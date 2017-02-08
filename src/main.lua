@@ -1,13 +1,45 @@
 
-cc.FileUtils:getInstance():setPopupNotify(false)
-cc.FileUtils:getInstance():addSearchPath("src/")
-cc.FileUtils:getInstance():addSearchPath("res/")
+--[[--------------------------------------------------------------------------------
+-- main.lua是lua程序的入口，在程序运行时被引擎自动调用。
+--
+-- 主要职责：
+--   读取游戏资源文件
+--   运行主场景
+--
+-- 使用场景举例：
+--   只在程序运行时被引擎调用，不应该自行调用本文件。
+--
+-- 其他：
+--   - 这个文件用到了游戏引擎的功能，因此服务器上的程序需要另写一个入口函数。
+--]]--------------------------------------------------------------------------------
+
+local fileUtils = cc.FileUtils:getInstance()
+fileUtils:setPopupNotify(false)
+fileUtils:addSearchPath("src/")
+fileUtils:addSearchPath("res/")
 
 require "config"
 require "cocos.init"
 
 local function main()
-    require("app.MyApp"):create():run()
+    display.loadSpriteFrames("FreeWarsTextureTile.plist",    "FreeWarsTextureTile.pvr.ccz")
+    display.loadSpriteFrames("FreeWarsTextureUnit.plist",    "FreeWarsTextureUnit.pvr.ccz")
+    display.loadSpriteFrames("FreeWarsTextureUI.plist",      "FreeWarsTextureUI.pvr.ccz")
+    display.loadSpriteFrames("FreeWarsTextureGallery.plist", "FreeWarsTextureGallery.pvr.ccz")
+
+    require("src.app.utilities.AnimationLoader")       .load()
+    require("src.app.utilities.GameConstantFunctions") .init()
+    require("src.app.utilities.SerializationFunctions").init()
+    require("src.app.utilities.WarFieldManager")       .init()
+
+    math.randomseed(os.time())
+
+    --cc.Director:getInstance():setDisplayStats(true)
+
+    local actorSceneMain = require("src.global.actors.Actor").createWithModelAndViewName("sceneMain.ModelSceneMain", nil, "sceneMain.ViewSceneMain")
+    require("src.app.utilities.WebSocketManager").init()
+    require("src.global.actors.ActorManager").setAndRunRootActor(actorSceneMain)
+    actorSceneMain:getModel():getModelMessageIndicator():showMessage(require("src.app.utilities.LocalizationFunctions").getLocalizedText(30, "StartConnecting"))
 end
 
 local status, msg = xpcall(main, __G__TRACKBACK__)
