@@ -601,6 +601,10 @@
     list 0 : *WarIdForIndexing(warID)
 }
 
+.PlayerAccountList {
+    list 0 : *string
+}
+
 .PlayerInfo {
     playerIndex 0 : integer
     account     1 : string
@@ -620,12 +624,12 @@
         waiting 1 : *WarIdForIndexing(warID)
     }
 
-    account             0 :  string
-    password            1 :  string
-    nickname            2 :  string
-    gameRecords         3 : *SingleGameRecord
-    skillConfigurations 4 : *SingleSkillConfiguration
-    warLists            5 :  WarLists
+    playerID    0 :  integer
+    account     1 :  string
+    password    2 :  string
+    nickname    3 :  string
+    gameRecords 4 : *SingleGameRecord
+    warLists    5 :  WarLists
 }
 
 .PlayerProfileForClient {
@@ -637,6 +641,7 @@
     nickname    1 :  string
     gameRecords 2 : *SingleGameRecordForPlayerProfile
     warLists    3 :  WarLists
+    playerID    4 :  integer
 }
 
 .RankingList {
