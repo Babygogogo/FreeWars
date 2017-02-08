@@ -1,0 +1,1 @@
+start simulator/win32/FreeWars -workdir %cd%
