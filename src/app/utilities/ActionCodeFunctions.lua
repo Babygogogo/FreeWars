@@ -11,7 +11,6 @@ local s_ActionCodes = {
     ActionGetPlayerProfile             = 5,
     ActionGetRankingList               = 6,
     ActionGetReplayConfigurations      = 7,
-    ActionGetSkillConfiguration        = 8,
     ActionGetWaitingWarConfigurations  = 9,
     ActionJoinWar                      = 10,
     ActionLogin                        = 11,
@@ -23,7 +22,6 @@ local s_ActionCodes = {
     ActionReloadSceneWar               = 17,
     ActionRunSceneMain                 = 18,
     ActionRunSceneWar                  = 19,
-    ActionSetSkillConfiguration        = 20,
     ActionSyncSceneWar                 = 21,
 
     ActionActivateSkillGroup           = 100,

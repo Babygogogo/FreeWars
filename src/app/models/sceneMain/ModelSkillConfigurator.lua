@@ -21,9 +21,6 @@ local SKILL_GROUP_ID_ACTIVE_1                 = ModelSkillConfiguration.getSkill
 local SKILL_GROUP_ID_ACTIVE_2                 = ModelSkillConfiguration.getSkillGroupIdActive2()
 local ACTIVE_SKILL_SLOTS_COUNT                = SkillDataAccessors.getActiveSkillSlotsCount()
 
-local ACTION_CODE_GET_SKILL_CONFIGURATION = ActionCodeFunctions.getActionCode("ActionGetSkillConfiguration")
-local ACTION_CODE_SET_SKILL_CONFIGURATION = ActionCodeFunctions.getActionCode("ActionSetSkillConfiguration")
-
 --------------------------------------------------------------------------------
 -- The util functions.
 --------------------------------------------------------------------------------

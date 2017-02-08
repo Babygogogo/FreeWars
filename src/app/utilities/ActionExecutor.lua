@@ -417,25 +417,6 @@ local function executeGetRankingList(action, modelScene)
     end
 end
 
-local function executeGetSkillConfiguration(action, modelScene)
-    assert(not IS_SERVER, "ActionExecutor-executeGetSkillConfiguration() should not be invoked on the server.")
-
-    local skillConfigurationID   = action.skillConfigurationID
-    local skillConfiguration     = action.skillConfiguration
-    local modelMainMenu          = modelScene:getModelMainMenu()
-    local modelSkillConfigurator = modelMainMenu:getModelSkillConfigurator()
-    local modelNewWarCreator     = modelMainMenu:getModelNewWarCreator()
-    local modelJoinWarSelector   = modelMainMenu:getModelJoinWarSelector()
-
-    if (modelSkillConfigurator:isRetrievingSkillConfiguration(skillConfigurationID)) then
-        modelSkillConfigurator:updateWithSkillConfiguration(skillConfiguration)
-    elseif (modelNewWarCreator:isRetrievingSkillConfiguration(skillConfigurationID)) then
-        modelNewWarCreator:updateWithSkillConfiguration(skillConfiguration, skillConfigurationID)
-    elseif (modelJoinWarSelector:isRetrievingSkillConfiguration(skillConfigurationID)) then
-        modelJoinWarSelector:updateWithSkillConfiguration(skillConfiguration, skillConfigurationID)
-    end
-end
-
 local function executeGetWaitingWarConfigurations(action, modelScene)
     assert(not IS_SERVER, "ActionExecutor-executeGetWaitingWarConfigurations() should not be invoked on the server.")
     if (modelScene.isModelSceneWar) then
@@ -574,14 +555,6 @@ local function executeReloadSceneWar(action, modelScene)
 
         local actorSceneWar = Actor.createWithModelAndViewName("sceneWar.ModelSceneWar", warData, "sceneWar.ViewSceneWar")
         ActorManager.setAndRunRootActor(actorSceneWar, "FADE", 1)
-    end
-end
-
-local function executeSetSkillConfiguration(action, modelScene)
-    if (IS_SERVER) then
-        PlayerProfileManager.setSkillConfiguration(action.playerAccount, action.skillConfigurationID, action.skillConfiguration)
-    else
-        getModelMessageIndicator(modelScene):showMessage(getLocalizedText(81, "SucceedToSetSkillConfiguration"))
     end
 end
 
@@ -1744,7 +1717,6 @@ function ActionExecutor.execute(action, modelScene)
     elseif (actionCode == ACTION_CODES.ActionGetPlayerProfile)             then executeGetPlayerProfile(            action, modelScene)
     elseif (actionCode == ACTION_CODES.ActionGetRankingList)               then executeGetRankingList(              action, modelScene)
     elseif (actionCode == ACTION_CODES.ActionGetReplayConfigurations)      then executeGetReplayConfigurations(     action, modelScene)
-    elseif (actionCode == ACTION_CODES.ActionGetSkillConfiguration)        then executeGetSkillConfiguration(       action, modelScene)
     elseif (actionCode == ACTION_CODES.ActionGetWaitingWarConfigurations)  then executeGetWaitingWarConfigurations( action, modelScene)
     elseif (actionCode == ACTION_CODES.ActionJoinWar)                      then executeJoinWar(                     action, modelScene)
     elseif (actionCode == ACTION_CODES.ActionLogin)                        then executeLogin(                       action, modelScene)
@@ -1755,7 +1727,6 @@ function ActionExecutor.execute(action, modelScene)
     elseif (actionCode == ACTION_CODES.ActionReloadSceneWar)               then executeReloadSceneWar(              action, modelScene)
     elseif (actionCode == ACTION_CODES.ActionRunSceneMain)                 then executeRunSceneMain(                action, modelScene)
     elseif (actionCode == ACTION_CODES.ActionRunSceneWar)                  then executeRunSceneWar(                 action, modelScene)
-    elseif (actionCode == ACTION_CODES.ActionSetSkillConfiguration)        then executeSetSkillConfiguration(       action, modelScene)
     elseif (actionCode == ACTION_CODES.ActionSyncSceneWar)                 then executeSyncSceneWar(                action, modelScene)
     elseif (actionCode == ACTION_CODES.ActionActivateSkillGroup)           then executeActivateSkillGroup(          action, modelScene)
     elseif (actionCode == ACTION_CODES.ActionAttack)                       then executeAttack(                      action, modelScene)

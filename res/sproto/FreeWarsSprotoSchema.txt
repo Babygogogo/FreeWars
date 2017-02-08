@@ -10,7 +10,6 @@
     ActionGetPlayerProfile              5 : ActionGetPlayerProfile
     ActionGetRankingList                6 : ActionGetRankingList
     ActionGetReplayConfigurations       7 : ActionGetReplayConfigurations
-    ActionGetSkillConfiguration         8 : ActionGetSkillConfiguration
     ActionGetWaitingWarConfigurations   9 : ActionGetWaitingWarConfigurations
     ActionJoinWar                      10 : ActionJoinWar
     ActionLogin                        11 : ActionLogin
@@ -22,7 +21,6 @@
     ActionReloadSceneWar               17 : ActionReloadSceneWar
     ActionRunSceneMain                 18 : ActionRunSceneMain
     ActionRunSceneWar                  19 : ActionRunSceneWar
-    ActionSetSkillConfiguration        20 : ActionSetSkillConfiguration
     ActionSyncSceneWar                 21 : ActionSyncSceneWar
 
     ActionActivateSkillGroup          100 : ActionActivateSkillGroup
@@ -98,14 +96,6 @@
     replayConfigurations 2 : *ReplayConfiguration
 }
 
-.ActionGetSkillConfiguration {
-    actionCode           0 : integer
-    playerAccount        1 : string
-    playerPassword       2 : string
-    skillConfigurationID 3 : integer
-    skillConfiguration   4 : SingleSkillConfiguration
-}
-
 .ActionGetWaitingWarConfigurations {
     actionCode        0 :  integer
     playerAccount     1 :  string
@@ -156,13 +146,11 @@
     warPassword           4 : string
     warFieldFileName      5 : string
     playerIndex           6 : integer
-    skillConfigurationID  7 : integer
-    maxBaseSkillPoints    8 : integer
-    isFogOfWarByDefault   9 : boolean
-    defaultWeatherCode   10 : integer
-    isRankMatch          11 : boolean
-    maxDiffScore         12 : integer
-    intervalUntilBoot    13 : integer
+    isFogOfWarByDefault   7 : boolean
+    defaultWeatherCode    8 : integer
+    isRankMatch           9 : boolean
+    maxDiffScore         10 : integer
+    intervalUntilBoot    11 : integer
 }
 
 .ActionRegister {
@@ -192,14 +180,6 @@
     playerPassword   2 : string
     warID            3 : integer
     warData          4 : SceneWar
-}
-
-.ActionSetSkillConfiguration {
-    actionCode           0 : integer
-    playerAccount        1 : string
-    playerPassword       2 : string
-    skillConfigurationID 3 : integer
-    skillConfiguration   4 : SingleSkillConfiguration
 }
 
 .ActionSyncSceneWar {
