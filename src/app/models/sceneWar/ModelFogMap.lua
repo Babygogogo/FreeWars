@@ -1,9 +1,9 @@
 
-local ModelFogMap = require("src.global.functions.class")("ModelFogMap")
+local ModelFogMap = requireFW("src.global.functions.class")("ModelFogMap")
 
-local GridIndexFunctions     = require("src.app.utilities.GridIndexFunctions")
-local SingletonGetters       = require("src.app.utilities.SingletonGetters")
-local SkillModifierFunctions = require("src.app.utilities.SkillModifierFunctions")
+local GridIndexFunctions     = requireFW("src.app.utilities.GridIndexFunctions")
+local SingletonGetters       = requireFW("src.app.utilities.SingletonGetters")
+local SkillModifierFunctions = requireFW("src.app.utilities.SkillModifierFunctions")
 
 local canRevealHidingPlacesWithUnits = SkillModifierFunctions.canRevealHidingPlacesWithUnits
 local getGridsWithinDistance         = GridIndexFunctions.getGridsWithinDistance
@@ -12,7 +12,7 @@ local getModelTileMap                = SingletonGetters.getModelTileMap
 local getModelUnitMap                = SingletonGetters.getModelUnitMap
 local getPlayerIndexLoggedIn         = SingletonGetters.getPlayerIndexLoggedIn
 
-local IS_SERVER               = require("src.app.utilities.GameConstantFunctions").isServer()
+local IS_SERVER               = requireFW("src.app.utilities.GameConstantFunctions").isServer()
 local TEMPLATE_WAR_FIELD_PATH = "res.data.templateWarField."
 local FORCING_FOG_CODE        = {
     None  = 0,
@@ -24,7 +24,7 @@ local FORCING_FOG_CODE        = {
 -- The util functions.
 --------------------------------------------------------------------------------
 local function getMapSizeAndPlayersCountWithWarFieldFileName(warFieldFileName)
-    local mapData = require(TEMPLATE_WAR_FIELD_PATH .. warFieldFileName)
+    local mapData = requireFW(TEMPLATE_WAR_FIELD_PATH .. warFieldFileName)
     return {width = mapData.width, height = mapData.height}, mapData.playersCount
 end
 

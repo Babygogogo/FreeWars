@@ -1,10 +1,10 @@
 
 local ModelMainMenu = class("ModelMainMenu")
 
-local AudioManager          = require("src.app.utilities.AudioManager")
-local LocalizationFunctions = require("src.app.utilities.LocalizationFunctions")
-local SingletonGetters      = require("src.app.utilities.SingletonGetters")
-local Actor                 = require("src.global.actors.Actor")
+local AudioManager          = requireFW("src.app.utilities.AudioManager")
+local LocalizationFunctions = requireFW("src.app.utilities.LocalizationFunctions")
+local SingletonGetters      = requireFW("src.app.utilities.SingletonGetters")
+local Actor                 = requireFW("src.global.actors.Actor")
 
 local getLocalizedText = LocalizationFunctions.getLocalizedText
 

@@ -17,17 +17,17 @@
 --     - 更换weather（TurnPhaseChangeWeather，目前未实现。具体切换与否，由ModelWeatherManager决定）
 --]]--------------------------------------------------------------------------------
 
-local ModelTurnManager = require("src.global.functions.class")("ModelTurnManager")
+local ModelTurnManager = requireFW("src.global.functions.class")("ModelTurnManager")
 
-local IS_SERVER             = require("src.app.utilities.GameConstantFunctions").isServer()
-local ActionCodeFunctions   = require("src.app.utilities.ActionCodeFunctions")
-local Destroyers            = require("src.app.utilities.Destroyers")
-local GridIndexFunctions    = require("src.app.utilities.GridIndexFunctions")
-local LocalizationFunctions = require("src.app.utilities.LocalizationFunctions")
-local SingletonGetters      = require("src.app.utilities.SingletonGetters")
-local SupplyFunctions       = require("src.app.utilities.SupplyFunctions")
-local VisibilityFunctions   = require("src.app.utilities.VisibilityFunctions")
-local WebSocketManager      = (not IS_SERVER) and (require("src.app.utilities.WebSocketManager")) or (nil)
+local IS_SERVER             = requireFW("src.app.utilities.GameConstantFunctions").isServer()
+local ActionCodeFunctions   = requireFW("src.app.utilities.ActionCodeFunctions")
+local Destroyers            = requireFW("src.app.utilities.Destroyers")
+local GridIndexFunctions    = requireFW("src.app.utilities.GridIndexFunctions")
+local LocalizationFunctions = requireFW("src.app.utilities.LocalizationFunctions")
+local SingletonGetters      = requireFW("src.app.utilities.SingletonGetters")
+local SupplyFunctions       = requireFW("src.app.utilities.SupplyFunctions")
+local VisibilityFunctions   = requireFW("src.app.utilities.VisibilityFunctions")
+local WebSocketManager      = (not IS_SERVER) and (requireFW("src.app.utilities.WebSocketManager")) or (nil)
 
 local destroyActorUnitOnMap    = Destroyers.destroyActorUnitOnMap
 local getAdjacentGrids         = GridIndexFunctions.getAdjacentGrids

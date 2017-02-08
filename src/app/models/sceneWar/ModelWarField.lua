@@ -14,12 +14,12 @@
 --     - GridEffect（server不含）
 --]]--------------------------------------------------------------------------------
 
-local ModelWarField = require("src.global.functions.class")("ModelWarField")
+local ModelWarField = requireFW("src.global.functions.class")("ModelWarField")
 
-local SingletonGetters = require("src.app.utilities.SingletonGetters")
-local Actor            = require("src.global.actors.Actor")
+local SingletonGetters = requireFW("src.app.utilities.SingletonGetters")
+local Actor            = requireFW("src.global.actors.Actor")
 
-local IS_SERVER               = require("src.app.utilities.GameConstantFunctions").isServer()
+local IS_SERVER               = requireFW("src.app.utilities.GameConstantFunctions").isServer()
 local TEMPLATE_WAR_FIELD_PATH = "res.data.templateWarField."
 
 --------------------------------------------------------------------------------
@@ -197,11 +197,11 @@ end
 -- The public functions.
 --------------------------------------------------------------------------------
 function ModelWarField:getWarFieldDisplayName()
-    return require(TEMPLATE_WAR_FIELD_PATH .. self.m_WarFieldFileName).warFieldName
+    return requireFW(TEMPLATE_WAR_FIELD_PATH .. self.m_WarFieldFileName).warFieldName
 end
 
 function ModelWarField:getWarFieldAuthorName()
-    return require(TEMPLATE_WAR_FIELD_PATH .. self.m_WarFieldFileName).authorName
+    return requireFW(TEMPLATE_WAR_FIELD_PATH .. self.m_WarFieldFileName).authorName
 end
 
 function ModelWarField:getModelActionPlanner()

@@ -13,10 +13,10 @@
 
 local AttackableGridListFunctions = {}
 
-local DamageCalculator       = require("src.app.utilities.DamageCalculator")
-local GridIndexFunctions     = require("src.app.utilities.GridIndexFunctions")
-local ReachableAreaFunctions = require("src.app.utilities.ReachableAreaFunctions")
-local ActorManager           = require("src.global.actors.ActorManager")
+local DamageCalculator       = requireFW("src.app.utilities.DamageCalculator")
+local GridIndexFunctions     = requireFW("src.app.utilities.GridIndexFunctions")
+local ReachableAreaFunctions = requireFW("src.app.utilities.ReachableAreaFunctions")
+local ActorManager           = requireFW("src.global.actors.ActorManager")
 
 local isWithinMap            = GridIndexFunctions.isWithinMap
 

@@ -8,9 +8,9 @@
 --   占领点数降为0后，若满足占领即失败的条件（如HQ），则派发相应事件（未完成）。
 --]]--------------------------------------------------------------------------------
 
-local Capturable = require("src.global.functions.class")("Capturable")
+local Capturable = requireFW("src.global.functions.class")("Capturable")
 
-local GridIndexFunctions = require("src.app.utilities.GridIndexFunctions")
+local GridIndexFunctions = requireFW("src.app.utilities.GridIndexFunctions")
 
 Capturable.EXPORTED_METHODS = {
     "getCurrentCapturePoint",

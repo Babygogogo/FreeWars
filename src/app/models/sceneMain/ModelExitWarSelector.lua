@@ -1,14 +1,14 @@
 
 local ModelExitWarSelector = class("ModelExitWarSelector")
 
-local ActionCodeFunctions   = require("src.app.utilities.ActionCodeFunctions")
-local AuxiliaryFunctions    = require("src.app.utilities.AuxiliaryFunctions")
-local LocalizationFunctions = require("src.app.utilities.LocalizationFunctions")
-local SingletonGetters      = require("src.app.utilities.SingletonGetters")
-local WarFieldManager       = require("src.app.utilities.WarFieldManager")
-local WebSocketManager      = require("src.app.utilities.WebSocketManager")
-local Actor                 = require("src.global.actors.Actor")
-local ActorManager          = require("src.global.actors.ActorManager")
+local ActionCodeFunctions   = requireFW("src.app.utilities.ActionCodeFunctions")
+local AuxiliaryFunctions    = requireFW("src.app.utilities.AuxiliaryFunctions")
+local LocalizationFunctions = requireFW("src.app.utilities.LocalizationFunctions")
+local SingletonGetters      = requireFW("src.app.utilities.SingletonGetters")
+local WarFieldManager       = requireFW("src.app.utilities.WarFieldManager")
+local WebSocketManager      = requireFW("src.app.utilities.WebSocketManager")
+local Actor                 = requireFW("src.global.actors.Actor")
+local ActorManager          = requireFW("src.global.actors.ActorManager")
 
 local os, string       = os, string
 local getLocalizedText = LocalizationFunctions.getLocalizedText
@@ -19,11 +19,11 @@ local ACTION_CODE_GET_WAITING_WAR_CONFIGURATIONS = ActionCodeFunctions.getAction
 -- The util functions.
 --------------------------------------------------------------------------------
 local function getWarFieldName(fileName)
-    return require("res.data.templateWarField." .. fileName).warFieldName
+    return requireFW("res.data.templateWarField." .. fileName).warFieldName
 end
 
 local function getPlayerNicknames(warConfiguration, currentTime)
-    local playersCount = require("res.data.templateWarField." .. warConfiguration.warFieldFileName).playersCount
+    local playersCount = requireFW("res.data.templateWarField." .. warConfiguration.warFieldFileName).playersCount
     local players      = warConfiguration.players
     local names        = {}
 

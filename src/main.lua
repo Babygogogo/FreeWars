@@ -13,6 +13,26 @@
 --   - 这个文件用到了游戏引擎的功能，因此服务器上的程序需要另写一个入口函数。
 --]]--------------------------------------------------------------------------------
 
+--------------------------------------------------------------------------------
+-- The global variables.
+--------------------------------------------------------------------------------
+requireFW = require
+
+__G__TRACKBACK__ = function(msg)
+    local msg = debug.traceback(msg, 3)
+    print(msg)
+
+    local scene = display.getRunningScene()
+    if (scene ~= nil) then
+        scene:addChild(requireFW("app.views.common.ViewErrorIndicator"):create(msg), 999)
+    end
+
+    return msg
+end
+
+--------------------------------------------------------------------------------
+-- The app initializers.
+--------------------------------------------------------------------------------
 local fileUtils = cc.FileUtils:getInstance()
 fileUtils:setPopupNotify(false)
 fileUtils:addSearchPath("src/")
@@ -27,19 +47,19 @@ local function main()
     display.loadSpriteFrames("FreeWarsTextureUI.plist",      "FreeWarsTextureUI.pvr.ccz")
     display.loadSpriteFrames("FreeWarsTextureGallery.plist", "FreeWarsTextureGallery.pvr.ccz")
 
-    require("src.app.utilities.AnimationLoader")       .load()
-    require("src.app.utilities.GameConstantFunctions") .init()
-    require("src.app.utilities.SerializationFunctions").init()
-    require("src.app.utilities.WarFieldManager")       .init()
+    requireFW("src.app.utilities.AnimationLoader")       .load()
+    requireFW("src.app.utilities.GameConstantFunctions") .init()
+    requireFW("src.app.utilities.SerializationFunctions").init()
+    requireFW("src.app.utilities.WarFieldManager")       .init()
 
     math.randomseed(os.time())
 
     --cc.Director:getInstance():setDisplayStats(true)
 
-    local actorSceneMain = require("src.global.actors.Actor").createWithModelAndViewName("sceneMain.ModelSceneMain", nil, "sceneMain.ViewSceneMain")
-    require("src.app.utilities.WebSocketManager").init()
-    require("src.global.actors.ActorManager").setAndRunRootActor(actorSceneMain)
-    actorSceneMain:getModel():getModelMessageIndicator():showMessage(require("src.app.utilities.LocalizationFunctions").getLocalizedText(30, "StartConnecting"))
+    local actorSceneMain = requireFW("src.global.actors.Actor").createWithModelAndViewName("sceneMain.ModelSceneMain", nil, "sceneMain.ViewSceneMain")
+    requireFW("src.app.utilities.WebSocketManager").init()
+    requireFW("src.global.actors.ActorManager").setAndRunRootActor(actorSceneMain)
+    actorSceneMain:getModel():getModelMessageIndicator():showMessage(requireFW("src.app.utilities.LocalizationFunctions").getLocalizedText(30, "StartConnecting"))
 end
 
 local status, msg = xpcall(main, __G__TRACKBACK__)

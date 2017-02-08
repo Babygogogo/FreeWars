@@ -1,7 +1,7 @@
 
-local MaterialOwner = require("src.global.functions.class")("MaterialOwner")
+local MaterialOwner = requireFW("src.global.functions.class")("MaterialOwner")
 
-local ComponentManager   = require("src.global.components.ComponentManager")
+local ComponentManager   = requireFW("src.global.components.ComponentManager")
 
 MaterialOwner.EXPORTED_METHODS = {
     "getCurrentMaterial",

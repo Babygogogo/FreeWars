@@ -1,7 +1,7 @@
 
 local SkillDataAccessors = {}
 
-local SKILL_DATA = require("res.data.SkillData")
+local SKILL_DATA = requireFW("res.data.SkillData")
 
 function SkillDataAccessors.getSkillConfigurationsCount()
     return SKILL_DATA.skillConfigurationsCount

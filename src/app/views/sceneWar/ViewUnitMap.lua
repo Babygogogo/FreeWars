@@ -1,10 +1,10 @@
 
 local ViewUnitMap = class("ViewUnitMap", cc.Node)
 
-local GridIndexFunctions     = require("src.app.utilities.GridIndexFunctions")
-local SerializationFunctions = require("src.app.utilities.SerializationFunctions")
-local GameConstantFunctions  = require("src.app.utilities.GameConstantFunctions")
-local Actor                  = require("src.global.actors.Actor")
+local GridIndexFunctions     = requireFW("src.app.utilities.GridIndexFunctions")
+local SerializationFunctions = requireFW("src.app.utilities.SerializationFunctions")
+local GameConstantFunctions  = requireFW("src.app.utilities.GameConstantFunctions")
+local Actor                  = requireFW("src.global.actors.Actor")
 
 local isTypeInCategory = GameConstantFunctions.isTypeInCategory
 local toErrorMessage   = SerializationFunctions.toErrorMessage

@@ -6,10 +6,10 @@ local TILE_BASE_Z_ORDER   = 0
 local CLEAR_COLOR         = {r = 255, g = 255, b = 255}
 local FOG_COLOR           = {r = 160, g = 160, b = 160}
 
-local ComponentManager      = require("src.global.components.ComponentManager")
-local TypeChecker           = require("src.app.utilities.TypeChecker")
-local AnimationLoader       = require("src.app.utilities.AnimationLoader")
-local GameConstantFunctions = require("src.app.utilities.GameConstantFunctions")
+local ComponentManager      = requireFW("src.global.components.ComponentManager")
+local TypeChecker           = requireFW("src.app.utilities.TypeChecker")
+local AnimationLoader       = requireFW("src.app.utilities.AnimationLoader")
+local GameConstantFunctions = requireFW("src.app.utilities.GameConstantFunctions")
 
 --------------------------------------------------------------------------------
 -- The constructor.

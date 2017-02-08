@@ -1,7 +1,7 @@
 
-local Joinable = require("src.global.functions.class")("Joinable")
+local Joinable = requireFW("src.global.functions.class")("Joinable")
 
-local ComponentManager = require("src.global.components.ComponentManager")
+local ComponentManager = requireFW("src.global.components.ComponentManager")
 
 Joinable.EXPORTED_METHODS = {
     "canJoinModelUnit",

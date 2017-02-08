@@ -26,9 +26,9 @@
 
 local ModelMapCursor = class("ModelMapCursor")
 
-local GridIndexFunctions = require("src.app.utilities.GridIndexFunctions")
-local SingletonGetters   = require("src.app.utilities.SingletonGetters")
-local ComponentManager   = require("src.global.components.ComponentManager")
+local GridIndexFunctions = requireFW("src.app.utilities.GridIndexFunctions")
+local SingletonGetters   = requireFW("src.app.utilities.SingletonGetters")
+local ComponentManager   = requireFW("src.global.components.ComponentManager")
 
 local getScriptEventDispatcher = SingletonGetters.getScriptEventDispatcher
 local getModelWarCommandMenu   = SingletonGetters.getModelWarCommandMenu

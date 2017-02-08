@@ -1,8 +1,8 @@
 
 local ViewWarConfigurator = class("ViewWarConfigurator", cc.Node)
 
-local DisplayNodeFunctions  = require("src.app.utilities.DisplayNodeFunctions")
-local LocalizationFunctions = require("src.app.utilities.LocalizationFunctions")
+local DisplayNodeFunctions  = requireFW("src.app.utilities.DisplayNodeFunctions")
+local LocalizationFunctions = requireFW("src.app.utilities.LocalizationFunctions")
 
 local getLocalizedText = LocalizationFunctions.getLocalizedText
 

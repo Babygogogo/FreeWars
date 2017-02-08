@@ -1,9 +1,9 @@
 
-local SiloLauncher = require("src.global.functions.class")("SiloLauncher")
+local SiloLauncher = requireFW("src.global.functions.class")("SiloLauncher")
 
-local ComponentManager      = require("src.global.components.ComponentManager")
-local GridIndexFunctions    = require("src.app.utilities.GridIndexFunctions")
-local GameConstantFunctions = require("src.app.utilities.GameConstantFunctions")
+local ComponentManager      = requireFW("src.global.components.ComponentManager")
+local GridIndexFunctions    = requireFW("src.app.utilities.GridIndexFunctions")
+local GameConstantFunctions = requireFW("src.app.utilities.GameConstantFunctions")
 
 SiloLauncher.EXPORTED_METHODS = {
     "canLaunchSiloOnTileType",

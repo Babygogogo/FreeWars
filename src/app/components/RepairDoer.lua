@@ -15,13 +15,13 @@
 --   - 维修量受co技能、金钱影响
 --]]--------------------------------------------------------------------------------
 
-local RepairDoer = require("src.global.functions.class")("RepairDoer")
+local RepairDoer = requireFW("src.global.functions.class")("RepairDoer")
 
-local GameConstantFunctions  = require("src.app.utilities.GameConstantFunctions")
-local LocalizationFunctions  = require("src.app.utilities.LocalizationFunctions")
-local SingletonGetters       = require("src.app.utilities.SingletonGetters")
-local SkillModifierFunctions = require("src.app.utilities.SkillModifierFunctions")
-local ComponentManager       = require("src.global.components.ComponentManager")
+local GameConstantFunctions  = requireFW("src.app.utilities.GameConstantFunctions")
+local LocalizationFunctions  = requireFW("src.app.utilities.LocalizationFunctions")
+local SingletonGetters       = requireFW("src.app.utilities.SingletonGetters")
+local SkillModifierFunctions = requireFW("src.app.utilities.SkillModifierFunctions")
+local ComponentManager       = requireFW("src.global.components.ComponentManager")
 
 RepairDoer.EXPORTED_METHODS = {
     "getRepairTargetCategoryFullName",

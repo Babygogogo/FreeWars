@@ -11,15 +11,15 @@
 --   单位移动范围同时受到燃料残量、天气、co技能等的影响
 --]]--------------------------------------------------------------------------------
 
-local MoveDoer = require("src.global.functions.class")("MoveDoer")
+local MoveDoer = requireFW("src.global.functions.class")("MoveDoer")
 
-local GridIndexFunctions     = require("src.app.utilities.GridIndexFunctions")
-local LocalizationFunctions  = require("src.app.utilities.LocalizationFunctions")
-local SingletonGetters       = require("src.app.utilities.SingletonGetters")
-local SkillModifierFunctions = require("src.app.utilities.SkillModifierFunctions")
-local ComponentManager       = require("src.global.components.ComponentManager")
+local GridIndexFunctions     = requireFW("src.app.utilities.GridIndexFunctions")
+local LocalizationFunctions  = requireFW("src.app.utilities.LocalizationFunctions")
+local SingletonGetters       = requireFW("src.app.utilities.SingletonGetters")
+local SkillModifierFunctions = requireFW("src.app.utilities.SkillModifierFunctions")
+local ComponentManager       = requireFW("src.global.components.ComponentManager")
 
-local MOVE_TYPES = require("res.data.GameConstant").moveTypes
+local MOVE_TYPES = requireFW("res.data.GameConstant").moveTypes
 
 MoveDoer.EXPORTED_METHODS = {
     "getMoveRange",

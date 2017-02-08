@@ -1,9 +1,9 @@
 
-local Producible = require("src.global.functions.class")("Producible")
+local Producible = requireFW("src.global.functions.class")("Producible")
 
-local GameConstantFunctions  = require("src.app.utilities.GameConstantFunctions")
-local SingletonGetters       = require("src.app.utilities.SingletonGetters")
-local SkillModifierFunctions = require("src.app.utilities.SkillModifierFunctions")
+local GameConstantFunctions  = requireFW("src.app.utilities.GameConstantFunctions")
+local SingletonGetters       = requireFW("src.app.utilities.SingletonGetters")
+local SkillModifierFunctions = requireFW("src.app.utilities.SkillModifierFunctions")
 
 Producible.EXPORTED_METHODS = {
     "getProductionCost",

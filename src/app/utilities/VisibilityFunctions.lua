@@ -1,11 +1,11 @@
 
 local VisibilityFunctions = {}
 
-local GameConstantFunctions  = require("src.app.utilities.GameConstantFunctions")
-local GridIndexFunctions     = require("src.app.utilities.GridIndexFunctions")
-local SingletonGetters       = require("src.app.utilities.SingletonGetters")
-local SkillModifierFunctions = require("src.app.utilities.SkillModifierFunctions")
-local TableFunctions         = require("src.app.utilities.TableFunctions")
+local GameConstantFunctions  = requireFW("src.app.utilities.GameConstantFunctions")
+local GridIndexFunctions     = requireFW("src.app.utilities.GridIndexFunctions")
+local SingletonGetters       = requireFW("src.app.utilities.SingletonGetters")
+local SkillModifierFunctions = requireFW("src.app.utilities.SkillModifierFunctions")
+local TableFunctions         = requireFW("src.app.utilities.TableFunctions")
 
 local canRevealHidingPlacesWithTilesForSkillGroup = SkillModifierFunctions.canRevealHidingPlacesWithTilesForSkillGroup
 local canRevealHidingPlacesWithTiles              = SkillModifierFunctions.canRevealHidingPlacesWithTiles

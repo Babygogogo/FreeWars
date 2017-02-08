@@ -49,13 +49,13 @@
 --     3. 读取instantialData中的数据
 --]]--------------------------------------------------------------------------------
 
-local ModelTile = require("src.global.functions.class")("ModelTile")
+local ModelTile = requireFW("src.global.functions.class")("ModelTile")
 
-local GameConstantFunctions = require("src.app.utilities.GameConstantFunctions")
-local LocalizationFunctions = require("src.app.utilities.LocalizationFunctions")
-local SingletonGetters      = require("src.app.utilities.SingletonGetters")
-local VisibilityFunctions   = require("src.app.utilities.VisibilityFunctions")
-local ComponentManager      = require("src.global.components.ComponentManager")
+local GameConstantFunctions = requireFW("src.app.utilities.GameConstantFunctions")
+local LocalizationFunctions = requireFW("src.app.utilities.LocalizationFunctions")
+local SingletonGetters      = requireFW("src.app.utilities.SingletonGetters")
+local VisibilityFunctions   = requireFW("src.app.utilities.VisibilityFunctions")
+local ComponentManager      = requireFW("src.global.components.ComponentManager")
 
 local IS_SERVER = GameConstantFunctions.isServer()
 

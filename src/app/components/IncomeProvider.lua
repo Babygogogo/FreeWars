@@ -8,11 +8,11 @@
 --   回合初计算玩家收入时会用到本组件
 --]]--------------------------------------------------------------------------------
 
-local IncomeProvider = require("src.global.functions.class")("IncomeProvider")
+local IncomeProvider = requireFW("src.global.functions.class")("IncomeProvider")
 
-local SingletonGetters       = require("src.app.utilities.SingletonGetters")
-local SkillModifierFunctions = require("src.app.utilities.SkillModifierFunctions")
-local ComponentManager       = require("src.global.components.ComponentManager")
+local SingletonGetters       = requireFW("src.app.utilities.SingletonGetters")
+local SkillModifierFunctions = requireFW("src.app.utilities.SkillModifierFunctions")
+local ComponentManager       = requireFW("src.global.components.ComponentManager")
 
 IncomeProvider.EXPORTED_METHODS = {
     "getIncomeAmount",

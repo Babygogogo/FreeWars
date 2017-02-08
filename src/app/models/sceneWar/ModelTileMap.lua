@@ -28,15 +28,15 @@
 --     若玩家的操作改变了ModelTileMap上的某些属性（比如占领，攻击meteor，发射导弹），那么相应的数据就记在instantialData中即可。
 --]]--------------------------------------------------------------------------------
 
-local ModelTileMap = require("src.global.functions.class")("ModelTileMap")
+local ModelTileMap = requireFW("src.global.functions.class")("ModelTileMap")
 
-local GameConstantFunctions  = require("src.app.utilities.GameConstantFunctions")
-local GridIndexFunctions     = require("src.app.utilities.GridIndexFunctions")
-local SerializationFunctions = require("src.app.utilities.SerializationFunctions")
-local SingletonGetters       = require("src.app.utilities.SingletonGetters")
-local TableFunctions         = require("src.app.utilities.TableFunctions")
-local VisibilityFunctions    = require("src.app.utilities.VisibilityFunctions")
-local Actor                  = require("src.global.actors.Actor")
+local GameConstantFunctions  = requireFW("src.app.utilities.GameConstantFunctions")
+local GridIndexFunctions     = requireFW("src.app.utilities.GridIndexFunctions")
+local SerializationFunctions = requireFW("src.app.utilities.SerializationFunctions")
+local SingletonGetters       = requireFW("src.app.utilities.SingletonGetters")
+local TableFunctions         = requireFW("src.app.utilities.TableFunctions")
+local VisibilityFunctions    = requireFW("src.app.utilities.VisibilityFunctions")
+local Actor                  = requireFW("src.global.actors.Actor")
 
 local ceil          = math.ceil
 local isTileVisible = VisibilityFunctions.isTileVisibleToPlayerIndex
@@ -63,7 +63,7 @@ local function createEmptyMap(width)
 end
 
 local function createActorTilesMapWithWarFieldFileName(warFieldFileName, isPreview)
-    local templateWarField = require(TEMPLATE_WAR_FIELD_PATH .. warFieldFileName)
+    local templateWarField = requireFW(TEMPLATE_WAR_FIELD_PATH .. warFieldFileName)
     local baseLayer        = templateWarField.layers[1]
     local objectLayerData  = templateWarField.layers[2].data
     local width, height    = baseLayer.width, baseLayer.height
@@ -102,7 +102,7 @@ end
 
 local function resetActorTilesMap(map, mapSize, warFieldFileName)
     local width, height    = mapSize.width, mapSize.height
-    local templateWarField = require(TEMPLATE_WAR_FIELD_PATH .. warFieldFileName)
+    local templateWarField = requireFW(TEMPLATE_WAR_FIELD_PATH .. warFieldFileName)
     local baseLayerData    = templateWarField.layers[1].data
     local objectLayerData  = templateWarField.layers[2].data
 

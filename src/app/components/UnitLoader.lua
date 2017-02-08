@@ -1,11 +1,11 @@
 
-local UnitLoader = require("src.global.functions.class")("UnitLoader")
+local UnitLoader = requireFW("src.global.functions.class")("UnitLoader")
 
-local GameConstantFunctions  = require("src.app.utilities.GameConstantFunctions")
-local SingletonGetters       = require("src.app.utilities.SingletonGetters")
-local SkillModifierFunctions = require("src.app.utilities.SkillModifierFunctions")
-local TableFunctions         = require("src.app.utilities.TableFunctions")
-local ComponentManager       = require("src.global.components.ComponentManager")
+local GameConstantFunctions  = requireFW("src.app.utilities.GameConstantFunctions")
+local SingletonGetters       = requireFW("src.app.utilities.SingletonGetters")
+local SkillModifierFunctions = requireFW("src.app.utilities.SkillModifierFunctions")
+local TableFunctions         = requireFW("src.app.utilities.TableFunctions")
+local ComponentManager       = requireFW("src.global.components.ComponentManager")
 
 UnitLoader.EXPORTED_METHODS = {
     "getMaxLoadCount",

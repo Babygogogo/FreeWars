@@ -1,9 +1,9 @@
 
 local ViewWarField = class("ViewWarField", cc.Node)
 
-local TypeChecker = require("src.app.utilities.TypeChecker")
+local TypeChecker = requireFW("src.app.utilities.TypeChecker")
 
-local GRID_SIZE = require("src.app.utilities.GameConstantFunctions").getGridSize()
+local GRID_SIZE = requireFW("src.app.utilities.GameConstantFunctions").getGridSize()
 
 local ORIGIN = {x = 0, y = 0}
 local BOUNDARY_RECT  = {upperRightX = display.width - 10, upperRightY = display.height - 10, lowerLeftX = 10, lowerLeftY = 10}

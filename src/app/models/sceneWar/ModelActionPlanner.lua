@@ -15,17 +15,17 @@
 
 local ModelActionPlanner = class("ModelActionPlanner")
 
-local Producible                  = require("src.app.components.Producible")
-local ActionCodeFunctions         = require("src.app.utilities.ActionCodeFunctions")
-local AnimationLoader             = require("src.app.utilities.AnimationLoader")
-local AttackableGridListFunctions = require("src.app.utilities.AttackableGridListFunctions")
-local GridIndexFunctions          = require("src.app.utilities.GridIndexFunctions")
-local LocalizationFunctions       = require("src.app.utilities.LocalizationFunctions")
-local MovePathFunctions           = require("src.app.utilities.MovePathFunctions")
-local ReachableAreaFunctions      = require("src.app.utilities.ReachableAreaFunctions")
-local SingletonGetters            = require("src.app.utilities.SingletonGetters")
-local WebSocketManager            = require("src.app.utilities.WebSocketManager")
-local Actor                       = require("src.global.actors.Actor")
+local Producible                  = requireFW("src.app.components.Producible")
+local ActionCodeFunctions         = requireFW("src.app.utilities.ActionCodeFunctions")
+local AnimationLoader             = requireFW("src.app.utilities.AnimationLoader")
+local AttackableGridListFunctions = requireFW("src.app.utilities.AttackableGridListFunctions")
+local GridIndexFunctions          = requireFW("src.app.utilities.GridIndexFunctions")
+local LocalizationFunctions       = requireFW("src.app.utilities.LocalizationFunctions")
+local MovePathFunctions           = requireFW("src.app.utilities.MovePathFunctions")
+local ReachableAreaFunctions      = requireFW("src.app.utilities.ReachableAreaFunctions")
+local SingletonGetters            = requireFW("src.app.utilities.SingletonGetters")
+local WebSocketManager            = requireFW("src.app.utilities.WebSocketManager")
+local Actor                       = requireFW("src.global.actors.Actor")
 
 local createPathForDispatch    = MovePathFunctions.createPathForDispatch
 local getLocalizedText         = LocalizationFunctions.getLocalizedText

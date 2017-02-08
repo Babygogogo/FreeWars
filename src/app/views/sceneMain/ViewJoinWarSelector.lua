@@ -1,8 +1,8 @@
 
 local ViewJoinWarSelector = class("ViewJoinWarSelector", cc.Node)
 
-local AuxiliaryFunctions    = require("src.app.utilities.AuxiliaryFunctions")
-local LocalizationFunctions = require("src.app.utilities.LocalizationFunctions")
+local AuxiliaryFunctions    = requireFW("src.app.utilities.AuxiliaryFunctions")
+local LocalizationFunctions = requireFW("src.app.utilities.LocalizationFunctions")
 
 local WAR_CONFIGURATOR_Z_ORDER    = 1
 local WAR_FIELD_PREVIEWER_Z_ORDER = 1

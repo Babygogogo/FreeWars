@@ -1,7 +1,7 @@
 
 local SupplyFunctions = {}
 
-local IS_SERVER = require("src.app.utilities.GameConstantFunctions").isServer()
+local IS_SERVER = requireFW("src.app.utilities.GameConstantFunctions").isServer()
 
 --------------------------------------------------------------------------------
 -- The util functions.

@@ -1,8 +1,8 @@
 
 local ViewMoneyEnergyInfo = class("ViewMoneyEnergyInfo", cc.Node)
 
-local LocalizationFunctions = require("src.app.utilities.LocalizationFunctions")
-local SingletonGetters      = require("src.app.utilities.SingletonGetters")
+local LocalizationFunctions = requireFW("src.app.utilities.LocalizationFunctions")
+local SingletonGetters      = requireFW("src.app.utilities.SingletonGetters")
 
 local getLocalizedText       = LocalizationFunctions.getLocalizedText
 local getModelFogMap         = SingletonGetters.getModelFogMap

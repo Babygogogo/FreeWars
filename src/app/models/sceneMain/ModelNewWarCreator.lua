@@ -1,9 +1,9 @@
 
 local ModelNewWarCreator = class("ModelNewWarCreator")
 
-local SingletonGetters          = require("src.app.utilities.SingletonGetters")
-local WarFieldManager           = require("src.app.utilities.WarFieldManager")
-local Actor                     = require("src.global.actors.Actor")
+local SingletonGetters          = requireFW("src.app.utilities.SingletonGetters")
+local WarFieldManager           = requireFW("src.app.utilities.WarFieldManager")
+local Actor                     = requireFW("src.global.actors.Actor")
 
 local ipairs = ipairs
 

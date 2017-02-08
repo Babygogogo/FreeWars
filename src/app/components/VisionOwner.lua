@@ -1,8 +1,8 @@
 
-local VisionOwner = require("src.global.functions.class")("VisionOwner")
+local VisionOwner = requireFW("src.global.functions.class")("VisionOwner")
 
-local SingletonGetters       = require("src.app.utilities.SingletonGetters")
-local SkillModifierFunctions = require("src.app.utilities.SkillModifierFunctions")
+local SingletonGetters       = requireFW("src.app.utilities.SingletonGetters")
+local SkillModifierFunctions = requireFW("src.app.utilities.SkillModifierFunctions")
 
 local getModelTileMap = SingletonGetters.getModelTileMap
 

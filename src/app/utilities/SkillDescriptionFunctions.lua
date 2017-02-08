@@ -1,9 +1,9 @@
 
 local SkillDescriptionFunctions = {}
 
-local ModelSkillConfiguration = require("src.app.models.common.ModelSkillConfiguration")
-local LocalizationFunctions   = require("src.app.utilities.LocalizationFunctions")
-local SkillDataAccessors      = require("src.app.utilities.SkillDataAccessors")
+local ModelSkillConfiguration = requireFW("src.app.models.common.ModelSkillConfiguration")
+local LocalizationFunctions   = requireFW("src.app.utilities.LocalizationFunctions")
+local SkillDataAccessors      = requireFW("src.app.utilities.SkillDataAccessors")
 
 local getSkillPoints            = SkillDataAccessors.getSkillPoints
 local getSkillEnergyRequirement = SkillDataAccessors.getSkillEnergyRequirement

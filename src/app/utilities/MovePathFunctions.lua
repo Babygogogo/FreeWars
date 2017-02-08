@@ -12,8 +12,8 @@
 
 local MovePathFunctions = {}
 
-local GridIndexFunctions     = require("src.app.utilities.GridIndexFunctions")
-local ReachableAreaFunctions = require("src.app.utilities.ReachableAreaFunctions")
+local GridIndexFunctions     = requireFW("src.app.utilities.GridIndexFunctions")
+local ReachableAreaFunctions = requireFW("src.app.utilities.ReachableAreaFunctions")
 
 --------------------------------------------------------------------------------
 -- The private functions.

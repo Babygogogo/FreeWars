@@ -18,14 +18,14 @@
 --  - 本类目前没有对应的view，因为暂时还不用显示。
 --]]--------------------------------------------------------------------------------
 
-local ModelPlayer = require("src.global.functions.class")("ModelPlayer")
+local ModelPlayer = requireFW("src.global.functions.class")("ModelPlayer")
 
-local ModelSkillConfiguration = require("src.app.models.common.ModelSkillConfiguration")
-local SerializationFunctions  = require("src.app.utilities.SerializationFunctions")
-local SkillDataAccessors      = require("src.app.utilities.SkillDataAccessors")
-local SkillModifierFunctions  = require("src.app.utilities.SkillModifierFunctions")
+local ModelSkillConfiguration = requireFW("src.app.models.common.ModelSkillConfiguration")
+local SerializationFunctions  = requireFW("src.app.utilities.SerializationFunctions")
+local SkillDataAccessors      = requireFW("src.app.utilities.SkillDataAccessors")
+local SkillModifierFunctions  = requireFW("src.app.utilities.SkillModifierFunctions")
 
-local round = require("src.global.functions.round")
+local round = requireFW("src.global.functions.round")
 
 local DAMAGE_COST_PER_ENERGY_REQUIREMENT = SkillDataAccessors.getDamageCostPerEnergyRequirement()
 local DAMAGE_COST_GROWTH_RATES           = SkillDataAccessors.getDamageCostGrowthRates()

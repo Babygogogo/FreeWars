@@ -1,7 +1,7 @@
 
-local UnitSupplier = require("src.global.functions.class")("UnitSupplier")
+local UnitSupplier = requireFW("src.global.functions.class")("UnitSupplier")
 
-local SupplyFunctions = require("src.app.utilities.SupplyFunctions")
+local SupplyFunctions = requireFW("src.app.utilities.SupplyFunctions")
 
 local canBeSuppliedWithAmmoOrFuel = SupplyFunctions.canBeSuppliedWithAmmoOrFuel
 

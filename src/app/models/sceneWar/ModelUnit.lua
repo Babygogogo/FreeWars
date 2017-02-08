@@ -10,13 +10,13 @@
 --     有点不同的是，ModelUnit只需一个tiledID即可构造，而ModelTile可能需要1-2个。
 --]]--------------------------------------------------------------------------------
 
-local ModelUnit = require("src.global.functions.class")("ModelUnit")
+local ModelUnit = requireFW("src.global.functions.class")("ModelUnit")
 
-local Destroyers            = require("src.app.utilities.Destroyers")
-local GameConstantFunctions = require("src.app.utilities.GameConstantFunctions")
-local GridIndexFunctions    = require("src.app.utilities.GridIndexFunctions")
-local LocalizationFunctions = require("src.app.utilities.LocalizationFunctions")
-local ComponentManager      = require("src.global.components.ComponentManager")
+local Destroyers            = requireFW("src.app.utilities.Destroyers")
+local GameConstantFunctions = requireFW("src.app.utilities.GameConstantFunctions")
+local GridIndexFunctions    = requireFW("src.app.utilities.GridIndexFunctions")
+local LocalizationFunctions = requireFW("src.app.utilities.LocalizationFunctions")
+local ComponentManager      = requireFW("src.global.components.ComponentManager")
 
 local UNIT_STATE_CODE = {
     Idle     = 1,

@@ -1,10 +1,10 @@
 
-local MovableUnitProducer = require("src.global.functions.class")("MovableUnitProducer")
+local MovableUnitProducer = requireFW("src.global.functions.class")("MovableUnitProducer")
 
-local Producible            = require("src.app.components.Producible")
-local GameConstantFunctions = require("src.app.utilities.GameConstantFunctions")
-local SingletonGetters      = require("src.app.utilities.SingletonGetters")
-local ComponentManager      = require("src.global.components.ComponentManager")
+local Producible            = requireFW("src.app.components.Producible")
+local GameConstantFunctions = requireFW("src.app.utilities.GameConstantFunctions")
+local SingletonGetters      = requireFW("src.app.utilities.SingletonGetters")
+local ComponentManager      = requireFW("src.global.components.ComponentManager")
 
 MovableUnitProducer.EXPORTED_METHODS = {
     "getMovableProductionCost",

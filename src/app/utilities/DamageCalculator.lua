@@ -1,10 +1,10 @@
 
 local DamageCalculator = {}
 
-local GameConstantFunctions  = require("src.app.utilities.GameConstantFunctions")
-local GridIndexFunctions     = require("src.app.utilities.GridIndexFunctions")
-local SkillModifierFunctions = require("src.app.utilities.SkillModifierFunctions")
-local ComponentManager       = require("src.global.components.ComponentManager")
+local GameConstantFunctions  = requireFW("src.app.utilities.GameConstantFunctions")
+local GridIndexFunctions     = requireFW("src.app.utilities.GridIndexFunctions")
+local SkillModifierFunctions = requireFW("src.app.utilities.SkillModifierFunctions")
+local ComponentManager       = requireFW("src.global.components.ComponentManager")
 
 local COMMAND_TOWER_ATTACK_BONUS  = GameConstantFunctions.getCommandTowerAttackBonus()
 local COMMAND_TOWER_DEFENSE_BONUS = GameConstantFunctions.getCommandTowerDefenseBonus()

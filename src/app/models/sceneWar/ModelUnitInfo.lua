@@ -12,9 +12,9 @@
 
 local ModelUnitInfo = class("ModelUnitInfo")
 
-local GridIndexFunctions  = require("src.app.utilities.GridIndexFunctions")
-local VisibilityFunctions = require("src.app.utilities.VisibilityFunctions")
-local SingletonGetters    = require("src.app.utilities.SingletonGetters")
+local GridIndexFunctions  = requireFW("src.app.utilities.GridIndexFunctions")
+local VisibilityFunctions = requireFW("src.app.utilities.VisibilityFunctions")
+local SingletonGetters    = requireFW("src.app.utilities.SingletonGetters")
 
 local getModelFogMap         = SingletonGetters.getModelFogMap
 local getModelUnitMap        = SingletonGetters.getModelUnitMap

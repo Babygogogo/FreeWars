@@ -1,12 +1,12 @@
 
 local Destroyers = {}
 
-local IS_SERVER           = require("src.app.utilities.GameConstantFunctions").isServer()
-local GridIndexFunctions  = require("src.app.utilities.GridIndexFunctions")
-local SingletonGetters    = require("src.app.utilities.SingletonGetters")
-local TableFunctions      = require("src.app.utilities.TableFunctions")
-local VisibilityFunctions = require("src.app.utilities.VisibilityFunctions")
-local WebSocketManager    = (not IS_SERVER) and (require("src.app.utilities.WebSocketManager")) or (nil)
+local IS_SERVER           = requireFW("src.app.utilities.GameConstantFunctions").isServer()
+local GridIndexFunctions  = requireFW("src.app.utilities.GridIndexFunctions")
+local SingletonGetters    = requireFW("src.app.utilities.SingletonGetters")
+local TableFunctions      = requireFW("src.app.utilities.TableFunctions")
+local VisibilityFunctions = requireFW("src.app.utilities.VisibilityFunctions")
+local WebSocketManager    = (not IS_SERVER) and (requireFW("src.app.utilities.WebSocketManager")) or (nil)
 
 local appendList               = TableFunctions.appendList
 local getAdjacentGrids         = GridIndexFunctions.getAdjacentGrids
