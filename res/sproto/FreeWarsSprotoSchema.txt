@@ -109,9 +109,8 @@
     playerPassword       2 : string
     warID                3 : integer
     playerIndex          4 : integer
-    skillConfigurationID 5 : integer
-    warPassword          6 : string
-    isWarStarted         7 : boolean
+    warPassword          5 : string
+    isWarStarted         6 : boolean
 }
 
 .ActionLogin {
@@ -659,9 +658,8 @@
         fund                3 : integer
         isAlive             4 : boolean
         damageCost          5 : integer
-        skillActivatedCount 6 : integer
-        skillConfiguration  7 : SingleSkillConfiguration
-        hasVotedForDraw     8 : boolean
+        skillConfiguration  6 : SingleSkillConfiguration
+        hasVotedForDraw     7 : boolean
     }
 
     .TurnData {
@@ -708,7 +706,6 @@
 
     warID                  0 :  integer
     actionID               1 :  integer
-    maxBaseSkillPoints     2 :  integer
     isWarEnded             3 :  boolean
     isRandomWarField       4 :  boolean
     isFogOfWarByDefault    5 :  boolean
@@ -744,16 +741,9 @@
         level 1 : integer
     }
 
-    .ActiveSkillGroup {
-        energyRequirement 0 :  integer
-        skills            1 : *SingleSkill
-    }
-
-    basePoints             0 :  integer
-    activatingSkillGroupID 1 :  integer
-    passive                2 : *SingleSkill
-    active1                3 :  ActiveSkillGroup
-    active2                4 :  ActiveSkillGroup
+    passiveSkills     1 : *SingleSkill
+    researchingSkills 2 : *SingleSkill
+    activeSkills      3 : *SingleSkill
 }
 
 .TileData {
@@ -789,7 +779,6 @@
     warID                0 :  integer
     warFieldFileName     1 :  string
     warPassword          2 :  string
-    maxBaseSkillPoints   3 :  integer
     isFogOfWarByDefault  4 :  boolean
     defaultWeatherCode   5 :  integer
     isRandomWarField     6 :  boolean
