@@ -43,8 +43,10 @@ local getScriptEventDispatcher      = SingletonGetters.getScriptEventDispatcher
 local isTotalReplay                 = SingletonGetters.isTotalReplay
 local isTileVisible                 = VisibilityFunctions.isTileVisibleToPlayerIndex
 local isUnitVisible                 = VisibilityFunctions.isUnitOnMapVisibleToPlayerIndex
-local next, pairs, ipairs, unpack   = next, pairs, ipairs, unpack
 local supplyWithAmmoAndFuel         = SupplyFunctions.supplyWithAmmoAndFuel
+
+local math                          = math
+local next, pairs, ipairs, unpack   = next, pairs, ipairs, unpack
 
 --------------------------------------------------------------------------------
 -- The functions for dispatching events.
@@ -273,6 +275,10 @@ local function getBaseDamageCostWithTargetAndDamage(target, damage)
         local normalizedRemainingHP = math.ceil(math.max(0, target:getCurrentHP() - damage) / 10)
         return math.floor(target:getBaseProductionCost() * (target:getNormalizedCurrentHP() - normalizedRemainingHP) / 10)
     end
+end
+
+local function getEnergyModifierWithTargetAndDamage(target, damage)
+    return (target:getNormalizedCurrentHP() - math.ceil(math.max(0, target:getCurrentHP() - damage) / 10)) * 100
 end
 
 local function getSkillModifiedDamageCost(cost, modelPlayer)
@@ -640,10 +646,15 @@ local function executeAttack(action, modelSceneWar)
         local attackerModelPlayer = modelPlayerManager:getModelPlayer(attackerPlayerIndex)
         local targetModelPlayer   = modelPlayerManager:getModelPlayer(targetPlayerIndex)
 
-        attackerModelPlayer:addDamageCost(getSkillModifiedDamageCost(attackerDamageCost * 2 + targetDamageCost,     attackerModelPlayer))
-        targetModelPlayer  :addDamageCost(getSkillModifiedDamageCost(attackerDamageCost     + targetDamageCost * 2, targetModelPlayer))
         attackerModelPlayer:setFund(attackerModelPlayer:getFund() + getIncomeWithDamageCost(targetDamageCost,   attackerModelPlayer))
         targetModelPlayer  :setFund(targetModelPlayer  :getFund() + getIncomeWithDamageCost(attackerDamageCost, targetModelPlayer))
+
+        if (not attackerModelPlayer:isActivatingSkill()) then
+            attackerModelPlayer:setEnergy(attackerModelPlayer:getEnergy() + getEnergyModifierWithTargetAndDamage(attacker, counterDamage) + getEnergyModifierWithTargetAndDamage(attackTarget, attackDamage))
+        end
+        if (not targetModelPlayer:isActivatingSkill()) then
+            targetModelPlayer  :setEnergy(targetModelPlayer:getEnergy()   + getEnergyModifierWithTargetAndDamage(attacker, counterDamage) + getEnergyModifierWithTargetAndDamage(attackTarget, attackDamage))
+        end
 
         dispatchEvtModelPlayerUpdated(modelSceneWar, attackerPlayerIndex)
     end

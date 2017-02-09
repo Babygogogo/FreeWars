@@ -221,27 +221,26 @@ end
 function SkillDescriptionFunctions.getFullDescription(modelSkillConfiguration)
     return string.format("%s\n%s\n\n%s\n\n%s",
         getFullDescriptionForBaseSkillPoints(modelSkillConfiguration:getBaseSkillPoints()),
-        getFullDescriptionForSkillGroup(modelSkillConfiguration:getModelSkillGroupPassive(), SKILL_PASSIVE),
-        getFullDescriptionForSkillGroup(modelSkillConfiguration:getModelSkillGroupActive1(), SKILL_RESEARCHING),
-        getFullDescriptionForSkillGroup(modelSkillConfiguration:getModelSkillGroupActive2(), SKILL_ACTIVE)
+        getFullDescriptionForSkillGroup(modelSkillConfiguration:getModelSkillGroupPassive(),     SKILL_PASSIVE),
+        getFullDescriptionForSkillGroup(modelSkillConfiguration:getModelSkillGroupResearching(), SKILL_RESEARCHING),
+        getFullDescriptionForSkillGroup(modelSkillConfiguration:getModelSkillGroupActive(),      SKILL_ACTIVE)
     )
 end
 
 function SkillDescriptionFunctions.getBriefDescription(modelSkillConfiguration)
-    local skillGroupPassive = modelSkillConfiguration:getModelSkillGroupPassive()
-    local skillGroupActive1 = modelSkillConfiguration:getModelSkillGroupActive1()
-    local skillGroupActive2 = modelSkillConfiguration:getModelSkillGroupActive2()
-    if ((skillGroupPassive:isEmpty())        and
-        (not skillGroupActive1:isEnabled())  and
-        (not skillGroupActive2:isEnabled())) then
+    local skillGroupPassive     = modelSkillConfiguration:getModelSkillGroupPassive()
+    local skillGroupResearching = modelSkillConfiguration:getModelSkillGroupResearching()
+    local skillGroupActive      = modelSkillConfiguration:getModelSkillGroupActive()
+    if ((skillGroupPassive    :isEmpty())  and
+        (skillGroupResearching:isEmpty())  and
+        (skillGroupActive     :isEmpty())) then
         return getLocalizedText(3, "NoSkills")
     end
 
-    return string.format("%s\n%s\n\n%s\n\n%s",
-        getFullDescriptionForBaseSkillPoints(modelSkillConfiguration:getBaseSkillPoints()),
-        getBriefDescriptionForSkillGroup(skillGroupPassive, SKILL_PASSIVE),
-        getBriefDescriptionForSkillGroup(skillGroupActive1, SKILL_RESEARCHING),
-        getBriefDescriptionForSkillGroup(skillGroupActive2, SKILL_ACTIVE)
+    return string.format("%s\n\n%s\n\n%s",
+        getBriefDescriptionForSkillGroup(skillGroupPassive,     SKILL_PASSIVE),
+        getBriefDescriptionForSkillGroup(skillGroupResearching, SKILL_RESEARCHING),
+        getBriefDescriptionForSkillGroup(skillGroupActive,      SKILL_ACTIVE)
     )
 end
 

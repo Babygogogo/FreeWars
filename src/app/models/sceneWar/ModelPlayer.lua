@@ -23,6 +23,8 @@ local ModelPlayer = requireFW("src.global.functions.class")("ModelPlayer")
 local ModelSkillConfiguration = requireFW("src.app.models.common.ModelSkillConfiguration")
 local SerializationFunctions  = requireFW("src.app.utilities.SerializationFunctions")
 
+local math = math
+
 --------------------------------------------------------------------------------
 -- The constructor.
 --------------------------------------------------------------------------------
@@ -116,6 +118,14 @@ end
 
 function ModelPlayer:getEnergy()
     return self.m_Energy
+end
+
+function ModelPlayer:setEnergy(energy)
+    assert((energy >= 0) and (math.floor(energy) == energy),
+        "ModelPlayer:setEnergy() the energy is invalid: " .. SerializationFunctions.toErrorMessage(energy))
+    self.m_Energy = energy
+
+    return self
 end
 
 function ModelPlayer:getModelSkillConfiguration()

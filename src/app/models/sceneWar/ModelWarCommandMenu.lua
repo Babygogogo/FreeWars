@@ -64,14 +64,10 @@ local function generateEmptyDataForEachPlayer(self)
 
     modelPlayerManager:forEachModelPlayer(function(modelPlayer, playerIndex)
         if (modelPlayer:isAlive()) then
-            local energy, req1, req2 = modelPlayer:getEnergy()
             dataForEachPlayer[playerIndex] = {
                 nickname            = modelPlayer:getNickname(),
                 fund                = ((not isReplay) and (modelFogMap:isFogOfWarCurrently()) and ((playerIndex ~= getPlayerIndexLoggedIn(modelSceneWar)))) and ("--") or (modelPlayer:getFund()),
-                energy              = energy,
-                req1                = req1,
-                req2                = req2,
-                damageCostPerEnergy = modelPlayer:getCurrentDamageCostPerEnergyRequirement(),
+                energy              = modelPlayer:getEnergy(),
                 idleUnitsCount      = 0,
                 unitsCount          = 0,
                 unitsValue          = 0,
@@ -207,11 +203,10 @@ local function updateStringWarInfo(self)
         else
             local d                  = dataForEachPlayer[i]
             local isPlayerInTurn     = i == playerIndexInTurn
-            stringList[#stringList + 1] = string.format("%s %d:    %s%s\n%s: %.2f / %s / %s      %s: %d\n%s: %s      %s: %d\n%s: %d%s      %s: %d\n%s: %d\n%s",
+            stringList[#stringList + 1] = string.format("%s %d:    %s%s\n%s: %d\n%s: %s      %s: %d\n%s: %d%s      %s: %d\n%s: %d\n%s",
                 getLocalizedText(65, "Player"),              i,           d.nickname,
                 ((isPlayerInTurn) and (getInTurnDescription(modelSceneWar)) or ("")),
-                getLocalizedText(65, "Energy"),               d.energy,    "" .. (d.req1 or "--"), "" .. (d.req2 or "--"),
-                getLocalizedText(65, "DamageCostPerEnergy"),  d.damageCostPerEnergy,
+                getLocalizedText(65, "Energy"),               d.energy,
                 getLocalizedText(65, "Fund"),                 "" .. d.fund,
                 getLocalizedText(65, "Income"),               d.income,
                 getLocalizedText(65, "UnitsCount"),           d.unitsCount,
@@ -259,8 +254,6 @@ local function getAvailableMainItems(self)
             self.m_ItemWarInfo,
             self.m_ItemSkillInfo,
         }
-        items[#items + 1] = (modelPlayer:canActivateSkillGroup(1)) and (self.m_ItemActiveSkill1) or (nil)
-        items[#items + 1] = (modelPlayer:canActivateSkillGroup(2)) and (self.m_ItemActiveSkill2) or (nil)
         items[#items + 1] = self.m_ItemAuxiliaryCommands
         items[#items + 1] = self.m_ItemHelp
         items[#items + 1] = self.m_ItemEndTurn
