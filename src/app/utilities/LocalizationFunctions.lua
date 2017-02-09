@@ -823,11 +823,23 @@ local s_Texts = {
         [1] = function(account) return "您已使用账号【" .. account .. "】进行了登陆。"      end,
         [2] = function(account) return "You have already logged in as " .. account .. "." end,
     },
-    --[[
     [22] = {
-        [1] = function() return "账号或密码错误，请重试。"    end,
-        [2] = function() return "Invalid account/password." end,
+        [1] = function(textType)
+            if     (textType == "ConfigSkill")       then return "配 置 技 能"
+            elseif (textType == "NoAvailableOption") then return "无可用选项"
+            elseif (textType == "SkillInfo")         then return "技 能 信 息"
+            else                                          return "未知22:" .. (textType or "")
+            end
+        end,
+        [2] = function(textType)
+            if     (textType == "ConfigSkill")       then return "Config Skill"
+            elseif (textType == "NoAvailableOption") then return "No Options"
+            elseif (textType == "SkillInfo")         then return "Skill Info"
+            else                                          return "Unknown22:" .. (textType or "")
+            end
+        end,
     },
+    --[[
     [23] = {
         [1] = function(account) return "您的账号【" .. account .. "】在另一台设备上被登陆，您已被迫下线！"     end,
         [2] = function(account) return "Another device is logging in with your account!" .. account .. "." end,

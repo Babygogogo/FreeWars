@@ -138,6 +138,9 @@ end
 
 function ModelPlayer:setActivatingSkill(isActivating)
     self.m_IsActivatingSkill = isActivating
+    if (not isActivating) then
+        self.m_ModelSkillConfiguration:getModelSkillGroupActive():clearAllSkills()
+    end
 
     return self
 end

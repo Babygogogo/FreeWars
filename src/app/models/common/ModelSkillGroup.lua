@@ -77,4 +77,10 @@ function ModelSkillGroup:setSkill(slotIndex, skillID, skillLevel)
     return self
 end
 
+function ModelSkillGroup:clearAllSkills()
+    self.m_Slots = {}
+
+    return self
+end
+
 return ModelSkillGroup

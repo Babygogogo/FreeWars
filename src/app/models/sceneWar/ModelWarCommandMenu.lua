@@ -242,7 +242,7 @@ local function getAvailableMainItems(self)
         return {
             self.m_ItemQuit,
             self.m_ItemWarInfo,
-            self.m_ItemSkillInfo,
+            self.m_ItemConfigSkill,
             self.m_ItemAuxiliaryCommands,
             self.m_ItemHelp,
         }
@@ -252,7 +252,7 @@ local function getAvailableMainItems(self)
             self.m_ItemQuit,
             self.m_ItemDrawOrSurrender,
             self.m_ItemWarInfo,
-            self.m_ItemSkillInfo,
+            self.m_ItemConfigSkill,
         }
         items[#items + 1] = self.m_ItemAuxiliaryCommands
         items[#items + 1] = self.m_ItemHelp
@@ -568,8 +568,27 @@ local function onEvtIsWaitingForServerResponse(self, event)
 end
 
 --------------------------------------------------------------------------------
--- The composition items.
+-- The composition elements.
 --------------------------------------------------------------------------------
+local function getActorSkillConfigurator(self)
+    if (not self.m_ActorSkillConfigurator) then
+        local model = Actor.createModel("sceneWar.ModelSkillConfigurator")
+        model:onStartRunning(self.m_ModelSceneWar)
+            :setCallbackOnButtonBackTouched(function()
+                model:setEnabled(false)
+                self.m_View:setOverviewVisible(true)
+                    :setMenuVisible(true)
+            end)
+
+        local view = Actor.createView("sceneWar.ViewSkillConfigurator")
+        self.m_View:setViewSkillConfigurator(view)
+
+        self.m_ActorSkillConfigurator = Actor.createWithModelAndViewInstance(model, view)
+    end
+
+    return self.m_ActorSkillConfigurator
+end
+
 local function initItemAbout(self)
     self.m_ItemAbout = {
         name     = getLocalizedText(1, "About"),
@@ -832,17 +851,15 @@ local function initItemProposeDraw(self)
     }
 end
 
-local function initItemSkillInfo(self)
-    local item = {
-        name     = getLocalizedText(65, "SkillInfo"),
+local function initItemConfigSkill(self)
+    self.m_ItemConfigSkill = {
+        name     = getLocalizedText(22, "ConfigSkill"),
         callback = function()
-            if (self.m_View) then
-                self.m_View:setOverviewString(self.m_StringSkillInfo)
-            end
+            self.m_View:setMenuVisible(false)
+                :setOverviewVisible(false)
+            getActorSkillConfigurator(self):getModel():setEnabled(true)
         end,
     }
-
-    self.m_ItemSkillInfo = item
 end
 
 local function initItemSkillSystem(self)
@@ -998,6 +1015,7 @@ function ModelWarCommandMenu:ctor(param)
     initItemActivateSkill2(     self)
     initItemAgreeDraw(          self)
     initItemAuxiliaryCommands(  self)
+    initItemConfigSkill(        self)
     initItemDestroyOwnedUnit(   self)
     initItemDisagreeDraw(       self)
     initItemDrawOrSurrender(    self)
@@ -1011,7 +1029,6 @@ function ModelWarCommandMenu:ctor(param)
     initItemProposeDraw(        self)
     initItemQuit(               self)
     initItemReload(             self)
-    initItemSkillInfo(          self)
     initItemSkillSystem(        self)
     initItemSetMessageIndicator(self)
     initItemSetMusic(           self)
