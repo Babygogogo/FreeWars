@@ -329,7 +329,7 @@ function SkillModifierFunctions.getAttackModifier(attacker, attackerGridIndex, t
     local configuration = modelSceneWar:getModelPlayerManager():getModelPlayer(attacker:getPlayerIndex()):getModelSkillConfiguration()
     return getAttackModifierForSkillGroup(configuration:getModelSkillGroupPassive(), false,
             attacker, attackerGridIndex, target, targetGridIndex, modelSceneWar) +
-        getAttackModifierForSkillGroup(configuration:getActivatingModelSkillGroup(), true,
+        getAttackModifierForSkillGroup(configuration:getModelSkillGroupActive(), true,
             attacker, attackerGridIndex, target, targetGridIndex, modelSceneWar)
 end
 
@@ -337,23 +337,23 @@ function SkillModifierFunctions.getDefenseModifier(attacker, attackerGridIndex, 
     local configuration = modelSceneWar:getModelPlayerManager():getModelPlayer(target:getPlayerIndex()):getModelSkillConfiguration()
     return getDefenseModifierForSkillGroup(configuration:getModelSkillGroupPassive(), false,
             attacker, attackerGridIndex, target, targetGridIndex, modelSceneWar) +
-        getDefenseModifierForSkillGroup(configuration:getActivatingModelSkillGroup(), true,
+        getDefenseModifierForSkillGroup(configuration:getModelSkillGroupActive(), true,
             attacker, attackerGridIndex, target, targetGridIndex, modelSceneWar)
 end
 
 function SkillModifierFunctions.getProductionCostModifier(configuration, tiledID)
     return getProductionCostModifierForSkillGroup(configuration:getModelSkillGroupPassive(), false, tiledID) +
-        getProductionCostModifierForSkillGroup(configuration:getActivatingModelSkillGroup(), true, tiledID)
+        getProductionCostModifierForSkillGroup(configuration:getModelSkillGroupActive(), true, tiledID)
 end
 
 function SkillModifierFunctions.getMoveRangeModifier(configuration, modelUnit)
     return getMoveRangeModifierForSkillGroup(configuration:getModelSkillGroupPassive(), false, modelUnit) +
-        getMoveRangeModifierForSkillGroup(configuration:getActivatingModelSkillGroup(), true, modelUnit)
+        getMoveRangeModifierForSkillGroup(configuration:getModelSkillGroupActive(), true, modelUnit)
 end
 
 function SkillModifierFunctions.getAttackRangeModifier(configuration)
     return getAttackRangeModifierForSkillGroup(configuration:getModelSkillGroupPassive(), false) +
-        getAttackRangeModifierForSkillGroup(configuration:getActivatingModelSkillGroup(), true)
+        getAttackRangeModifierForSkillGroup(configuration:getModelSkillGroupActive(), true)
 end
 
 function SkillModifierFunctions.getRepairAmountModifier(configuration)
@@ -366,17 +366,17 @@ end
 
 function SkillModifierFunctions.getLuckDamageUpperModifier(configuration)
     return getLuckDamageUpperModifierForSkillGroup(configuration:getModelSkillGroupPassive(), false) +
-        getLuckDamageUpperModifierForSkillGroup(configuration:getActivatingModelSkillGroup(), true)
+        getLuckDamageUpperModifierForSkillGroup(configuration:getModelSkillGroupActive(), true)
 end
 
 function SkillModifierFunctions.getLuckDamageLowerModifier(configuration)
     return getLuckDamageLowerModifierForSkillGroup(configuration:getModelSkillGroupPassive(), false) +
-        getLuckDamageLowerModifierForSkillGroup(configuration:getActivatingModelSkillGroup(), true)
+        getLuckDamageLowerModifierForSkillGroup(configuration:getModelSkillGroupActive(), true)
 end
 
 function SkillModifierFunctions.getCaptureAmountModifier(configuration)
     return getCaptureAmountModifierForSkillGroup(configuration:getModelSkillGroupPassive(), false) +
-        getCaptureAmountModifierForSkillGroup(configuration:getActivatingModelSkillGroup(), true)
+        getCaptureAmountModifierForSkillGroup(configuration:getModelSkillGroupActive(), true)
 end
 
 function SkillModifierFunctions.getIncomeModifier(configuration)
@@ -410,7 +410,7 @@ end
 
 function SkillModifierFunctions.getAttackDamageCostToFundModifier(configuration)
     return getAttackDamageCostToFundModifierForSkillGroup(configuration:getModelSkillGroupPassive(), false) +
-        getAttackDamageCostToFundModifierForSkillGroup(configuration:getActivatingModelSkillGroup(), true)
+        getAttackDamageCostToFundModifierForSkillGroup(configuration:getModelSkillGroupActive(), true)
 end
 
 function SkillModifierFunctions.getPassivePromotionModifier(configuration)
@@ -428,7 +428,7 @@ end
 
 function SkillModifierFunctions.isPerfectMovement(configuration)
     return isPerfectMovementForSkillGroup(configuration:getModelSkillGroupPassive(), false) or
-        isPerfectMovementForSkillGroup(configuration:getActivatingModelSkillGroup(), true)
+        isPerfectMovementForSkillGroup(configuration:getModelSkillGroupActive(), true)
 end
 
 function SkillModifierFunctions.getVisionModifierForUnitsForSkillGroup(modelSkillGroup, isActive)
@@ -453,7 +453,7 @@ end
 
 function SkillModifierFunctions.getVisionModifierForUnits(configuration)
     return SkillModifierFunctions.getVisionModifierForUnitsForSkillGroup(configuration:getModelSkillGroupPassive(), false) +
-        SkillModifierFunctions.getVisionModifierForUnitsForSkillGroup(configuration:getActivatingModelSkillGroup(), true)
+        SkillModifierFunctions.getVisionModifierForUnitsForSkillGroup(configuration:getModelSkillGroupActive(), true)
 end
 
 function SkillModifierFunctions.getVisionModifierForTilesForSkillGroup(modelSkillGroup, isActive)
@@ -478,7 +478,7 @@ end
 
 function SkillModifierFunctions.getVisionModifierForTiles(configuration)
     return SkillModifierFunctions.getVisionModifierForTilesForSkillGroup(configuration:getModelSkillGroupPassive(), false) +
-        SkillModifierFunctions.getVisionModifierForTilesForSkillGroup(configuration:getActivatingModelSkillGroup(), true)
+        SkillModifierFunctions.getVisionModifierForTilesForSkillGroup(configuration:getModelSkillGroupActive(), true)
 end
 
 function SkillModifierFunctions.canRevealHidingPlacesWithUnitsForSkillGroup(modelSkillGroup, isActive)
@@ -502,7 +502,7 @@ end
 
 function SkillModifierFunctions.canRevealHidingPlacesWithUnits(configuration)
     return SkillModifierFunctions.canRevealHidingPlacesWithUnitsForSkillGroup(configuration:getModelSkillGroupPassive(), false) or
-        SkillModifierFunctions.canRevealHidingPlacesWithUnitsForSkillGroup(configuration:getActivatingModelSkillGroup(), true)
+        SkillModifierFunctions.canRevealHidingPlacesWithUnitsForSkillGroup(configuration:getModelSkillGroupActive(), true)
 end
 
 function SkillModifierFunctions.canRevealHidingPlacesWithTilesForSkillGroup(modelSkillGroup, isActive)
@@ -526,7 +526,7 @@ end
 
 function SkillModifierFunctions.canRevealHidingPlacesWithTiles(configuration)
     return SkillModifierFunctions.canRevealHidingPlacesWithTilesForSkillGroup(configuration:getModelSkillGroupPassive(), false) or
-        SkillModifierFunctions.canRevealHidingPlacesWithTilesForSkillGroup(configuration:getActivatingModelSkillGroup(), true)
+        SkillModifierFunctions.canRevealHidingPlacesWithTilesForSkillGroup(configuration:getModelSkillGroupActive(), true)
 end
 
 return SkillModifierFunctions

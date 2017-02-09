@@ -657,9 +657,10 @@
         nickname            2 : string
         fund                3 : integer
         isAlive             4 : boolean
-        damageCost          5 : integer
+        energy              5 : integer
         skillConfiguration  6 : SingleSkillConfiguration
         hasVotedForDraw     7 : boolean
+        isActivatingSkill   8 : boolean
     }
 
     .TurnData {

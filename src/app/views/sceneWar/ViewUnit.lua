@@ -123,14 +123,10 @@ end
 
 local function getSkillIndicatorFrame(self, unit)
     local playerIndex = unit:getPlayerIndex()
-    local modelPlayer = getModelPlayerManager(unit:getModelSceneWar()):getModelPlayer(playerIndex)
-    local id          = modelPlayer:getModelSkillConfiguration():getActivatingSkillGroupId()
-    if (not id) then
-        return nil
-    elseif (id == 1) then
-        return cc.SpriteFrameCache:getInstance():getSpriteFrame("c02_t99_s08_f0" .. playerIndex .. ".png")
-    else
+    if (getModelPlayerManager(unit:getModelSceneWar()):getModelPlayer(playerIndex):isActivatingSkill()) then
         return cc.SpriteFrameCache:getInstance():getSpriteFrame("c02_t99_s07_f0" .. playerIndex .. ".png")
+    else
+        return nil
     end
 end
 

@@ -22,27 +22,20 @@ local ModelPlayer = requireFW("src.global.functions.class")("ModelPlayer")
 
 local ModelSkillConfiguration = requireFW("src.app.models.common.ModelSkillConfiguration")
 local SerializationFunctions  = requireFW("src.app.utilities.SerializationFunctions")
-local SkillDataAccessors      = requireFW("src.app.utilities.SkillDataAccessors")
-local SkillModifierFunctions  = requireFW("src.app.utilities.SkillModifierFunctions")
-
-local round = requireFW("src.global.functions.round")
-
-local DAMAGE_COST_PER_ENERGY_REQUIREMENT = SkillDataAccessors.getDamageCostPerEnergyRequirement()
-local DAMAGE_COST_GROWTH_RATES           = SkillDataAccessors.getDamageCostGrowthRates()
 
 --------------------------------------------------------------------------------
 -- The constructor.
 --------------------------------------------------------------------------------
 function ModelPlayer:ctor(param)
-    self.m_PlayerIndex             = param.playerIndex
     self.m_Account                 = param.account
-    self.m_Nickname                = param.nickname
+    self.m_Energy                  = param.energy
     self.m_Fund                    = param.fund
-    self.m_IsAlive                 = param.isAlive
-    self.m_DamageCost              = param.damageCost
-    self.m_SkillActivatedCount     = param.skillActivatedCount
     self.m_HasVotedForDraw         = param.hasVotedForDraw
+    self.m_IsActivatingSkill       = param.isActivatingSkill
+    self.m_IsAlive                 = param.isAlive
+    self.m_Nickname                = param.nickname
     self.m_ModelSkillConfiguration = ModelSkillConfiguration:create(param.skillConfiguration)
+    self.m_PlayerIndex             = param.playerIndex
 
     return self
 end
@@ -52,29 +45,29 @@ end
 --------------------------------------------------------------------------------
 function ModelPlayer:toSerializableTable()
     return {
-        playerIndex         = self.m_PlayerIndex,
         account             = self:getAccount(),
-        nickname            = self:getNickname(),
+        energy              = self.m_Energy,
         fund                = self:getFund(),
-        isAlive             = self:isAlive(),
-        damageCost          = self.m_DamageCost,
-        skillActivatedCount = self.m_SkillActivatedCount,
         hasVotedForDraw     = self:hasVotedForDraw(),
+        isActivatingSkill   = self.m_IsActivatingSkill,
+        isAlive             = self:isAlive(),
+        nickname            = self:getNickname(),
         skillConfiguration  = self:getModelSkillConfiguration():toSerializableTable(),
+        playerIndex         = self.m_PlayerIndex,
     }
 end
 
 function ModelPlayer:toSerializableReplayData()
     return {
-        playerIndex         = self.m_PlayerIndex,
         account             = self:getAccount(),
-        nickname            = self:getNickname(),
+        energy              = 0,
         fund                = 0,
-        isAlive             = true,
-        damageCost          = 0,
-        skillActivatedCount = 0,
         hasVotedForDraw     = nil,
+        isActivatingSkill   = false,
+        isAlive             = true,
+        nickname            = self:getNickname(),
         skillConfiguration  = self:getModelSkillConfiguration():toSerializableReplayData(),
+        playerIndex         = self.m_PlayerIndex,
     }
 end
 
@@ -121,84 +114,22 @@ function ModelPlayer:setVotedForDraw(hasVoted)
     return self
 end
 
-function ModelPlayer:canActivateSkillGroup(skillGroupID)
-    local modelSkillConfiguration = self:getModelSkillConfiguration()
-    if (modelSkillConfiguration:getActivatingSkillGroupId()) then
-        return false
-    end
-
-    local energy, req1, req2 = self:getEnergy()
-    return ((skillGroupID == 1) and (modelSkillConfiguration:isModelSkillGroupEnabled(1)) and (energy >= req1)) or
-        (   (skillGroupID == 2) and (modelSkillConfiguration:isModelSkillGroupEnabled(2)) and (energy >= req2))
-end
-
-function ModelPlayer:deactivateSkillGroup()
-    self:getModelSkillConfiguration():setActivatingSkillGroupId(nil)
-
-    return self
-end
-
-function ModelPlayer:getSkillActivatedCount()
-    return self.m_SkillActivatedCount
-end
-
-function ModelPlayer:setSkillActivatedCount(count)
-    assert((count >= 0) and (math.floor(count) == count), "ModelPlayer:setSkillActivatedCount() invalid count: " .. (count or ""))
-    self.m_SkillActivatedCount = count
-
-    return self
-end
-
-function ModelPlayer:getDamageCost()
-    return self.m_DamageCost
-end
-
-function ModelPlayer:getDamageCostForSkillGroupId(skillGroupID)
-    assert((skillGroupID == 1) or (skillGroupID == 2), "ModelPlayer:getDamageCostForSkillGroupId() invalid skillGroupID: " .. (skillGroupID or ""))
-    local modelSkillConfiguration = self:getModelSkillConfiguration()
-    local req1, req2              = modelSkillConfiguration:getEnergyRequirement()
-    local requirement             = (skillGroupID == 1) and (req1) or (req2)
-
-    return (requirement) and (requirement * self:getCurrentDamageCostPerEnergyRequirement()) or (nil)
-end
-
-function ModelPlayer:setDamageCost(cost)
-    assert((cost >= 0) and (math.floor(cost) == cost), "ModelPlayer:setDamageCost() invalid cost: " .. (cost or ""))
-    self.m_DamageCost = cost
-
-    return self
-end
-
-function ModelPlayer:addDamageCost(cost)
-    local modelSkillConfiguration = self:getModelSkillConfiguration()
-    if (not modelSkillConfiguration:getActivatingSkillGroupId()) then
-        local _, maxEnergyRequirement = modelSkillConfiguration:getEnergyRequirement()
-        if (maxEnergyRequirement) then
-            self:setDamageCost(round(math.min(
-                self.m_DamageCost + cost,
-                maxEnergyRequirement * self:getCurrentDamageCostPerEnergyRequirement()
-            )))
-        end
-    end
-
-    return self
-end
-
-function ModelPlayer:getCurrentDamageCostPerEnergyRequirement()
-    if (SkillModifierFunctions.isDamageCostPerEnergyRequirementLocked(self:getModelSkillConfiguration())) then
-        return round(DAMAGE_COST_PER_ENERGY_REQUIREMENT)
-    else
-        return round(DAMAGE_COST_PER_ENERGY_REQUIREMENT * (1 + self.m_SkillActivatedCount * DAMAGE_COST_GROWTH_RATES / 100))
-    end
-end
-
 function ModelPlayer:getEnergy()
-    local currentEnergy = self.m_DamageCost / self:getCurrentDamageCostPerEnergyRequirement()
-    return currentEnergy, self:getModelSkillConfiguration():getEnergyRequirement()
+    return self.m_Energy
 end
 
 function ModelPlayer:getModelSkillConfiguration()
     return self.m_ModelSkillConfiguration
+end
+
+function ModelPlayer:isActivatingSkill()
+    return self.m_IsActivatingSkill
+end
+
+function ModelPlayer:setActivatingSkill(isActivating)
+    self.m_IsActivatingSkill = isActivating
+
+    return self
 end
 
 return ModelPlayer
