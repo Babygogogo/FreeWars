@@ -242,7 +242,7 @@ local function getAvailableMainItems(self)
         return {
             self.m_ItemQuit,
             self.m_ItemWarInfo,
-            self.m_ItemConfigSkill,
+            self.m_ItemSkillInfo,
             self.m_ItemAuxiliaryCommands,
             self.m_ItemHelp,
         }
@@ -252,7 +252,7 @@ local function getAvailableMainItems(self)
             self.m_ItemQuit,
             self.m_ItemDrawOrSurrender,
             self.m_ItemWarInfo,
-            self.m_ItemConfigSkill,
+            self.m_ItemSkillInfo,
         }
         items[#items + 1] = self.m_ItemAuxiliaryCommands
         items[#items + 1] = self.m_ItemHelp
@@ -851,9 +851,9 @@ local function initItemProposeDraw(self)
     }
 end
 
-local function initItemConfigSkill(self)
-    self.m_ItemConfigSkill = {
-        name     = getLocalizedText(22, "ConfigSkill"),
+local function initItemSkillInfo(self)
+    self.m_ItemSkillInfo = {
+        name     = getLocalizedText(22, "SkillInfo"),
         callback = function()
             self.m_View:setMenuVisible(false)
                 :setOverviewVisible(false)
@@ -1015,7 +1015,6 @@ function ModelWarCommandMenu:ctor(param)
     initItemActivateSkill2(     self)
     initItemAgreeDraw(          self)
     initItemAuxiliaryCommands(  self)
-    initItemConfigSkill(        self)
     initItemDestroyOwnedUnit(   self)
     initItemDisagreeDraw(       self)
     initItemDrawOrSurrender(    self)
@@ -1029,6 +1028,7 @@ function ModelWarCommandMenu:ctor(param)
     initItemProposeDraw(        self)
     initItemQuit(               self)
     initItemReload(             self)
+    initItemSkillInfo(          self)
     initItemSkillSystem(        self)
     initItemSetMessageIndicator(self)
     initItemSetMusic(           self)

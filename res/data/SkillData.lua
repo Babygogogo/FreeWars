@@ -14,6 +14,14 @@ SkillData.passiveSkillSlotsCount          = 4
 SkillData.activeSkillSlotsCount           = 4
 
 SkillData.categories = {
+    ["SkillsActive"] = {
+        1, 2, 3, 4, 5, 6, 7, 9, 10,
+    },
+
+    ["SkillsPassive"] = {
+        1, 2, 5, 6, 8,
+    },
+
     ["SkillCategoriesForPassive"] = {
         "SkillCategoryPassiveAttack",
         "SkillCategoryPassiveDefense",
@@ -354,7 +362,7 @@ SkillData.skills = {
         maxLevelPassive    = nil,
         minLevelActive     = 1,
         maxLevelActive     = 5,
-        modifierUnit = "%",
+        modifierUnit = "",
         levels       = {
             [1] = {modifierPassive = nil, pointsPassive = nil, modifierActive = -12000, pointsActive = 10000},
             [2] = {modifierPassive = nil, pointsPassive = nil, modifierActive = -24000, pointsActive = 20000},

@@ -141,7 +141,7 @@ local s_LongText5_1 = [[
 日常技：日常技是购买后，从下一回合开始生效，直至战局结束才失效的技能。同一战局中，每位玩家都有4个日常技能槽位。
 同名技能可以多次购买，其效果会叠加，且只占用一个技能槽位。
 
-主动技：主动技是购买后即时生效，直至您的下个回合初失效的技能。同一回合中，您可以任意购买不限种类和次数的主动技。
+主动技（特技）：主动技是购买后即时生效，直至您的下个回合初失效的技能。同一回合中，您可以任意购买不限种类和次数的主动技。
 比如，如果能量足够，您可以一个回合再动N次，同时增加M%的攻击力。
 
 技能效果叠加：大多数技能的效果是可以线性叠加的。以全军攻击力为例，如果您的日常技能是全军攻击力+5%，主动技的技能是全军攻击力+15%，那么您发动主动技能时，最终的效果是全军攻击力+20%。
@@ -723,26 +723,49 @@ local s_Texts = {
     },
     [22] = {
         [1] = function(textType)
-            if     (textType == "ConfigSkill")       then return "配 置 技 能"
-            elseif (textType == "NoAvailableOption") then return "无可用选项"
-            elseif (textType == "SkillInfo")         then return "技 能 信 息"
-            else                                          return "未知22:" .. (textType or "")
+            if     (textType == "ActivateSkill")      then return "发动特技"
+            elseif (textType == "ConfigSkill")        then return "配 置 技 能"
+            elseif (textType == "EnergyCost")         then return "能量消耗"
+            elseif (textType == "HelpForActiveSkill") then return "请选择您需要发动的特技。\n\n请注意：\n1. 大部分特技的效果只维持到您下个回合初。\n2. 一旦发动特技，则直至您下个回合开始前，您都无法再通过战斗获得能量。"
+            elseif (textType == "Level")              then return "等级"
+            elseif (textType == "Modifier")           then return "增幅"
+            elseif (textType == "NoAvailableOption")  then return "无可用选项"
+            elseif (textType == "SkillInfo")          then return "技 能 信 息"
+            else                                           return "未知22:" .. (textType or "")
             end
         end,
         [2] = function(textType)
-            if     (textType == "ConfigSkill")       then return "Config Skill"
-            elseif (textType == "NoAvailableOption") then return "No Options"
-            elseif (textType == "SkillInfo")         then return "Skill Info"
-            else                                          return "Unknown22:" .. (textType or "")
+            if     (textType == "ActivateSkill")      then return "ActivateSkill"
+            elseif (textType == "ConfigSkill")        then return "Config Skill"
+            elseif (textType == "EnergyCost")         then return "Cost"
+            elseif (textType == "HelpForActiveSkill") then return "Please choose a skill.\n\nNote:\n1. The skill effect lasts to your next turn.\n2. Once you activate a skill, you won't get any energy through battle until your next turn."
+            elseif (textType == "Level")              then return "Level"
+            elseif (textType == "Modifier")           then return "Modifier"
+            elseif (textType == "NoAvailableOption")  then return "No Options"
+            elseif (textType == "SkillInfo")          then return "Skill Info"
+            else                                           return "Unknown22:" .. (textType or "")
             end
         end,
     },
-    --[[
     [23] = {
-        [1] = function(account) return "您的账号【" .. account .. "】在另一台设备上被登陆，您已被迫下线！"     end,
-        [2] = function(account) return "Another device is logging in with your account!" .. account .. "." end,
+        [1] = function(skillID)
+            if     (skillID == 1)  then return "增加我方全体部队的攻击力。"
+            elseif (skillID == 2)  then return "增加我方全体部队的防御力。"
+            elseif (skillID == 3)  then return "增加我方全体部队的当前HP。"
+            elseif (skillID == 4)  then return "减少对方全体部队的当前HP，但最少剩余1。"
+            elseif (skillID == 5)  then return "增加我方全体部队的移动力。"
+            elseif (skillID == 6)  then return "增加我方全体远程部队的射程上限。"
+            elseif (skillID == 7)  then return "使我方步兵系以外的全体部队变为未行动的状态。"
+            elseif (skillID == 8)  then return "增加我方所有建筑的金钱收入。"
+            elseif (skillID == 9)  then return "以我军当前收入的某个百分比，增加我军资金。"
+            elseif (skillID == 10) then return "减少所有对手的能量值。"
+            else                        return "未知23:" .. (skillID or "")
+            end
+        end,
+        [2] = function(skillID)
+            return "Untranslated..."
+        end,
     },
-    --]]
     [24] = {
         [1] = function(account, password)
             return "您确定要用以下账号和密码进行注册吗？\n" .. account .. "\n" .. password
