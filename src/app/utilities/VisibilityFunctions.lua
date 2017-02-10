@@ -66,7 +66,7 @@ end
 
 local function createVisibilityMapWithPathNodes(modelSceneWar, pathNodes, modelUnit)
     local playerIndex           = modelUnit:getPlayerIndex()
-    local canRevealHidingPlaces = canRevealHidingPlacesWithUnits(getModelPlayerManager(modelSceneWar):getModelPlayer(playerIndex):getModelSkillConfiguration())
+    local canRevealHidingPlaces = false --canRevealHidingPlacesWithUnits(getModelPlayerManager(modelSceneWar):getModelPlayer(playerIndex):getModelSkillConfiguration())
     local mapSize               = getModelTileMap(modelSceneWar):getMapSize()
     local visibilityMap         = createEmptyMap(mapSize)
 
@@ -94,7 +94,7 @@ local function getVisionForBuiltTile(modelSceneWar, gridIndex, builder)
     local newTileType             = GameConstantFunctions.getTileTypeWithTiledId(builder:getBuildTiledIdWithTileType(oldTileType))
     local template                = GameConstantFunctions.getTemplateModelTileWithTileType(newTileType).VisionOwner
     local modelSkillConfiguration = getModelPlayerManager(modelSceneWar):getModelPlayer(builder:getPlayerIndex()):getModelSkillConfiguration()
-    return template.vision + getVisionModifierForTiles(modelSkillConfiguration)
+    return template.vision -- + getVisionModifierForTiles(modelSkillConfiguration)
 end
 
 local function getVisionForCapturedTile(modelSceneWar, gridIndex, playerIndex)
@@ -102,7 +102,7 @@ local function getVisionForCapturedTile(modelSceneWar, gridIndex, playerIndex)
     tileType                      = (tileType ~= "Headquarters") and (tileType) or ("City")
     local template                = GameConstantFunctions.getTemplateModelTileWithTileType(tileType).VisionOwner
     local modelSkillConfiguration = getModelPlayerManager(modelSceneWar):getModelPlayer(playerIndex):getModelSkillConfiguration()
-    return template.vision + getVisionModifierForTiles(modelSkillConfiguration)
+    return template.vision -- + getVisionModifierForTiles(modelSkillConfiguration)
 end
 
 local function generateTilesData(modelTile, mapSize)
@@ -136,7 +136,7 @@ local function getRevealedTilesAndUnitsForPlayerIndexOnGettingBuilding(modelScen
     local modelTileMap          = getModelTileMap(modelSceneWar)
     local modelUnitMap          = getModelUnitMap(modelSceneWar)
     local mapSize               = modelTileMap:getMapSize()
-    local canRevealHidingPlaces = canRevealHidingPlacesWithTiles(getModelPlayerManager(modelSceneWar):getModelPlayer(playerIndex):getModelSkillConfiguration())
+    local canRevealHidingPlaces = false -- canRevealHidingPlacesWithTiles(getModelPlayerManager(modelSceneWar):getModelPlayer(playerIndex):getModelSkillConfiguration())
     local revealedTiles, revealedUnits
 
     for _, gridIndex in pairs(getGridsWithinDistance(origin, 0, vision, mapSize)) do
@@ -193,8 +193,8 @@ function VisibilityFunctions.isUnitOnMapVisibleToPlayerIndex(modelSceneWar, grid
             return true
         else
             local skillConfiguration = getModelPlayerManager(modelSceneWar):getModelPlayer(targetPlayerIndex):getModelSkillConfiguration()
-            canRevealWithTiles = (not canRevealWithTiles) and (canRevealHidingPlacesWithTiles(skillConfiguration)) or (canRevealWithTiles)
-            canRevealWithUnits = (not canRevealWithUnits) and (canRevealHidingPlacesWithUnits(skillConfiguration)) or (canRevealWithUnits)
+            canRevealWithTiles = false --(not canRevealWithTiles) and (canRevealHidingPlacesWithTiles(skillConfiguration)) or (canRevealWithTiles)
+            canRevealWithUnits = false --(not canRevealWithUnits) and (canRevealHidingPlacesWithUnits(skillConfiguration)) or (canRevealWithUnits)
             return ((visibilityForTiles == 1) and (canRevealWithTiles)) or
                 (   (visibilityForUnits == 1) and (canRevealWithUnits))
         end
@@ -218,8 +218,8 @@ function VisibilityFunctions.isTileVisibleToPlayerIndex(modelSceneWar, gridIndex
             return true
         else
             local skillConfiguration = getModelPlayerManager(modelSceneWar):getModelPlayer(targetPlayerIndex):getModelSkillConfiguration()
-            canRevealWithTiles = (not canRevealWithTiles) and (canRevealHidingPlacesWithTiles(skillConfiguration)) or (canRevealWithTiles)
-            canRevealWithUnits = (not canRevealWithUnits) and (canRevealHidingPlacesWithUnits(skillConfiguration)) or (canRevealWithUnits)
+            canRevealWithTiles = false --(not canRevealWithTiles) and (canRevealHidingPlacesWithTiles(skillConfiguration)) or (canRevealWithTiles)
+            canRevealWithUnits = false --(not canRevealWithUnits) and (canRevealHidingPlacesWithUnits(skillConfiguration)) or (canRevealWithUnits)
             return ((visibilityForTiles == 1) and (canRevealWithTiles)) or
                 (   (visibilityForUnits == 1) and (canRevealWithUnits))
         end

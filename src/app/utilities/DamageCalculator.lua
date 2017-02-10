@@ -26,6 +26,8 @@ local function getEndingGridIndex(movePath)
 end
 
 local function getLuckValue(playerIndex, modelSceneWar)
+    return math.random(0, 10)
+    --[[
     local modelSkillConfiguration = modelSceneWar:getModelPlayerManager():getModelPlayer(playerIndex):getModelSkillConfiguration()
     local upperModifier           = SkillModifierFunctions.getLuckDamageUpperModifier(modelSkillConfiguration)
     local lowerModifier           = SkillModifierFunctions.getLuckDamageLowerModifier(modelSkillConfiguration)
@@ -33,6 +35,7 @@ local function getLuckValue(playerIndex, modelSceneWar)
     local lowerBound              = math.min(lowerModifier, upperBound)
 
     return math.random(lowerBound, upperBound)
+    --]]
 end
 
 local function getAttackBonusMultiplier(attacker, attackerGridIndex, target, targetGridIndex, modelSceneWar)

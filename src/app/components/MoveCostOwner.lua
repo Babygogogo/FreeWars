@@ -65,13 +65,7 @@ function MoveCostOwner:getMoveCostWithModelUnit(modelUnit)
         (GameConstantFunctions.isTypeInCategory(modelUnit:getUnitType(), "LargeNavalUnits"))) then
         return nil
     else
-        local baseCost = self:getMoveCostWithMoveType(modelUnit:getMoveType())
-        if (not baseCost) then
-            return baseCost
-        else
-            local modelPlayer = SingletonGetters.getModelPlayerManager(self.m_ModelSceneWar):getModelPlayer(modelUnit:getPlayerIndex())
-            return SkillModifierFunctions.isPerfectMovement(modelPlayer:getModelSkillConfiguration()) and (1) or (baseCost)
-        end
+        return self:getMoveCostWithMoveType(modelUnit:getMoveType())
     end
 end
 

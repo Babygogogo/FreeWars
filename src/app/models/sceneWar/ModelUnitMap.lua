@@ -20,7 +20,6 @@ local ModelUnitMap = requireFW("src.global.functions.class")("ModelUnitMap")
 
 local Destroyers             = requireFW("src.app.utilities.Destroyers")
 local GridIndexFunctions     = requireFW("src.app.utilities.GridIndexFunctions")
-local SkillModifierFunctions = requireFW("src.app.utilities.SkillModifierFunctions")
 local VisibilityFunctions    = requireFW("src.app.utilities.VisibilityFunctions")
 local Actor                  = requireFW("src.global.actors.Actor")
 

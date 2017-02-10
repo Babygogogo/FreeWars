@@ -17,7 +17,6 @@
 local AttackTaker = requireFW("src.global.functions.class")("AttackTaker")
 
 local GameConstantFunctions  = requireFW("src.app.utilities.GameConstantFunctions")
-local SkillModifierFunctions = requireFW("src.app.utilities.SkillModifierFunctions")
 local ComponentManager       = requireFW("src.global.components.ComponentManager")
 
 local UNIT_MAX_HP = GameConstantFunctions.getUnitMaxHP()
@@ -47,18 +46,6 @@ local function getDamageCostWithTargetAndDamage(target, damage)
     else
         local remainingHP = math.max(0, target:getCurrentHP() - damage)
         return math.floor(target:getBaseProductionCost() * (target:getNormalizedCurrentHP() - getNormalizedHP(remainingHP)) / 10)
-    end
-end
-
-local function getModifiedDamageCost(cost, modelPlayer)
-    local modifier = SkillModifierFunctions.getEnergyGrowthRateModifier(modelPlayer:getModelSkillConfiguration())
-    return math.floor(cost * (100 + modifier) / 100)
-end
-
-local function addFundWithAttackDamageCost(modelPlayer, targetDamageCost)
-    local modifier = SkillModifierFunctions.getAttackDamageCostToFundModifier(modelPlayer:getModelSkillConfiguration())
-    if (modifier ~= 0) then
-        modelPlayer:setFund(modelPlayer:getFund() + math.floor(targetDamageCost * modifier / 100))
     end
 end
 

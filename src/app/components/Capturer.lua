@@ -84,10 +84,13 @@ function Capturer:canCaptureModelTile(modelTile)
 end
 
 function Capturer:getCaptureAmount()
+    return self.m_Owner:getNormalizedCurrentHP()
+    --[[
     local capturer    = self.m_Owner
     local modelPlayer = SingletonGetters.getModelPlayerManager(self.m_ModelSceneWar):getModelPlayer(capturer:getPlayerIndex())
     local modifier    = SkillModifierFunctions.getCaptureAmountModifier(modelPlayer:getModelSkillConfiguration())
     return round(capturer:getNormalizedCurrentHP() * (100 + modifier) / 100)
+    ]]
 end
 
 return Capturer

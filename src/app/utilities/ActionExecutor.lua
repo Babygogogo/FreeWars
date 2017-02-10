@@ -87,7 +87,7 @@ end
 
 local function promoteModelUnitOnProduce(modelUnit, modelSceneWar)
     local modelPlayer = getModelPlayerManager(modelSceneWar):getModelPlayer(modelUnit:getPlayerIndex())
-    local modifier    = SkillModifierFunctions.getPassivePromotionModifier(modelPlayer:getModelSkillConfiguration())
+    local modifier    = 0 -- SkillModifierFunctions.getPassivePromotionModifier(modelPlayer:getModelSkillConfiguration())
     if ((modifier > 0) and (modelUnit.setCurrentPromotion)) then
         modelUnit:setCurrentPromotion(modifier)
     end
@@ -279,17 +279,7 @@ local function getBaseDamageCostWithTargetAndDamage(target, damage)
 end
 
 local function getEnergyModifierWithTargetAndDamage(target, damage)
-    return (target:getNormalizedCurrentHP() - math.ceil(math.max(0, target:getCurrentHP() - damage) / 10)) * 100000
-end
-
-local function getSkillModifiedDamageCost(cost, modelPlayer)
-    local modifier = SkillModifierFunctions.getEnergyGrowthRateModifier(modelPlayer:getModelSkillConfiguration())
-    return math.floor(cost * (100 + modifier) / 100)
-end
-
-local function getIncomeWithDamageCost(targetDamageCost, modelPlayer)
-    local modifier = SkillModifierFunctions.getAttackDamageCostToFundModifier(modelPlayer:getModelSkillConfiguration())
-    return math.floor(targetDamageCost * modifier / 100)
+    return (target:getNormalizedCurrentHP() - math.ceil(math.max(0, target:getCurrentHP() - damage) / 10)) * 100
 end
 
 local function getAdjacentPlasmaGridIndexes(gridIndex, modelTileMap)
@@ -652,9 +642,6 @@ local function executeAttack(action, modelSceneWar)
         local targetDamageCost    = getBaseDamageCostWithTargetAndDamage(attackTarget, attackDamage)
         local attackerModelPlayer = modelPlayerManager:getModelPlayer(attackerPlayerIndex)
         local targetModelPlayer   = modelPlayerManager:getModelPlayer(targetPlayerIndex)
-
-        attackerModelPlayer:setFund(attackerModelPlayer:getFund() + getIncomeWithDamageCost(targetDamageCost,   attackerModelPlayer))
-        targetModelPlayer  :setFund(targetModelPlayer  :getFund() + getIncomeWithDamageCost(attackerDamageCost, targetModelPlayer))
 
         if (not attackerModelPlayer:isActivatingSkill()) then
             attackerModelPlayer:setEnergy(attackerModelPlayer:getEnergy() + getEnergyModifierWithTargetAndDamage(attacker, counterDamage) + getEnergyModifierWithTargetAndDamage(attackTarget, attackDamage))
