@@ -1,16 +1,16 @@
 return {
     "BaZhenTuEr",               -- 2p
     "BaoChiWeiXiao",
-    "BaoFengYan_2",
+    "BaoFengYan",
     "BeiZhong",
     "BiFengGang",
     "CuiMian",
     "DiBiao",
-    "DuoYanPingYuan_2",
+    "DuoYanPingYuan",
     "FangBaoPingZhang",
     "FeiXu",
     "FengBaoQianXian",
-    "FuWuTai_2",
+    "FuWuTai",
     "GaoLaMiJia",
     "GanHeZhiJing",
     "GeBiTan",
@@ -19,28 +19,28 @@ return {
     "Ling",
     "ManShouXueXing",
     "SanHeGu",
-    "ShenSeYanCaoZhanZheng_2",
+    "ShenSeYanCaoZhanZheng",
     "ShuiXingYaoSai",
-    "SiPanDao_2",
+    "SiPanDao",
     "SiTongBaDa",
     "TanXinWan",
     "WangPaiKongJun",
-    "WeiJiSiFu_2",
+    "WeiJiSiFu",
     "WuGuangDeWuTai",
     "WuShangZhiAi",
-    "YangFanYuanHang_3",
+    "YangFanYuanHang",
     "YunShiQun",
     "ZhengZhengFangFang",
 
     "ZuJiZhaoTianTong",         -- Fun 2p maps
 
-    "JuWaiRen_2",               -- 3p
+    "JuWaiRen",               -- 3p
 
     "BeiPan",                   -- 4p
     "DuiKangZhaoTianTong",
     "ShiJieDaZhan",
     "XiaoGuoZhengBaSai",
-    "XuanZe_2",
+    "XuanZe",
 
     "Random2P",                 -- random maps
     "Random2P_HighQuality",
