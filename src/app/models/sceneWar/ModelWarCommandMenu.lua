@@ -68,6 +68,7 @@ local function generateEmptyDataForEachPlayer(self)
                 fund                = ((not isReplay) and (modelFogMap:isFogOfWarCurrently()) and ((playerIndex ~= getPlayerIndexLoggedIn(modelSceneWar)))) and ("--") or (modelPlayer:getFund()),
                 energy              = modelPlayer:getEnergy(),
                 idleUnitsCount      = 0,
+                isSkillDeclared     = modelPlayer:isSkillDeclared(),
                 unitsCount          = 0,
                 unitsValue          = 0,
                 tilesCount          = 0,
@@ -202,10 +203,11 @@ local function updateStringWarInfo(self)
         else
             local d                  = dataForEachPlayer[i]
             local isPlayerInTurn     = i == playerIndexInTurn
-            stringList[#stringList + 1] = string.format("%s %d:    %s%s\n%s: %d\n%s: %s      %s: %d\n%s: %d%s      %s: %d\n%s: %d\n%s",
+            stringList[#stringList + 1] = string.format("%s %d:    %s%s\n%s: %d      %s: %s\n%s: %s      %s: %d\n%s: %d%s      %s: %d\n%s: %d\n%s",
                 getLocalizedText(65, "Player"),              i,           d.nickname,
                 ((isPlayerInTurn) and (getInTurnDescription(modelSceneWar)) or ("")),
                 getLocalizedText(65, "Energy"),               d.energy,
+                getLocalizedText(22, "DeclareSkill"),         (d.isSkillDeclared) and (getLocalizedText(22, "Yes")) or (getLocalizedText(22, "No")),
                 getLocalizedText(65, "Fund"),                 "" .. d.fund,
                 getLocalizedText(65, "Income"),               d.income,
                 getLocalizedText(65, "UnitsCount"),           d.unitsCount,

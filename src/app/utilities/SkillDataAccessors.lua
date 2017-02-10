@@ -39,6 +39,10 @@ function SkillDataAccessors.getDamageCostGrowthRates()
     return SKILL_DATA.damageCostGrowthRates
 end
 
+function SkillDataAccessors.getSkillDeclarationCost()
+    return SKILL_DATA.skillDeclarationCost
+end
+
 function SkillDataAccessors.getSkillPoints(id, level, isActive)
     assert(type(isActive) == "boolean", "SkillDataAccessors.getSkillPoints() invalid param isActive. Boolean expected.")
     if (isActive) then

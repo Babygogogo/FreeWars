@@ -150,8 +150,6 @@ local s_LongText5_1 = [[
 local s_LongText5_2 = "Untranslated"
 
 local s_LongText6_1 = [[
-请选择您需要发动的特技。
-
 请注意：
 1. 大部分特技的效果只维持到您下个回合初。
 2. 一旦发动特技，则直至您下个回合开始前，您都无法再通过战斗获得能量。
@@ -160,8 +158,6 @@ local s_LongText6_1 = [[
 5. 如有部分按钮不可点击，则是因为您的能量不足。
 ]]
 local s_LongText6_2 = [[
-Please choose a skill.
-
 Note:
 1. The skill effect lasts till the beginning of your next turn.
 2. Once you activate a skill, you won't get any energy through battle until your next turn begins."
@@ -550,11 +546,12 @@ local s_Texts = {
     },
     [12] = {
         [1] = function(actionName)
-            if     (actionName == "ActionActivateSkillGroup")     then return "发动技能"
+            if     (actionName == "ActionActivateSkill")          then return "发动技能"
             elseif (actionName == "ActionAttack")                 then return "攻击"
             elseif (actionName == "ActionBeginTurn")              then return "开始回合"
             elseif (actionName == "ActionBuildModelTile")         then return "建造"
             elseif (actionName == "ActionCaptureModelTile")       then return "占领"
+            elseif (actionName == "ActionDeclareSkill")           then return "发起特技宣言"
             elseif (actionName == "ActionDestroyOwnedModelUnit")  then return "自爆"
             elseif (actionName == "ActionDive")                   then return "下潜"
             elseif (actionName == "ActionDropModelUnit")          then return "卸载"
@@ -575,11 +572,12 @@ local s_Texts = {
             end
         end,
         [2] = function(actionName)
-            if     (actionName == "ActionActivateSkillGroup")     then return "ActivateSkillGroup"
+            if     (actionName == "ActionActivateSkill")          then return "ActivateSkillGroup"
             elseif (actionName == "ActionAttack")                 then return "Attack"
             elseif (actionName == "ActionBeginTurn")              then return "BeginTurn"
             elseif (actionName == "ActionBuildModelTile")         then return "BuildTile"
             elseif (actionName == "ActionCaptureModelTile")       then return "Capture"
+            elseif (actionName == "ActionDeclareSkill")           then return "DeclareSkill"
             elseif (actionName == "ActionDestroyOwnedModelUnit")  then return "SelfDestruction"
             elseif (actionName == "ActionDive")                   then return "Dive"
             elseif (actionName == "ActionDropModelUnit")          then return "Drop"
@@ -750,29 +748,41 @@ local s_Texts = {
     },
     [22] = {
         [1] = function(textType)
-            if     (textType == "ActivateSkill")           then return "发动特技"
-            elseif (textType == "ConfigSkill")             then return "配 置 技 能"
-            elseif (textType == "ConfirmationActiveSkill") then return "您确定要发动如下特技吗？"
-            elseif (textType == "EnergyCost")              then return "能量消耗"
-            elseif (textType == "HelpForActiveSkill")      then return s_LongText6_1
-            elseif (textType == "Level")                   then return "等级"
-            elseif (textType == "Modifier")                then return "增幅"
-            elseif (textType == "NoAvailableOption")       then return "无可用选项"
-            elseif (textType == "SkillInfo")               then return "技 能 信 息"
-            else                                                return "未知22:" .. (textType or "")
+            if     (textType == "ActivateSkill")            then return "发动特技"
+            elseif (textType == "ConfigSkill")              then return "配 置 技 能"
+            elseif (textType == "ConfirmationActiveSkill")  then return "您确定要发动如下特技吗？"
+            elseif (textType == "ConfirmationDeclareSkill") then return "发起宣言需要扣除3000能量，并将允许您下回合发动特技(也可以不发动)。\n确定要宣言吗？"
+            elseif (textType == "CurrentEnergy")            then return "当前能量值"
+            elseif (textType == "DeclareSkill")             then return "发起特技宣言"
+            elseif (textType == "EnergyCost")               then return "能量消耗"
+            elseif (textType == "HasDeclaredSkill")         then return "已发起了特技宣言"
+            elseif (textType == "HelpForActiveSkill")       then return s_LongText6_1
+            elseif (textType == "Level")                    then return "等级"
+            elseif (textType == "Modifier")                 then return "增幅"
+            elseif (textType == "No")                       then return "否"
+            elseif (textType == "NoAvailableOption")        then return "无可用选项"
+            elseif (textType == "SkillInfo")                then return "技 能 信 息"
+            elseif (textType == "Yes")                      then return "是"
+            else                                                 return "未知22:" .. (textType or "")
             end
         end,
         [2] = function(textType)
-            if     (textType == "ActivateSkill")           then return "ActivateSkill"
-            elseif (textType == "ConfigSkill")             then return "Config Skill"
-            elseif (textType == "ConfirmationActiveSkill") then return "Are you sure to activate the skill below?"
-            elseif (textType == "EnergyCost")              then return "Cost"
-            elseif (textType == "HelpForActiveSkill")      then return s_LongText6_2
-            elseif (textType == "Level")                   then return "Level"
-            elseif (textType == "Modifier")                then return "Modifier"
-            elseif (textType == "NoAvailableOption")       then return "No Options"
-            elseif (textType == "SkillInfo")               then return "Skill Info"
-            else                                                return "Unknown22:" .. (textType or "")
+            if     (textType == "ActivateSkill")            then return "ActivateSkill"
+            elseif (textType == "ConfigSkill")              then return "Config Skill"
+            elseif (textType == "ConfirmationActiveSkill")  then return "Are you sure to activate the skill below?"
+            elseif (textType == "ConfirmationDeclareSkill") then return "The declaration costs 3000 energy and enable you to activate active skills next turn.\nAre you sure?"
+            elseif (textType == "CurrentEnergy")            then return "Current Energy"
+            elseif (textType == "DeclareSkill")             then return "Declare Skill"
+            elseif (textType == "EnergyCost")               then return "Cost"
+            elseif (textType == "HasDeclaredSkill")         then return "has declared skill activation"
+            elseif (textType == "HelpForActiveSkill")       then return s_LongText6_2
+            elseif (textType == "Level")                    then return "Level"
+            elseif (textType == "Modifier")                 then return "Modifier"
+            elseif (textType == "No")                       then return "No"
+            elseif (textType == "NoAvailableOption")        then return "No Options"
+            elseif (textType == "SkillInfo")                then return "Skill Info"
+            elseif (textType == "Yes")                      then return "Yes"
+            else                                                 return "Unknown22:" .. (textType or "")
             end
         end,
     },

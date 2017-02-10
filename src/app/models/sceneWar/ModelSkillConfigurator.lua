@@ -15,6 +15,7 @@ local string, table    = string, table
 local getLocalizedText = LocalizationFunctions.getLocalizedText
 
 local ACTION_CODE_ACTIVATE_SKILL = ActionCodeFunctions.getActionCode("ActionActivateSkill")
+local ACTION_CODE_DECLARE_SKILL  = ActionCodeFunctions.getActionCode("ActionDeclareSkill")
 
 --------------------------------------------------------------------------------
 -- The util functions.
@@ -22,8 +23,10 @@ local ACTION_CODE_ACTIVATE_SKILL = ActionCodeFunctions.getActionCode("ActionActi
 local function generateSkillInfoText(self)
     local stringList = {}
     SingletonGetters.getModelPlayerManager(self.m_ModelSceneWar):forEachModelPlayer(function(modelPlayer, playerIndex)
-        stringList[#stringList + 1] = string.format("%s %d: %s\n%s",
+        stringList[#stringList + 1] = string.format("%s %d: %s    %s: %d    %s: %s\n%s",
             getLocalizedText(65, "Player"), playerIndex, modelPlayer:getNickname(),
+            getLocalizedText(22, "CurrentEnergy"), modelPlayer:getEnergy(),
+            getLocalizedText(22, "DeclareSkill"),  getLocalizedText(22, modelPlayer:isSkillDeclared() and "Yes" or "No"),
             SkillDescriptionFunctions.getBriefDescription(modelPlayer:getModelSkillConfiguration())
         )
     end)
@@ -33,7 +36,7 @@ end
 
 local function generateActiveSkillDetailText(skillID)
     local textList = {
-        string.format("%s: %s\n\n%s / %s / %s",
+        string.format("%s: %s\n%s / %s / %s",
             getLocalizedText(5, skillID), getLocalizedText(23, skillID),
             getLocalizedText(22, "Level"), getLocalizedText(22, "EnergyCost"), getLocalizedText(22, "Modifier")
         ),
@@ -83,6 +86,23 @@ local function sendActionActivateSkill(warID, actionID, skillID, skillLevel)
     })
 end
 
+local function sendActionDeclareSkill(warID, actionID)
+    WebSocketManager.sendAction({
+        actionCode  = ACTION_CODE_DECLARE_SKILL,
+        warID       = warID,
+        actionID    = actionID,
+    })
+end
+
+local function cleanupAfterSendAction(modelSceneWar)
+    SingletonGetters.getModelMessageIndicator(modelSceneWar):showPersistentMessage(getLocalizedText(80, "TransferingData"))
+    SingletonGetters.getScriptEventDispatcher(modelSceneWar):dispatchEvent({
+        name    = "EvtIsWaitingForServerResponse",
+        waiting = true,
+    })
+    SingletonGetters.getModelWarCommandMenu(modelSceneWar):setEnabled(false)
+end
+
 --------------------------------------------------------------------------------
 -- The dynamic items generators.
 --------------------------------------------------------------------------------
@@ -96,27 +116,32 @@ local function generateItemsForStateMain(self)
     if ((SingletonGetters.isTotalReplay(modelSceneWar))                               or
         (playerIndexInTurn ~= SingletonGetters.getPlayerIndexLoggedIn(modelSceneWar)) or
         (self.m_IsWaitingForServerResponse))                                          then
-        return {
-            self.m_ItemPlaceHolder,
-        }
+        return {self.m_ItemPlaceHolder}
     else
-        return {
-            self.m_ItemActivateSkill,
-        }
+        local modelPlayer = SingletonGetters.getModelPlayerManager(modelSceneWar):getModelPlayer(playerIndexInTurn)
+        local items       = {}
+        if ((not modelPlayer:isSkillDeclared()) and (modelPlayer:getEnergy() >= 3000)) then
+            items[#items + 1] = self.m_ItemDeclareSkill
+        end
+        if (modelPlayer:canActivateSkill()) then
+            items[#items + 1] = self.m_ItemActivateSkill
+        end
+        if (#items == 0) then
+            items[#items + 1] = self.m_ItemPlaceHolder
+        end
+
+        return items
     end
 end
 
 local function generateItemsForStateChooseActiveSkillLevel(self, skillID)
-    local modelSceneWar         = self.m_ModelSceneWar
-    local warID                 = SingletonGetters.getWarId(modelSceneWar)
-    local actionID              = SingletonGetters.getActionId(modelSceneWar) + 1
-    local modelConfirmBox       = SingletonGetters.getModelConfirmBox(modelSceneWar)
-    local modelWarCommandMenu   = SingletonGetters.getModelWarCommandMenu(modelSceneWar)
-    local modelMessageIndicator = SingletonGetters.getModelMessageIndicator(modelSceneWar)
-    local eventDispatcher       = SingletonGetters.getScriptEventDispatcher(modelSceneWar)
-    local _, modelPlayer        = SingletonGetters.getModelPlayerManager(modelSceneWar):getPlayerIndexLoggedIn()
-    local energy                = modelPlayer:getEnergy()
-    local skillData             = SkillDataAccessors.getSkillData(skillID)
+    local modelSceneWar   = self.m_ModelSceneWar
+    local warID           = SingletonGetters.getWarId(modelSceneWar)
+    local actionID        = SingletonGetters.getActionId(modelSceneWar) + 1
+    local modelConfirmBox = SingletonGetters.getModelConfirmBox(modelSceneWar)
+    local _, modelPlayer  = SingletonGetters.getModelPlayerManager(modelSceneWar):getPlayerIndexLoggedIn()
+    local energy          = modelPlayer:getEnergy()
+    local skillData       = SkillDataAccessors.getSkillData(skillID)
 
     local items            = {}
     local hasAvailableItem = false
@@ -131,12 +156,7 @@ local function generateItemsForStateChooseActiveSkillLevel(self, skillID)
                 modelConfirmBox:setConfirmText(generateActiveSkillConfirmationText(skillID, level))
                     :setOnConfirmYes(function()
                         sendActionActivateSkill(warID, actionID, skillID, level, true)
-                        modelMessageIndicator:showPersistentMessage(getLocalizedText(80, "TransferingData"))
-                        eventDispatcher:dispatchEvent({
-                            name    = "EvtIsWaitingForServerResponse",
-                            waiting = true,
-                        })
-                        modelWarCommandMenu:setEnabled(false)
+                        cleanupAfterSendAction(modelSceneWar)
                         modelConfirmBox:setEnabled(false)
                     end)
                     :setEnabled(true)
@@ -168,9 +188,11 @@ end
 --------------------------------------------------------------------------------
 setStateActivateSkill = function(self)
     self.m_State = "stateActivateSkill"
+
+    local _, modelPlayer = SingletonGetters.getModelPlayerManager(self.m_ModelSceneWar):getPlayerIndexLoggedIn()
     self.m_View:setMenuItems(generateItemsForStateActivateSkill(self))
         :setMenuTitleText(getLocalizedText(22, "ActivateSkill"))
-        :setOverviewText(getLocalizedText(22, "HelpForActiveSkill"))
+        :setOverviewText(string.format("%s: %d\n\n%s", getLocalizedText(22, "CurrentEnergy"), modelPlayer:getEnergy(), self.m_TextActiveSkillOverview))
 end
 
 setStateChooseActiveSkillLevel = function(self, skillID, menuItemsForStateChooseActiveSkillLevel)
@@ -198,6 +220,23 @@ local function initItemActivateSkill(self)
     }
 end
 
+local function initItemDeclareSkill(self)
+    self.m_ItemDeclareSkill = {
+        name     = getLocalizedText(22, "DeclareSkill"),
+        callback = function()
+            local modelSceneWar   = self.m_ModelSceneWar
+            local modelConfirmBox = SingletonGetters.getModelConfirmBox(modelSceneWar)
+            modelConfirmBox:setConfirmText(getLocalizedText(22, "ConfirmationDeclareSkill"))
+                :setOnConfirmYes(function()
+                    sendActionDeclareSkill(SingletonGetters.getWarId(modelSceneWar), SingletonGetters.getActionId(modelSceneWar) + 1)
+                    cleanupAfterSendAction(modelSceneWar)
+                    modelConfirmBox:setEnabled(false)
+                end)
+                :setEnabled(true)
+        end,
+    }
+end
+
 local function initItemPlaceHolder(self)
     self.m_ItemPlaceHolder = {
         name     = "(" .. getLocalizedText(22, "NoAvailableOption") .. ")",
@@ -206,12 +245,25 @@ local function initItemPlaceHolder(self)
     }
 end
 
+local function initTextActiveSkillOverview(self)
+    local textList = {}
+    for _, skillID in ipairs(SkillDataAccessors.getSkillCategory("SkillsActive")) do
+        textList[#textList + 1] = generateActiveSkillDetailText(skillID)
+    end
+
+    textList[#textList + 1] = getLocalizedText(22, "HelpForActiveSkill")
+
+    self.m_TextActiveSkillOverview = table.concat(textList, "\n\n")
+end
+
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
 function ModelSkillConfigurator:ctor()
-    initItemActivateSkill(self)
-    initItemPlaceHolder(  self)
+    initItemActivateSkill(      self)
+    initItemDeclareSkill(       self)
+    initItemPlaceHolder(        self)
+    initTextActiveSkillOverview(self)
 
     return self
 end

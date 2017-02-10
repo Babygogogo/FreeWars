@@ -326,7 +326,10 @@ end
 
 local function runTurnPhaseResetSkillState(self)
     local playerIndex = self.m_PlayerIndex
-    getModelPlayerManager(self.m_ModelSceneWar):getModelPlayer(playerIndex):setActivatingSkill(false)
+    local modelPlayer = getModelPlayerManager(self.m_ModelSceneWar):getModelPlayer(playerIndex)
+    modelPlayer:setActivatingSkill(false)
+        :setCanActivateSkill(modelPlayer:isSkillDeclared())
+        :setSkillDeclared(false)
 
     if (not IS_SERVER) then
         local func = function(modelUnit)

@@ -28,21 +28,22 @@
     ActionBeginTurn                   102 : ActionBeginTurn
     ActionBuildModelTile              103 : ActionBuildModelTile
     ActionCaptureModelTile            104 : ActionCaptureModelTile
-    ActionDestroyOwnedModelUnit       105 : ActionDestroyOwnedModelUnit
-    ActionDive                        106 : ActionDive
-    ActionDropModelUnit               107 : ActionDropModelUnit
-    ActionEndTurn                     108 : ActionEndTurn
-    ActionJoinModelUnit               109 : ActionJoinModelUnit
-    ActionLaunchFlare                 110 : ActionLaunchFlare
-    ActionLaunchSilo                  111 : ActionLaunchSilo
-    ActionLoadModelUnit               112 : ActionLoadModelUnit
-    ActionProduceModelUnitOnTile      113 : ActionProduceModelUnitOnTile
-    ActionProduceModelUnitOnUnit      114 : ActionProduceModelUnitOnUnit
-    ActionSupplyModelUnit             115 : ActionSupplyModelUnit
-    ActionSurface                     116 : ActionSurface
-    ActionSurrender                   117 : ActionSurrender
-    ActionVoteForDraw                 118 : ActionVoteForDraw
-    ActionWait                        119 : ActionWait
+    ActionDeclareSkill                105 : ActionDeclareSkill
+    ActionDestroyOwnedModelUnit       106 : ActionDestroyOwnedModelUnit
+    ActionDive                        107 : ActionDive
+    ActionDropModelUnit               108 : ActionDropModelUnit
+    ActionEndTurn                     109 : ActionEndTurn
+    ActionJoinModelUnit               110 : ActionJoinModelUnit
+    ActionLaunchFlare                 111 : ActionLaunchFlare
+    ActionLaunchSilo                  112 : ActionLaunchSilo
+    ActionLoadModelUnit               113 : ActionLoadModelUnit
+    ActionProduceModelUnitOnTile      114 : ActionProduceModelUnitOnTile
+    ActionProduceModelUnitOnUnit      115 : ActionProduceModelUnitOnUnit
+    ActionSupplyModelUnit             116 : ActionSupplyModelUnit
+    ActionSurface                     117 : ActionSurface
+    ActionSurrender                   118 : ActionSurrender
+    ActionVoteForDraw                 119 : ActionVoteForDraw
+    ActionWait                        120 : ActionWait
 }
 
 .ActionRedis {
@@ -292,6 +293,14 @@
     path              9 :  MovePath
     launchUnitID     10 :  integer
     lostPlayerIndex  11 :  integer
+}
+
+.ActionDeclareSkill {
+    actionCode        0 :  integer
+    playerAccount     1 :  string
+    playerPassword    2 :  string
+    warID             3 :  integer
+    actionID          4 :  integer
 }
 
 .ActionDestroyOwnedModelUnit {
@@ -654,15 +663,17 @@
 
 .SceneWar {
     .SinglePlayerData {
-        playerIndex         0 : integer
-        account             1 : string
-        nickname            2 : string
-        fund                3 : integer
-        isAlive             4 : boolean
-        energy              5 : integer
-        skillConfiguration  6 : SingleSkillConfiguration
-        hasVotedForDraw     7 : boolean
-        isActivatingSkill   8 : boolean
+        playerIndex          0 : integer
+        account              1 : string
+        nickname             2 : string
+        fund                 3 : integer
+        isAlive              4 : boolean
+        energy               5 : integer
+        skillConfiguration   6 : SingleSkillConfiguration
+        hasVotedForDraw      7 : boolean
+        isActivatingSkill    8 : boolean
+        isSkillDeclared      9 : boolean
+        canActivateSkill    10 : boolean
     }
 
     .TurnData {
