@@ -8,6 +8,8 @@ local SupplyFunctions       = requireFW("src.app.utilities.SupplyFunctions")
 
 local IS_SERVER = GameConstantFunctions.isServer()
 
+local math = math
+
 local getPlayerIndexLoggedIn = SingletonGetters.getPlayerIndexLoggedIn
 local getSkillModifier       = SkillDataAccessors.getSkillModifier
 
@@ -30,9 +32,8 @@ end
 --------------------------------------------------------------------------------
 -- The functions for executing instant skills.
 --------------------------------------------------------------------------------
--- Modify HPs of all units of the currently-in-turn player.
-s_Executors.execute4 = function(modelSceneWar, level)
-    local modifier     = getSkillModifier(4, level, true) * 10
+s_Executors.execute3 = function(modelSceneWar, level)
+    local modifier     = getSkillModifier(3, level, true) * 10
     local playerIndex  = modelSceneWar:getModelTurnManager():getPlayerIndex()
     local func         = function(modelUnit)
         if (modelUnit:getPlayerIndex() == playerIndex) then
@@ -46,8 +47,8 @@ s_Executors.execute4 = function(modelSceneWar, level)
     modelSceneWar:getScriptEventDispatcher():dispatchEvent({name = "EvtModelUnitMapUpdated"})
 end
 
-s_Executors.execute5 = function(modelSceneWar, level)
-    local modifier     = getSkillModifier(5, level, true) * 10
+s_Executors.execute4 = function(modelSceneWar, level)
+    local modifier     = getSkillModifier(4, level, true) * 10
     local playerIndex  = modelSceneWar:getModelTurnManager():getPlayerIndex()
     local func         = function(modelUnit)
         if (modelUnit:getPlayerIndex() ~= playerIndex) then
@@ -61,7 +62,7 @@ s_Executors.execute5 = function(modelSceneWar, level)
     modelSceneWar:getScriptEventDispatcher():dispatchEvent({name = "EvtModelUnitMapUpdated"})
 end
 
-s_Executors.execute8 = function(modelSceneWar, level)
+s_Executors.execute7 = function(modelSceneWar, level)
     local playerIndex = modelSceneWar:getModelTurnManager():getPlayerIndex()
     local func        = function(modelUnit)
         if ((modelUnit:getPlayerIndex() == playerIndex)                                             and
@@ -78,6 +79,30 @@ s_Executors.execute8 = function(modelSceneWar, level)
 end
 
 s_Executors.execute9 = function(modelSceneWar, level)
+    local playerIndex = modelSceneWar:getModelTurnManager():getPlayerIndex()
+    local fund        = 0
+    SingletonGetters.getModelTileMap(modelSceneWar):forEachModelTile(function(modelTile)
+        if ((modelTile:getPlayerIndex() == playerIndex) and (modelTile.getIncomeAmount)) then
+            fund = fund + modelTile:getIncomeAmount()
+        end
+    end)
+
+    local modelPlayer = SingletonGetters.getModelPlayerManager():getModelPlayer(playerIndex)
+    modelPlayer:setFund(round(modelPlayer:getFund() + fund * getSkillModifier(9, level, true) / 100))
+end
+
+s_Executors.execute10 = function(modelSceneWar, level)
+    local playerIndex = modelSceneWar:getModelTurnManager():getPlayerIndex()
+    local modifier    = getSkillModifier(10, level, true)
+    SingletonGetters.getModelPlayerManager(modelSceneWar):forEachModelPlayer(function(modelPlayer, index)
+        if ((index ~= playerIndex) and (modelPlayer:isAlive())) then
+            modelPlayer:setEnergy(math.max(0, modelPlayer:getEnergy() + modifier))
+        end
+    end)
+end
+
+--[[
+s_Executors.execute9 = function(modelSceneWar, level)
     local playerIndex  = modelSceneWar:getModelTurnManager():getPlayerIndex()
     local baseModifier = getSkillModifier(9, level, true)
     local modifier     = (baseModifier >= 0) and ((100 + baseModifier) / 100) or (100 / (100 - baseModifier))
@@ -93,6 +118,7 @@ s_Executors.execute9 = function(modelSceneWar, level)
 
     modelSceneWar:getScriptEventDispatcher():dispatchEvent({name = "EvtModelUnitMapUpdated"})
 end
+--]]
 
 s_Executors.execute12 = function(modelSceneWar, level)
     local playerIndex  = modelSceneWar:getModelTurnManager():getPlayerIndex()
@@ -211,6 +237,15 @@ function InstantSkillExecutor.activateSkillGroup(modelSceneWar, skillGroupID)
         if (s_Executors[methodName]) then
             s_Executors[methodName](modelSceneWar, skill.level)
         end
+    end
+
+    return InstantSkillExecutor
+end
+
+function InstantSkillExecutor.executeInstantSkill(modelSceneWar, skillID, skillLevel)
+    local methodName = "execute" .. skillID
+    if (s_Executors[methodName]) then
+        s_Executors[methodName](modelSceneWar, skillLevel)
     end
 
     return InstantSkillExecutor

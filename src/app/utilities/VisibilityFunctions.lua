@@ -307,6 +307,8 @@ function VisibilityFunctions.getRevealedTilesAndUnitsDataForFlare(modelSceneWar,
 end
 
 function VisibilityFunctions.getRevealedTilesAndUnitsDataForSkillActivation(modelSceneWar, skillGroupID)
+    return nil, nil
+    --[[
     local playerIndex            = getModelTurnManager(modelSceneWar):getPlayerIndex()
     local modelSkillGroup        = getModelPlayerManager(modelSceneWar):getModelPlayer(playerIndex):getModelSkillConfiguration():getModelSkillGroupWithId(skillGroupID)
     local canRevealWithTiles     = canRevealHidingPlacesWithTilesForSkillGroup(modelSkillGroup, true)
@@ -370,6 +372,7 @@ function VisibilityFunctions.getRevealedTilesAndUnitsDataForSkillActivation(mode
     end
 
     return revealedTiles, revealedUnits
+    --]]
 end
 
 return VisibilityFunctions

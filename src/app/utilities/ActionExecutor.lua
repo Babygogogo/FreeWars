@@ -572,20 +572,26 @@ end
 --------------------------------------------------------------------------------
 -- The executors for war actions.
 --------------------------------------------------------------------------------
-local function executeActivateSkillGroup(action, modelSceneWar)
+local function executeActivateSkill(action, modelSceneWar)
     if (not modelSceneWar.isModelSceneWar) then
         return
     end
     modelSceneWar:setExecutingAction(true)
     updateTilesAndUnitsBeforeExecutingAction(action, modelSceneWar)
 
-    local skillGroupID = action.skillGroupID
-    local playerIndex  = getModelTurnManager(modelSceneWar):getPlayerIndex()
-    local modelPlayer  = getModelPlayerManager(modelSceneWar):getModelPlayer(playerIndex)
-    modelPlayer:getModelSkillConfiguration():setActivatingSkillGroupId(skillGroupID)
-    modelPlayer:setDamageCost(modelPlayer:getDamageCost() - modelPlayer:getDamageCostForSkillGroupId(skillGroupID))
-        :setSkillActivatedCount(modelPlayer:getSkillActivatedCount() + 1)
-    InstantSkillExecutor.activateSkillGroup(modelSceneWar, skillGroupID)
+    local skillID                 = action.skillID
+    local skillLevel              = action.skillLevel
+    local isActiveSkill           = action.isActiveSkill
+    local playerIndex             = getModelTurnManager(modelSceneWar):getPlayerIndex()
+    local modelPlayer             = getModelPlayerManager(modelSceneWar):getModelPlayer(playerIndex)
+    local modelSkillConfiguration = modelPlayer:getModelSkillConfiguration()
+    modelPlayer:setEnergy(modelPlayer:getEnergy() - SkillDataAccessors.getSkillPoints(skillID, skillLevel, isActiveSkill))
+    if (not isActiveSkill) then
+    else
+        modelPlayer:setActivatingSkill(true)
+        InstantSkillExecutor.executeInstantSkill(modelSceneWar, skillID, skillLevel)
+        modelSkillConfiguration:getModelSkillGroupActive():pushBackSkill(skillID, skillLevel)
+    end
 
     if ((IS_SERVER) or (modelSceneWar:isFastExecutingActions())) then
         modelSceneWar:setExecutingAction(false)
@@ -1739,7 +1745,7 @@ function ActionExecutor.execute(action, modelScene)
     elseif (actionCode == ACTION_CODES.ActionRunSceneMain)                 then executeRunSceneMain(                action, modelScene)
     elseif (actionCode == ACTION_CODES.ActionRunSceneWar)                  then executeRunSceneWar(                 action, modelScene)
     elseif (actionCode == ACTION_CODES.ActionSyncSceneWar)                 then executeSyncSceneWar(                action, modelScene)
-    elseif (actionCode == ACTION_CODES.ActionActivateSkillGroup)           then executeActivateSkillGroup(          action, modelScene)
+    elseif (actionCode == ACTION_CODES.ActionActivateSkill)                then executeActivateSkill(               action, modelScene)
     elseif (actionCode == ACTION_CODES.ActionAttack)                       then executeAttack(                      action, modelScene)
     elseif (actionCode == ACTION_CODES.ActionBeginTurn)                    then executeBeginTurn(                   action, modelScene)
     elseif (actionCode == ACTION_CODES.ActionBuildModelTile)               then executeBuildModelTile(              action, modelScene)

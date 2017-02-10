@@ -312,7 +312,7 @@ SkillData.skills = {
         },
     },
 
-    -- Lightning strike (move again).
+    -- Instant: Lightning strike (move again).
     [7] = {
         minLevelPassive    = nil,
         maxLevelPassive    = nil,
