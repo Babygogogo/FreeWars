@@ -150,8 +150,6 @@ local s_LongText5_1 = [[
 local s_LongText5_2 = "Untranslated"
 
 local s_LongText6_1 = [[
-请选择您需要发动的特技。
-
 请注意：
 1. 大部分特技的效果只维持到您下个回合初。
 2. 一旦发动特技，则直至您下个回合开始前，您都无法再通过战斗获得能量。
@@ -160,8 +158,6 @@ local s_LongText6_1 = [[
 5. 如有部分按钮不可点击，则是因为您的能量不足。
 ]]
 local s_LongText6_2 = [[
-Please choose a skill.
-
 Note:
 1. The skill effect lasts till the beginning of your next turn.
 2. Once you activate a skill, you won't get any energy through battle until your next turn begins."

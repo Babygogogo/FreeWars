@@ -33,7 +33,7 @@ end
 
 local function generateActiveSkillDetailText(skillID)
     local textList = {
-        string.format("%s: %s\n\n%s / %s / %s",
+        string.format("%s: %s\n%s / %s / %s",
             getLocalizedText(5, skillID), getLocalizedText(23, skillID),
             getLocalizedText(22, "Level"), getLocalizedText(22, "EnergyCost"), getLocalizedText(22, "Modifier")
         ),
@@ -170,7 +170,7 @@ setStateActivateSkill = function(self)
     self.m_State = "stateActivateSkill"
     self.m_View:setMenuItems(generateItemsForStateActivateSkill(self))
         :setMenuTitleText(getLocalizedText(22, "ActivateSkill"))
-        :setOverviewText(getLocalizedText(22, "HelpForActiveSkill"))
+        :setOverviewText(self.m_TextActiveSkillOverview)
 end
 
 setStateChooseActiveSkillLevel = function(self, skillID, menuItemsForStateChooseActiveSkillLevel)
@@ -206,12 +206,24 @@ local function initItemPlaceHolder(self)
     }
 end
 
+local function initTextActiveSkillOverview(self)
+    local textList = {}
+    for _, skillID in ipairs(SkillDataAccessors.getSkillCategory("SkillsActive")) do
+        textList[#textList + 1] = generateActiveSkillDetailText(skillID)
+    end
+
+    textList[#textList + 1] = getLocalizedText(22, "HelpForActiveSkill")
+
+    self.m_TextActiveSkillOverview = table.concat(textList, "\n\n")
+end
+
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
 function ModelSkillConfigurator:ctor()
-    initItemActivateSkill(self)
-    initItemPlaceHolder(  self)
+    initItemActivateSkill(      self)
+    initItemPlaceHolder(        self)
+    initTextActiveSkillOverview(self)
 
     return self
 end
