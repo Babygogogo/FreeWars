@@ -6,21 +6,17 @@ local ActionCodeFunctions       = requireFW("src.app.utilities.ActionCodeFunctio
 local AuxiliaryFunctions        = requireFW("src.app.utilities.AuxiliaryFunctions")
 local LocalizationFunctions     = requireFW("src.app.utilities.LocalizationFunctions")
 local SingletonGetters          = requireFW("src.app.utilities.SingletonGetters")
-local SkillDataAccessors        = requireFW("src.app.utilities.SkillDataAccessors")
-local SkillDescriptionFunctions = requireFW("src.app.utilities.SkillDescriptionFunctions")
 local WarFieldManager           = requireFW("src.app.utilities.WarFieldManager")
 local WebSocketManager          = requireFW("src.app.utilities.WebSocketManager")
 
 local string           = string
 local getLocalizedText = LocalizationFunctions.getLocalizedText
 
-local ACTION_CODE_EXIT_WAR                    = ActionCodeFunctions.getActionCode("ActionExitWar")
-local ACTION_CODE_GET_SKILL_CONFIGURATION     = ActionCodeFunctions.getActionCode("ActionGetSkillConfiguration")
-local ACTION_CODE_JOIN_WAR                    = ActionCodeFunctions.getActionCode("ActionJoinWar")
-local ACTION_CODE_NEW_WAR                     = ActionCodeFunctions.getActionCode("ActionNewWar")
-local ACTION_CODE_RUN_SCENE_WAR               = ActionCodeFunctions.getActionCode("ActionRunSceneWar")
-local INTERVALS_UNTIL_BOOT                    = {60 * 15, 3600 * 24, 3600 * 24 * 3, 3600 * 24 * 7} -- 15 minutes, 1 day, 3 days, 7 days
-local MIN_POINTS, MAX_POINTS, POINTS_PER_STEP = SkillDataAccessors.getBasePointsMinMaxStep()
+local ACTION_CODE_EXIT_WAR      = ActionCodeFunctions.getActionCode("ActionExitWar")
+local ACTION_CODE_JOIN_WAR      = ActionCodeFunctions.getActionCode("ActionJoinWar")
+local ACTION_CODE_NEW_WAR       = ActionCodeFunctions.getActionCode("ActionNewWar")
+local ACTION_CODE_RUN_SCENE_WAR = ActionCodeFunctions.getActionCode("ActionRunSceneWar")
+local INTERVALS_UNTIL_BOOT      = {60 * 15, 3600 * 24, 3600 * 24 * 3, 3600 * 24 * 7} -- 15 minutes, 1 day, 3 days, 7 days
 
 local function initSelectorWeather(modelWarConfigurator)
     -- TODO: enable the selector.
@@ -42,36 +38,15 @@ local function generatePlayerColorText(playerIndex)
     end
 end
 
-local function generateSkillDescription(self)
-    local skillConfigurationID = self.m_SkillConfigurationID
-    if ((self.m_Mode == "modeContinue") or (self.m_Mode == "modeExit")) then
-        return getLocalizedText(14, "Selected")
-    elseif (not skillConfigurationID) then
-        return getLocalizedText(14, "None")
-    else
-        local prefix = (skillConfigurationID > 0)                                                         and
-            (string.format("%s %d\n", getLocalizedText(14, "CustomConfiguration"), skillConfigurationID)) or
-            (SkillDataAccessors.getSkillPresets()[-skillConfigurationID].name .. "\n")
-
-        if (not self.m_ModelSkillConfiguration) then
-            return prefix .. getLocalizedText(14, "RetrievingSkillConfiguration")
-        else
-            return prefix .. SkillDescriptionFunctions.getBriefDescription(self.m_ModelSkillConfiguration)
-        end
-    end
-end
-
 local function generateOverviewText(self)
-    return string.format("%s:\n\n%s: %s\n\n%s: %s\n\n%s: %s\n\n%s: %s\n\n%s: %s\n\n%s: %s\n\n%s: %s\n\n%s: %s",
+    return string.format("%s:\n\n%s:%s%s\n\n%s:%s%s\n\n%s:%s%s\n\n%s:%s%s\n\n%s:%s%s\n\n%s:%s%s",
         getLocalizedText(14, "Overview"),
-        getLocalizedText(14, "WarFieldName"),       WarFieldManager.getWarFieldName(self.m_WarConfiguration.warFieldFileName),
-        getLocalizedText(14, "PlayerIndex"),        generatePlayerColorText(self.m_PlayerIndex),
-        getLocalizedText(14, "FogOfWar"),           getLocalizedText(14, (self.m_IsFogOfWarByDefault) and ("Yes") or ("No")),
-        getLocalizedText(14, "RankMatch"),          getLocalizedText(14, (self.m_IsRankMatch)         and ("Yes") or ("No")),
-        getLocalizedText(14, "MaxDiffScore"),       (self.m_MaxDiffScore) and ("" .. self.m_MaxDiffScore) or getLocalizedText(14, "NoLimit"),
-        getLocalizedText(14, "IntervalUntilBoot"),  AuxiliaryFunctions.formatTimeInterval(self.m_IntervalUntilBoot),
-        getLocalizedText(14, "MaxBaseSkillPoints"), (self.m_MaxBaseSkillPoints) and ("" .. self.m_MaxBaseSkillPoints) or (getLocalizedText(14, "DisableSkills")),
-        getLocalizedText(14, "SkillConfiguration"), generateSkillDescription(self)
+        getLocalizedText(14, "WarFieldName"),       "      ",     WarFieldManager.getWarFieldName(self.m_WarConfiguration.warFieldFileName),
+        getLocalizedText(14, "PlayerIndex"),        "      ",     generatePlayerColorText(self.m_PlayerIndex),
+        getLocalizedText(14, "FogOfWar"),           "      ",     getLocalizedText(14, (self.m_IsFogOfWarByDefault) and ("Yes") or ("No")),
+        getLocalizedText(14, "RankMatch"),          "          ", getLocalizedText(14, (self.m_IsRankMatch)         and ("Yes") or ("No")),
+        getLocalizedText(14, "MaxDiffScore"),       "      ",     (self.m_MaxDiffScore) and ("" .. self.m_MaxDiffScore) or getLocalizedText(14, "NoLimit"),
+        getLocalizedText(14, "IntervalUntilBoot"),  "      ",     AuxiliaryFunctions.formatTimeInterval(self.m_IntervalUntilBoot)
     )
 end
 
@@ -89,27 +64,18 @@ end
 local function createItemsForStateMain(self)
     local mode = self.m_Mode
     if (mode == "modeCreate") then
-        local items = {
+        return {
             self.m_ItemPlayerIndex,
             self.m_ItemFogOfWar,
             self.m_ItemRankMatch,
             self.m_ItemMaxDiffScore,
             self.m_ItemIntervalUntilBoot,
-            self.m_ItemMaxBaseSkillPoints,
         }
-        if (self.m_MaxBaseSkillPoints) then
-            items[#items + 1] = self.m_ItemSkillConfiguration
-        end
-
-        return items
 
     elseif (mode == "modeJoin") then
         local items = {}
         if (#self.m_ItemsForStatePlayerIndex > 1) then
             items[#items + 1] = self.m_ItemPlayerIndex
-        end
-        if (self.m_MaxBaseSkillPoints) then
-            items[#items + 1] = self.m_ItemSkillConfiguration
         end
         if (#items == 0) then
             items[#items + 1] = self.m_ItemPlaceHolder
@@ -163,20 +129,12 @@ local function sendActionExitWar(warID)
     })
 end
 
-local function sendActionGetSkillConfiguration(skillConfigurationID)
-    WebSocketManager.sendAction({
-        actionCode           = ACTION_CODE_GET_SKILL_CONFIGURATION,
-        skillConfigurationID = skillConfigurationID,
-    })
-end
-
 local function sendActionJoinWar(self)
     WebSocketManager.sendAction({
-        actionCode           = ACTION_CODE_JOIN_WAR,
-        playerIndex          = self.m_PlayerIndex,
-        skillConfigurationID = self.m_SkillConfigurationID,
-        warID                = self.m_WarConfiguration.warID,
-        warPassword          = "", -- TODO: self.m_WarPassword,
+        actionCode  = ACTION_CODE_JOIN_WAR,
+        playerIndex = self.m_PlayerIndex,
+        warID       = self.m_WarConfiguration.warID,
+        warPassword = "", -- TODO: self.m_WarPassword,
     })
 end
 
@@ -187,10 +145,8 @@ local function sendActionNewWar(self)
         intervalUntilBoot    = self.m_IntervalUntilBoot,
         isFogOfWarByDefault  = self.m_IsFogOfWarByDefault,
         isRankMatch          = self.m_IsRankMatch,
-        maxBaseSkillPoints   = self.m_MaxBaseSkillPoints,
         maxDiffScore         = self.m_MaxDiffScore,
         playerIndex          = self.m_PlayerIndex,
-        skillConfigurationID = self.m_SkillConfigurationID,
         warPassword          = "", -- TODO: self.m_WarPassword,
         warFieldFileName     = self.m_WarConfiguration.warFieldFileName,
     })
@@ -228,12 +184,6 @@ setStateMain = function(self, shouldUpdateOverview)
     end
 end
 
-local function setStateMaxBaseSkillPoints(self)
-    self.m_State = "stateMaxBaseSkillPoints"
-    self.m_View:setMenuTitleText(getLocalizedText(34, "BaseSkillPointsShort"))
-        :setItems(self.m_ItemsForStateMaxBaseSkillPoints)
-end
-
 local function setStateMaxDiffScore(self)
     self.m_State = "stateMaxDiffScore"
     self.m_View:setMenuTitleText(getLocalizedText(34, "MaxDiffScore"))
@@ -250,12 +200,6 @@ local function setStateRankMatch(self)
     self.m_State = "stateRankMatch"
     self.m_View:setMenuTitleText(getLocalizedText(34, "RankMatch"))
         :setItems(self.m_ItemsForStateRankMatch)
-end
-
-local function setStateSkillConfiguration(self)
-    self.m_State = "stateSkillConfiguration"
-    self.m_View:setMenuTitleText(getLocalizedText(34, "SkillConfiguration"))
-        :setItems(self.m_ItemsForStateSkillConfiguration)
 end
 
 --------------------------------------------------------------------------------
@@ -275,15 +219,6 @@ local function initItemIntervalUntilBoot(self)
         name     = getLocalizedText(14, "IntervalUntilBoot"),
         callback = function()
             setStateIntervalUntilBoot(self)
-        end,
-    }
-end
-
-local function initItemMaxBaseSkillPoints(self)
-    self.m_ItemMaxBaseSkillPoints = {
-        name     = getLocalizedText(34, "BaseSkillPoints"),
-        callback = function()
-            setStateMaxBaseSkillPoints(self)
         end,
     }
 end
@@ -323,15 +258,6 @@ local function initItemRankMatch(self)
     }
 end
 
-local function initItemSkillConfiguration(self)
-    self.m_ItemSkillConfiguration = {
-        name     = getLocalizedText(34, "SkillConfiguration"),
-        callback = function()
-            setStateSkillConfiguration(self)
-        end,
-    }
-end
-
 local function initItemsForStateFogOfWar(self)
     self.m_ItemsForStateFogOfWar = {
         {
@@ -367,30 +293,6 @@ local function initItemsForStateIntervalUntilBoot(self)
     end
 
     self.m_ItemsForStateIntervalUntilBoot = items
-end
-
-local function initItemsForStateMaxBaseSkillPoints(self)
-    local items = {{
-        name     = getLocalizedText(14, "DisableSkills"),
-        callback = function()
-            self.m_MaxBaseSkillPoints   = nil
-            self.m_SkillConfigurationID = nil
-
-            setStateMain(self, true)
-        end,
-    }}
-    for points = MIN_POINTS, MAX_POINTS, POINTS_PER_STEP do
-        items[#items + 1] = {
-            name     = (points == 100) and ("100" .. "(" .. getLocalizedText(3, "Default") .. ")") or ("" .. points),
-            callback = function()
-                self.m_MaxBaseSkillPoints = points
-
-                setStateMain(self, true)
-            end,
-        }
-    end
-
-    self.m_ItemsForStateMaxBaseSkillPoints = items
 end
 
 local function initItemsForStateMaxDiffScore(self)
@@ -438,66 +340,21 @@ local function initItemsForStateRankMatch(self)
     }
 end
 
-local function initItemsForStateSkillConfiguration(self)
-    local items = {{
-        name     = getLocalizedText(14, "None"),
-        callback = function()
-            self.m_SkillConfigurationID    = nil
-            self.m_ModelSkillConfiguration = nil
-
-            setStateMain(self, true)
-        end,
-    }}
-
-    local prefix = getLocalizedText(3, "Configuration") .. " "
-    for i = 1, SkillDataAccessors.getSkillConfigurationsCount() do
-        items[#items + 1] = {
-            name     = prefix .. i,
-            callback = function()
-                self.m_SkillConfigurationID    = i
-                self.m_ModelSkillConfiguration = nil
-                sendActionGetSkillConfiguration(i)
-
-                setStateMain(self, true)
-            end,
-        }
-    end
-
-    for i, presetData in ipairs(SkillDataAccessors.getSkillPresets()) do
-        local presetName = presetData.name
-        items[#items + 1] = {
-            name     = presetName,
-            callback = function()
-                self.m_SkillConfigurationID    = -i
-                self.m_ModelSkillConfiguration = Actor.createModel("common.ModelSkillConfiguration", presetData)
-
-                setStateMain(self, true)
-            end,
-        }
-    end
-
-    self.m_ItemsForStateSkillConfiguration = items
-end
-
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
 function ModelWarConfigurator:ctor()
     initItemFogOfWar(          self)
     initItemIntervalUntilBoot( self)
-    initItemMaxBaseSkillPoints(self)
     initItemMaxDiffScore(      self)
     initItemPlayerIndex(       self)
     initItemPlaceHolder(       self)
     initItemRankMatch(         self)
-    initItemSkillConfiguration(self)
 
     initItemsForStateFogOfWar(          self)
     initItemsForStateIntervalUntilBoot( self)
-    initItemsForStateMaxBaseSkillPoints(self)
     initItemsForStateMaxDiffScore(      self)
     initItemsForStateRankMatch(         self)
-    initItemsForStateSkillConfiguration(self)
 
     return self
 end
@@ -601,13 +458,9 @@ function ModelWarConfigurator:resetWithWarConfiguration(warConfiguration)
         self.m_IsFogOfWarByDefault      = false
         self.m_IsRankMatch              = false
         self.m_ItemsForStatePlayerIndex = createItemsForStatePlayerIndex(self)
-        self.m_MaxBaseSkillPoints       = 100
         self.m_MaxDiffScore             = 100
-        self.m_ModelSkillConfiguration  = nil
         self.m_PlayerIndex              = 1
-        self.m_SkillConfigurationID     = 1
 
-        sendActionGetSkillConfiguration(1)
         self.m_View:setButtonConfirmText(getLocalizedText(14, "ConfirmCreateWar"))
 
     elseif (mode == "modeJoin") then
@@ -615,15 +468,9 @@ function ModelWarConfigurator:resetWithWarConfiguration(warConfiguration)
         self.m_IsFogOfWarByDefault      = warConfiguration.isFogOfWarByDefault
         self.m_IsRankMatch              = warConfiguration.isRankMatch
         self.m_ItemsForStatePlayerIndex = createItemsForStatePlayerIndex(self)
-        self.m_MaxBaseSkillPoints       = warConfiguration.maxBaseSkillPoints
         self.m_MaxDiffScore             = warConfiguration.maxDiffScore
-        self.m_ModelSkillConfiguration  = nil
         self.m_PlayerIndex              = self.m_ItemsForStatePlayerIndex[1].playerIndex
-        self.m_SkillConfigurationID     = (warConfiguration.maxBaseSkillPoints) and (1) or (nil)
 
-        if (self.m_SkillConfigurationID) then
-            sendActionGetSkillConfiguration(1)
-        end
         self.m_View:setButtonConfirmText(getLocalizedText(14, "ConfirmJoinWar"))
 
     elseif (mode == "modeContinue") then
@@ -631,11 +478,8 @@ function ModelWarConfigurator:resetWithWarConfiguration(warConfiguration)
         self.m_IsFogOfWarByDefault      = warConfiguration.isFogOfWarByDefault
         self.m_IsRankMatch              = warConfiguration.isRankMatch
         self.m_ItemsForStatePlayerIndex = nil
-        self.m_MaxBaseSkillPoints       = warConfiguration.maxBaseSkillPoints
         self.m_MaxDiffScore             = warConfiguration.maxDiffScore
-        self.m_ModelSkillConfiguration  = nil
         self.m_PlayerIndex              = getPlayerIndexForWarConfiguration(warConfiguration)
-        self.m_SkillConfigurationID     = nil
 
         self.m_View:setButtonConfirmText(getLocalizedText(14, "ConfirmContinueWar"))
 
@@ -644,11 +488,8 @@ function ModelWarConfigurator:resetWithWarConfiguration(warConfiguration)
         self.m_IsFogOfWarByDefault      = warConfiguration.isFogOfWarByDefault
         self.m_IsRankMatch              = warConfiguration.isRankMatch
         self.m_ItemsForStatePlayerIndex = nil
-        self.m_MaxBaseSkillPoints       = warConfiguration.maxBaseSkillPoints
         self.m_MaxDiffScore             = warConfiguration.maxDiffScore
-        self.m_ModelSkillConfiguration  = nil
         self.m_PlayerIndex              = getPlayerIndexForWarConfiguration(warConfiguration)
-        self.m_SkillConfigurationID     = nil
 
         self.m_View:setButtonConfirmText(getLocalizedText(14, "ConfirmExitWar"))
 
@@ -670,19 +511,6 @@ function ModelWarConfigurator:setEnabled(enabled)
 
     if (self.m_View) then
         self.m_View:setVisible(enabled)
-    end
-
-    return self
-end
-
-function ModelWarConfigurator:isRetrievingSkillConfiguration(skillConfigurationID)
-    return (self.m_SkillConfigurationID == skillConfigurationID) and (not self.m_ModelSkillConfiguration)
-end
-
-function ModelWarConfigurator:updateWithSkillConfiguration(skillConfiguration, skillConfigurationID)
-    if (self:isRetrievingSkillConfiguration(skillConfigurationID)) then
-        self.m_ModelSkillConfiguration = Actor.createModel("common.ModelSkillConfiguration", skillConfiguration)
-        self.m_View:setOverviewText(generateOverviewText(self))
     end
 
     return self

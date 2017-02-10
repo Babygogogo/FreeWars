@@ -10,7 +10,6 @@
     ActionGetPlayerProfile              5 : ActionGetPlayerProfile
     ActionGetRankingList                6 : ActionGetRankingList
     ActionGetReplayConfigurations       7 : ActionGetReplayConfigurations
-    ActionGetSkillConfiguration         8 : ActionGetSkillConfiguration
     ActionGetWaitingWarConfigurations   9 : ActionGetWaitingWarConfigurations
     ActionJoinWar                      10 : ActionJoinWar
     ActionLogin                        11 : ActionLogin
@@ -22,10 +21,9 @@
     ActionReloadSceneWar               17 : ActionReloadSceneWar
     ActionRunSceneMain                 18 : ActionRunSceneMain
     ActionRunSceneWar                  19 : ActionRunSceneWar
-    ActionSetSkillConfiguration        20 : ActionSetSkillConfiguration
     ActionSyncSceneWar                 21 : ActionSyncSceneWar
 
-    ActionActivateSkillGroup          100 : ActionActivateSkillGroup
+    ActionActivateSkill               100 : ActionActivateSkill
     ActionAttack                      101 : ActionAttack
     ActionBeginTurn                   102 : ActionBeginTurn
     ActionBuildModelTile              103 : ActionBuildModelTile
@@ -98,14 +96,6 @@
     replayConfigurations 2 : *ReplayConfiguration
 }
 
-.ActionGetSkillConfiguration {
-    actionCode           0 : integer
-    playerAccount        1 : string
-    playerPassword       2 : string
-    skillConfigurationID 3 : integer
-    skillConfiguration   4 : SingleSkillConfiguration
-}
-
 .ActionGetWaitingWarConfigurations {
     actionCode        0 :  integer
     playerAccount     1 :  string
@@ -119,9 +109,8 @@
     playerPassword       2 : string
     warID                3 : integer
     playerIndex          4 : integer
-    skillConfigurationID 5 : integer
-    warPassword          6 : string
-    isWarStarted         7 : boolean
+    warPassword          5 : string
+    isWarStarted         6 : boolean
 }
 
 .ActionLogin {
@@ -156,13 +145,11 @@
     warPassword           4 : string
     warFieldFileName      5 : string
     playerIndex           6 : integer
-    skillConfigurationID  7 : integer
-    maxBaseSkillPoints    8 : integer
-    isFogOfWarByDefault   9 : boolean
-    defaultWeatherCode   10 : integer
-    isRankMatch          11 : boolean
-    maxDiffScore         12 : integer
-    intervalUntilBoot    13 : integer
+    isFogOfWarByDefault   7 : boolean
+    defaultWeatherCode    8 : integer
+    isRankMatch           9 : boolean
+    maxDiffScore         10 : integer
+    intervalUntilBoot    11 : integer
 }
 
 .ActionRegister {
@@ -194,14 +181,6 @@
     warData          4 : SceneWar
 }
 
-.ActionSetSkillConfiguration {
-    actionCode           0 : integer
-    playerAccount        1 : string
-    playerPassword       2 : string
-    skillConfigurationID 3 : integer
-    skillConfiguration   4 : SingleSkillConfiguration
-}
-
 .ActionSyncSceneWar {
     actionCode       0 : integer
     playerAccount    1 : string
@@ -210,7 +189,7 @@
     actionID         4 : integer
 }
 
-.ActionActivateSkillGroup {
+.ActionActivateSkill {
     actionCode        0 :  integer
     playerAccount     1 :  string
     playerPassword    2 :  string
@@ -220,7 +199,9 @@
     revealedTiles     6 : *TileData(positionIndex)
     actingUnitsData   7 : *UnitData(unitID)
     actingTilesData   8 : *TileData(positionIndex)
-    skillGroupID      9 :  integer
+    skillID           9 :  integer
+    skillLevel       10 :  integer
+    isActiveSkill    11 :  boolean
 }
 
 .ActionAttack {
@@ -678,10 +659,10 @@
         nickname            2 : string
         fund                3 : integer
         isAlive             4 : boolean
-        damageCost          5 : integer
-        skillActivatedCount 6 : integer
-        skillConfiguration  7 : SingleSkillConfiguration
-        hasVotedForDraw     8 : boolean
+        energy              5 : integer
+        skillConfiguration  6 : SingleSkillConfiguration
+        hasVotedForDraw     7 : boolean
+        isActivatingSkill   8 : boolean
     }
 
     .TurnData {
@@ -728,7 +709,6 @@
 
     warID                  0 :  integer
     actionID               1 :  integer
-    maxBaseSkillPoints     2 :  integer
     isWarEnded             3 :  boolean
     isRandomWarField       4 :  boolean
     isFogOfWarByDefault    5 :  boolean
@@ -764,16 +744,9 @@
         level 1 : integer
     }
 
-    .ActiveSkillGroup {
-        energyRequirement 0 :  integer
-        skills            1 : *SingleSkill
-    }
-
-    basePoints             0 :  integer
-    activatingSkillGroupID 1 :  integer
-    passive                2 : *SingleSkill
-    active1                3 :  ActiveSkillGroup
-    active2                4 :  ActiveSkillGroup
+    passiveSkills     1 : *SingleSkill
+    researchingSkills 2 : *SingleSkill
+    activeSkills      3 : *SingleSkill
 }
 
 .TileData {
@@ -809,7 +782,6 @@
     warID                0 :  integer
     warFieldFileName     1 :  string
     warPassword          2 :  string
-    maxBaseSkillPoints   3 :  integer
     isFogOfWarByDefault  4 :  boolean
     defaultWeatherCode   5 :  integer
     isRandomWarField     6 :  boolean

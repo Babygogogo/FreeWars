@@ -45,7 +45,6 @@ local isTotalReplay            = SingletonGetters.isTotalReplay
 local round                    = requireFW("src.global.functions.round")
 local string, ipairs, pairs    = string, ipairs, pairs
 
-local ACTION_CODE_ACTIVATE_SKILL_GROUP = ActionCodeFunctions.getActionCode("ActionActivateSkillGroup")
 local ACTION_CODE_DESTROY_OWNED_UNIT   = ActionCodeFunctions.getActionCode("ActionDestroyOwnedModelUnit")
 local ACTION_CODE_END_TURN             = ActionCodeFunctions.getActionCode("ActionEndTurn")
 local ACTION_CODE_RELOAD_SCENE_WAR     = ActionCodeFunctions.getActionCode("ActionReloadSceneWar")
@@ -64,14 +63,10 @@ local function generateEmptyDataForEachPlayer(self)
 
     modelPlayerManager:forEachModelPlayer(function(modelPlayer, playerIndex)
         if (modelPlayer:isAlive()) then
-            local energy, req1, req2 = modelPlayer:getEnergy()
             dataForEachPlayer[playerIndex] = {
                 nickname            = modelPlayer:getNickname(),
                 fund                = ((not isReplay) and (modelFogMap:isFogOfWarCurrently()) and ((playerIndex ~= getPlayerIndexLoggedIn(modelSceneWar)))) and ("--") or (modelPlayer:getFund()),
-                energy              = energy,
-                req1                = req1,
-                req2                = req2,
-                damageCostPerEnergy = modelPlayer:getCurrentDamageCostPerEnergyRequirement(),
+                energy              = modelPlayer:getEnergy(),
                 idleUnitsCount      = 0,
                 unitsCount          = 0,
                 unitsValue          = 0,
@@ -207,11 +202,10 @@ local function updateStringWarInfo(self)
         else
             local d                  = dataForEachPlayer[i]
             local isPlayerInTurn     = i == playerIndexInTurn
-            stringList[#stringList + 1] = string.format("%s %d:    %s%s\n%s: %.2f / %s / %s      %s: %d\n%s: %s      %s: %d\n%s: %d%s      %s: %d\n%s: %d\n%s",
+            stringList[#stringList + 1] = string.format("%s %d:    %s%s\n%s: %d\n%s: %s      %s: %d\n%s: %d%s      %s: %d\n%s: %d\n%s",
                 getLocalizedText(65, "Player"),              i,           d.nickname,
                 ((isPlayerInTurn) and (getInTurnDescription(modelSceneWar)) or ("")),
-                getLocalizedText(65, "Energy"),               d.energy,    "" .. (d.req1 or "--"), "" .. (d.req2 or "--"),
-                getLocalizedText(65, "DamageCostPerEnergy"),  d.damageCostPerEnergy,
+                getLocalizedText(65, "Energy"),               d.energy,
                 getLocalizedText(65, "Fund"),                 "" .. d.fund,
                 getLocalizedText(65, "Income"),               d.income,
                 getLocalizedText(65, "UnitsCount"),           d.unitsCount,
@@ -259,8 +253,6 @@ local function getAvailableMainItems(self)
             self.m_ItemWarInfo,
             self.m_ItemSkillInfo,
         }
-        items[#items + 1] = (modelPlayer:canActivateSkillGroup(1)) and (self.m_ItemActiveSkill1) or (nil)
-        items[#items + 1] = (modelPlayer:canActivateSkillGroup(2)) and (self.m_ItemActiveSkill2) or (nil)
         items[#items + 1] = self.m_ItemAuxiliaryCommands
         items[#items + 1] = self.m_ItemHelp
         items[#items + 1] = self.m_ItemEndTurn
@@ -539,14 +531,18 @@ local function setStateHelp(self)
     end
 end
 
+local getActorSkillConfigurator
 local function setStateMain(self)
     self.m_State = "stateMain"
     updateStringWarInfo(  self)
     updateStringSkillInfo(self)
+    getActorSkillConfigurator(self):getModel():setEnabled(false)
 
     if (self.m_View) then
         self.m_View:setItems(getAvailableMainItems(self))
+            :setMenuVisible(true)
             :setOverviewString(self.m_StringWarInfo)
+            :setOverviewVisible(true)
             :setEnabled(true)
     end
 end
@@ -575,8 +571,27 @@ local function onEvtIsWaitingForServerResponse(self, event)
 end
 
 --------------------------------------------------------------------------------
--- The composition items.
+-- The composition elements.
 --------------------------------------------------------------------------------
+getActorSkillConfigurator = function(self)
+    if (not self.m_ActorSkillConfigurator) then
+        local model = Actor.createModel("sceneWar.ModelSkillConfigurator")
+        model:onStartRunning(self.m_ModelSceneWar)
+            :setCallbackOnButtonBackTouched(function()
+                model:setEnabled(false)
+                self.m_View:setOverviewVisible(true)
+                    :setMenuVisible(true)
+            end)
+
+        local view = Actor.createView("sceneWar.ViewSkillConfigurator")
+        self.m_View:setViewSkillConfigurator(view)
+
+        self.m_ActorSkillConfigurator = Actor.createWithModelAndViewInstance(model, view)
+    end
+
+    return self.m_ActorSkillConfigurator
+end
+
 local function initItemAbout(self)
     self.m_ItemAbout = {
         name     = getLocalizedText(1, "About"),
@@ -584,24 +599,6 @@ local function initItemAbout(self)
             self.m_View:setOverviewString(getLocalizedText(2, 3))
         end,
     }
-end
-
-local function createItemActivateSkill(self, skillGroupID)
-    return {
-        name     = string.format("%s %d", getLocalizedText(65, "ActivateSkill"), skillGroupID),
-        callback = function()
-            sendActionActivateSkillGroup(self, skillGroupID)
-            self:setEnabled(false)
-        end,
-    }
-end
-
-local function initItemActivateSkill1(self)
-    self.m_ItemActiveSkill1 = createItemActivateSkill(self, 1)
-end
-
-local function initItemActivateSkill2(self)
-    self.m_ItemActiveSkill2 = createItemActivateSkill(self, 2)
 end
 
 local function initItemAgreeDraw(self)
@@ -840,16 +837,14 @@ local function initItemProposeDraw(self)
 end
 
 local function initItemSkillInfo(self)
-    local item = {
-        name     = getLocalizedText(65, "SkillInfo"),
+    self.m_ItemSkillInfo = {
+        name     = getLocalizedText(22, "SkillInfo"),
         callback = function()
-            if (self.m_View) then
-                self.m_View:setOverviewString(self.m_StringSkillInfo)
-            end
+            self.m_View:setMenuVisible(false)
+                :setOverviewVisible(false)
+            getActorSkillConfigurator(self):getModel():setEnabled(true)
         end,
     }
-
-    self.m_ItemSkillInfo = item
 end
 
 local function initItemSkillSystem(self)
@@ -1001,8 +996,6 @@ function ModelWarCommandMenu:ctor(param)
     self.m_State                      = "stateDisabled"
 
     initItemAbout(              self)
-    initItemActivateSkill1(     self)
-    initItemActivateSkill2(     self)
     initItemAgreeDraw(          self)
     initItemAuxiliaryCommands(  self)
     initItemDestroyOwnedUnit(   self)

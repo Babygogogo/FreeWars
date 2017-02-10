@@ -74,8 +74,8 @@ function SkillDataAccessors.getSkillCategory(categoryName)
     return SKILL_DATA.categories[categoryName]
 end
 
-function SkillDataAccessors.getSkillPresets()
-    return SKILL_DATA.skillPresets
+function SkillDataAccessors.getSkillData(skillID)
+    return SKILL_DATA.skills[skillID]
 end
 
 return SkillDataAccessors

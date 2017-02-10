@@ -3,7 +3,6 @@ local UnitLoader = requireFW("src.global.functions.class")("UnitLoader")
 
 local GameConstantFunctions  = requireFW("src.app.utilities.GameConstantFunctions")
 local SingletonGetters       = requireFW("src.app.utilities.SingletonGetters")
-local SkillModifierFunctions = requireFW("src.app.utilities.SkillModifierFunctions")
 local TableFunctions         = requireFW("src.app.utilities.TableFunctions")
 local ComponentManager       = requireFW("src.global.components.ComponentManager")
 
@@ -61,17 +60,6 @@ local function isValidTargetTileType(self, tileType)
         end
 
         return false
-    end
-end
-
-local function getNormalizedRepairAmount(self)
-    local baseAmount  = self.m_Template.repairAmount
-    local playerIndex = self.m_Owner:getPlayerIndex()
-    if ((not baseAmount) or (playerIndex < 1)) then
-        return baseAmount
-    else
-        local modelPlayer = SingletonGetters.getModelPlayerManager(self.m_ModelSceneWar):getModelPlayer(self.m_Owner:getPlayerIndex())
-        return baseAmount + SkillModifierFunctions.getRepairAmountModifier(modelPlayer:getModelSkillConfiguration())
     end
 end
 

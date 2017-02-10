@@ -263,7 +263,7 @@ function ModelFogMap:updateMapForPathsWithModelUnitAndPath(modelUnit, path)
     assert((IS_SERVER) or (self.m_IsTotalReplay) or (playerIndex == getPlayerIndexLoggedIn(self.m_ModelSceneWar)),
         "ModelFogMap:updateMapForPathsWithModelUnitAndPath() invalid playerIndex on the client: " .. (playerIndex or ""))
 
-    local canRevealHidingPlaces = canRevealHidingPlacesWithUnits(getModelPlayerManager(self.m_ModelSceneWar):getModelPlayer(playerIndex):getModelSkillConfiguration())
+    local canRevealHidingPlaces = false -- canRevealHidingPlacesWithUnits(getModelPlayerManager(self.m_ModelSceneWar):getModelPlayer(playerIndex):getModelSkillConfiguration())
     local visibilityMap         = self.m_MapsForPaths[playerIndex]
     local mapSize               = self:getMapSize()
     for _, pathNode in ipairs(path) do

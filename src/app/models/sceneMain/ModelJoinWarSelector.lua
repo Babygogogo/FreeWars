@@ -141,16 +141,6 @@ function ModelJoinWarSelector:setEnabled(enabled)
     return self
 end
 
-function ModelJoinWarSelector:isRetrievingSkillConfiguration(skillConfigurationID)
-    return getActorWarConfigurator(self):getModel():isRetrievingSkillConfiguration(skillConfigurationID)
-end
-
-function ModelJoinWarSelector:updateWithSkillConfiguration(skillConfiguration, skillConfigurationID)
-    getActorWarConfigurator(self):getModel():updateWithSkillConfiguration(skillConfiguration, skillConfigurationID)
-
-    return self
-end
-
 function ModelJoinWarSelector:isRetrievingJoinableWarConfigurations()
     return (self.m_IsEnabled) and (not getActorWarConfigurator(self):getModel():isEnabled())
 end

@@ -75,8 +75,7 @@ local s_LongText4_1 = [[
 
 相同的部队及建筑：不计技能的情况下，所有玩家可用的部队、建筑的种类和属性值都是完全相同的。胜负将直接取决于玩家的指挥水平！
 
-技能：技能是本作最大的特色。每个玩家都可以为自己装配独特的技能，以此获得战场上的某些优势。一旦进入战局，技能就将无法更改，因此在此之前就选好最合适的技能是游戏的重要环节。
-详细帮助请点击“技能系统”进行查看。
+技能：技能是本作最大的特色。每个玩家都可以为自己装配独特的技能，以此获得战场上的某些优势。详细帮助请点击“技能系统”进行查看。
 
 资金：资金主要从您所占有的建筑中获取（每个回合初自动结算入账）。资金主要用于生产（在工厂、机场和海港中）和维修部队。资金直接决定我方部队的数量和质量，因此极为重要。
 
@@ -132,39 +131,44 @@ local s_LongText4_2 = "Untranslated"
 
 local s_LongText5_1 = [[
 --- 技能系统 ---
-概述：通过使用技能系统，您可以为自己装配一套独特的技能，从而在战场上获得优势。
+概述：通过使用战场上获得的能量，您可以购买战局内永久生效的日常技能，或者发动即时生效但时间短暂的主动技能，从而获得优势。
+游戏对技能的组合没有限制。也就是说，只要能量足够，您就可以随意组合您需要的技能。
 
-技能点：为防止过强的技能组合的出现，系统以技能点的形式对玩家进行限制。默认情况下，您以及其他每一位玩家都具有100点基准技能点，您可以随意分配这些技能点到您所希望的技能上。越强力的技能需要消耗的技能点数越多。
-游戏中还存在具有负面影响的技能，它们能够返还一定的技能点供您进一步分配。也就是说，您可以牺牲某些能力以换取其他能力的进一步加强。
+能量：能量是通过战斗积累的。能量的积累速度只与您对敌方部队造成的HP损伤量、以及自己的部队受到的HP损伤量有关，与部队造价无关。
+一个回合中，如果您发动了主动技，则直至您的下个回合开始前，您都无法再通过战斗获得能量。
+能量值没有上限。您可以一直积累能量，直到必要时才一次性发动强大的技能。
 
-日常技：日常技是装配后无论任何时候都会生效的技能。
-每位玩家都有一套日常技，最多可以装配4个技能。
+日常技：日常技是购买后，从下一回合开始生效，直至战局结束才失效的技能。同一战局中，每位玩家都有4个日常技能槽位。
+同名技能可以多次购买，其效果会叠加，且只占用一个技能槽位。
 
-主动技：主动技的效果在平时并不会生效。您需要通过进攻或被攻击来累积能量，并通过消耗能量来使得主动技生效。主动技的效果只在发动的回合内（包括对手回合）有效，在您的下个回合初会自动失效。
-每位玩家都有最多两套主动技，每套最多4个技能。同一时间，您最多只能发动一套主动技。
+主动技（特技）：主动技是购买后即时生效，直至您的下个回合初失效的技能。同一回合中，您可以任意购买不限种类和次数的主动技。
+比如，如果能量足够，您可以一个回合再动N次，同时增加M%的攻击力。
 
 技能效果叠加：大多数技能的效果是可以线性叠加的。以全军攻击力为例，如果您的日常技能是全军攻击力+5%，主动技的技能是全军攻击力+15%，那么您发动主动技能时，最终的效果是全军攻击力+20%。
 如果您的主动技还配有一个步兵系攻击力+10%的效果，那么主动技发动时的最终效果就是步兵系攻击力+30%，其他部队攻击力+20%。
-
-能量：能量是主动技发动的必要条件。能量是在战场上通过战斗积累的，不论是进攻还是被攻击，您的能量值都会得到增长（被攻击时的增长速度比攻击的更快）。
-当能量值达到主动技的能量需求时，您才能发动主动技；一旦发动主动技，则能量值会相应扣除；当回合内能量值无法增长，而且后续的能量增长速度会变慢。
-
-能量槽：您可以选择主动技的能量槽的长度。越长的能量槽能提供的技能点越多，但是累积能量所需的时间越长。换言之，能够频繁发动的技能的效果会比较弱，经过长时间才能发动的技能的效果会比较强。
-每位玩家有两套主动技，它们的能量槽长度可以分别设定（也可以设为一样）。两套主动技的效果互不干涉。
-
-技能点补偿：在默认的100点基准技能点的情况下，如果您开启两个主动技，则日常技可用的技能点数是100。如果您禁用一个或两个主动技，则可用的点数会增加；如果日常技点数没有用完，则剩余的点数会被加到主动技上。
-换言之，如果您使用的日常技较弱，则您的主动技可以比一般情况下更强；如果您少使用或不使用主动技，则日常技也会得到加强。
-
-基准技能点：基准技能点直接影响您可以分配的技能点点数。默认的基准技能点是100，但游戏也提供了其他点数的选项。不同的基准技能点下可以配置的技能强度相距甚远。
-与朋友对战时，若您的指挥水平明显高于朋友，您可以创建一个基准技能点为100的战局，而自己只使用60点的技能配置，从而达到类似让子的效果。但如果是积分战，除非有绝对自信否则请不要这么做，您的对手可不是吃素的：）
-
-禁用技能：您创建战局时，可以把基准技能点上限设置为“禁用”，那么所有参战的玩家都不能使用任何技能。
-
-使用预设技能：您创建或加入战局时，可以选用游戏预设的技能配置（在技能配置选择器中点击左箭头即可看到，以英文名命名），也能获得不错的效果。这样，即使您一下子找不到配置技能的思路，也可以顺利地进行游戏。
-这些预设的配置实际上就是原版游戏系列中曾经出现过的CO配置，但其强度已适当调整过，从而让不同的预设有着相近的实力。
-但是，预设配置的强度是比不上仔细推敲过的自定义配置的。为了提高自己的战力，研究技能系统并配置适合自己的技能依然必不可少。
 ]]
 local s_LongText5_2 = "Untranslated"
+
+local s_LongText6_1 = [[
+请选择您需要发动的特技。
+
+请注意：
+1. 大部分特技的效果只维持到您下个回合初。
+2. 一旦发动特技，则直至您下个回合开始前，您都无法再通过战斗获得能量。
+3. 您可以多次发动同一个特技；如果可能，其效果将被自动叠加（比如全军加攻等技能）。
+4. 您可以任意多次交替发动特技和操作部队。
+5. 如有部分按钮不可点击，则是因为您的能量不足。
+]]
+local s_LongText6_2 = [[
+Please choose a skill.
+
+Note:
+1. The skill effect lasts till the beginning of your next turn.
+2. Once you activate a skill, you won't get any energy through battle until your next turn begins."
+3. You may activate a same skill multiple times.
+4. You may move your units, activate skills, again move your units, again activate skills and so on.
+5. If your energy is not enough, some buttons will be unavailable.
+]]
 
 --------------------------------------------------------------------------------
 -- The private functions.
@@ -260,6 +264,9 @@ local s_Texts = {
             elseif (textType == "PassiveSkill")           then return "日 常 技 能"
             elseif (textType == "ActiveSkill")            then return "主 动 技 能"
             elseif (textType == "Skill")                  then return "技 能"
+            elseif (textType == "SkillActive")            then return "当前回合已发动的主动技能"
+            elseif (textType == "SkillPassive")           then return "日常技能"
+            elseif (textType == "SkillResearching")       then return "研发中的日常技能"
             elseif (textType == "MaxPoints")              then return "可用总技能点"
             elseif (textType == "BasePoints")             then return "基准技能点"
             elseif (textType == "TotalPoints")            then return "已用技能点"
@@ -290,6 +297,9 @@ local s_Texts = {
             elseif (textType == "PassiveSkill")           then return "Passive"
             elseif (textType == "ActiveSkill")            then return "Active"
             elseif (textType == "Skill")                  then return "Skill"
+            elseif (textType == "SkillActive")            then return "Active Skills"
+            elseif (textType == "SkillPassive")           then return "Passive Skills"
+            elseif (textType == "SkillResearching")       then return "Researching Skills"
             elseif (textType == "MaxPoints")              then return "Max Skill Points"
             elseif (textType == "TotalPoints")            then return "Total Points"
             elseif (textType == "SkillPoints")            then return "Points"
@@ -317,65 +327,14 @@ local s_Texts = {
         [1] = function(skillID)
             if     (skillID == 1)  then return "我方全体部队的攻击力"
             elseif (skillID == 2)  then return "我方全体部队的防御力"
-            elseif (skillID == 3)  then return "我方全体部队的造价变为基础的"
-            elseif (skillID == 4)  then return "我方全体部队的当前HP"
-            elseif (skillID == 5)  then return "对方全体部队的当前HP"
-            elseif (skillID == 6)  then return "我方全体部队的移动力"
-            elseif (skillID == 7)  then return "我方全体远程部队的射程上限"
-            elseif (skillID == 8)  then return "使我方步兵系以外的全体部队变为未行动的状态。"
-            elseif (skillID == 9)  then return "使对方全体部队的燃料值变为当前值的"
-            elseif (skillID == 10) then return "我方具有维修能力的据点及部队的维修量"
-            elseif (skillID == 11) then return "使我方维修费用变为基础的"
-            elseif (skillID == 12) then return "使我方资金变为当前的"
-            elseif (skillID == 13) then return "根据我方资金来改变其他所有玩家的能量值，幅度为每10000资金"
-            elseif (skillID == 14) then return "我方全体部队的幸运伤害值上限"
-            elseif (skillID == 15) then return "改变我方步兵系的占领速度（四舍五入），幅度为"
-            elseif (skillID == 16) then return "补满我方全体部队的燃料、弹药和建造材料。"
-            elseif (skillID == 17) then return "我方所有建筑的金钱收入"
-            elseif (skillID == 18) then return "锁定我方能量槽的实际长度，使能量增长不会随着主动技能的发动而变慢。"
-            elseif (skillID == 19) then return "我方能量增长速度"
-            elseif (skillID == 20) then return "根据我方资金来改变全军攻击力，比例为每10000资金"
-            elseif (skillID == 21) then return "根据我方资金来改变全军防御力，比例为每10000资金"
-            elseif (skillID == 22) then return "对对方造成攻击伤害时获得金钱，数量为该伤害的基础价值的"
-            elseif (skillID == 23) then return "我方部队所在地形每有一颗防御星，则该部队的攻击力"
-            elseif (skillID == 24) then return "我方部队所在地形每有一颗防御星，则该部队的防御力"
-            elseif (skillID == 25) then return "额外改变我方全体部队的幸运伤害值下限（不高于上限），幅度为"
-            elseif (skillID == 26) then return "我方全体部队的当前晋升等级"
-            elseif (skillID == 27) then return "我方生产的所有部队自带晋升等级"
-            elseif (skillID == 28) then return "使我方全军在全地形上的移动力消耗均变为1（不可移动的除外）"
-            elseif (skillID == 29) then return "我方所有近战部队（含步兵系）的攻击力"
-            elseif (skillID == 30) then return "我方所有远程部队的攻击力"
-            elseif (skillID == 31) then return "我方所有陆军的攻击力"
-            elseif (skillID == 32) then return "我方所有空军的攻击力"
-            elseif (skillID == 33) then return "我方所有海军的攻击力"
-            elseif (skillID == 34) then return "我方步兵系的攻击力"
-            elseif (skillID == 35) then return "我方车辆系的攻击力"
-            elseif (skillID == 36) then return "我方近战机械部队的攻击力"
-            elseif (skillID == 37) then return "我方所有近战部队（含步兵系）的防御力"
-            elseif (skillID == 38) then return "我方所有远程部队的防御力"
-            elseif (skillID == 39) then return "我方所有陆军的防御力"
-            elseif (skillID == 40) then return "我方所有空军的防御力"
-            elseif (skillID == 41) then return "我方所有海军的防御力"
-            elseif (skillID == 42) then return "我方步兵系的防御力"
-            elseif (skillID == 43) then return "我方车辆系的防御力"
-            elseif (skillID == 44) then return "我方近战机械部队的防御力"
-            elseif (skillID == 45) then return "我方运输系（不含炮舰）的防御力"
-            elseif (skillID == 46) then return "我方所有近战部队的移动力"
-            elseif (skillID == 47) then return "我方所有远程部队的移动力"
-            elseif (skillID == 48) then return "我方所有陆军的移动力"
-            elseif (skillID == 49) then return "我方所有空军的移动力"
-            elseif (skillID == 50) then return "我方所有海军的移动力"
-            elseif (skillID == 51) then return "我方所有步兵系的移动力"
-            elseif (skillID == 52) then return "我方所有车辆系的移动力"
-            elseif (skillID == 53) then return "我方所有近战机械部队的移动力"
-            elseif (skillID == 54) then return "我方所有运输系（不含炮舰）的移动力"
-            elseif (skillID == 55) then return "我方所有部队的视野"
-            elseif (skillID == 56) then return "我方所有建筑的视野"
-            elseif (skillID == 57) then return "我方所有部队和建筑的视野"
-            elseif (skillID == 58) then return "使我方所有部队能够直接探明视野内的敌军隐蔽地点。"
-            elseif (skillID == 59) then return "使我方所有建筑能够直接探明视野内的敌军隐蔽地点。"
-            elseif (skillID == 60) then return "使我方所有部队和建筑能够直接探明视野内的敌军隐蔽地点。"
-            elseif (skillID == 61) then return "我方当前能量值"
+            elseif (skillID == 3)  then return "我方全体部队的当前HP"
+            elseif (skillID == 4)  then return "对方全体部队的当前HP"
+            elseif (skillID == 5)  then return "我方全体部队的移动力"
+            elseif (skillID == 6)  then return "我方全体远程部队的射程上限"
+            elseif (skillID == 7)  then return "使我方步兵系以外的全体部队变为未行动的状态。"
+            elseif (skillID == 8)  then return "我方所有建筑的金钱收入"
+            elseif (skillID == 9)  then return "增加我方资金，数量为我军当前收入的"
+            elseif (skillID == 10) then return "对方能量值"
             else                        return "未知4:" .. (skillID or "")
             end
         end,
@@ -387,65 +346,14 @@ local s_Texts = {
         [1] = function(skillID)
             if     (skillID == 1)  then return "全军攻击力"
             elseif (skillID == 2)  then return "全军防御力"
-            elseif (skillID == 3)  then return "全军造价"
-            elseif (skillID == 4)  then return "全军HP"
-            elseif (skillID == 5)  then return "对方全军HP"
-            elseif (skillID == 6)  then return "全军移动力"
-            elseif (skillID == 7)  then return "远程部队射程"
-            elseif (skillID == 8)  then return "再动"
-            elseif (skillID == 9)  then return "对方全军燃料"
-            elseif (skillID == 10) then return "我方维修量"
-            elseif (skillID == 11) then return "我方维修费用"
-            elseif (skillID == 12) then return "我方当前资金"
-            elseif (skillID == 13) then return "对方能量值"
-            elseif (skillID == 14) then return "我方幸运上限"
-            elseif (skillID == 15) then return "我军占领速度"
-            elseif (skillID == 16) then return "全面补给"
-            elseif (skillID == 17) then return "我方金钱收入"
-            elseif (skillID == 18) then return "锁定能量槽长度"
-            elseif (skillID == 19) then return "能量增速"
-            elseif (skillID == 20) then return "金钱加成攻击"
-            elseif (skillID == 21) then return "金钱加成防御"
-            elseif (skillID == 22) then return "攻击掠夺金钱"
-            elseif (skillID == 23) then return "地形加成攻击"
-            elseif (skillID == 24) then return "地形加成防御"
-            elseif (skillID == 25) then return "我方幸运下限"
-            elseif (skillID == 26) then return "全军晋升"
-            elseif (skillID == 27) then return "全军自带晋升"
-            elseif (skillID == 28) then return "完美移动"
-            elseif (skillID == 29) then return "近战系攻击力"
-            elseif (skillID == 30) then return "远程系攻击力"
-            elseif (skillID == 31) then return "陆军攻击力"
-            elseif (skillID == 32) then return "空军攻击力"
-            elseif (skillID == 33) then return "海军攻击力"
-            elseif (skillID == 34) then return "步兵系攻击力"
-            elseif (skillID == 35) then return "车辆系攻击力"
-            elseif (skillID == 36) then return "近战机械攻击力"
-            elseif (skillID == 37) then return "近战系防御力"
-            elseif (skillID == 38) then return "远程系防御力"
-            elseif (skillID == 39) then return "陆军防御力"
-            elseif (skillID == 40) then return "空军防御力"
-            elseif (skillID == 41) then return "海军防御力"
-            elseif (skillID == 42) then return "步兵系防御力"
-            elseif (skillID == 43) then return "车辆系防御力"
-            elseif (skillID == 44) then return "近战机械防御力"
-            elseif (skillID == 45) then return "运输系防御力"
-            elseif (skillID == 46) then return "近战系移动力"
-            elseif (skillID == 47) then return "远程系移动力"
-            elseif (skillID == 48) then return "陆军移动力"
-            elseif (skillID == 49) then return "空军移动力"
-            elseif (skillID == 50) then return "海军移动力"
-            elseif (skillID == 51) then return "步兵系移动力"
-            elseif (skillID == 52) then return "车辆系移动力"
-            elseif (skillID == 53) then return "近战机械移动力"
-            elseif (skillID == 54) then return "运输系移动力"
-            elseif (skillID == 55) then return "部队视野范围"
-            elseif (skillID == 56) then return "建筑视野范围"
-            elseif (skillID == 57) then return "部队建筑视野范围"
-            elseif (skillID == 58) then return "部队视野穿透"
-            elseif (skillID == 59) then return "建筑视野穿透"
-            elseif (skillID == 60) then return "部队建筑视野穿透"
-            elseif (skillID == 61) then return "我方能量值"
+            elseif (skillID == 3)  then return "全军HP"
+            elseif (skillID == 4)  then return "敌军HP"
+            elseif (skillID == 5)  then return "全军移动力"
+            elseif (skillID == 6)  then return "远程部队射程"
+            elseif (skillID == 7)  then return "再动"
+            elseif (skillID == 8)  then return "我军收入"
+            elseif (skillID == 9)  then return "我军资金"
+            elseif (skillID == 10) then return "敌军能量值"
             else                        return "未知5:" .. (skillID or "")
             end
         end,
@@ -840,16 +748,53 @@ local s_Texts = {
         [1] = function(account) return "您已使用账号【" .. account .. "】进行了登陆。"      end,
         [2] = function(account) return "You have already logged in as " .. account .. "." end,
     },
-    --[[
     [22] = {
-        [1] = function() return "账号或密码错误，请重试。"    end,
-        [2] = function() return "Invalid account/password." end,
+        [1] = function(textType)
+            if     (textType == "ActivateSkill")           then return "发动特技"
+            elseif (textType == "ConfigSkill")             then return "配 置 技 能"
+            elseif (textType == "ConfirmationActiveSkill") then return "您确定要发动如下特技吗？"
+            elseif (textType == "EnergyCost")              then return "能量消耗"
+            elseif (textType == "HelpForActiveSkill")      then return s_LongText6_1
+            elseif (textType == "Level")                   then return "等级"
+            elseif (textType == "Modifier")                then return "增幅"
+            elseif (textType == "NoAvailableOption")       then return "无可用选项"
+            elseif (textType == "SkillInfo")               then return "技 能 信 息"
+            else                                                return "未知22:" .. (textType or "")
+            end
+        end,
+        [2] = function(textType)
+            if     (textType == "ActivateSkill")           then return "ActivateSkill"
+            elseif (textType == "ConfigSkill")             then return "Config Skill"
+            elseif (textType == "ConfirmationActiveSkill") then return "Are you sure to activate the skill below?"
+            elseif (textType == "EnergyCost")              then return "Cost"
+            elseif (textType == "HelpForActiveSkill")      then return s_LongText6_2
+            elseif (textType == "Level")                   then return "Level"
+            elseif (textType == "Modifier")                then return "Modifier"
+            elseif (textType == "NoAvailableOption")       then return "No Options"
+            elseif (textType == "SkillInfo")               then return "Skill Info"
+            else                                                return "Unknown22:" .. (textType or "")
+            end
+        end,
     },
     [23] = {
-        [1] = function(account) return "您的账号【" .. account .. "】在另一台设备上被登陆，您已被迫下线！"     end,
-        [2] = function(account) return "Another device is logging in with your account!" .. account .. "." end,
+        [1] = function(skillID)
+            if     (skillID == 1)  then return "增加我方全体部队的攻击力。"
+            elseif (skillID == 2)  then return "增加我方全体部队的防御力。"
+            elseif (skillID == 3)  then return "增加我方全体部队的当前HP。"
+            elseif (skillID == 4)  then return "减少对方全体部队的当前HP，但最少剩余1。"
+            elseif (skillID == 5)  then return "增加我方全体部队的移动力。"
+            elseif (skillID == 6)  then return "增加我方全体远程部队的射程上限。"
+            elseif (skillID == 7)  then return "使我方步兵系以外的全体部队变为未行动的状态。"
+            elseif (skillID == 8)  then return "增加我方所有建筑的金钱收入。"
+            elseif (skillID == 9)  then return "以我军当前收入的某个百分比，增加我军资金。"
+            elseif (skillID == 10) then return "减少所有对手的能量值。"
+            else                        return "未知23:" .. (skillID or "")
+            end
+        end,
+        [2] = function(skillID)
+            return "Untranslated..."
+        end,
     },
-    --]]
     [24] = {
         [1] = function(account, password)
             return "您确定要用以下账号和密码进行注册吗？\n" .. account .. "\n" .. password
@@ -858,12 +803,22 @@ local s_Texts = {
             return "Are you sure to register with the following account and password:\n" .. account .. "\n" .. password
         end,
     },
-    --[[
     [25] = {
-        [1] = function() return "该账号已被注册，请使用其他账号。"                                  end,
-        [2] = function() return "The account is registered already. Please use another account." end,
+        [1] = function(textType)
+            if     (textType == "Energy") then return "能量"
+            elseif (textType == "Player") then return "玩家"
+            elseif (textType == "Fund")   then return "金钱"
+            else                               return "未知25:" .. (textType or "")
+            end
+        end,
+        [2] = function(textType)
+            if     (textType == "Energy") then return "Energy"
+            elseif (textType == "Player") then return "Player"
+            elseif (textType == "Fund")   then return "Fund"
+            else                               return "Unknown25:" .. (textType or "")
+            end
+        end,
     },
-    --]]
     [26] = {
         [1] = function(account) return "欢迎登陆，【" .. account .. "】！" end,
         [2] = function(account) return "Welcome, " .. account .. "!"      end,
@@ -1119,7 +1074,6 @@ local s_Texts = {
         [1] = function() return "您输入的密码无效，请重试。"                   end,
         [2] = function() return "The password is invalid. Please try again." end,
     },
-    ]]
     [62] = {
         [1] = function(nickname) return "玩家：" .. nickname    end,
         [2] = function(nickname) return "Player:  " .. nickname end,
@@ -1132,6 +1086,7 @@ local s_Texts = {
         [1] = function(energy) return "能量：" .. energy    end,
         [2] = function(energy) return "Energy:  " .. energy end,
     },
+    ]]
     [65] = {
         [1] = function(textType)
             if     (textType == "ActionID")            then return "行动数"

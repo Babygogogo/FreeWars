@@ -20,14 +20,12 @@ local RepairDoer = requireFW("src.global.functions.class")("RepairDoer")
 local GameConstantFunctions  = requireFW("src.app.utilities.GameConstantFunctions")
 local LocalizationFunctions  = requireFW("src.app.utilities.LocalizationFunctions")
 local SingletonGetters       = requireFW("src.app.utilities.SingletonGetters")
-local SkillModifierFunctions = requireFW("src.app.utilities.SkillModifierFunctions")
 local ComponentManager       = requireFW("src.global.components.ComponentManager")
 
 RepairDoer.EXPORTED_METHODS = {
     "getRepairTargetCategoryFullName",
     "getRepairTargetCategory",
     "canRepairTarget",
-    "getNormalizedRepairAmount",
 }
 
 --------------------------------------------------------------------------------
@@ -82,16 +80,6 @@ function RepairDoer:canRepairTarget(target)
     end
 
     return false
-end
-
-function RepairDoer:getNormalizedRepairAmount()
-    local playerIndex = self.m_Owner:getPlayerIndex()
-    if (playerIndex < 1) then
-        return self.m_Template.amount
-    else
-        local modelPlayer = SingletonGetters.getModelPlayerManager(self.m_ModelSceneWar):getModelPlayer(self.m_Owner:getPlayerIndex())
-        return self.m_Template.amount + SkillModifierFunctions.getRepairAmountModifier(modelPlayer:getModelSkillConfiguration())
-    end
 end
 
 return RepairDoer

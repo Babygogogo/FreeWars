@@ -164,7 +164,6 @@ local function setStateMain(self, isPlayerLoggedIn)
     if (isPlayerLoggedIn) then
         self.m_View:setItems({
             self.m_ItemManageWar,
-            self.m_ItemConfigSkills,
             self.m_ItemManageReplay,
             self.m_ItemViewGameRecord,
             self.m_ItemLogin,
@@ -204,18 +203,6 @@ local function initItemAuxiliaryCommands(self)
             setStateAuxiliaryCommands(self)
         end,
     }
-end
-
-local function initItemConfigSkills(self)
-    local item = {
-        name     = getLocalizedText(1, "ConfigSkills"),
-        callback = function()
-            self:setMenuEnabled(false)
-                :getModelSkillConfigurator():setEnabled(true)
-        end,
-    }
-
-    self.m_ItemConfigSkills = item
 end
 
 local function initItemContinue(self)
@@ -351,7 +338,6 @@ end
 --------------------------------------------------------------------------------
 function ModelMainMenu:ctor(param)
     initItemAuxiliaryCommands(  self)
-    initItemConfigSkills(       self)
     initItemContinue(           self)
     initItemExitWar(            self)
     initItemHelp(               self)
@@ -455,10 +441,6 @@ end
 
 function ModelMainMenu:getModelReplayManager()
     return getActorReplayManager(self):getModel()
-end
-
-function ModelMainMenu:getModelSkillConfigurator()
-    return getActorSkillConfigurator(self):getModel()
 end
 
 return ModelMainMenu

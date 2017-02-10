@@ -10,6 +10,7 @@ local InstantSkillExecutor   = requireFW("src.app.utilities.InstantSkillExecutor
 local LocalizationFunctions  = requireFW("src.app.utilities.LocalizationFunctions")
 local SerializationFunctions = requireFW("src.app.utilities.SerializationFunctions")
 local SingletonGetters       = requireFW("src.app.utilities.SingletonGetters")
+local SkillDataAccessors     = requireFW("src.app.utilities.SkillDataAccessors")
 local SkillModifierFunctions = requireFW("src.app.utilities.SkillModifierFunctions")
 local SupplyFunctions        = requireFW("src.app.utilities.SupplyFunctions")
 local TableFunctions         = requireFW("src.app.utilities.TableFunctions")
@@ -43,8 +44,10 @@ local getScriptEventDispatcher      = SingletonGetters.getScriptEventDispatcher
 local isTotalReplay                 = SingletonGetters.isTotalReplay
 local isTileVisible                 = VisibilityFunctions.isTileVisibleToPlayerIndex
 local isUnitVisible                 = VisibilityFunctions.isUnitOnMapVisibleToPlayerIndex
-local next, pairs, ipairs, unpack   = next, pairs, ipairs, unpack
 local supplyWithAmmoAndFuel         = SupplyFunctions.supplyWithAmmoAndFuel
+
+local math                          = math
+local next, pairs, ipairs, unpack   = next, pairs, ipairs, unpack
 
 --------------------------------------------------------------------------------
 -- The functions for dispatching events.
@@ -84,7 +87,7 @@ end
 
 local function promoteModelUnitOnProduce(modelUnit, modelSceneWar)
     local modelPlayer = getModelPlayerManager(modelSceneWar):getModelPlayer(modelUnit:getPlayerIndex())
-    local modifier    = SkillModifierFunctions.getPassivePromotionModifier(modelPlayer:getModelSkillConfiguration())
+    local modifier    = 0 -- SkillModifierFunctions.getPassivePromotionModifier(modelPlayer:getModelSkillConfiguration())
     if ((modifier > 0) and (modelUnit.setCurrentPromotion)) then
         modelUnit:setCurrentPromotion(modifier)
     end
@@ -275,14 +278,8 @@ local function getBaseDamageCostWithTargetAndDamage(target, damage)
     end
 end
 
-local function getSkillModifiedDamageCost(cost, modelPlayer)
-    local modifier = SkillModifierFunctions.getEnergyGrowthRateModifier(modelPlayer:getModelSkillConfiguration())
-    return math.floor(cost * (100 + modifier) / 100)
-end
-
-local function getIncomeWithDamageCost(targetDamageCost, modelPlayer)
-    local modifier = SkillModifierFunctions.getAttackDamageCostToFundModifier(modelPlayer:getModelSkillConfiguration())
-    return math.floor(targetDamageCost * modifier / 100)
+local function getEnergyModifierWithTargetAndDamage(target, damage)
+    return (target:getNormalizedCurrentHP() - math.ceil(math.max(0, target:getCurrentHP() - damage) / 10)) * 100
 end
 
 local function getAdjacentPlasmaGridIndexes(gridIndex, modelTileMap)
@@ -414,25 +411,6 @@ local function executeGetRankingList(action, modelScene)
     local modelGameRecordViewer = modelScene:getModelMainMenu():getModelGameRecordViewer()
     if (modelGameRecordViewer:isRetrievingRankingList(action.rankingListIndex)) then
         modelGameRecordViewer:updateWithRankingList(action.rankingList, action.rankingListIndex)
-    end
-end
-
-local function executeGetSkillConfiguration(action, modelScene)
-    assert(not IS_SERVER, "ActionExecutor-executeGetSkillConfiguration() should not be invoked on the server.")
-
-    local skillConfigurationID   = action.skillConfigurationID
-    local skillConfiguration     = action.skillConfiguration
-    local modelMainMenu          = modelScene:getModelMainMenu()
-    local modelSkillConfigurator = modelMainMenu:getModelSkillConfigurator()
-    local modelNewWarCreator     = modelMainMenu:getModelNewWarCreator()
-    local modelJoinWarSelector   = modelMainMenu:getModelJoinWarSelector()
-
-    if (modelSkillConfigurator:isRetrievingSkillConfiguration(skillConfigurationID)) then
-        modelSkillConfigurator:updateWithSkillConfiguration(skillConfiguration)
-    elseif (modelNewWarCreator:isRetrievingSkillConfiguration(skillConfigurationID)) then
-        modelNewWarCreator:updateWithSkillConfiguration(skillConfiguration, skillConfigurationID)
-    elseif (modelJoinWarSelector:isRetrievingSkillConfiguration(skillConfigurationID)) then
-        modelJoinWarSelector:updateWithSkillConfiguration(skillConfiguration, skillConfigurationID)
     end
 end
 
@@ -577,14 +555,6 @@ local function executeReloadSceneWar(action, modelScene)
     end
 end
 
-local function executeSetSkillConfiguration(action, modelScene)
-    if (IS_SERVER) then
-        PlayerProfileManager.setSkillConfiguration(action.playerAccount, action.skillConfigurationID, action.skillConfiguration)
-    else
-        getModelMessageIndicator(modelScene):showMessage(getLocalizedText(81, "SucceedToSetSkillConfiguration"))
-    end
-end
-
 local function executeSyncSceneWar(action, modelScene)
     assert(not IS_SERVER, "ActionExecutor-executeSyncSceneWar() should not be invoked on the server.")
     -- Nothing to do.
@@ -593,20 +563,26 @@ end
 --------------------------------------------------------------------------------
 -- The executors for war actions.
 --------------------------------------------------------------------------------
-local function executeActivateSkillGroup(action, modelSceneWar)
+local function executeActivateSkill(action, modelSceneWar)
     if (not modelSceneWar.isModelSceneWar) then
         return
     end
     modelSceneWar:setExecutingAction(true)
     updateTilesAndUnitsBeforeExecutingAction(action, modelSceneWar)
 
-    local skillGroupID = action.skillGroupID
-    local playerIndex  = getModelTurnManager(modelSceneWar):getPlayerIndex()
-    local modelPlayer  = getModelPlayerManager(modelSceneWar):getModelPlayer(playerIndex)
-    modelPlayer:getModelSkillConfiguration():setActivatingSkillGroupId(skillGroupID)
-    modelPlayer:setDamageCost(modelPlayer:getDamageCost() - modelPlayer:getDamageCostForSkillGroupId(skillGroupID))
-        :setSkillActivatedCount(modelPlayer:getSkillActivatedCount() + 1)
-    InstantSkillExecutor.activateSkillGroup(modelSceneWar, skillGroupID)
+    local skillID                 = action.skillID
+    local skillLevel              = action.skillLevel
+    local isActiveSkill           = action.isActiveSkill
+    local playerIndex             = getModelTurnManager(modelSceneWar):getPlayerIndex()
+    local modelPlayer             = getModelPlayerManager(modelSceneWar):getModelPlayer(playerIndex)
+    local modelSkillConfiguration = modelPlayer:getModelSkillConfiguration()
+    modelPlayer:setEnergy(modelPlayer:getEnergy() - SkillDataAccessors.getSkillPoints(skillID, skillLevel, isActiveSkill))
+    if (not isActiveSkill) then
+    else
+        modelPlayer:setActivatingSkill(true)
+        InstantSkillExecutor.executeInstantSkill(modelSceneWar, skillID, skillLevel)
+        modelSkillConfiguration:getModelSkillGroupActive():pushBackSkill(skillID, skillLevel)
+    end
 
     if ((IS_SERVER) or (modelSceneWar:isFastExecutingActions())) then
         modelSceneWar:setExecutingAction(false)
@@ -667,10 +643,12 @@ local function executeAttack(action, modelSceneWar)
         local attackerModelPlayer = modelPlayerManager:getModelPlayer(attackerPlayerIndex)
         local targetModelPlayer   = modelPlayerManager:getModelPlayer(targetPlayerIndex)
 
-        attackerModelPlayer:addDamageCost(getSkillModifiedDamageCost(attackerDamageCost * 2 + targetDamageCost,     attackerModelPlayer))
-        targetModelPlayer  :addDamageCost(getSkillModifiedDamageCost(attackerDamageCost     + targetDamageCost * 2, targetModelPlayer))
-        attackerModelPlayer:setFund(attackerModelPlayer:getFund() + getIncomeWithDamageCost(targetDamageCost,   attackerModelPlayer))
-        targetModelPlayer  :setFund(targetModelPlayer  :getFund() + getIncomeWithDamageCost(attackerDamageCost, targetModelPlayer))
+        if (not attackerModelPlayer:isActivatingSkill()) then
+            attackerModelPlayer:setEnergy(attackerModelPlayer:getEnergy() + getEnergyModifierWithTargetAndDamage(attacker, counterDamage) + getEnergyModifierWithTargetAndDamage(attackTarget, attackDamage))
+        end
+        if (not targetModelPlayer:isActivatingSkill()) then
+            targetModelPlayer  :setEnergy(targetModelPlayer:getEnergy()   + getEnergyModifierWithTargetAndDamage(attacker, counterDamage) + getEnergyModifierWithTargetAndDamage(attackTarget, attackDamage))
+        end
 
         dispatchEvtModelPlayerUpdated(modelSceneWar, attackerPlayerIndex)
     end
@@ -1744,7 +1722,6 @@ function ActionExecutor.execute(action, modelScene)
     elseif (actionCode == ACTION_CODES.ActionGetPlayerProfile)             then executeGetPlayerProfile(            action, modelScene)
     elseif (actionCode == ACTION_CODES.ActionGetRankingList)               then executeGetRankingList(              action, modelScene)
     elseif (actionCode == ACTION_CODES.ActionGetReplayConfigurations)      then executeGetReplayConfigurations(     action, modelScene)
-    elseif (actionCode == ACTION_CODES.ActionGetSkillConfiguration)        then executeGetSkillConfiguration(       action, modelScene)
     elseif (actionCode == ACTION_CODES.ActionGetWaitingWarConfigurations)  then executeGetWaitingWarConfigurations( action, modelScene)
     elseif (actionCode == ACTION_CODES.ActionJoinWar)                      then executeJoinWar(                     action, modelScene)
     elseif (actionCode == ACTION_CODES.ActionLogin)                        then executeLogin(                       action, modelScene)
@@ -1755,9 +1732,8 @@ function ActionExecutor.execute(action, modelScene)
     elseif (actionCode == ACTION_CODES.ActionReloadSceneWar)               then executeReloadSceneWar(              action, modelScene)
     elseif (actionCode == ACTION_CODES.ActionRunSceneMain)                 then executeRunSceneMain(                action, modelScene)
     elseif (actionCode == ACTION_CODES.ActionRunSceneWar)                  then executeRunSceneWar(                 action, modelScene)
-    elseif (actionCode == ACTION_CODES.ActionSetSkillConfiguration)        then executeSetSkillConfiguration(       action, modelScene)
     elseif (actionCode == ACTION_CODES.ActionSyncSceneWar)                 then executeSyncSceneWar(                action, modelScene)
-    elseif (actionCode == ACTION_CODES.ActionActivateSkillGroup)           then executeActivateSkillGroup(          action, modelScene)
+    elseif (actionCode == ACTION_CODES.ActionActivateSkill)                then executeActivateSkill(               action, modelScene)
     elseif (actionCode == ACTION_CODES.ActionAttack)                       then executeAttack(                      action, modelScene)
     elseif (actionCode == ACTION_CODES.ActionBeginTurn)                    then executeBeginTurn(                   action, modelScene)
     elseif (actionCode == ACTION_CODES.ActionBuildModelTile)               then executeBuildModelTile(              action, modelScene)

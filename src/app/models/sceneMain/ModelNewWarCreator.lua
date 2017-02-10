@@ -113,16 +113,6 @@ function ModelNewWarCreator:setEnabled(enabled)
     return self
 end
 
-function ModelNewWarCreator:isRetrievingSkillConfiguration(skillConfigurationID)
-    return getActorWarConfigurator(self):getModel():isRetrievingSkillConfiguration(skillConfigurationID)
-end
-
-function ModelNewWarCreator:updateWithSkillConfiguration(skillConfiguration, skillConfigurationID)
-    getActorWarConfigurator(self):getModel():updateWithSkillConfiguration(skillConfiguration, skillConfigurationID)
-
-    return self
-end
-
 function ModelNewWarCreator:onButtonBackTouched()
     self:setEnabled(false)
     SingletonGetters.getModelMainMenu(self.m_ModelSceneMain):setMenuEnabled(true)

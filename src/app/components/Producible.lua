@@ -3,7 +3,6 @@ local Producible = requireFW("src.global.functions.class")("Producible")
 
 local GameConstantFunctions  = requireFW("src.app.utilities.GameConstantFunctions")
 local SingletonGetters       = requireFW("src.app.utilities.SingletonGetters")
-local SkillModifierFunctions = requireFW("src.app.utilities.SkillModifierFunctions")
 
 Producible.EXPORTED_METHODS = {
     "getProductionCost",
@@ -14,16 +13,7 @@ Producible.EXPORTED_METHODS = {
 -- The static functions.
 --------------------------------------------------------------------------------
 function Producible.getProductionCostWithTiledId(tiledID, modelPlayerManager)
-    local playerIndex = GameConstantFunctions.getPlayerIndexWithTiledId(tiledID)
-    local modifier    = SkillModifierFunctions.getProductionCostModifier(modelPlayerManager:getModelPlayer(playerIndex):getModelSkillConfiguration())
-    -- TODO: take the skills of the opponents into account.
-
-    local baseCost = GameConstantFunctions.getTemplateModelUnitWithTiledId(tiledID).Producible.productionCost
-    if (modifier > 0) then
-        return math.floor(baseCost * (1 + modifier / 100))
-    else
-        return math.floor(baseCost / (1 - modifier / 100))
-    end
+    return GameConstantFunctions.getTemplateModelUnitWithTiledId(tiledID).Producible.productionCost
 end
 
 --------------------------------------------------------------------------------

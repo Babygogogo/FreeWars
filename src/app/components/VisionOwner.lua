@@ -46,17 +46,12 @@ function VisionOwner:getVisionForPlayerIndex(playerIndex, gridIndex)
     else
         local modelSceneWar           = self.m_ModelSceneWar
         local baseVision              = template.vision
-        local modelSkillConfiguration = SingletonGetters.getModelPlayerManager(modelSceneWar):getModelPlayer(playerIndex):getModelSkillConfiguration()
         if (owner.getTileType) then
-            if (ownerPlayerIndex == playerIndex) then
-                return baseVision + SkillModifierFunctions.getVisionModifierForTiles(modelSkillConfiguration)
-            else
-                return baseVision
-            end
+            return baseVision
         else
             local tileType = getModelTileMap(modelSceneWar):getModelTile(gridIndex or owner:getGridIndex()):getTileType()
             local bonus    = (template.bonusOnTiles) and (template.bonusOnTiles[tileType] or 0) or (0)
-            return baseVision + bonus + SkillModifierFunctions.getVisionModifierForUnits(modelSkillConfiguration)
+            return baseVision + bonus
         end
     end
 end

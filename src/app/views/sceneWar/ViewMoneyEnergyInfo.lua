@@ -128,13 +128,12 @@ end
 function ViewMoneyEnergyInfo:updateWithModelPlayer(modelPlayer, playerIndex)
     assert(type(playerIndex) == "number", "ViewMoneyEnergyInfo:updateWithModelPlayer() invalid playerIndex: " .. (playerIndex or ""))
 
-    local modelSceneWar      = self.m_ModelSceneWar
-    local label              = self.m_Label
-    local energy, req1, req2 = modelPlayer:getEnergy()
-    label:setString(string.format("%s\n%s\n%s",
-        getLocalizedText(62, modelPlayer:getNickname()),
-        getLocalizedText(63, ((not isTotalReplay(modelSceneWar)) and (getModelFogMap(modelSceneWar):isFogOfWarCurrently()) and (playerIndex ~= getPlayerIndexLoggedIn(modelSceneWar))) and ("--") or (modelPlayer:getFund())),
-        getLocalizedText(64, string.format("%.2f/%s/%s", energy, "" .. (req1 or "--"), "" .. (req2 or "--")))
+    local modelSceneWar = self.m_ModelSceneWar
+    local label         = self.m_Label
+    label:setString(string.format("%s: %s\n%s: %s\n%s: %d",
+        getLocalizedText(25, "Player"),  modelPlayer:getNickname(),
+        getLocalizedText(25, "Fund"),    ((not isTotalReplay(modelSceneWar)) and (getModelFogMap(modelSceneWar):isFogOfWarCurrently()) and (playerIndex ~= getPlayerIndexLoggedIn(modelSceneWar))) and ("--") or (modelPlayer:getFund()),
+        getLocalizedText(25, "Energy"),  modelPlayer:getEnergy()
     ))
     label:setScaleX(math.min(1, LABEL_MAX_WIDTH / label:getContentSize().width))
 
