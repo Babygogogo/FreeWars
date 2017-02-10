@@ -10,6 +10,7 @@ local InstantSkillExecutor   = requireFW("src.app.utilities.InstantSkillExecutor
 local LocalizationFunctions  = requireFW("src.app.utilities.LocalizationFunctions")
 local SerializationFunctions = requireFW("src.app.utilities.SerializationFunctions")
 local SingletonGetters       = requireFW("src.app.utilities.SingletonGetters")
+local SkillDataAccessors     = requireFW("src.app.utilities.SkillDataAccessors")
 local SkillModifierFunctions = requireFW("src.app.utilities.SkillModifierFunctions")
 local SupplyFunctions        = requireFW("src.app.utilities.SupplyFunctions")
 local TableFunctions         = requireFW("src.app.utilities.TableFunctions")
@@ -278,7 +279,7 @@ local function getBaseDamageCostWithTargetAndDamage(target, damage)
 end
 
 local function getEnergyModifierWithTargetAndDamage(target, damage)
-    return (target:getNormalizedCurrentHP() - math.ceil(math.max(0, target:getCurrentHP() - damage) / 10)) * 100
+    return (target:getNormalizedCurrentHP() - math.ceil(math.max(0, target:getCurrentHP() - damage) / 10)) * 100000
 end
 
 local function getSkillModifiedDamageCost(cost, modelPlayer)

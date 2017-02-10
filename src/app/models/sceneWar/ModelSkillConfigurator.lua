@@ -90,14 +90,16 @@ local function generateItemsForStateMain(self)
 end
 
 local function generateItemsForStateChooseActiveSkillLevel(self, skillID)
-    local modelSceneWar       = self.m_ModelSceneWar
-    local warID               = SingletonGetters.getWarId(modelSceneWar)
-    local actionID            = SingletonGetters.getActionId(modelSceneWar) + 1
-    local modelConfirmBox     = SingletonGetters.getModelConfirmBox(modelSceneWar)
-    local modelWarCommandMenu = SingletonGetters.getModelWarCommandMenu(modelSceneWar)
-    local _, modelPlayer      = SingletonGetters.getModelPlayerManager(modelSceneWar):getPlayerIndexLoggedIn()
-    local energy              = modelPlayer:getEnergy()
-    local skillData           = SkillDataAccessors.getSkillData(skillID)
+    local modelSceneWar         = self.m_ModelSceneWar
+    local warID                 = SingletonGetters.getWarId(modelSceneWar)
+    local actionID              = SingletonGetters.getActionId(modelSceneWar) + 1
+    local modelConfirmBox       = SingletonGetters.getModelConfirmBox(modelSceneWar)
+    local modelWarCommandMenu   = SingletonGetters.getModelWarCommandMenu(modelSceneWar)
+    local modelMessageIndicator = SingletonGetters.getModelMessageIndicator(modelSceneWar)
+    local eventDispatcher       = SingletonGetters.getScriptEventDispatcher(modelSceneWar)
+    local _, modelPlayer        = SingletonGetters.getModelPlayerManager(modelSceneWar):getPlayerIndexLoggedIn()
+    local energy                = modelPlayer:getEnergy()
+    local skillData             = SkillDataAccessors.getSkillData(skillID)
 
     local items            = {}
     local hasAvailableItem = false
@@ -112,6 +114,12 @@ local function generateItemsForStateChooseActiveSkillLevel(self, skillID)
                 modelConfirmBox:setConfirmText(generateActiveSkillConfirmationText(skillID, level))
                     :setOnConfirmYes(function()
                         sendActionActivateSkill(warID, actionID, skillID, level, true)
+                        modelMessageIndicator:showPersistentMessage(getLocalizedText(80, "TransferingData"))
+                        eventDispatcher:dispatchEvent({
+                            name    = "EvtIsWaitingForServerResponse",
+                            waiting = true,
+                        })
+                        modelWarCommandMenu:setEnabled(false)
                         modelConfirmBox:setEnabled(false)
                     end)
                     :setEnabled(true)

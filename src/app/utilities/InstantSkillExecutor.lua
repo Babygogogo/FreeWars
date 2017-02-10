@@ -87,7 +87,7 @@ s_Executors.execute9 = function(modelSceneWar, level)
         end
     end)
 
-    local modelPlayer = SingletonGetters.getModelPlayerManager():getModelPlayer(playerIndex)
+    local modelPlayer = SingletonGetters.getModelPlayerManager(modelSceneWar):getModelPlayer(playerIndex)
     modelPlayer:setFund(round(modelPlayer:getFund() + fund * getSkillModifier(9, level, true) / 100))
 end
 

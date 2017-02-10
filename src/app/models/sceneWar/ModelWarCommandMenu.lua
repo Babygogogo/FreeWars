@@ -531,14 +531,18 @@ local function setStateHelp(self)
     end
 end
 
+local getActorSkillConfigurator
 local function setStateMain(self)
     self.m_State = "stateMain"
     updateStringWarInfo(  self)
     updateStringSkillInfo(self)
+    getActorSkillConfigurator(self):getModel():setEnabled(false)
 
     if (self.m_View) then
         self.m_View:setItems(getAvailableMainItems(self))
+            :setMenuVisible(true)
             :setOverviewString(self.m_StringWarInfo)
+            :setOverviewVisible(true)
             :setEnabled(true)
     end
 end
@@ -569,7 +573,7 @@ end
 --------------------------------------------------------------------------------
 -- The composition elements.
 --------------------------------------------------------------------------------
-local function getActorSkillConfigurator(self)
+getActorSkillConfigurator = function(self)
     if (not self.m_ActorSkillConfigurator) then
         local model = Actor.createModel("sceneWar.ModelSkillConfigurator")
         model:onStartRunning(self.m_ModelSceneWar)
