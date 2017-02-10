@@ -15,6 +15,7 @@ local string, table    = string, table
 local getLocalizedText = LocalizationFunctions.getLocalizedText
 
 local ACTION_CODE_ACTIVATE_SKILL = ActionCodeFunctions.getActionCode("ActionActivateSkill")
+local ACTION_CODE_DECLARE_SKILL  = ActionCodeFunctions.getActionCode("ActionDeclareSkill")
 
 --------------------------------------------------------------------------------
 -- The util functions.
@@ -22,8 +23,10 @@ local ACTION_CODE_ACTIVATE_SKILL = ActionCodeFunctions.getActionCode("ActionActi
 local function generateSkillInfoText(self)
     local stringList = {}
     SingletonGetters.getModelPlayerManager(self.m_ModelSceneWar):forEachModelPlayer(function(modelPlayer, playerIndex)
-        stringList[#stringList + 1] = string.format("%s %d: %s\n%s",
+        stringList[#stringList + 1] = string.format("%s %d: %s    %s: %d    %s: %s\n%s",
             getLocalizedText(65, "Player"), playerIndex, modelPlayer:getNickname(),
+            getLocalizedText(22, "CurrentEnergy"), modelPlayer:getEnergy(),
+            getLocalizedText(22, "DeclareSkill"),  getLocalizedText(22, modelPlayer:isSkillDeclared() and "Yes" or "No"),
             SkillDescriptionFunctions.getBriefDescription(modelPlayer:getModelSkillConfiguration())
         )
     end)

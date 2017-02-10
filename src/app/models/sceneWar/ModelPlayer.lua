@@ -72,7 +72,7 @@ function ModelPlayer:toSerializableReplayData()
         hasVotedForDraw     = nil,
         isActivatingSkill   = false,
         isAlive             = true,
-        isSkillDeclared     = self.m_IsSkillDeclared,
+        isSkillDeclared     = false,
         nickname            = self:getNickname(),
         skillConfiguration  = self:getModelSkillConfiguration():toSerializableReplayData(),
         playerIndex         = self.m_PlayerIndex,

@@ -663,15 +663,17 @@
 
 .SceneWar {
     .SinglePlayerData {
-        playerIndex         0 : integer
-        account             1 : string
-        nickname            2 : string
-        fund                3 : integer
-        isAlive             4 : boolean
-        energy              5 : integer
-        skillConfiguration  6 : SingleSkillConfiguration
-        hasVotedForDraw     7 : boolean
-        isActivatingSkill   8 : boolean
+        playerIndex          0 : integer
+        account              1 : string
+        nickname             2 : string
+        fund                 3 : integer
+        isAlive              4 : boolean
+        energy               5 : integer
+        skillConfiguration   6 : SingleSkillConfiguration
+        hasVotedForDraw      7 : boolean
+        isActivatingSkill    8 : boolean
+        isSkillDeclared      9 : boolean
+        canActivateSkill    10 : boolean
     }
 
     .TurnData {

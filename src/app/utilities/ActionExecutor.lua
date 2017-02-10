@@ -990,6 +990,31 @@ local function executeCaptureModelTile(action, modelSceneWar)
     end
 end
 
+local function executeDeclareSkill(action, modelSceneWar)
+    if (not modelSceneWar.isModelSceneWar) then
+        return
+    end
+    modelSceneWar:setExecutingAction(true)
+
+    local playerIndex             = getModelTurnManager(modelSceneWar):getPlayerIndex()
+    local modelPlayer             = getModelPlayerManager(modelSceneWar):getModelPlayer(playerIndex)
+    modelPlayer:setEnergy(modelPlayer:getEnergy() - SkillDataAccessors.getSkillDeclarationCost())
+        :setSkillDeclared(true)
+
+    if ((IS_SERVER) or (modelSceneWar:isFastExecutingActions())) then
+        modelSceneWar:setExecutingAction(false)
+    else
+        if (not isTotalReplay(modelSceneWar)) then
+            cleanupOnReceivingResponseFromServer(modelSceneWar)
+        end
+        SingletonGetters.getModelMessageIndicator(modelSceneWar):showMessage(string.format("[%s]%s!", modelPlayer:getNickname(), getLocalizedText(22, "HasDeclaredSkill")))
+
+        dispatchEvtModelPlayerUpdated(modelSceneWar, playerIndex)
+
+        modelSceneWar:setExecutingAction(false)
+    end
+end
+
 local function executeDestroyOwnedModelUnit(action, modelSceneWar)
     if (not modelSceneWar.isModelSceneWar) then
         return
@@ -1738,6 +1763,7 @@ function ActionExecutor.execute(action, modelScene)
     elseif (actionCode == ACTION_CODES.ActionBeginTurn)                    then executeBeginTurn(                   action, modelScene)
     elseif (actionCode == ACTION_CODES.ActionBuildModelTile)               then executeBuildModelTile(              action, modelScene)
     elseif (actionCode == ACTION_CODES.ActionCaptureModelTile)             then executeCaptureModelTile(            action, modelScene)
+    elseif (actionCode == ACTION_CODES.ActionDeclareSkill)                 then executeDeclareSkill(                action, modelScene)
     elseif (actionCode == ACTION_CODES.ActionDestroyOwnedModelUnit)        then executeDestroyOwnedModelUnit(       action, modelScene)
     elseif (actionCode == ACTION_CODES.ActionDive)                         then executeDive(                        action, modelScene)
     elseif (actionCode == ACTION_CODES.ActionDropModelUnit)                then executeDropModelUnit(               action, modelScene)

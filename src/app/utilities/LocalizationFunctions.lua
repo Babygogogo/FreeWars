@@ -551,6 +551,7 @@ local s_Texts = {
             elseif (actionName == "ActionBeginTurn")              then return "开始回合"
             elseif (actionName == "ActionBuildModelTile")         then return "建造"
             elseif (actionName == "ActionCaptureModelTile")       then return "占领"
+            elseif (actionName == "ActionDeclareSkill")           then return "发起特技宣言"
             elseif (actionName == "ActionDestroyOwnedModelUnit")  then return "自爆"
             elseif (actionName == "ActionDive")                   then return "下潜"
             elseif (actionName == "ActionDropModelUnit")          then return "卸载"
@@ -576,6 +577,7 @@ local s_Texts = {
             elseif (actionName == "ActionBeginTurn")              then return "BeginTurn"
             elseif (actionName == "ActionBuildModelTile")         then return "BuildTile"
             elseif (actionName == "ActionCaptureModelTile")       then return "Capture"
+            elseif (actionName == "ActionDeclareSkill")           then return "DeclareSkill"
             elseif (actionName == "ActionDestroyOwnedModelUnit")  then return "SelfDestruction"
             elseif (actionName == "ActionDive")                   then return "Dive"
             elseif (actionName == "ActionDropModelUnit")          then return "Drop"
@@ -753,11 +755,14 @@ local s_Texts = {
             elseif (textType == "CurrentEnergy")            then return "当前能量值"
             elseif (textType == "DeclareSkill")             then return "发起特技宣言"
             elseif (textType == "EnergyCost")               then return "能量消耗"
+            elseif (textType == "HasDeclaredSkill")         then return "已发起了特技宣言"
             elseif (textType == "HelpForActiveSkill")       then return s_LongText6_1
             elseif (textType == "Level")                    then return "等级"
             elseif (textType == "Modifier")                 then return "增幅"
+            elseif (textType == "No")                       then return "否"
             elseif (textType == "NoAvailableOption")        then return "无可用选项"
             elseif (textType == "SkillInfo")                then return "技 能 信 息"
+            elseif (textType == "Yes")                      then return "是"
             else                                                 return "未知22:" .. (textType or "")
             end
         end,
@@ -769,11 +774,14 @@ local s_Texts = {
             elseif (textType == "CurrentEnergy")            then return "Current Energy"
             elseif (textType == "DeclareSkill")             then return "Declare Skill"
             elseif (textType == "EnergyCost")               then return "Cost"
+            elseif (textType == "HasDeclaredSkill")         then return "has declared skill activation"
             elseif (textType == "HelpForActiveSkill")       then return s_LongText6_2
             elseif (textType == "Level")                    then return "Level"
             elseif (textType == "Modifier")                 then return "Modifier"
+            elseif (textType == "No")                       then return "No"
             elseif (textType == "NoAvailableOption")        then return "No Options"
             elseif (textType == "SkillInfo")                then return "Skill Info"
+            elseif (textType == "Yes")                      then return "Yes"
             else                                                 return "Unknown22:" .. (textType or "")
             end
         end,
