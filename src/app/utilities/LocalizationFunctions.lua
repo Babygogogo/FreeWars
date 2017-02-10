@@ -149,6 +149,27 @@ local s_LongText5_1 = [[
 ]]
 local s_LongText5_2 = "Untranslated"
 
+local s_LongText6_1 = [[
+请选择您需要发动的特技。
+
+请注意：
+1. 大部分特技的效果只维持到您下个回合初。
+2. 一旦发动特技，则直至您下个回合开始前，您都无法再通过战斗获得能量。
+3. 您可以多次发动同一个特技；如果可能，其效果将被自动叠加（比如全军加攻等技能）。
+4. 您可以任意多次交替发动特技和操作部队。
+5. 如有部分按钮不可点击，则是因为您的能量不足。
+]]
+local s_LongText6_2 = [[
+Please choose a skill.
+
+Note:
+1. The skill effect lasts till the beginning of your next turn.
+2. Once you activate a skill, you won't get any energy through battle until your next turn begins."
+3. You may activate a same skill multiple times.
+4. You may move your units, activate skills, again move your units, again activate skills and so on.
+5. If your energy is not enough, some buttons will be unavailable.
+]]
+
 --------------------------------------------------------------------------------
 -- The private functions.
 --------------------------------------------------------------------------------
@@ -723,27 +744,29 @@ local s_Texts = {
     },
     [22] = {
         [1] = function(textType)
-            if     (textType == "ActivateSkill")      then return "发动特技"
-            elseif (textType == "ConfigSkill")        then return "配 置 技 能"
-            elseif (textType == "EnergyCost")         then return "能量消耗"
-            elseif (textType == "HelpForActiveSkill") then return "请选择您需要发动的特技。\n\n请注意：\n1. 大部分特技的效果只维持到您下个回合初。\n2. 一旦发动特技，则直至您下个回合开始前，您都无法再通过战斗获得能量。"
-            elseif (textType == "Level")              then return "等级"
-            elseif (textType == "Modifier")           then return "增幅"
-            elseif (textType == "NoAvailableOption")  then return "无可用选项"
-            elseif (textType == "SkillInfo")          then return "技 能 信 息"
-            else                                           return "未知22:" .. (textType or "")
+            if     (textType == "ActivateSkill")           then return "发动特技"
+            elseif (textType == "ConfigSkill")             then return "配 置 技 能"
+            elseif (textType == "ConfirmationActiveSkill") then return "您确定要发动如下特技吗？"
+            elseif (textType == "EnergyCost")              then return "能量消耗"
+            elseif (textType == "HelpForActiveSkill")      then return s_LongText6_1
+            elseif (textType == "Level")                   then return "等级"
+            elseif (textType == "Modifier")                then return "增幅"
+            elseif (textType == "NoAvailableOption")       then return "无可用选项"
+            elseif (textType == "SkillInfo")               then return "技 能 信 息"
+            else                                                return "未知22:" .. (textType or "")
             end
         end,
         [2] = function(textType)
-            if     (textType == "ActivateSkill")      then return "ActivateSkill"
-            elseif (textType == "ConfigSkill")        then return "Config Skill"
-            elseif (textType == "EnergyCost")         then return "Cost"
-            elseif (textType == "HelpForActiveSkill") then return "Please choose a skill.\n\nNote:\n1. The skill effect lasts to your next turn.\n2. Once you activate a skill, you won't get any energy through battle until your next turn."
-            elseif (textType == "Level")              then return "Level"
-            elseif (textType == "Modifier")           then return "Modifier"
-            elseif (textType == "NoAvailableOption")  then return "No Options"
-            elseif (textType == "SkillInfo")          then return "Skill Info"
-            else                                           return "Unknown22:" .. (textType or "")
+            if     (textType == "ActivateSkill")           then return "ActivateSkill"
+            elseif (textType == "ConfigSkill")             then return "Config Skill"
+            elseif (textType == "ConfirmationActiveSkill") then return "Are you sure to activate the skill below?"
+            elseif (textType == "EnergyCost")              then return "Cost"
+            elseif (textType == "HelpForActiveSkill")      then return s_LongText6_2
+            elseif (textType == "Level")                   then return "Level"
+            elseif (textType == "Modifier")                then return "Modifier"
+            elseif (textType == "NoAvailableOption")       then return "No Options"
+            elseif (textType == "SkillInfo")               then return "Skill Info"
+            else                                                return "Unknown22:" .. (textType or "")
             end
         end,
     },

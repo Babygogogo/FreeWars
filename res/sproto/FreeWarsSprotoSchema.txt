@@ -23,7 +23,7 @@
     ActionRunSceneWar                  19 : ActionRunSceneWar
     ActionSyncSceneWar                 21 : ActionSyncSceneWar
 
-    ActionActivateSkillGroup          100 : ActionActivateSkillGroup
+    ActionActivateSkill               100 : ActionActivateSkill
     ActionAttack                      101 : ActionAttack
     ActionBeginTurn                   102 : ActionBeginTurn
     ActionBuildModelTile              103 : ActionBuildModelTile
@@ -189,7 +189,7 @@
     actionID         4 : integer
 }
 
-.ActionActivateSkillGroup {
+.ActionActivateSkill {
     actionCode        0 :  integer
     playerAccount     1 :  string
     playerPassword    2 :  string
@@ -199,7 +199,9 @@
     revealedTiles     6 : *TileData(positionIndex)
     actingUnitsData   7 : *UnitData(unitID)
     actingTilesData   8 : *TileData(positionIndex)
-    skillGroupID      9 :  integer
+    skillID           9 :  integer
+    skillLevel       10 :  integer
+    isActiveSkill    11 :  boolean
 }
 
 .ActionAttack {

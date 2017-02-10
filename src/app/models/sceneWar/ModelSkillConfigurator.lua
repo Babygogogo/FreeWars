@@ -1,7 +1,6 @@
 
 local ModelSkillConfigurator = class("ModelSkillConfigurator")
 
-local Actor                     = requireFW("src.global.actors.Actor")
 local ActionCodeFunctions       = requireFW("src.app.utilities.ActionCodeFunctions")
 local AuxiliaryFunctions        = requireFW("src.app.utilities.AuxiliaryFunctions")
 local LocalizationFunctions     = requireFW("src.app.utilities.LocalizationFunctions")
@@ -10,9 +9,12 @@ local SkillDataAccessors        = requireFW("src.app.utilities.SkillDataAccessor
 local SkillDescriptionFunctions = requireFW("src.app.utilities.SkillDescriptionFunctions")
 local WarFieldManager           = requireFW("src.app.utilities.WarFieldManager")
 local WebSocketManager          = requireFW("src.app.utilities.WebSocketManager")
+local Actor                     = requireFW("src.global.actors.Actor")
 
 local string, table    = string, table
 local getLocalizedText = LocalizationFunctions.getLocalizedText
+
+local ACTION_CODE_ACTIVATE_SKILL = ActionCodeFunctions.getActionCode("ActionActivateSkill")
 
 --------------------------------------------------------------------------------
 -- The util functions.
@@ -29,7 +31,7 @@ local function generateSkillInfoText(self)
     return table.concat(stringList, "\n--------------------\n")
 end
 
-local function generateActiveSkillText(skillID)
+local function generateActiveSkillDetailText(skillID)
     local textList = {
         string.format("%s: %s\n\n%s / %s / %s",
             getLocalizedText(5, skillID), getLocalizedText(23, skillID),
@@ -48,26 +50,87 @@ local function generateActiveSkillText(skillID)
     return table.concat(textList, "\n")
 end
 
+local function generateActiveSkillConfirmationText(skillID, skillLevel)
+    local skillData      = SkillDataAccessors.getSkillData(skillID)
+    local modifierUnit   = skillData.modifierUnit
+    local levelData      = skillData.levels[skillLevel]
+    local modifierActive = levelData.modifierActive
+    return string.format("%s\n%s %s%d\n%s: %d   %s: %s",
+        getLocalizedText(22, "ConfirmationActiveSkill"),
+        getLocalizedText(5, skillID), getLocalizedText(22, "Level"), skillLevel,
+        getLocalizedText(22, "EnergyCost"), levelData.pointsActive, getLocalizedText(22, "Modifier"), (modifierActive) and ("" .. modifierActive .. modifierUnit) or ("--" .. modifierUnit)
+    )
+end
+
 --------------------------------------------------------------------------------
 -- The functions for sending actions.
 --------------------------------------------------------------------------------
+local function sendActionActivateSkill(warID, actionID, skillID, skillLevel)
+    WebSocketManager.sendAction({
+        actionCode    = ACTION_CODE_ACTIVATE_SKILL,
+        warID         = warID,
+        actionID      = actionID,
+        skillID       = skillID,
+        skillLevel    = skillLevel,
+        isActiveSkill = true,
+    })
+end
 
 --------------------------------------------------------------------------------
 -- The dynamic items generators.
 --------------------------------------------------------------------------------
+local setStateActivateSkill
+local setStateChooseActiveSkillLevel
+local setStateMain
+
 local function generateItemsForStateMain(self)
     return {
         self.m_ItemActivateSkill,
     }
 end
 
-local function generateItemsForStateChooseActiveSkillLevel(self)
-    local items     = {}
-    local skillData = SkillDataAccessors.getSkillData(self.m_SkillID)
+local function generateItemsForStateChooseActiveSkillLevel(self, skillID)
+    local modelSceneWar       = self.m_ModelSceneWar
+    local warID               = SingletonGetters.getWarId(modelSceneWar)
+    local actionID            = SingletonGetters.getActionId(modelSceneWar) + 1
+    local modelConfirmBox     = SingletonGetters.getModelConfirmBox(modelSceneWar)
+    local modelWarCommandMenu = SingletonGetters.getModelWarCommandMenu(modelSceneWar)
+    local _, modelPlayer      = SingletonGetters.getModelPlayerManager(modelSceneWar):getPlayerIndexLoggedIn()
+    local energy              = modelPlayer:getEnergy()
+    local skillData           = SkillDataAccessors.getSkillData(skillID)
+
+    local items            = {}
+    local hasAvailableItem = false
     for level = skillData.minLevelActive, skillData.maxLevelActive do
+        local isAvailable = skillData.levels[level].pointsActive <= energy
+        hasAvailableItem  = hasAvailableItem or isAvailable
+
         items[#items + 1] = {
-            name     = getLocalizedText(22, "Level") .. level,
-            callback = function()
+            name        = getLocalizedText(22, "Level") .. level,
+            isAvailable = isAvailable,
+            callback    = function()
+                modelConfirmBox:setConfirmText(generateActiveSkillConfirmationText(skillID, level))
+                    :setOnConfirmYes(function()
+                        sendActionActivateSkill(warID, actionID, skillID, level, true)
+                        modelConfirmBox:setEnabled(false)
+                    end)
+                    :setEnabled(true)
+            end,
+        }
+    end
+
+    return items, hasAvailableItem
+end
+
+local function generateItemsForStateActivateSkill(self)
+    local items = {}
+    for _, skillID in ipairs(SkillDataAccessors.getSkillCategory("SkillsActive")) do
+        local subItems, hasAvailableSubItem = generateItemsForStateChooseActiveSkillLevel(self, skillID)
+        items[#items + 1] = {
+            name        = getLocalizedText(5, skillID),
+            isAvailable = hasAvailableSubItem,
+            callback    = function()
+                setStateChooseActiveSkillLevel(self, skillID, subItems)
             end,
         }
     end
@@ -78,24 +141,23 @@ end
 --------------------------------------------------------------------------------
 -- The state setters.
 --------------------------------------------------------------------------------
-local function setStateActivateSkill(self)
+setStateActivateSkill = function(self)
     self.m_State = "stateActivateSkill"
-    self.m_View:setMenuItems(self.m_ItemsForStateActivateSkill)
+    self.m_View:setMenuItems(generateItemsForStateActivateSkill(self))
         :setMenuTitleText(getLocalizedText(22, "ActivateSkill"))
         :setOverviewText(getLocalizedText(22, "HelpForActiveSkill"))
 end
 
-local function setStateChooseActiveSkillLevel(self, skillID)
-    self.m_State   = "stateChooseActiveSkillLevel"
-    self.m_SkillID = skillID
-    self.m_View:setMenuItems(generateItemsForStateChooseActiveSkillLevel(self))
-        :setOverviewText(generateActiveSkillText(skillID))
+setStateChooseActiveSkillLevel = function(self, skillID, menuItemsForStateChooseActiveSkillLevel)
+    self.m_State = "stateChooseActiveSkillLevel"
+    self.m_View:setMenuItems(menuItemsForStateChooseActiveSkillLevel)
+        :setOverviewText(generateActiveSkillDetailText(skillID))
 end
 
-local function setStateMain(self)
+setStateMain = function(self)
     self.m_State = "stateMain"
     self.m_View:setMenuItems(generateItemsForStateMain(self))
-        :setMenuTitleText(getLocalizedText(22, "ConfigSkill"))
+        :setMenuTitleText(getLocalizedText(22, "SkillInfo"))
         :setOverviewText(generateSkillInfoText(self))
 end
 
@@ -119,27 +181,12 @@ local function initItemPlaceHolder(self)
     }
 end
 
-local function initItemsForStateActivateSkill(self)
-    local items = {}
-    for _, skillID in ipairs(SkillDataAccessors.getSkillCategory("SkillsActive")) do
-        items[#items + 1] = {
-            name     = getLocalizedText(5, skillID),
-            callback = function()
-                setStateChooseActiveSkillLevel(self, skillID)
-            end,
-        }
-    end
-
-    self.m_ItemsForStateActivateSkill = items
-end
-
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
 function ModelSkillConfigurator:ctor()
-    initItemActivateSkill(         self)
-    initItemPlaceHolder(           self)
-    initItemsForStateActivateSkill(self)
+    initItemActivateSkill(self)
+    initItemPlaceHolder(  self)
 
     return self
 end

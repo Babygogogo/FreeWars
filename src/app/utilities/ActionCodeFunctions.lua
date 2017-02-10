@@ -24,7 +24,7 @@ local s_ActionCodes = {
     ActionRunSceneWar                  = 19,
     ActionSyncSceneWar                 = 21,
 
-    ActionActivateSkillGroup           = 100,
+    ActionActivateSkill                = 100,
     ActionAttack                       = 101,
     ActionBeginTurn                    = 102,
     ActionBuildModelTile               = 103,

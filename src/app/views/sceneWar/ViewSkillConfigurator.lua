@@ -106,7 +106,7 @@ local function createViewItem(item)
     view:getRendererNormal():setCascadeColorEnabled(true)
         :addChild(label)
 
-    if (item.available == false) then
+    if (item.isAvailable == false) then
         setButtonEnabled(view, false)
     end
 

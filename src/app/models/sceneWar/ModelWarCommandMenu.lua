@@ -45,7 +45,6 @@ local isTotalReplay            = SingletonGetters.isTotalReplay
 local round                    = requireFW("src.global.functions.round")
 local string, ipairs, pairs    = string, ipairs, pairs
 
-local ACTION_CODE_ACTIVATE_SKILL_GROUP = ActionCodeFunctions.getActionCode("ActionActivateSkillGroup")
 local ACTION_CODE_DESTROY_OWNED_UNIT   = ActionCodeFunctions.getActionCode("ActionDestroyOwnedModelUnit")
 local ACTION_CODE_END_TURN             = ActionCodeFunctions.getActionCode("ActionEndTurn")
 local ACTION_CODE_RELOAD_SCENE_WAR     = ActionCodeFunctions.getActionCode("ActionReloadSceneWar")
@@ -598,24 +597,6 @@ local function initItemAbout(self)
     }
 end
 
-local function createItemActivateSkill(self, skillGroupID)
-    return {
-        name     = string.format("%s %d", getLocalizedText(65, "ActivateSkill"), skillGroupID),
-        callback = function()
-            sendActionActivateSkillGroup(self, skillGroupID)
-            self:setEnabled(false)
-        end,
-    }
-end
-
-local function initItemActivateSkill1(self)
-    self.m_ItemActiveSkill1 = createItemActivateSkill(self, 1)
-end
-
-local function initItemActivateSkill2(self)
-    self.m_ItemActiveSkill2 = createItemActivateSkill(self, 2)
-end
-
 local function initItemAgreeDraw(self)
     self.m_ItemAgreeDraw = {
         name = getLocalizedText(65, "AgreeDraw"),
@@ -1011,8 +992,6 @@ function ModelWarCommandMenu:ctor(param)
     self.m_State                      = "stateDisabled"
 
     initItemAbout(              self)
-    initItemActivateSkill1(     self)
-    initItemActivateSkill2(     self)
     initItemAgreeDraw(          self)
     initItemAuxiliaryCommands(  self)
     initItemDestroyOwnedUnit(   self)
