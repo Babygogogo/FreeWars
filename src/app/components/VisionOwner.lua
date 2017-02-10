@@ -44,7 +44,15 @@ function VisionOwner:getVisionForPlayerIndex(playerIndex, gridIndex)
     if ((not template.isEnabledForAllPlayers) and (ownerPlayerIndex ~= playerIndex)) then
         return nil
     else
-        return template.vision
+        local modelSceneWar           = self.m_ModelSceneWar
+        local baseVision              = template.vision
+        if (owner.getTileType) then
+            return baseVision
+        else
+            local tileType = getModelTileMap(modelSceneWar):getModelTile(gridIndex or owner:getGridIndex()):getTileType()
+            local bonus    = (template.bonusOnTiles) and (template.bonusOnTiles[tileType] or 0) or (0)
+            return baseVision + bonus
+        end
     end
 end
 

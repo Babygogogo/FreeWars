@@ -63,6 +63,13 @@ local function generateActiveSkillConfirmationText(skillID, skillLevel)
 end
 
 --------------------------------------------------------------------------------
+-- The callback functions on events.
+--------------------------------------------------------------------------------
+local function onEvtIsWaitingForServerResponse(self, event)
+    self.m_IsWaitingForServerResponse = event.waiting
+end
+
+--------------------------------------------------------------------------------
 -- The functions for sending actions.
 --------------------------------------------------------------------------------
 local function sendActionActivateSkill(warID, actionID, skillID, skillLevel)
@@ -84,9 +91,19 @@ local setStateChooseActiveSkillLevel
 local setStateMain
 
 local function generateItemsForStateMain(self)
-    return {
-        self.m_ItemActivateSkill,
-    }
+    local modelSceneWar     = self.m_ModelSceneWar
+    local playerIndexInTurn = SingletonGetters.getModelTurnManager(modelSceneWar):getPlayerIndex()
+    if ((SingletonGetters.isTotalReplay(modelSceneWar))                               or
+        (playerIndexInTurn ~= SingletonGetters.getPlayerIndexLoggedIn(modelSceneWar)) or
+        (self.m_IsWaitingForServerResponse))                                          then
+        return {
+            self.m_ItemPlaceHolder,
+        }
+    else
+        return {
+            self.m_ItemActivateSkill,
+        }
+    end
 end
 
 local function generateItemsForStateChooseActiveSkillLevel(self, skillID)
@@ -207,6 +224,16 @@ end
 
 function ModelSkillConfigurator:onStartRunning(modelSceneWar)
     self.m_ModelSceneWar = modelSceneWar
+    SingletonGetters.getScriptEventDispatcher(modelSceneWar)
+        :addEventListener("EvtIsWaitingForServerResponse", self)
+
+    return self
+end
+
+function ModelSkillConfigurator:onEvent(event)
+    local eventName = event.name
+    if (eventName == "EvtIsWaitingForServerResponse") then onEvtIsWaitingForServerResponse(self, event)
+    end
 
     return self
 end
