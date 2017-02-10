@@ -546,7 +546,7 @@ local s_Texts = {
     },
     [12] = {
         [1] = function(actionName)
-            if     (actionName == "ActionActivateSkillGroup")     then return "发动技能"
+            if     (actionName == "ActionActivateSkill")          then return "发动技能"
             elseif (actionName == "ActionAttack")                 then return "攻击"
             elseif (actionName == "ActionBeginTurn")              then return "开始回合"
             elseif (actionName == "ActionBuildModelTile")         then return "建造"
@@ -571,7 +571,7 @@ local s_Texts = {
             end
         end,
         [2] = function(actionName)
-            if     (actionName == "ActionActivateSkillGroup")     then return "ActivateSkillGroup"
+            if     (actionName == "ActionActivateSkill")          then return "ActivateSkillGroup"
             elseif (actionName == "ActionAttack")                 then return "Attack"
             elseif (actionName == "ActionBeginTurn")              then return "BeginTurn"
             elseif (actionName == "ActionBuildModelTile")         then return "BuildTile"
@@ -746,29 +746,35 @@ local s_Texts = {
     },
     [22] = {
         [1] = function(textType)
-            if     (textType == "ActivateSkill")           then return "发动特技"
-            elseif (textType == "ConfigSkill")             then return "配 置 技 能"
-            elseif (textType == "ConfirmationActiveSkill") then return "您确定要发动如下特技吗？"
-            elseif (textType == "EnergyCost")              then return "能量消耗"
-            elseif (textType == "HelpForActiveSkill")      then return s_LongText6_1
-            elseif (textType == "Level")                   then return "等级"
-            elseif (textType == "Modifier")                then return "增幅"
-            elseif (textType == "NoAvailableOption")       then return "无可用选项"
-            elseif (textType == "SkillInfo")               then return "技 能 信 息"
-            else                                                return "未知22:" .. (textType or "")
+            if     (textType == "ActivateSkill")            then return "发动特技"
+            elseif (textType == "ConfigSkill")              then return "配 置 技 能"
+            elseif (textType == "ConfirmationActiveSkill")  then return "您确定要发动如下特技吗？"
+            elseif (textType == "ConfirmationDeclareSkill") then return "发起宣言需要扣除3000能量，并将允许您下回合发动特技(也可以不发动)。\n确定要宣言吗？"
+            elseif (textType == "CurrentEnergy")            then return "当前能量值"
+            elseif (textType == "DeclareSkill")             then return "发起特技宣言"
+            elseif (textType == "EnergyCost")               then return "能量消耗"
+            elseif (textType == "HelpForActiveSkill")       then return s_LongText6_1
+            elseif (textType == "Level")                    then return "等级"
+            elseif (textType == "Modifier")                 then return "增幅"
+            elseif (textType == "NoAvailableOption")        then return "无可用选项"
+            elseif (textType == "SkillInfo")                then return "技 能 信 息"
+            else                                                 return "未知22:" .. (textType or "")
             end
         end,
         [2] = function(textType)
-            if     (textType == "ActivateSkill")           then return "ActivateSkill"
-            elseif (textType == "ConfigSkill")             then return "Config Skill"
-            elseif (textType == "ConfirmationActiveSkill") then return "Are you sure to activate the skill below?"
-            elseif (textType == "EnergyCost")              then return "Cost"
-            elseif (textType == "HelpForActiveSkill")      then return s_LongText6_2
-            elseif (textType == "Level")                   then return "Level"
-            elseif (textType == "Modifier")                then return "Modifier"
-            elseif (textType == "NoAvailableOption")       then return "No Options"
-            elseif (textType == "SkillInfo")               then return "Skill Info"
-            else                                                return "Unknown22:" .. (textType or "")
+            if     (textType == "ActivateSkill")            then return "ActivateSkill"
+            elseif (textType == "ConfigSkill")              then return "Config Skill"
+            elseif (textType == "ConfirmationActiveSkill")  then return "Are you sure to activate the skill below?"
+            elseif (textType == "ConfirmationDeclareSkill") then return "The declaration costs 3000 energy and enable you to activate active skills next turn.\nAre you sure?"
+            elseif (textType == "CurrentEnergy")            then return "Current Energy"
+            elseif (textType == "DeclareSkill")             then return "Declare Skill"
+            elseif (textType == "EnergyCost")               then return "Cost"
+            elseif (textType == "HelpForActiveSkill")       then return s_LongText6_2
+            elseif (textType == "Level")                    then return "Level"
+            elseif (textType == "Modifier")                 then return "Modifier"
+            elseif (textType == "NoAvailableOption")        then return "No Options"
+            elseif (textType == "SkillInfo")                then return "Skill Info"
+            else                                                 return "Unknown22:" .. (textType or "")
             end
         end,
     },
