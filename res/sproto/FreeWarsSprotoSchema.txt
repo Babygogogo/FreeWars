@@ -750,14 +750,19 @@
 }
 
 .SingleSkillConfiguration {
-    .SingleSkill {
+    .SingleSkillActive {
         id    0 : integer
         level 1 : integer
     }
 
-    passiveSkills     1 : *SingleSkill
-    researchingSkills 2 : *SingleSkill
-    activeSkills      3 : *SingleSkill
+    .SingleSkillPassive {
+        id       0 : integer
+        modifier 1 : integer
+    }
+
+    passiveSkills     1 : *SingleSkillPassive
+    researchingSkills 2 : *SingleSkillPassive
+    activeSkills      3 : *SingleSkillActive
 }
 
 .TileData {

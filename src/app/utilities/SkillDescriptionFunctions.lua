@@ -44,12 +44,7 @@ local function transformModifier3(modifier, unit)
     end
 end
 
-local function getSkillModifierForDisplay(id, level, isActive)
-    local modifier = getSkillModifier(id, level, isActive)
-    if (not modifier) then
-        return ""
-    end
-
+local function getSkillModifierForDisplay(id, modifier)
     local modifierUnit = getSkillModifierUnit(id)
     if     (id == 1)  then return transformModifier3(modifier,  modifierUnit)
     elseif (id == 2)  then return transformModifier3(modifier,  modifierUnit)
@@ -71,7 +66,7 @@ local function getBriefDescriptionForSingleSkill(id, level, isActive)
 end
 
 local function getBriefDescriptionForSkillGroup(skillGroup, skillGroupType)
-    local prefix    = getLocalizedText(3, skillGroupType) .. ":"
+    local prefix = getLocalizedText(3, skillGroupType) .. ":"
     if (skillGroup:isEmpty()) then
         return prefix .. " " .. getLocalizedText(3, "None")
     end
@@ -79,7 +74,9 @@ local function getBriefDescriptionForSkillGroup(skillGroup, skillGroupType)
     local isActiveSkill = skillGroupType == SKILL_ACTIVE
     local descriptions  = {prefix}
     for i, skill in ipairs(skillGroup:getAllSkills()) do
-        descriptions[#descriptions + 1] = string.format("%d. %s", i, getBriefDescriptionForSingleSkill(skill.id, skill.level, isActiveSkill))
+        local skillID  = skill.id
+        local modifier = (isActiveSkill) and (getSkillModifier(skillID, skill.level)) or (skill.modifier)
+        descriptions[#descriptions + 1] = string.format("%d. %s", i, getBriefDescriptionForSingleSkill(skillID, modifier))
     end
 
     return table.concat(descriptions, "\n")

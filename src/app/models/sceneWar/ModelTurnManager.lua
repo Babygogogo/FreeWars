@@ -330,6 +330,7 @@ local function runTurnPhaseResetSkillState(self)
     modelPlayer:setActivatingSkill(false)
         :setCanActivateSkill(modelPlayer:isSkillDeclared())
         :setSkillDeclared(false)
+        :getModelSkillConfiguration():mergePassiveAndResearchingSkills()
 
     if (not IS_SERVER) then
         local func = function(modelUnit)

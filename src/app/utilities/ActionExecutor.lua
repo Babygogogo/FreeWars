@@ -578,6 +578,7 @@ local function executeActivateSkill(action, modelSceneWar)
     local modelSkillConfiguration = modelPlayer:getModelSkillConfiguration()
     modelPlayer:setEnergy(modelPlayer:getEnergy() - SkillDataAccessors.getSkillPoints(skillID, skillLevel, isActiveSkill))
     if (not isActiveSkill) then
+        modelSkillConfiguration:getModelSkillGroupResearching():pushBackSkill(skillID, skillLevel)
     else
         modelPlayer:setActivatingSkill(true)
         InstantSkillExecutor.executeInstantSkill(modelSceneWar, skillID, skillLevel)
