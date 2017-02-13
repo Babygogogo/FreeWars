@@ -4,20 +4,12 @@ local SkillModifierFunctions = {}
 local SkillDataAccessors = requireFW("src.app.utilities.SkillDataAccessors")
 
 local getSkillModifier = SkillDataAccessors.getSkillModifier
-local isTypeInCategory = requireFW("src.app.utilities.GameConstantFunctions").isTypeInCategory
 
 local ipairs = ipairs
-
-local PASSIVE_SLOTS_COUNT = SkillDataAccessors.getPassiveSkillSlotsCount()
-local ACTIVE_SLOTS_COUNT  = SkillDataAccessors.getActiveSkillSlotsCount()
 
 --------------------------------------------------------------------------------
 -- The util functions.
 --------------------------------------------------------------------------------
-local function getSlotsCount(isActive)
-    return (isActive) and (ACTIVE_SLOTS_COUNT) or (PASSIVE_SLOTS_COUNT)
-end
-
 local function getAttackModifierForSkillGroup(modelSkillGroup, isActive,
     attacker, attackerGridIndex, target, targetGridIndex, modelSceneWar)
 
@@ -71,16 +63,10 @@ local function getAttackRangeModifierForSkillGroup(modelSkillGroup, isActive)
 end
 
 local function getIncomeModifierForSkillGroup(modelSkillGroup, isActive)
-    if (not modelSkillGroup) then
-        return 0
-    end
-
     local modifier = 0
-    local skills   = modelSkillGroup:getAllSkills()
-    for i = 1, getSlotsCount(isActive) do
-        local skill = skills[i]
-        if ((skill)          and
-            (skill.id == 17)) then
+    for _, skill in ipairs(modelSkillGroup:getAllSkills()) do
+        local skillID = skill.id
+        if (skillID == 8) then
             modifier = modifier + getSkillModifier(skill.id, skill.level, isActive)
         end
     end

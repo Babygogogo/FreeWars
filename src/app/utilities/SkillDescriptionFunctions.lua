@@ -12,8 +12,6 @@ local getSkillModifierUnit      = SkillDataAccessors.getSkillModifierUnit
 local getLocalizedText          = LocalizationFunctions.getLocalizedText
 local string                    = string
 
-local PASSIVE_SLOTS_COUNT = SkillDataAccessors.getPassiveSkillSlotsCount()
-local ACTIVE_SLOTS_COUNT  = SkillDataAccessors.getActiveSkillSlotsCount()
 local SKILL_PASSIVE       = "SkillPassive"
 local SKILL_RESEARCHING   = "SkillResearching"
 local SKILL_ACTIVE        = "SkillActive"
@@ -65,70 +63,11 @@ local function getSkillModifierForDisplay(id, level, isActive)
     end
 end
 
-local function getFullDescriptionForBaseSkillPoints(points)
-    return string.format("%s: %d", getLocalizedText(3, "BasePoints"), points)
-end
-
-local function getFullDescriptionForSingleSkill(id, level, isActive)
-    if (not isActive) then
-        return string.format("%s      %s: %d      %s: %.2f\n%s %s",
-            getLocalizedText(5, id),
-            getLocalizedText(3, "Level"),       level,
-            getLocalizedText(3, "SkillPoints"), getSkillPoints(id, level, false),
-            getLocalizedText(4, id),            getSkillModifierForDisplay(id, level, false)
-        )
-    else
-        return string.format("%s      %s: %d      %s: %.2f      %s: %d\n%s %s",
-            getLocalizedText(5, id),
-            getLocalizedText(3, "Level"),       level,
-            getLocalizedText(3, "SkillPoints"), getSkillPoints(id, level, true),
-            getLocalizedText(3, "MinEnergy"),   getSkillEnergyRequirement(id, level),
-            getLocalizedText(4, id),            getSkillModifierForDisplay(id, level, true)
-        )
-    end
-end
-
 local function getBriefDescriptionForSingleSkill(id, level, isActive)
     return string.format("%s\n%s %s",
         getLocalizedText(5, id),
         getLocalizedText(4, id), getSkillModifierForDisplay(id, level, isActive)
     )
-end
-
-local function getFullDescriptionForSkillGroup(skillGroup, skillGroupType)
-    local isPassive = skillGroupType == SKILL_PASSIVE
-    local prefix    = (isPassive)                                                     and
-        (string.format("%s : ",    getLocalizedText(3, "PassiveSkill")))              or
-        (string.format("%s %d : ", getLocalizedText(3, "ActiveSkill"), skillGroupType))
-
-    if ((not isPassive) and (not skillGroup:isEnabled())) then
-        return prefix .. getLocalizedText(3, "Disabled")
-    end
-
-    local descriptions = {
-        string.format("%s    (%s: %.2f      %s: %.2f)",
-            prefix,
-            getLocalizedText(3, "TotalPoints"), skillGroup:getSkillPoints(),
-            getLocalizedText(3, "MaxPoints"),   skillGroup:getMaxSkillPoints()
-        )
-    }
-    if (not isPassive) then
-        descriptions[#descriptions + 1] = string.format("%s:   %d",
-            getLocalizedText(3, "EnergyRequirement"), skillGroup:getEnergyRequirement())
-    end
-
-    local slotsCount = (isPassive) and (PASSIVE_SLOTS_COUNT) or (ACTIVE_SLOTS_COUNT)
-    local skills     = skillGroup:getAllSkills()
-    for i = 1, slotsCount do
-        local skill = skills[i]
-        if (skill) then
-            descriptions[#descriptions + 1] = string.format("%d. %s", i, getFullDescriptionForSingleSkill(skill.id, skill.level, not isPassive))
-        else
-            descriptions[#descriptions + 1] = string.format("%d. %s", i, getLocalizedText(3, "None"))
-        end
-    end
-
-    return table.concat(descriptions, "\n")
 end
 
 local function getBriefDescriptionForSkillGroup(skillGroup, skillGroupType)
@@ -149,15 +88,6 @@ end
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
-function SkillDescriptionFunctions.getFullDescription(modelSkillConfiguration)
-    return string.format("%s\n%s\n\n%s\n\n%s",
-        getFullDescriptionForBaseSkillPoints(modelSkillConfiguration:getBaseSkillPoints()),
-        getFullDescriptionForSkillGroup(modelSkillConfiguration:getModelSkillGroupPassive(),     SKILL_PASSIVE),
-        getFullDescriptionForSkillGroup(modelSkillConfiguration:getModelSkillGroupResearching(), SKILL_RESEARCHING),
-        getFullDescriptionForSkillGroup(modelSkillConfiguration:getModelSkillGroupActive(),      SKILL_ACTIVE)
-    )
-end
-
 function SkillDescriptionFunctions.getBriefDescription(modelSkillConfiguration)
     local skillGroupPassive     = modelSkillConfiguration:getModelSkillGroupPassive()
     local skillGroupResearching = modelSkillConfiguration:getModelSkillGroupResearching()

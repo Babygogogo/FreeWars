@@ -5,8 +5,6 @@ local SkillDataAccessors    = requireFW("src.app.utilities.SkillDataAccessors")
 
 local ipairs = ipairs
 
-local SLOTS_COUNT = SkillDataAccessors.getPassiveSkillSlotsCount()
-
 --------------------------------------------------------------------------------
 -- The constructor and initializer.
 --------------------------------------------------------------------------------
@@ -35,8 +33,7 @@ function ModelSkillGroup:getAllSkills()
 end
 
 function ModelSkillGroup:setSkill(slotIndex, skillID, skillLevel)
-    assert((slotIndex > 0) and (slotIndex <= SLOTS_COUNT) and (slotIndex == math.floor(slotIndex)),
-        "ModelSkillGroup:setSkill() the param slotIndex is invalid.")
+    assert((slotIndex > 0) and (slotIndex == math.floor(slotIndex)), "ModelSkillGroup:setSkill() the param slotIndex is invalid.")
     self.m_Slots[slotIndex] = {
         id    = skillID,
         level = skillLevel,
