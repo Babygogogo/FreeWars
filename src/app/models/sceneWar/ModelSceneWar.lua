@@ -199,6 +199,7 @@ end
 --------------------------------------------------------------------------------
 function ModelSceneWar:ctor(sceneData)
     self.m_CachedActions              = {}
+    self.m_EnergyGainModifier         = sceneData.energyGainModifier
     self.m_EnterTurnTime              = sceneData.enterTurnTime
     self.m_ExecutedActions            = sceneData.executedActions
     self.m_IntervalUntilBoot          = sceneData.intervalUntilBoot
@@ -278,6 +279,7 @@ end
 function ModelSceneWar:toSerializableTable()
     return {
         actionID              = self:getActionId(),
+        energyGainModifier    = self.m_EnergyGainModifier,
         enterTurnTime         = self.m_EnterTurnTime,
         executedActions       = self.m_ExecutedActions,
         intervalUntilBoot     = self.m_IntervalUntilBoot,
@@ -301,6 +303,7 @@ end
 function ModelSceneWar:toSerializableTableForPlayerIndex(playerIndex)
     return {
         actionID              = self:getActionId(),
+        energyGainModifier    = self.m_EnergyGainModifier,
         enterTurnTime         = self.m_EnterTurnTime,
         executedActions       = nil,
         intervalUntilBoot     = self.m_IntervalUntilBoot,
@@ -324,6 +327,7 @@ end
 function ModelSceneWar:toSerializableReplayData()
     return {
         actionID              = 0,
+        energyGainModifier    = self.m_EnergyGainModifier,
         enterTurnTime         = nil,
         executedActions       = self.m_ExecutedActions,
         intervalUntilBoot     = self.m_IntervalUntilBoot,
@@ -539,6 +543,10 @@ end
 
 function ModelSceneWar:getWarId()
     return self.m_WarID
+end
+
+function ModelSceneWar:getEnergyGainModifier()
+    return self.m_EnergyGainModifier
 end
 
 function ModelSceneWar:getIntervalUntilBoot()

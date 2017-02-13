@@ -278,8 +278,8 @@ local function getBaseDamageCostWithTargetAndDamage(target, damage)
     end
 end
 
-local function getEnergyModifierWithTargetAndDamage(target, damage)
-    return (target:getNormalizedCurrentHP() - math.ceil(math.max(0, target:getCurrentHP() - (damage or 0)) / 10)) * 100
+local function getEnergyModifierWithTargetAndDamage(target, damage, energyGainModifier)
+    return (target:getNormalizedCurrentHP() - math.ceil(math.max(0, target:getCurrentHP() - (damage or 0)) / 10)) * energyGainModifier
 end
 
 local function getAdjacentPlasmaGridIndexes(gridIndex, modelTileMap)
@@ -643,12 +643,15 @@ local function executeAttack(action, modelSceneWar)
         local targetDamageCost    = getBaseDamageCostWithTargetAndDamage(attackTarget, attackDamage)
         local attackerModelPlayer = modelPlayerManager:getModelPlayer(attackerPlayerIndex)
         local targetModelPlayer   = modelPlayerManager:getModelPlayer(targetPlayerIndex)
+        local energyGainModifier  = modelSceneWar:getEnergyGainModifier()
+        local attackEnergy        = getEnergyModifierWithTargetAndDamage(attackTarget, attackDamage,  energyGainModifier)
+        local counterEnergy       = getEnergyModifierWithTargetAndDamage(attacker,     counterDamage, energyGainModifier)
 
         if (not attackerModelPlayer:isActivatingSkill()) then
-            attackerModelPlayer:setEnergy(attackerModelPlayer:getEnergy() + getEnergyModifierWithTargetAndDamage(attacker, counterDamage) + getEnergyModifierWithTargetAndDamage(attackTarget, attackDamage))
+            attackerModelPlayer:setEnergy(attackerModelPlayer:getEnergy() + attackEnergy + counterEnergy)
         end
         if (not targetModelPlayer:isActivatingSkill()) then
-            targetModelPlayer  :setEnergy(targetModelPlayer:getEnergy()   + getEnergyModifierWithTargetAndDamage(attacker, counterDamage) + getEnergyModifierWithTargetAndDamage(attackTarget, attackDamage))
+            targetModelPlayer  :setEnergy(targetModelPlayer:getEnergy()   + attackEnergy + counterEnergy)
         end
 
         dispatchEvtModelPlayerUpdated(modelSceneWar, attackerPlayerIndex)
