@@ -52,16 +52,18 @@ local function getSkillModifierForDisplay(id, modifier)
     elseif (id == 4)  then return transformModifier3(modifier,  modifierUnit)
     elseif (id == 5)  then return transformModifier3(modifier,  modifierUnit)
     elseif (id == 6)  then return transformModifier3(modifier,  modifierUnit)
+    elseif (id == 7)  then return ""
     elseif (id == 8)  then return transformModifier3(modifier,  modifierUnit)
     elseif (id == 9)  then return transformModifier3(modifier,  modifierUnit)
     elseif (id == 10) then return transformModifier3(modifier,  modifierUnit)
+    else                   error("SkillDescriptionFunctions-getSkillModifierForDisplay() invalid skill id: " .. (id or ""))
     end
 end
 
-local function getBriefDescriptionForSingleSkill(id, level, isActive)
+local function getBriefDescriptionForSingleSkill(id, modifier)
     return string.format("%s\n%s %s",
         getLocalizedText(5, id),
-        getLocalizedText(4, id), getSkillModifierForDisplay(id, level, isActive)
+        getLocalizedText(4, id), getSkillModifierForDisplay(id, modifier)
     )
 end
 
@@ -75,7 +77,7 @@ local function getBriefDescriptionForSkillGroup(skillGroup, skillGroupType)
     local descriptions  = {prefix}
     for i, skill in ipairs(skillGroup:getAllSkills()) do
         local skillID  = skill.id
-        local modifier = (isActiveSkill) and (getSkillModifier(skillID, skill.level)) or (skill.modifier)
+        local modifier = (isActiveSkill) and (getSkillModifier(skillID, skill.level, true)) or (skill.modifier)
         descriptions[#descriptions + 1] = string.format("%d. %s", i, getBriefDescriptionForSingleSkill(skillID, modifier))
     end
 
