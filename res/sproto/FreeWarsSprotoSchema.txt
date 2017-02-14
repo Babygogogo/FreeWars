@@ -93,7 +93,7 @@
 
 .ActionGetReplayConfigurations {
     actionCode           0 :  integer
-    pageIndex            1 :  integer
+    warID                1 :  integer
     replayConfigurations 2 : *ReplayConfiguration
 }
 

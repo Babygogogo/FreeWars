@@ -4,6 +4,7 @@ local ModelReplayManager = class("ModelReplayManager")
 local Actor                  = requireFW("src.global.actors.Actor")
 local ActorManager           = requireFW("src.global.actors.ActorManager")
 local ActionCodeFunctions    = requireFW("src.app.utilities.ActionCodeFunctions")
+local AuxiliaryFunctions     = requireFW("src.app.utilities.AuxiliaryFunctions")
 local LocalizationFunctions  = requireFW("src.app.utilities.LocalizationFunctions")
 local SingletonGetters       = requireFW("src.app.utilities.SingletonGetters")
 local SerializationFunctions = requireFW("src.app.utilities.SerializationFunctions")
@@ -262,11 +263,9 @@ local function setStateDisabled(self)
 end
 
 local function setStateDownload(self)
-    self.m_State             = "stateDownload"
-    self.m_DownloadPageIndex = 0
+    self.m_State = "stateDownload"
     WebSocketManager.sendAction({
         actionCode = ACTION_CODE_GET_REPLAY_CONFIGURATIONS,
-        pageIndex  = 1,
     })
 
     if (self.m_View) then
@@ -404,23 +403,13 @@ function ModelReplayManager:isRetrievingReplayConfigurations()
     return self.m_State == "stateDownload"
 end
 
-function ModelReplayManager:updateWithReplayConfigurations(replayConfigurations, pageIndex)
-    self.m_DownloadPageIndex = pageIndex
-
+function ModelReplayManager:updateWithReplayConfigurations(replayConfigurations)
     local items = createMenuItemsForDownload(self, replayConfigurations)
     if (#items == 0) then
-        if (pageIndex == 1) then
-            getModelMessageIndicator(self.m_ModelSceneMain):showMessage(getLocalizedText(10, "NoDownloadableReplay"))
-        else
-            getModelMessageIndicator(self.m_ModelSceneMain):showMessage(getLocalizedText(10, "NoMoreReplay"))
-        end
-    elseif (self.m_View) then
-        if (pageIndex == 1) then
-            self.m_View:setMenuItems(items)
-        else
-            self.m_View:appendMenuItems(items)
-        end
-        self.m_View:setButtonConfirmText(getLocalizedText(10, "DownloadReplay"))
+        getModelMessageIndicator(self.m_ModelSceneMain):showMessage(getLocalizedText(10, "NoDownloadableReplay"))
+    else
+        self.m_View:setMenuItems(items)
+            :setButtonConfirmText(getLocalizedText(10, "DownloadReplay"))
     end
 
     return self
@@ -469,14 +458,15 @@ function ModelReplayManager:onButtonConfirmTouched()
 end
 
 function ModelReplayManager:onButtonFindTouched(warName)
-    return self
-end
-
-function ModelReplayManager:onButtonMoreTouched()
-    WebSocketManager.sendAction({
-        actionCode = ACTION_CODE_GET_REPLAY_CONFIGURATIONS,
-        pageIndex  = self.m_DownloadPageIndex + 1,
-    })
+    if (string.len(warName) ~= 6) then
+        getModelMessageIndicator(self.m_ModelSceneMain):showMessage(getLocalizedText(10, "InvalidWarName"))
+    else
+        getModelMessageIndicator(self.m_ModelSceneMain):showMessage(getLocalizedText(10, "RetrievingReplayConfiguration"))
+        WebSocketManager.sendAction({
+            actionCode = ACTION_CODE_GET_REPLAY_CONFIGURATIONS,
+            warID      = AuxiliaryFunctions.getWarIdWithWarName(warName),
+        })
+    end
 
     return self
 end
