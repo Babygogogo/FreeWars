@@ -139,19 +139,21 @@
 }
 
 .ActionNewWar {
-    actionCode            0 : integer
-    playerAccount         1 : string
-    playerPassword        2 : string
-    warID                 3 : integer
-    warPassword           4 : string
-    warFieldFileName      5 : string
-    playerIndex           6 : integer
-    isFogOfWarByDefault   7 : boolean
-    defaultWeatherCode    8 : integer
-    isRankMatch           9 : boolean
-    maxDiffScore         10 : integer
-    intervalUntilBoot    11 : integer
-    energyGainModifier   12 : integer
+    actionCode             0 : integer
+    playerAccount          1 : string
+    playerPassword         2 : string
+    warID                  3 : integer
+    warPassword            4 : string
+    warFieldFileName       5 : string
+    playerIndex            6 : integer
+    isFogOfWarByDefault    7 : boolean
+    defaultWeatherCode     8 : integer
+    isRankMatch            9 : boolean
+    maxDiffScore          10 : integer
+    intervalUntilBoot     11 : integer
+    energyGainModifier    12 : integer
+    isPassiveSkillEnabled 13 : boolean
+    isActiveSkillEnabled  14 : boolean
 }
 
 .ActionRegister {
@@ -738,6 +740,8 @@
     intervalUntilBoot     17 :  integer
     enterTurnTime         18 :  integer
     energyGainModifier    19 :  integer
+    isPassiveSkillEnabled 20 :  boolean
+    isActiveSkillEnabled  21 :  boolean
 }
 
 .WarIdForIndexing {
@@ -797,18 +801,20 @@
 }
 
 .WarConfiguration {
-    warID                0 :  integer
-    warFieldFileName     1 :  string
-    warPassword          2 :  string
-    isFogOfWarByDefault  4 :  boolean
-    defaultWeatherCode   5 :  integer
-    isRandomWarField     6 :  boolean
-    players              7 : *PlayerInfo(playerIndex)
-    isRankMatch          8 :  boolean
-    maxDiffScore         9 :  integer
-    createdTime         10 :  integer
-    intervalUntilBoot   11 :  integer
-    enterTurnTime       12 :  integer
-    playerIndexInTurn   13 :  integer
-    energyGainModifier  14 :  integer
+    warID                  0 :  integer
+    warFieldFileName       1 :  string
+    warPassword            2 :  string
+    isFogOfWarByDefault    4 :  boolean
+    defaultWeatherCode     5 :  integer
+    isRandomWarField       6 :  boolean
+    players                7 : *PlayerInfo(playerIndex)
+    isRankMatch            8 :  boolean
+    maxDiffScore           9 :  integer
+    createdTime           10 :  integer
+    intervalUntilBoot     11 :  integer
+    enterTurnTime         12 :  integer
+    playerIndexInTurn     13 :  integer
+    energyGainModifier    14 :  integer
+    isPassiveSkillEnabled 15 :  boolean
+    isActiveSkillEnabled  16 :  boolean
 }

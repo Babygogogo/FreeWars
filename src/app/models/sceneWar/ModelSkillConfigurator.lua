@@ -21,8 +21,14 @@ local ACTION_CODE_DECLARE_SKILL  = ActionCodeFunctions.getActionCode("ActionDecl
 -- The util functions.
 --------------------------------------------------------------------------------
 local function generateSkillInfoText(self)
-    local stringList = {}
-    SingletonGetters.getModelPlayerManager(self.m_ModelSceneWar):forEachModelPlayer(function(modelPlayer, playerIndex)
+    local modelSceneWar = self.m_ModelSceneWar
+    local stringList    = {string.format("%s: %d%%         %s: %s         %s: %s",
+        getLocalizedText(14, "EnergyGainModifier"), modelSceneWar:getEnergyGainModifier(),
+        getLocalizedText(14, "EnablePassiveSkill"), getLocalizedText(14, (modelSceneWar:isPassiveSkillEnabled()) and ("Yes") or ("No")),
+        getLocalizedText(14, "EnableActiveSkill"),  getLocalizedText(14, (modelSceneWar:isActiveSkillEnabled())  and ("Yes") or ("No"))
+    )}
+
+    SingletonGetters.getModelPlayerManager(modelSceneWar):forEachModelPlayer(function(modelPlayer, playerIndex)
         stringList[#stringList + 1] = string.format("%s %d: %s    %s: %d    %s: %s\n%s",
             getLocalizedText(65, "Player"), playerIndex, modelPlayer:getNickname(),
             getLocalizedText(22, "CurrentEnergy"), modelPlayer:getEnergy(),
@@ -161,12 +167,18 @@ local function generateItemsForStateMain(self)
         return {self.m_ItemPlaceHolder}
     else
         local modelPlayer = SingletonGetters.getModelPlayerManager(modelSceneWar):getModelPlayer(playerIndexInTurn)
-        local items       = {self.m_ItemResearchPassiveSkill}
-        if ((not modelPlayer:isSkillDeclared()) and (modelPlayer:getEnergy() >= 3000)) then
+        local items       = {}
+        if (modelSceneWar:isPassiveSkillEnabled()) then
+            items[#items + 1] = self.m_ItemResearchPassiveSkill
+        end
+        if ((modelSceneWar:isActiveSkillEnabled()) and (not modelPlayer:isSkillDeclared()) and (modelPlayer:getEnergy() >= 3000)) then
             items[#items + 1] = self.m_ItemDeclareSkill
         end
         if (modelPlayer:canActivateSkill()) then
             items[#items + 1] = self.m_ItemActivateActiveSkill
+        end
+        if (#items == 0) then
+            items[#items + 1] = self.m_ItemPlaceHolder
         end
 
         return items

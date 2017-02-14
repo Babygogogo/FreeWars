@@ -279,7 +279,7 @@ local function getBaseDamageCostWithTargetAndDamage(target, damage)
 end
 
 local function getEnergyModifierWithTargetAndDamage(target, damage, energyGainModifier)
-    return (target:getNormalizedCurrentHP() - math.ceil(math.max(0, target:getCurrentHP() - (damage or 0)) / 10)) * energyGainModifier
+    return math.floor((target:getNormalizedCurrentHP() - math.ceil(math.max(0, target:getCurrentHP() - (damage or 0)) / 10)) * energyGainModifier)
 end
 
 local function getAdjacentPlasmaGridIndexes(gridIndex, modelTileMap)

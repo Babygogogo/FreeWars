@@ -40,15 +40,17 @@ local function generatePlayerColorText(playerIndex)
 end
 
 local function generateOverviewText(self)
-    return string.format("%s:\n\n%s:%s%s\n\n%s:%s%s\n\n%s:%s%s\n\n%s:%s%s\n\n%s:%s%s\n\n%s:%s%s\n\n%s:%s%s",
+    return string.format("%s:\n\n%s:%s%s\n%s:%s%s\n%s:%s%s\n\n%s:%s%s\n%s:%s%s\n\n%s:%s%s\n\n%s:%s%s\n%s:%s%s\n%s:%s%s",
         getLocalizedText(14, "Overview"),
-        getLocalizedText(14, "WarFieldName"),       "      ",     WarFieldManager.getWarFieldName(self.m_WarConfiguration.warFieldFileName),
-        getLocalizedText(14, "PlayerIndex"),        "      ",     generatePlayerColorText(self.m_PlayerIndex),
-        getLocalizedText(14, "FogOfWar"),           "      ",     getLocalizedText(14, (self.m_IsFogOfWarByDefault) and ("Yes") or ("No")),
-        getLocalizedText(14, "RankMatch"),          "          ", getLocalizedText(14, (self.m_IsRankMatch)         and ("Yes") or ("No")),
-        getLocalizedText(14, "MaxDiffScore"),       "      ",     (self.m_MaxDiffScore) and ("" .. self.m_MaxDiffScore) or getLocalizedText(14, "NoLimit"),
-        getLocalizedText(14, "IntervalUntilBoot"),  "      ",     AuxiliaryFunctions.formatTimeInterval(self.m_IntervalUntilBoot),
-        getLocalizedText(14, "EnergyGainModifier"), "      ",     "" .. self.m_EnergyGainModifier .. "%"
+        getLocalizedText(14, "WarFieldName"),       "         ",     WarFieldManager.getWarFieldName(self.m_WarConfiguration.warFieldFileName),
+        getLocalizedText(14, "PlayerIndex"),        "         ",     generatePlayerColorText(self.m_PlayerIndex),
+        getLocalizedText(14, "FogOfWar"),           "         ",     getLocalizedText(14, (self.m_IsFogOfWarByDefault) and ("Yes") or ("No")),
+        getLocalizedText(14, "RankMatch"),          "             ", getLocalizedText(14, (self.m_IsRankMatch)         and ("Yes") or ("No")),
+        getLocalizedText(14, "MaxDiffScore"),       "         ",     (self.m_MaxDiffScore) and ("" .. self.m_MaxDiffScore) or getLocalizedText(14, "NoLimit"),
+        getLocalizedText(14, "IntervalUntilBoot"),  "         ",     AuxiliaryFunctions.formatTimeInterval(self.m_IntervalUntilBoot),
+        getLocalizedText(14, "EnergyGainModifier"), "         ",     "" .. self.m_EnergyGainModifier .. "%",
+        getLocalizedText(14, "EnablePassiveSkill"), "     ",         getLocalizedText(14, (self.m_IsPassiveSkillEnabled) and ("Yes") or ("No")),
+        getLocalizedText(14, "EnableActiveSkill"),  "     ",         getLocalizedText(14, (self.m_IsActiveSkillEnabled)  and ("Yes") or ("No"))
     )
 end
 
@@ -66,7 +68,7 @@ end
 local function createItemsForStateMain(self)
     local mode = self.m_Mode
     if (mode == "modeCreate") then
-        return {
+        local items = {
             self.m_ItemPlayerIndex,
             self.m_ItemFogOfWar,
             self.m_ItemRankMatch,
@@ -74,6 +76,11 @@ local function createItemsForStateMain(self)
             self.m_ItemIntervalUntilBoot,
             self.m_ItemEnergyModifier,
         }
+        if (self.m_EnergyGainModifier > 0) then
+            items[#items + 1] = self.m_ItemEnablePassiveSkill
+            items[#items + 1] = self.m_ItemEnableActiveSkill
+        end
+        return items
 
     elseif (mode == "modeJoin") then
         local items = {}
@@ -143,16 +150,18 @@ end
 
 local function sendActionNewWar(self)
     WebSocketManager.sendAction({
-        actionCode           = ACTION_CODE_NEW_WAR,
-        defaultWeatherCode   = 1, --TODO: add an option for the weather.
-        energyGainModifier   = self.m_EnergyGainModifier,
-        intervalUntilBoot    = self.m_IntervalUntilBoot,
-        isFogOfWarByDefault  = self.m_IsFogOfWarByDefault,
-        isRankMatch          = self.m_IsRankMatch,
-        maxDiffScore         = self.m_MaxDiffScore,
-        playerIndex          = self.m_PlayerIndex,
-        warPassword          = "", -- TODO: self.m_WarPassword,
-        warFieldFileName     = self.m_WarConfiguration.warFieldFileName,
+        actionCode            = ACTION_CODE_NEW_WAR,
+        defaultWeatherCode    = 1, --TODO: add an option for the weather.
+        energyGainModifier    = self.m_EnergyGainModifier,
+        intervalUntilBoot     = self.m_IntervalUntilBoot,
+        isActiveSkillEnabled  = self.m_IsActiveSkillEnabled,
+        isPassiveSkillEnabled = self.m_IsPassiveSkillEnabled,
+        isFogOfWarByDefault   = self.m_IsFogOfWarByDefault,
+        isRankMatch           = self.m_IsRankMatch,
+        maxDiffScore          = self.m_MaxDiffScore,
+        playerIndex           = self.m_PlayerIndex,
+        warPassword           = "", -- TODO: self.m_WarPassword,
+        warFieldFileName      = self.m_WarConfiguration.warFieldFileName,
     })
 end
 
@@ -166,6 +175,18 @@ end
 --------------------------------------------------------------------------------
 -- The state setters.
 --------------------------------------------------------------------------------
+local function setStateEnableActiveSkill(self)
+    self.m_State = "stateEnableActiveSkill"
+    self.m_View:setMenuTitleText(getLocalizedText(14, "EnableActiveSkill"))
+        :setItems(self.m_ItemsForStateEnableActiveSkill)
+end
+
+local function setStateEnablePassiveSkill(self)
+    self.m_State = "stateEnablePassiveSkill"
+    self.m_View:setMenuTitleText(getLocalizedText(14, "EnablePassiveSkill"))
+        :setItems(self.m_ItemsForStateEnablePassiveSkill)
+end
+
 local function setStateEnergyGainModifier(self)
     self.m_State = "stateEnergyModifier"
     self.m_View:setMenuTitleText(getLocalizedText(14, "Energy Gain Modifier"))
@@ -215,6 +236,24 @@ end
 --------------------------------------------------------------------------------
 -- The composition elements.
 --------------------------------------------------------------------------------
+local function initItemEnableActiveSkill(self)
+    self.m_ItemEnableActiveSkill = {
+        name     = getLocalizedText(14, "EnableActiveSkill"),
+        callback = function()
+            setStateEnableActiveSkill(self)
+        end,
+    }
+end
+
+local function initItemEnablePassiveSkill(self)
+    self.m_ItemEnablePassiveSkill = {
+        name     = getLocalizedText(14, "EnablePassiveSkill"),
+        callback = function()
+            setStateEnablePassiveSkill(self)
+        end,
+    }
+end
+
 local function initItemEnergyGainModifier(self)
     self.m_ItemEnergyModifier = {
         name     = getLocalizedText(14, "Energy Gain Modifier"),
@@ -277,6 +316,44 @@ local function initItemRankMatch(self)
     }
 end
 
+local function initItemsForStateEnableActiveSkill(self)
+    self.m_ItemsForStateEnableActiveSkill = {
+        {
+            name     = getLocalizedText(14, "Yes"),
+            callback = function()
+                self.m_IsActiveSkillEnabled = true
+                setStateMain(self, true)
+            end,
+        },
+        {
+            name     = getLocalizedText(14, "No"),
+            callback = function()
+                self.m_IsActiveSkillEnabled = false
+                setStateMain(self, true)
+            end,
+        }
+    }
+end
+
+local function initItemsForStateEnablePassiveSkill(self)
+    self.m_ItemsForStateEnablePassiveSkill = {
+        {
+            name     = getLocalizedText(14, "Yes"),
+            callback = function()
+                self.m_IsPassiveSkillEnabled = true
+                setStateMain(self, true)
+            end,
+        },
+        {
+            name     = getLocalizedText(14, "No"),
+            callback = function()
+                self.m_IsPassiveSkillEnabled = false
+                setStateMain(self, true)
+            end,
+        }
+    }
+end
+
 local function initItemsForStateEnergyGainModifier(self)
     local items = {}
     for _, modifier in ipairs(ENERGY_GAIN_MODIFIERS) do
@@ -284,6 +361,10 @@ local function initItemsForStateEnergyGainModifier(self)
             name     = (modifier ~= 100) and (string.format("%d%%", modifier)) or (string.format("%d%%(%s)", modifier, getLocalizedText(14, "Default"))),
             callback = function()
                 self.m_EnergyGainModifier = modifier
+                if (modifier <= 0) then
+                    self.m_IsActiveSkillEnabled  = false
+                    self.m_IsPassiveSkillEnabled = false
+                end
 
                 setStateMain(self, true)
             end,
@@ -379,6 +460,8 @@ end
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
 function ModelWarConfigurator:ctor()
+    initItemEnableActiveSkill( self)
+    initItemEnablePassiveSkill(self)
     initItemEnergyGainModifier(self)
     initItemFogOfWar(          self)
     initItemIntervalUntilBoot( self)
@@ -387,6 +470,8 @@ function ModelWarConfigurator:ctor()
     initItemPlaceHolder(       self)
     initItemRankMatch(         self)
 
+    initItemsForStateEnableActiveSkill( self)
+    initItemsForStateEnablePassiveSkill(self)
     initItemsForStateEnergyGainModifier(self)
     initItemsForStateFogOfWar(          self)
     initItemsForStateIntervalUntilBoot( self)
@@ -493,7 +578,9 @@ function ModelWarConfigurator:resetWithWarConfiguration(warConfiguration)
     if (mode == "modeCreate") then
         self.m_EnergyGainModifier       = 100
         self.m_IntervalUntilBoot        = 3600 * 24 * 3
+        self.m_IsActiveSkillEnabled     = true
         self.m_IsFogOfWarByDefault      = false
+        self.m_IsPassiveSkillEnabled    = true
         self.m_IsRankMatch              = false
         self.m_ItemsForStatePlayerIndex = createItemsForStatePlayerIndex(self)
         self.m_MaxDiffScore             = 100
@@ -504,7 +591,9 @@ function ModelWarConfigurator:resetWithWarConfiguration(warConfiguration)
     elseif (mode == "modeJoin") then
         self.m_EnergyGainModifier       = warConfiguration.energyGainModifier
         self.m_IntervalUntilBoot        = warConfiguration.intervalUntilBoot
+        self.m_IsActiveSkillEnabled     = warConfiguration.isActiveSkillEnabled
         self.m_IsFogOfWarByDefault      = warConfiguration.isFogOfWarByDefault
+        self.m_IsPassiveSkillEnabled    = warConfiguration.isPassiveSkillEnabled
         self.m_IsRankMatch              = warConfiguration.isRankMatch
         self.m_ItemsForStatePlayerIndex = createItemsForStatePlayerIndex(self)
         self.m_MaxDiffScore             = warConfiguration.maxDiffScore
@@ -515,7 +604,9 @@ function ModelWarConfigurator:resetWithWarConfiguration(warConfiguration)
     elseif (mode == "modeContinue") then
         self.m_EnergyGainModifier       = warConfiguration.energyGainModifier
         self.m_IntervalUntilBoot        = warConfiguration.intervalUntilBoot
+        self.m_IsActiveSkillEnabled     = warConfiguration.isActiveSkillEnabled
         self.m_IsFogOfWarByDefault      = warConfiguration.isFogOfWarByDefault
+        self.m_IsPassiveSkillEnabled    = warConfiguration.isPassiveSkillEnabled
         self.m_IsRankMatch              = warConfiguration.isRankMatch
         self.m_ItemsForStatePlayerIndex = nil
         self.m_MaxDiffScore             = warConfiguration.maxDiffScore
@@ -526,7 +617,9 @@ function ModelWarConfigurator:resetWithWarConfiguration(warConfiguration)
     elseif (mode == "modeExit") then
         self.m_EnergyGainModifier       = warConfiguration.energyGainModifier
         self.m_IntervalUntilBoot        = warConfiguration.intervalUntilBoot
+        self.m_IsActiveSkillEnabled     = warConfiguration.isActiveSkillEnabled
         self.m_IsFogOfWarByDefault      = warConfiguration.isFogOfWarByDefault
+        self.m_IsPassiveSkillEnabled    = warConfiguration.isPassiveSkillEnabled
         self.m_IsRankMatch              = warConfiguration.isRankMatch
         self.m_ItemsForStatePlayerIndex = nil
         self.m_MaxDiffScore             = warConfiguration.maxDiffScore
