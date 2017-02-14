@@ -94,7 +94,7 @@
 .ActionGetReplayConfigurations {
     actionCode           0 :  integer
     warID                1 :  integer
-    replayConfigurations 2 : *ReplayConfiguration
+    replayConfigurations 2 : *ReplayConfiguration(warID)
 }
 
 .ActionGetWaitingWarConfigurations {
@@ -662,7 +662,8 @@
 }
 
 .ReplayListForServer {
-    list 0 : *WarIdForIndexing(warID)
+    fullList   0 : *WarIdForIndexing(warID)
+    recentList 1 : *integer
 }
 
 .SceneWar {
