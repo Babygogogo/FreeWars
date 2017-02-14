@@ -202,6 +202,7 @@ function ModelSceneWar:ctor(sceneData)
     self.m_EnergyGainModifier         = sceneData.energyGainModifier
     self.m_EnterTurnTime              = sceneData.enterTurnTime
     self.m_ExecutedActions            = sceneData.executedActions
+    self.m_IncomeModifier             = sceneData.incomeModifier       or 100
     self.m_IntervalUntilBoot          = sceneData.intervalUntilBoot
     self.m_IsActiveSkillEnabled       = sceneData.isActiveSkillEnabled
     self.m_IsFogOfWarByDefault        = sceneData.isFogOfWarByDefault
@@ -284,6 +285,7 @@ function ModelSceneWar:toSerializableTable()
         energyGainModifier    = self.m_EnergyGainModifier,
         enterTurnTime         = self.m_EnterTurnTime,
         executedActions       = self.m_ExecutedActions,
+        incomeModifier        = self.m_IncomeModifier,
         intervalUntilBoot     = self.m_IntervalUntilBoot,
         isActiveSkillEnabled  = self.m_IsActiveSkillEnabled,
         isFogOfWarByDefault   = self.m_IsFogOfWarByDefault,
@@ -310,6 +312,7 @@ function ModelSceneWar:toSerializableTableForPlayerIndex(playerIndex)
         energyGainModifier    = self.m_EnergyGainModifier,
         enterTurnTime         = self.m_EnterTurnTime,
         executedActions       = nil,
+        incomeModifier        = self.m_IncomeModifier,
         intervalUntilBoot     = self.m_IntervalUntilBoot,
         isActiveSkillEnabled  = self.m_IsActiveSkillEnabled,
         isFogOfWarByDefault   = self.m_IsFogOfWarByDefault,
@@ -336,6 +339,7 @@ function ModelSceneWar:toSerializableReplayData()
         energyGainModifier    = self.m_EnergyGainModifier,
         enterTurnTime         = nil,
         executedActions       = self.m_ExecutedActions,
+        incomeModifier        = self.m_IncomeModifier,
         intervalUntilBoot     = self.m_IntervalUntilBoot,
         isActiveSkillEnabled  = self.m_IsActiveSkillEnabled,
         isFogOfWarByDefault   = self.m_IsFogOfWarByDefault,
@@ -563,6 +567,10 @@ end
 
 function ModelSceneWar:isPassiveSkillEnabled()
     return self.m_IsPassiveSkillEnabled
+end
+
+function ModelSceneWar:getIncomeModifier()
+    return self.m_IncomeModifier
 end
 
 function ModelSceneWar:getIntervalUntilBoot()

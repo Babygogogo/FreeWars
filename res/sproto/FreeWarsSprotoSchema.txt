@@ -154,6 +154,7 @@
     energyGainModifier    12 : integer
     isPassiveSkillEnabled 13 : boolean
     isActiveSkillEnabled  14 : boolean
+    incomeModifier        15 : integer
 }
 
 .ActionRegister {
@@ -742,6 +743,7 @@
     energyGainModifier    19 :  integer
     isPassiveSkillEnabled 20 :  boolean
     isActiveSkillEnabled  21 :  boolean
+    incomeModifier        22 :  integer
 }
 
 .WarIdForIndexing {
@@ -817,4 +819,5 @@
     energyGainModifier    14 :  integer
     isPassiveSkillEnabled 15 :  boolean
     isActiveSkillEnabled  16 :  boolean
+    incomeModifier        17 :  integer
 }

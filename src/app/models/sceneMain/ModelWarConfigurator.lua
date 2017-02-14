@@ -17,7 +17,8 @@ local ACTION_CODE_JOIN_WAR      = ActionCodeFunctions.getActionCode("ActionJoinW
 local ACTION_CODE_NEW_WAR       = ActionCodeFunctions.getActionCode("ActionNewWar")
 local ACTION_CODE_RUN_SCENE_WAR = ActionCodeFunctions.getActionCode("ActionRunSceneWar")
 local INTERVALS_UNTIL_BOOT      = {60 * 15, 3600 * 24, 3600 * 24 * 3, 3600 * 24 * 7} -- 15 minutes, 1 day, 3 days, 7 days
-local ENERGY_GAIN_MODIFIERS          = {0, 50, 100, 150, 200, 300, 500}
+local ENERGY_GAIN_MODIFIERS     = {0, 50, 100, 150, 200, 300, 500}
+local INCOME_MODIFIERS          = {50, 100, 150, 200, 300, 500}
 
 local function initSelectorWeather(modelWarConfigurator)
     -- TODO: enable the selector.
@@ -40,11 +41,12 @@ local function generatePlayerColorText(playerIndex)
 end
 
 local function generateOverviewText(self)
-    return string.format("%s:\n\n%s:%s%s\n%s:%s%s\n%s:%s%s\n\n%s:%s%s\n%s:%s%s\n\n%s:%s%s\n\n%s:%s%s\n%s:%s%s\n%s:%s%s",
+    return string.format("%s:\n\n%s:%s%s\n%s:%s%s\n%s:%s%s\n%s:%s%s\n\n%s:%s%s\n%s:%s%s\n\n%s:%s%s\n\n%s:%s%s\n%s:%s%s\n%s:%s%s",
         getLocalizedText(14, "Overview"),
         getLocalizedText(14, "WarFieldName"),       "         ",     WarFieldManager.getWarFieldName(self.m_WarConfiguration.warFieldFileName),
         getLocalizedText(14, "PlayerIndex"),        "         ",     generatePlayerColorText(self.m_PlayerIndex),
         getLocalizedText(14, "FogOfWar"),           "         ",     getLocalizedText(14, (self.m_IsFogOfWarByDefault) and ("Yes") or ("No")),
+        getLocalizedText(14, "IncomeModifier"),     "         ",     "" .. self.m_IncomeModifier .. "%",
         getLocalizedText(14, "RankMatch"),          "             ", getLocalizedText(14, (self.m_IsRankMatch)         and ("Yes") or ("No")),
         getLocalizedText(14, "MaxDiffScore"),       "         ",     (self.m_MaxDiffScore) and ("" .. self.m_MaxDiffScore) or getLocalizedText(14, "NoLimit"),
         getLocalizedText(14, "IntervalUntilBoot"),  "         ",     AuxiliaryFunctions.formatTimeInterval(self.m_IntervalUntilBoot),
@@ -71,6 +73,7 @@ local function createItemsForStateMain(self)
         local items = {
             self.m_ItemPlayerIndex,
             self.m_ItemFogOfWar,
+            self.m_ItemIncomeModifier,
             self.m_ItemRankMatch,
             self.m_ItemMaxDiffScore,
             self.m_ItemIntervalUntilBoot,
@@ -153,6 +156,7 @@ local function sendActionNewWar(self)
         actionCode            = ACTION_CODE_NEW_WAR,
         defaultWeatherCode    = 1, --TODO: add an option for the weather.
         energyGainModifier    = self.m_EnergyGainModifier,
+        incomeModifier        = self.m_IncomeModifier,
         intervalUntilBoot     = self.m_IntervalUntilBoot,
         isActiveSkillEnabled  = self.m_IsActiveSkillEnabled,
         isPassiveSkillEnabled = self.m_IsPassiveSkillEnabled,
@@ -197,6 +201,12 @@ local function setStateFogOfWar(self)
     self.m_State = "stateFogOfWar"
     self.m_View:setMenuTitleText(getLocalizedText(34, "FogOfWar"))
         :setItems(self.m_ItemsForStateFogOfWar)
+end
+
+local function setStateIncomeModifier(self)
+    self.m_State = "stateIncomeModifier"
+    self.m_View:setMenuTitleText(getLocalizedText(14, "Income Modifier"))
+        :setItems(self.m_ItemsForStateIncomeModifier)
 end
 
 local function setStateIntervalUntilBoot(self)
@@ -268,6 +278,15 @@ local function initItemFogOfWar(self)
         name     = getLocalizedText(34, "FogOfWar"),
         callback = function()
             setStateFogOfWar(self)
+        end,
+    }
+end
+
+local function initItemIncomeModifier(self)
+    self.m_ItemIncomeModifier = {
+        name     = getLocalizedText(14, "Income Modifier"),
+        callback = function()
+            setStateIncomeModifier(self)
         end,
     }
 end
@@ -395,6 +414,21 @@ local function initItemsForStateFogOfWar(self)
     }
 end
 
+local function initItemsForStateIncomeModifier(self)
+    local items = {}
+    for _, modifier in ipairs(INCOME_MODIFIERS) do
+        items[#items + 1] = {
+            name     = (modifier ~= 100) and (string.format("%d%%", modifier)) or (string.format("%d%%(%s)", modifier, getLocalizedText(14, "Default"))),
+            callback = function()
+                self.m_IncomeModifier = modifier
+                setStateMain(self, true)
+            end,
+        }
+    end
+
+    self.m_ItemsForStateIncomeModifier = items
+end
+
 local function initItemsForStateIntervalUntilBoot(self)
     local items = {}
     for _, interval in ipairs(INTERVALS_UNTIL_BOOT) do
@@ -464,6 +498,7 @@ function ModelWarConfigurator:ctor()
     initItemEnablePassiveSkill(self)
     initItemEnergyGainModifier(self)
     initItemFogOfWar(          self)
+    initItemIncomeModifier(    self)
     initItemIntervalUntilBoot( self)
     initItemMaxDiffScore(      self)
     initItemPlayerIndex(       self)
@@ -474,6 +509,7 @@ function ModelWarConfigurator:ctor()
     initItemsForStateEnablePassiveSkill(self)
     initItemsForStateEnergyGainModifier(self)
     initItemsForStateFogOfWar(          self)
+    initItemsForStateIncomeModifier(    self)
     initItemsForStateIntervalUntilBoot( self)
     initItemsForStateMaxDiffScore(      self)
     initItemsForStateRankMatch(         self)
@@ -577,6 +613,7 @@ function ModelWarConfigurator:resetWithWarConfiguration(warConfiguration)
     local mode = self.m_Mode
     if (mode == "modeCreate") then
         self.m_EnergyGainModifier       = 100
+        self.m_IncomeModifier           = 100
         self.m_IntervalUntilBoot        = 3600 * 24 * 3
         self.m_IsActiveSkillEnabled     = true
         self.m_IsFogOfWarByDefault      = false
@@ -590,6 +627,7 @@ function ModelWarConfigurator:resetWithWarConfiguration(warConfiguration)
 
     elseif (mode == "modeJoin") then
         self.m_EnergyGainModifier       = warConfiguration.energyGainModifier
+        self.m_IncomeModifier           = warConfiguration.incomeModifier        or 100
         self.m_IntervalUntilBoot        = warConfiguration.intervalUntilBoot
         self.m_IsActiveSkillEnabled     = warConfiguration.isActiveSkillEnabled
         self.m_IsFogOfWarByDefault      = warConfiguration.isFogOfWarByDefault
@@ -603,6 +641,7 @@ function ModelWarConfigurator:resetWithWarConfiguration(warConfiguration)
 
     elseif (mode == "modeContinue") then
         self.m_EnergyGainModifier       = warConfiguration.energyGainModifier
+        self.m_IncomeModifier           = warConfiguration.incomeModifier        or 100
         self.m_IntervalUntilBoot        = warConfiguration.intervalUntilBoot
         self.m_IsActiveSkillEnabled     = warConfiguration.isActiveSkillEnabled
         self.m_IsFogOfWarByDefault      = warConfiguration.isFogOfWarByDefault
@@ -616,6 +655,7 @@ function ModelWarConfigurator:resetWithWarConfiguration(warConfiguration)
 
     elseif (mode == "modeExit") then
         self.m_EnergyGainModifier       = warConfiguration.energyGainModifier
+        self.m_IncomeModifier           = warConfiguration.incomeModifier        or 100
         self.m_IntervalUntilBoot        = warConfiguration.intervalUntilBoot
         self.m_IsActiveSkillEnabled     = warConfiguration.isActiveSkillEnabled
         self.m_IsFogOfWarByDefault      = warConfiguration.isFogOfWarByDefault
