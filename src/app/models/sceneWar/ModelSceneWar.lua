@@ -202,7 +202,7 @@ function ModelSceneWar:ctor(sceneData)
     self.m_EnergyGainModifier         = sceneData.energyGainModifier
     self.m_EnterTurnTime              = sceneData.enterTurnTime
     self.m_ExecutedActions            = sceneData.executedActions
-    self.m_IncomeModifier             = sceneData.incomeModifier       or 100
+    self.m_IncomeModifier             = sceneData.incomeModifier
     self.m_IntervalUntilBoot          = sceneData.intervalUntilBoot
     self.m_IsActiveSkillEnabled       = sceneData.isActiveSkillEnabled
     self.m_IsFogOfWarByDefault        = sceneData.isFogOfWarByDefault
