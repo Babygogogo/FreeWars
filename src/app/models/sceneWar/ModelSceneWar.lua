@@ -199,14 +199,18 @@ end
 --------------------------------------------------------------------------------
 function ModelSceneWar:ctor(sceneData)
     self.m_CachedActions              = {}
+    self.m_EnergyGainModifier         = sceneData.energyGainModifier
     self.m_EnterTurnTime              = sceneData.enterTurnTime
     self.m_ExecutedActions            = sceneData.executedActions
+    self.m_IncomeModifier             = sceneData.incomeModifier       or 100
     self.m_IntervalUntilBoot          = sceneData.intervalUntilBoot
-    self.m_IsWarEnded                 = sceneData.isWarEnded
+    self.m_IsActiveSkillEnabled       = sceneData.isActiveSkillEnabled
     self.m_IsFogOfWarByDefault        = sceneData.isFogOfWarByDefault
+    self.m_IsPassiveSkillEnabled      = sceneData.isPassiveSkillEnabled
     self.m_IsRandomWarField           = sceneData.isRandomWarField
     self.m_IsRankMatch                = sceneData.isRankMatch
     self.m_IsTotalReplay              = sceneData.isTotalReplay
+    self.m_IsWarEnded                 = sceneData.isWarEnded
     self.m_MaxBaseSkillPoints         = sceneData.maxBaseSkillPoints
     self.m_MaxDiffScore               = sceneData.maxDiffScore
     self.m_RemainingVotesForDraw      = sceneData.remainingVotesForDraw
@@ -278,10 +282,14 @@ end
 function ModelSceneWar:toSerializableTable()
     return {
         actionID              = self:getActionId(),
+        energyGainModifier    = self.m_EnergyGainModifier,
         enterTurnTime         = self.m_EnterTurnTime,
         executedActions       = self.m_ExecutedActions,
+        incomeModifier        = self.m_IncomeModifier,
         intervalUntilBoot     = self.m_IntervalUntilBoot,
+        isActiveSkillEnabled  = self.m_IsActiveSkillEnabled,
         isFogOfWarByDefault   = self.m_IsFogOfWarByDefault,
+        isPassiveSkillEnabled = self.m_IsPassiveSkillEnabled,
         isRandomWarField      = self.m_IsRandomWarField,
         isRankMatch           = self.m_IsRankMatch,
         isTotalReplay         = self.m_IsTotalReplay,
@@ -301,10 +309,14 @@ end
 function ModelSceneWar:toSerializableTableForPlayerIndex(playerIndex)
     return {
         actionID              = self:getActionId(),
+        energyGainModifier    = self.m_EnergyGainModifier,
         enterTurnTime         = self.m_EnterTurnTime,
         executedActions       = nil,
+        incomeModifier        = self.m_IncomeModifier,
         intervalUntilBoot     = self.m_IntervalUntilBoot,
+        isActiveSkillEnabled  = self.m_IsActiveSkillEnabled,
         isFogOfWarByDefault   = self.m_IsFogOfWarByDefault,
+        isPassiveSkillEnabled = self.m_IsPassiveSkillEnabled,
         isRandomWarField      = self.m_IsRandomWarField,
         isRankMatch           = self.m_IsRankMatch,
         isTotalReplay         = false,
@@ -324,10 +336,14 @@ end
 function ModelSceneWar:toSerializableReplayData()
     return {
         actionID              = 0,
+        energyGainModifier    = self.m_EnergyGainModifier,
         enterTurnTime         = nil,
         executedActions       = self.m_ExecutedActions,
+        incomeModifier        = self.m_IncomeModifier,
         intervalUntilBoot     = self.m_IntervalUntilBoot,
+        isActiveSkillEnabled  = self.m_IsActiveSkillEnabled,
         isFogOfWarByDefault   = self.m_IsFogOfWarByDefault,
+        isPassiveSkillEnabled = self.m_IsPassiveSkillEnabled,
         isRandomWarField      = self.m_IsRandomWarField,
         isRankMatch           = self.m_IsRankMatch,
         isTotalReplay         = true,
@@ -539,6 +555,22 @@ end
 
 function ModelSceneWar:getWarId()
     return self.m_WarID
+end
+
+function ModelSceneWar:getEnergyGainModifier()
+    return self.m_EnergyGainModifier
+end
+
+function ModelSceneWar:isActiveSkillEnabled()
+    return self.m_IsActiveSkillEnabled
+end
+
+function ModelSceneWar:isPassiveSkillEnabled()
+    return self.m_IsPassiveSkillEnabled
+end
+
+function ModelSceneWar:getIncomeModifier()
+    return self.m_IncomeModifier
 end
 
 function ModelSceneWar:getIntervalUntilBoot()

@@ -139,18 +139,22 @@
 }
 
 .ActionNewWar {
-    actionCode            0 : integer
-    playerAccount         1 : string
-    playerPassword        2 : string
-    warID                 3 : integer
-    warPassword           4 : string
-    warFieldFileName      5 : string
-    playerIndex           6 : integer
-    isFogOfWarByDefault   7 : boolean
-    defaultWeatherCode    8 : integer
-    isRankMatch           9 : boolean
-    maxDiffScore         10 : integer
-    intervalUntilBoot    11 : integer
+    actionCode             0 : integer
+    playerAccount          1 : string
+    playerPassword         2 : string
+    warID                  3 : integer
+    warPassword            4 : string
+    warFieldFileName       5 : string
+    playerIndex            6 : integer
+    isFogOfWarByDefault    7 : boolean
+    defaultWeatherCode     8 : integer
+    isRankMatch            9 : boolean
+    maxDiffScore          10 : integer
+    intervalUntilBoot     11 : integer
+    energyGainModifier    12 : integer
+    isPassiveSkillEnabled 13 : boolean
+    isActiveSkillEnabled  14 : boolean
+    incomeModifier        15 : integer
 }
 
 .ActionRegister {
@@ -736,6 +740,10 @@
     createdTime           16 :  integer
     intervalUntilBoot     17 :  integer
     enterTurnTime         18 :  integer
+    energyGainModifier    19 :  integer
+    isPassiveSkillEnabled 20 :  boolean
+    isActiveSkillEnabled  21 :  boolean
+    incomeModifier        22 :  integer
 }
 
 .WarIdForIndexing {
@@ -750,14 +758,19 @@
 }
 
 .SingleSkillConfiguration {
-    .SingleSkill {
+    .SingleSkillActive {
         id    0 : integer
         level 1 : integer
     }
 
-    passiveSkills     1 : *SingleSkill
-    researchingSkills 2 : *SingleSkill
-    activeSkills      3 : *SingleSkill
+    .SingleSkillPassive {
+        id       0 : integer
+        modifier 1 : integer
+    }
+
+    passiveSkills     1 : *SingleSkillPassive
+    researchingSkills 2 : *SingleSkillPassive
+    activeSkills      3 : *SingleSkillActive
 }
 
 .TileData {
@@ -790,17 +803,21 @@
 }
 
 .WarConfiguration {
-    warID                0 :  integer
-    warFieldFileName     1 :  string
-    warPassword          2 :  string
-    isFogOfWarByDefault  4 :  boolean
-    defaultWeatherCode   5 :  integer
-    isRandomWarField     6 :  boolean
-    players              7 : *PlayerInfo(playerIndex)
-    isRankMatch          8 :  boolean
-    maxDiffScore         9 :  integer
-    createdTime         10 :  integer
-    intervalUntilBoot   11 :  integer
-    enterTurnTime       12 :  integer
-    playerIndexInTurn   13 :  integer
+    warID                  0 :  integer
+    warFieldFileName       1 :  string
+    warPassword            2 :  string
+    isFogOfWarByDefault    4 :  boolean
+    defaultWeatherCode     5 :  integer
+    isRandomWarField       6 :  boolean
+    players                7 : *PlayerInfo(playerIndex)
+    isRankMatch            8 :  boolean
+    maxDiffScore           9 :  integer
+    createdTime           10 :  integer
+    intervalUntilBoot     11 :  integer
+    enterTurnTime         12 :  integer
+    playerIndexInTurn     13 :  integer
+    energyGainModifier    14 :  integer
+    isPassiveSkillEnabled 15 :  boolean
+    isActiveSkillEnabled  16 :  boolean
+    incomeModifier        17 :  integer
 }

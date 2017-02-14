@@ -3,42 +3,6 @@ local SkillDataAccessors = {}
 
 local SKILL_DATA = requireFW("res.data.SkillData")
 
-function SkillDataAccessors.getSkillConfigurationsCount()
-    return SKILL_DATA.skillConfigurationsCount
-end
-
-function SkillDataAccessors.getPassiveSkillSlotsCount()
-    return SKILL_DATA.passiveSkillSlotsCount
-end
-
-function SkillDataAccessors.getActiveSkillSlotsCount()
-    return SKILL_DATA.activeSkillSlotsCount
-end
-
-function SkillDataAccessors.getBasePointsMinMaxStep()
-    return SKILL_DATA.minBasePoints, SKILL_DATA.maxBasePoints, SKILL_DATA.basePointsPerStep
-end
-
-function SkillDataAccessors.getEnergyRequirementMinMax()
-    return SKILL_DATA.minEnergyRequirement, SKILL_DATA.maxEnergyRequirement
-end
-
-function SkillDataAccessors.getSkillPointsPerEnergyRequirement()
-    return SKILL_DATA.skillPointsPerEnergyRequirement
-end
-
-function SkillDataAccessors.getDamageCostPerEnergyRequirement()
-    return SKILL_DATA.damageCostPerEnergyRequirement
-end
-
-function SkillDataAccessors.getSkillEnergyRequirement(id, level)
-    return SKILL_DATA.skills[id].levels[level].minEnergy
-end
-
-function SkillDataAccessors.getDamageCostGrowthRates()
-    return SKILL_DATA.damageCostGrowthRates
-end
-
 function SkillDataAccessors.getSkillDeclarationCost()
     return SKILL_DATA.skillDeclarationCost
 end

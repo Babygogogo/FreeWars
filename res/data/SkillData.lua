@@ -1,18 +1,7 @@
 
 local SkillData = {}
 
-SkillData.minBasePoints                   = 0
-SkillData.maxBasePoints                   = 200
-SkillData.basePointsPerStep               = 25
-SkillData.minEnergyRequirement            = 1
-SkillData.maxEnergyRequirement            = 15
-SkillData.skillPointsPerEnergyRequirement = 100
-SkillData.skillDeclarationCost            = 2500
-SkillData.damageCostPerEnergyRequirement  = 18000
-SkillData.damageCostGrowthRates           = 20
-SkillData.skillConfigurationsCount        = 10
-SkillData.passiveSkillSlotsCount          = 4
-SkillData.activeSkillSlotsCount           = 4
+SkillData.skillDeclarationCost = 2500
 
 SkillData.categories = {
     ["SkillsActive"] = {
@@ -21,198 +10,6 @@ SkillData.categories = {
 
     ["SkillsPassive"] = {
         1, 2, 5, 6, 8,
-    },
-
-    ["SkillCategoriesForPassive"] = {
-        "SkillCategoryPassiveAttack",
-        "SkillCategoryPassiveDefense",
-        "SkillCategoryPassiveMoney",
-        "SkillCategoryPassiveMovement",
-        "SkillCategoryPassiveAttackRange",
-        "SkillCategoryPassiveCapture",
-        "SkillCategoryPassiveRepair",
-        "SkillCategoryPassivePromotion",
-        "SkillCategoryPassiveEnergy",
-        "SkillCategoryPassiveVision",
-    },
-
-    ["SkillCategoriesForActive"] = {
-        "SkillCategoryActiveAttack",
-        "SkillCategoryActiveDefense",
-        "SkillCategoryActiveMoney",
-        "SkillCategoryActiveMovement",
-        "SkillCategoryActiveAttackRange",
-        "SkillCategoryActiveCapture",
-        "SkillCategoryActiveHP",
-        "SkillCategoryActivePromotion",
-        "SkillCategoryActiveEnergy",
-        "SkillCategoryActiveLogistics",
-        "SkillCategoryActiveVision",
-    },
-
-    ["SkillCategoryPassiveAttack"] = {
-        1,
-        20,
-        23,
-        14,
-        25,
-        29,
-        30,
-        31,
-        32,
-        33,
-        34,
-        35,
-        36,
-    },
-
-    ["SkillCategoryActiveAttack"] = {
-        1,
-        20,
-        23,
-        14,
-        25,
-        29,
-        30,
-        31,
-        32,
-        33,
-        34,
-        35,
-        36,
-    },
-
-    ["SkillCategoryPassiveDefense"] = {
-        2,
-        21,
-        24,
-        37,
-        38,
-        39,
-        40,
-        41,
-        42,
-        43,
-        44,
-        45,
-    },
-
-    ["SkillCategoryActiveDefense"] = {
-        2,
-        21,
-        24,
-        37,
-        38,
-        39,
-        40,
-        41,
-        42,
-        43,
-        44,
-        45,
-    },
-
-    ["SkillCategoryPassiveMoney"] = {
-        3,
-        17,
-        20,
-        21,
-        22,
-    },
-
-    ["SkillCategoryActiveMoney"] = {
-        3,
-        12,
-        20,
-        21,
-        22,
-    },
-
-    ["SkillCategoryPassiveMovement"] = {
-        28,
-        54,
-    },
-
-    ["SkillCategoryActiveMovement"] = {
-        6,
-        8,
-        28,
-        46,
-        47,
-        48,
-        49,
-        50,
-        51,
-        52,
-        53,
-        54,
-    },
-
-    ["SkillCategoryPassiveAttackRange"] = {
-        7,
-    },
-
-    ["SkillCategoryActiveAttackRange"] = {
-        7,
-    },
-
-    ["SkillCategoryPassiveCapture"] = {
-        15,
-    },
-
-    ["SkillCategoryActiveCapture"] = {
-        15,
-    },
-
-    ["SkillCategoryPassiveRepair"] = {
-        10,
-        11,
-    },
-
-    ["SkillCategoryPassiveEnergy"] = {
-        18,
-        19,
-    },
-
-    ["SkillCategoryActiveEnergy"] = {
-        13,
-        61,
-    },
-
-    ["SkillCategoryActiveHP"] = {
-        4,
-        5,
-    },
-
-    ["SkillCategoryPassivePromotion"] = {
-        27,
-    },
-
-    ["SkillCategoryActivePromotion"] = {
-        26,
-    },
-
-    ["SkillCategoryActiveLogistics"] = {
-        9,
-        16,
-    },
-
-    ["SkillCategoryPassiveVision"] = {
-        55,
-        56,
-        57,
-        58,
-        59,
-        60,
-    },
-
-    ["SkillCategoryActiveVision"] = {
-        55,
-        56,
-        57,
-        58,
-        59,
-        60,
     },
 }
 
@@ -337,7 +134,7 @@ SkillData.skills = {
             [2] = {modifierPassive = 10, pointsPassive = 30000, modifierActive = nil, pointsActive = nil},
             [3] = {modifierPassive = 15, pointsPassive = 45000, modifierActive = nil, pointsActive = nil},
             [4] = {modifierPassive = 20, pointsPassive = 60000, modifierActive = nil, pointsActive = nil},
-            [5] = {modifierPassive = 15, pointsPassive = 75000, modifierActive = nil, pointsActive = nil},
+            [5] = {modifierPassive = 25, pointsPassive = 75000, modifierActive = nil, pointsActive = nil},
         },
     },
 

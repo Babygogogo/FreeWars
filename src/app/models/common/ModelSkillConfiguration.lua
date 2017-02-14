@@ -1,15 +1,16 @@
 
 local ModelSkillConfiguration = requireFW("src.global.functions.class")("ModelSkillConfiguration")
 
-local ModelSkillGroup = requireFW("src.app.models.common.ModelSkillGroup")
+local ModelSkillGroupActive  = requireFW("src.app.models.common.ModelSkillGroupActive")
+local ModelSkillGroupPassive = requireFW("src.app.models.common.ModelSkillGroupPassive")
 
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
 function ModelSkillConfiguration:ctor(param)
-    self.m_ModelSkillGroupPassive     = self.m_ModelSkillGroupPassive     or ModelSkillGroup:create()
-    self.m_ModelSkillGroupResearching = self.m_ModelSkillGroupResearching or ModelSkillGroup:create()
-    self.m_ModelSkillGroupActive      = self.m_ModelSkillGroupActive      or ModelSkillGroup:create()
+    self.m_ModelSkillGroupPassive     = self.m_ModelSkillGroupPassive     or ModelSkillGroupPassive:create()
+    self.m_ModelSkillGroupResearching = self.m_ModelSkillGroupResearching or ModelSkillGroupPassive:create()
+    self.m_ModelSkillGroupActive      = self.m_ModelSkillGroupActive      or ModelSkillGroupActive:create()
 
     param = param or {}
     self.m_ModelSkillGroupPassive    :ctor(param.passiveSkills)
@@ -47,6 +48,13 @@ end
 
 function ModelSkillConfiguration:getModelSkillGroupActive()
     return self.m_ModelSkillGroupActive
+end
+
+function ModelSkillConfiguration:mergePassiveAndResearchingSkills()
+    self.m_ModelSkillGroupPassive:mergeSkillGroup(self.m_ModelSkillGroupResearching)
+    self.m_ModelSkillGroupResearching:clearAllSkills()
+
+    return self
 end
 
 return ModelSkillConfiguration
