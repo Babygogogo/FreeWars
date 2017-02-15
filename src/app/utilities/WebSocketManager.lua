@@ -38,6 +38,8 @@ local function heartbeat()
         WebSocketManager.sendAction({
                 actionCode       = ACTION_CODE_HEARTBEAT,
                 heartbeatCounter = s_HeartbeatCounter,
+                playerAccount    = s_Account,
+                playerPassword   = s_Password,
             }, true)
     end
 end
