@@ -136,6 +136,8 @@
 .ActionNetworkHeartbeat {
     actionCode       0 : integer
     heartbeatCounter 1 : integer
+    playerAccount    2 : string
+    playerPassword   3 : string
 }
 
 .ActionNewWar {
@@ -616,26 +618,30 @@
     .WarLists {
         ongoing 0 : *WarIdForIndexing(warID)
         waiting 1 : *WarIdForIndexing(warID)
+        recent  2 : *integer
     }
 
-    playerID    0 :  integer
-    account     1 :  string
-    password    2 :  string
-    nickname    3 :  string
-    gameRecords 4 : *SingleGameRecord
-    warLists    5 :  WarLists
+    playerID            0 :  integer
+    account             1 :  string
+    password            2 :  string
+    nickname            3 :  string
+    gameRecords         4 : *SingleGameRecord
+    warLists            5 :  WarLists
+    totalOnlineDuration 6 :  integer
 }
 
 .PlayerProfileForClient {
     .WarLists {
         waiting 0 : *WarIdForIndexing(warID)
+        recent  1 : *integer
     }
 
-    account     0 :  string
-    nickname    1 :  string
-    gameRecords 2 : *SingleGameRecordForPlayerProfile
-    warLists    3 :  WarLists
-    playerID    4 :  integer
+    account             0 :  string
+    nickname            1 :  string
+    gameRecords         2 : *SingleGameRecordForPlayerProfile
+    warLists            3 :  WarLists
+    playerID            4 :  integer
+    totalOnlineDuration 5 :  integer
 }
 
 .RankingList {
