@@ -16,6 +16,7 @@ local getLocalizedText = LocalizationFunctions.getLocalizedText
 
 local ACTION_CODE_ACTIVATE_SKILL = ActionCodeFunctions.getActionCode("ActionActivateSkill")
 local ACTION_CODE_DECLARE_SKILL  = ActionCodeFunctions.getActionCode("ActionDeclareSkill")
+local SKILL_DECLARATION_COST     = SkillDataAccessors.getSkillDeclarationCost()
 
 --------------------------------------------------------------------------------
 -- The util functions.
@@ -171,7 +172,7 @@ local function generateItemsForStateMain(self)
         if (modelSceneWar:isPassiveSkillEnabled()) then
             items[#items + 1] = self.m_ItemResearchPassiveSkill
         end
-        if ((modelSceneWar:isActiveSkillEnabled()) and (not modelPlayer:isSkillDeclared()) and (modelPlayer:getEnergy() >= 3000)) then
+        if ((modelSceneWar:isActiveSkillEnabled()) and (not modelPlayer:isSkillDeclared()) and (modelPlayer:getEnergy() >= SKILL_DECLARATION_COST)) then
             items[#items + 1] = self.m_ItemDeclareSkill
         end
         if (modelPlayer:canActivateSkill()) then
