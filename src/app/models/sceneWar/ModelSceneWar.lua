@@ -214,6 +214,8 @@ function ModelSceneWar:ctor(sceneData)
     self.m_MaxBaseSkillPoints         = sceneData.maxBaseSkillPoints
     self.m_MaxDiffScore               = sceneData.maxDiffScore
     self.m_RemainingVotesForDraw      = sceneData.remainingVotesForDraw
+    self.m_StartingEnergy             = sceneData.startingEnergy
+    self.m_StartingFund               = sceneData.startingFund
     self.m_WarID                      = sceneData.warID
     self.m_WarPassword                = sceneData.warPassword
     setActionId(self, sceneData.actionID)
@@ -297,6 +299,8 @@ function ModelSceneWar:toSerializableTable()
         maxBaseSkillPoints    = self.m_MaxBaseSkillPoints,
         maxDiffScore          = self.m_MaxDiffScore,
         remainingVotesForDraw = self.m_RemainingVotesForDraw,
+        startingEnergy        = self.m_StartingEnergy,
+        startingFund          = self.m_StartingFund,
         warID                 = self.m_WarID,
         warPassword           = self.m_WarPassword,
         players               = self:getModelPlayerManager() :toSerializableTable(),
@@ -324,6 +328,8 @@ function ModelSceneWar:toSerializableTableForPlayerIndex(playerIndex)
         maxBaseSkillPoints    = self.m_MaxBaseSkillPoints,
         maxDiffScore          = self.m_MaxDiffScore,
         remainingVotesForDraw = self.m_RemainingVotesForDraw,
+        startingEnergy        = self.m_StartingEnergy,
+        startingFund          = self.m_StartingFund,
         warID                 = self.m_WarID,
         warPassword           = self.m_WarPassword,
         players               = self:getModelPlayerManager() :toSerializableTableForPlayerIndex(playerIndex),
@@ -351,6 +357,8 @@ function ModelSceneWar:toSerializableReplayData()
         maxBaseSkillPoints    = self.m_MaxBaseSkillPoints,
         maxDiffScore          = self.m_MaxDiffScore,
         remainingVotesForDraw = nil,
+        startingEnergy        = self.m_StartingEnergy,
+        startingFund          = self.m_StartingFund,
         warID                 = self.m_WarID,
         warPassword           = self.m_WarPassword,
         players               = self:getModelPlayerManager() :toSerializableReplayData(),
@@ -577,6 +585,22 @@ function ModelSceneWar:getIntervalUntilBoot()
     return self.m_IntervalUntilBoot
 end
 
+function ModelSceneWar:isFogOfWarByDefault()
+    return self.m_IsFogOfWarByDefault
+end
+
+function ModelSceneWar:isRankMatch()
+    return self.m_IsRankMatch
+end
+
+function ModelSceneWar:getStartingEnergy()
+    return self.m_StartingEnergy
+end
+
+function ModelSceneWar:getStartingFund()
+    return self.m_StartingFund
+end
+
 function ModelSceneWar:getEnterTurnTime()
     return self.m_EnterTurnTime
 end
@@ -589,14 +613,6 @@ end
 
 function ModelSceneWar:isEnded()
     return self.m_IsWarEnded
-end
-
-function ModelSceneWar:isFogOfWarByDefault()
-    return self.m_IsFogOfWarByDefault
-end
-
-function ModelSceneWar:isRankMatch()
-    return self.m_IsRankMatch
 end
 
 function ModelSceneWar:setEnded(ended)

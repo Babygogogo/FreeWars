@@ -67,8 +67,8 @@ function ModelPlayer:toSerializableReplayData()
     return {
         account             = self:getAccount(),
         canActivateSkill    = false,
-        energy              = 0,
-        fund                = 0,
+        energy              = self.m_ModelSceneWar:getStartingEnergy(),
+        fund                = self.m_ModelSceneWar:getStartingFund(),
         hasVotedForDraw     = nil,
         isActivatingSkill   = false,
         isAlive             = true,
@@ -77,6 +77,12 @@ function ModelPlayer:toSerializableReplayData()
         skillConfiguration  = self:getModelSkillConfiguration():toSerializableReplayData(),
         playerIndex         = self.m_PlayerIndex,
     }
+end
+
+function ModelPlayer:onStartRunning(modelSceneWar)
+    self.m_ModelSceneWar = modelSceneWar
+
+    return self
 end
 
 --------------------------------------------------------------------------------
