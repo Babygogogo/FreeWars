@@ -158,6 +158,7 @@
     isActiveSkillEnabled  14 : boolean
     incomeModifier        15 : integer
     startingEnergy        16 : integer
+    startingFund          17 : integer
 }
 
 .ActionRegister {
@@ -753,6 +754,7 @@
     isActiveSkillEnabled  21 :  boolean
     incomeModifier        22 :  integer
     startingEnergy        23 :  integer
+    startingFund          24 :  integer
 }
 
 .WarIdForIndexing {
@@ -830,4 +832,5 @@
     isActiveSkillEnabled  16 :  boolean
     incomeModifier        17 :  integer
     startingEnergy        18 :  integer
+    startingFund          19 :  integer
 }
