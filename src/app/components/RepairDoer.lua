@@ -26,6 +26,7 @@ RepairDoer.EXPORTED_METHODS = {
     "getRepairTargetCategoryFullName",
     "getRepairTargetCategory",
     "canRepairTarget",
+    "getNormalizedRepairAmount",
 }
 
 --------------------------------------------------------------------------------
@@ -80,6 +81,10 @@ function RepairDoer:canRepairTarget(target)
     end
 
     return false
+end
+
+function RepairDoer:getNormalizedRepairAmount()
+    return self.m_Template.amount
 end
 
 return RepairDoer

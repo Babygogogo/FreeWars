@@ -38,11 +38,11 @@ SkillData.skills = {
         maxLevelActive      = 5,
         modifierUnit = "%",
         levels = {
-            [1] = {modifierPassive = 6, pointsPassive = 10000, modifierActive = 20, pointsActive = 5000},
-            [2] = {modifierPassive = 12, pointsPassive = 20000, modifierActive = 40, pointsActive = 10000},
-            [3] = {modifierPassive = 18, pointsPassive = 30000, modifierActive = 60, pointsActive = 15000},
-            [4] = {modifierPassive = 24, pointsPassive = 40000, modifierActive = 80, pointsActive = 20000},
-            [5] = {modifierPassive = 30, pointsPassive = 50000, modifierActive = 100, pointsActive = 25000},
+            [1] = {modifierPassive = 5, pointsPassive = 10000, modifierActive = 20, pointsActive = 5000},
+            [2] = {modifierPassive = 10, pointsPassive = 20000, modifierActive = 40, pointsActive = 10000},
+            [3] = {modifierPassive = 15, pointsPassive = 30000, modifierActive = 60, pointsActive = 15000},
+            [4] = {modifierPassive = 20, pointsPassive = 40000, modifierActive = 80, pointsActive = 20000},
+            [5] = {modifierPassive = 25, pointsPassive = 50000, modifierActive = 100, pointsActive = 25000},
         },
     },
 
