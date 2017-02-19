@@ -1256,6 +1256,7 @@ local s_Texts = {
             elseif (textType == "RequireVoteForDraw")  then return "已有玩家提出求和。您需要先表决是否同意和局，才能结束本回合。"
             elseif (textType == "QuitWar")             then return "您将回到主界面（可以随时再回到本战局）。\n是否确定退出？"
             elseif (textType == "ReloadWar")           then return "是否确定要重新载入战局？"
+            elseif (textType == "SkillNotDeclared")    then return "您尚未发起特技宣言。"
             elseif (textType == "Surrender")           then return "您将输掉本战局，且无法反悔！\n是否确定投降？"
             else                                            return "未知66:" .. (textType or "")
             end
@@ -1273,6 +1274,7 @@ local s_Texts = {
             elseif (textType == "RequireVoteForDraw")  then return "A draw has been proposed. You must approve/decline it before ending your turn."
             elseif (textType == "QuitWar")             then return "You are quitting the war (you may reenter it later).\nAre you sure?"
             elseif (textType == "ReloadWar")           then return "Are you sure to reload the war?"
+            elseif (textType == "SkillNotDeclared")    then return "You haven't made a skill declaration."
             elseif (textType == "Surrender")           then return "You will lose the game by surrendering!\nAre you sure?"
             else                                            return "Unrecognized:[66]" .. textType
             end
