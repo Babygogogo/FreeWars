@@ -817,6 +817,18 @@ local function executeBeginTurn(action, modelSceneWar)
 
         if (not lostPlayerIndex) then
             modelTurnManager:beginTurnPhaseBeginning(action.income, action.repairData, action.supplyData, function()
+                if (not isReplay) then
+                    local playerIndexInTurn = modelTurnManager:getPlayerIndex()
+                    if (playerIndexInTurn == modelPlayerManager:getPlayerIndexLoggedIn()) then
+                        local modelMessageIndicator = getModelMessageIndicator(modelSceneWar)
+                        modelPlayerManager:forEachModelPlayer(function(modelPlayer, playerIndex)
+                            if ((playerIndex ~= playerIndexInTurn) and (modelPlayer:isSkillDeclared())) then
+                                modelMessageIndicator:showMessage(string.format("[%s]%s!", modelPlayer:getAccount(), getLocalizedText(22, "HasDeclaredSkill")))
+                            end
+                        end)
+                    end
+                end
+
                 modelSceneWar:setExecutingAction(false)
             end)
         else
