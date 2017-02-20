@@ -153,19 +153,21 @@ local s_LongText5_2 = "Untranslated"
 
 local s_LongText6_1 = [[
 请注意：
-1. 大部分特技的效果只维持到您下个回合初。
-2. 一旦发动特技，则直至您下个回合开始前，您都无法再通过战斗获得能量。
-3. 您可以多次发动同一个特技；如果可能，其效果将被自动叠加（比如全军加攻等技能）。
-4. 您可以任意多次交替发动特技和操作部队。
-5. 如有部分按钮不可点击，则是因为您的能量不足。
+1. 您必须提前一回合发出特技宣言，才能发动特技。
+2. 大部分特技的效果只维持到您下个回合初。
+3. 一旦发动特技，则直至您下个回合开始前，您都无法再通过战斗获得能量。
+4. 您可以多次发动同一个特技；如果可能，其效果将被自动叠加（比如全军加攻等技能）。
+5. 您可以任意多次交替发动特技和操作部队。
+6. 如有部分按钮不可点击，则是因为您的能量不足。
 ]]
 local s_LongText6_2 = [[
 Note:
-1. The skill effect lasts till the beginning of your next turn.
-2. Once you activate a skill, you won't get any energy through battles until your next turn begins."
-3. You may activate a same skill multiple times.
-4. You may move your units, activate skills, again move your units, again activate skills and so on.
-5. If your energy is not enough, some buttons will be unavailable.
+1. You have to make a skill declaration so that you may activate active skills in your next turn.
+2. The skill effect lasts till the beginning of your next turn.
+3. Once you activate a skill, you won't get any energy through battles until your next turn begins."
+4. You may activate a same skill multiple times.
+5. You may move your units, activate skills, again move your units, again activate skills and so on.
+6. If your energy is not enough, some buttons will be unavailable.
 ]]
 
 local s_LongText7_1 = [[
@@ -804,6 +806,8 @@ local s_Texts = {
             elseif (textType == "ConfirmationResearchSkill") then return "您确定要研发如下日常技吗？"
             elseif (textType == "CurrentEnergy")             then return "当前能量值"
             elseif (textType == "DeclareSkill")              then return "发起特技宣言"
+            elseif (textType == "EffectListActiveSkill")     then return "特技消耗表"
+            elseif (textType == "EffectListPassiveSkill")    then return "日常技消耗表"
             elseif (textType == "EnergyCost")                then return "能量消耗"
             elseif (textType == "HasDeclaredSkill")          then return "已发起了特技宣言"
             elseif (textType == "HelpForActiveSkill")        then return s_LongText6_1
@@ -826,6 +830,8 @@ local s_Texts = {
             elseif (textType == "ConfirmationResearchSkill") then return "Are you sure to research the skill below?"
             elseif (textType == "CurrentEnergy")             then return "Current Energy"
             elseif (textType == "DeclareSkill")              then return "Declare Skill"
+            elseif (textType == "EffectListActiveSkill")     then return "ActiveList"
+            elseif (textType == "EffectListPassiveSkill")    then return "PassiveList"
             elseif (textType == "EnergyCost")                then return "Cost"
             elseif (textType == "HasDeclaredSkill")          then return "has declared skill activation"
             elseif (textType == "HelpForActiveSkill")        then return s_LongText6_2
@@ -1256,6 +1262,7 @@ local s_Texts = {
             elseif (textType == "RequireVoteForDraw")  then return "已有玩家提出求和。您需要先表决是否同意和局，才能结束本回合。"
             elseif (textType == "QuitWar")             then return "您将回到主界面（可以随时再回到本战局）。\n是否确定退出？"
             elseif (textType == "ReloadWar")           then return "是否确定要重新载入战局？"
+            elseif (textType == "SkillNotDeclared")    then return "您尚未发起特技宣言。"
             elseif (textType == "Surrender")           then return "您将输掉本战局，且无法反悔！\n是否确定投降？"
             else                                            return "未知66:" .. (textType or "")
             end
@@ -1273,6 +1280,7 @@ local s_Texts = {
             elseif (textType == "RequireVoteForDraw")  then return "A draw has been proposed. You must approve/decline it before ending your turn."
             elseif (textType == "QuitWar")             then return "You are quitting the war (you may reenter it later).\nAre you sure?"
             elseif (textType == "ReloadWar")           then return "Are you sure to reload the war?"
+            elseif (textType == "SkillNotDeclared")    then return "You haven't made a skill declaration."
             elseif (textType == "Surrender")           then return "You will lose the game by surrendering!\nAre you sure?"
             else                                            return "Unrecognized:[66]" .. textType
             end
