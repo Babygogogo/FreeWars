@@ -165,7 +165,11 @@ local function generateItemsForStateMain(self)
     if ((SingletonGetters.isTotalReplay(modelSceneWar))                               or
         (playerIndexInTurn ~= SingletonGetters.getPlayerIndexLoggedIn(modelSceneWar)) or
         (self.m_IsWaitingForServerResponse))                                          then
-        return {self.m_ItemPlaceHolder}
+        return {
+            self.m_ItemSkillInfo,
+            self.m_ItemCostListPassiveSkill,
+            self.m_ItemCostListActiveSkill,
+        }
     else
         local modelPlayer = SingletonGetters.getModelPlayerManager(modelSceneWar):getModelPlayer(playerIndexInTurn)
         local items       = {}
@@ -178,9 +182,9 @@ local function generateItemsForStateMain(self)
         if (modelPlayer:canActivateSkill()) then
             items[#items + 1] = self.m_ItemActivateActiveSkill
         end
-        if (#items == 0) then
-            items[#items + 1] = self.m_ItemPlaceHolder
-        end
+        items[#items + 1] = self.m_ItemSkillInfo
+        items[#items + 1] = self.m_ItemCostListPassiveSkill
+        items[#items + 1] = self.m_ItemCostListActiveSkill
 
         return items
     end
@@ -285,10 +289,20 @@ local function initItemDeclareSkill(self)
     }
 end
 
-local function initItemPlaceHolder(self)
-    self.m_ItemPlaceHolder = {
-        name     = "(" .. getLocalizedText(22, "NoAvailableOption") .. ")",
+local function initItemCostListActiveSkill(self)
+    self.m_ItemCostListActiveSkill = {
+        name     = getLocalizedText(22, "EffectListActiveSkill"),
         callback = function()
+            self.m_View:setOverviewText(self.m_TextActiveSkillOverview)
+        end,
+    }
+end
+
+local function initItemCostListPassiveSkill(self)
+    self.m_ItemCostListPassiveSkill = {
+        name     = getLocalizedText(22, "EffectListPassiveSkill"),
+        callback = function()
+            self.m_View:setOverviewText(self.m_TextPassiveSkillOverview)
         end,
     }
 end
@@ -299,6 +313,15 @@ local function initItemResearchPassiveSkill(self)
         callback = function()
             setStateResearchPassiveSkill(self)
         end,
+    }
+end
+
+local function initItemSkillInfo(self)
+    self.m_ItemSkillInfo = {
+        name     = getLocalizedText(22, "SkillInfo"),
+        callback = function()
+            self.m_View:setOverviewText(generateSkillInfoText(self))
+        end
     }
 end
 
@@ -329,9 +352,11 @@ end
 --------------------------------------------------------------------------------
 function ModelSkillConfigurator:ctor()
     initItemActivateActiveSkill( self)
+    initItemCostListActiveSkill( self)
+    initItemCostListPassiveSkill(self)
     initItemDeclareSkill(        self)
-    initItemPlaceHolder(         self)
     initItemResearchPassiveSkill(self)
+    initItemSkillInfo(           self)
     initTextActiveSkillOverview( self)
     initTextPassiveSkillOverview(self)
 
