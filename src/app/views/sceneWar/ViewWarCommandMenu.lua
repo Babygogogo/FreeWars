@@ -252,12 +252,6 @@ function ViewWarCommandMenu:setOverviewString(text)
     return self
 end
 
-function ViewWarCommandMenu:setEnabled(enabled)
-    self:setVisible(enabled)
-
-    return self
-end
-
 function ViewWarCommandMenu:setOverviewVisible(visible)
     self.m_OverviewBackground:setVisible(visible)
     self.m_OverviewScrollView:setVisible(visible)
