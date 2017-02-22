@@ -74,9 +74,7 @@ local function executeNextReplayAction(self)
             getLocalizedText(12, ActionCodeFunctions.getActionName(action.actionCode))
         ))
 
-        action.actionID = actionID
         setActionId(self, actionID)
-
         ActionExecutorForReplay.executeReplayAction(action, self)
     end
 
