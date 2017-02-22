@@ -185,7 +185,7 @@ function ModelContinueWarSelector:isRetrievingOngoingWarData()
 end
 
 function ModelContinueWarSelector:updateWithOngoingWarData(warData)
-    local actorSceneWar = Actor.createWithModelAndViewName("sceneWar.ModelSceneWar", warData, "sceneWar.ViewSceneWar")
+    local actorSceneWar = Actor.createWithModelAndViewName("sceneWar.ModelSceneWar", warData, "common.ViewSceneWar")
     ActorManager.setAndRunRootActor(actorSceneWar, "FADE", 1)
 end
 

@@ -129,11 +129,9 @@ local function initActorWarField(self, warFieldData, isTotalReplay)
     end
 end
 
-local function initActorWarHud(self, isReplay)
+local function initActorWarHud(self)
     if (not self.m_ActorWarHud) then
-        self.m_ActorWarHud = Actor.createWithModelAndViewName("sceneWar.ModelWarHUD", isReplay, "sceneWar.ViewWarHUD")
-    else
-        self.m_ActorWarHud:getModel():ctor(isReplay)
+        self.m_ActorWarHud = Actor.createWithModelAndViewName("sceneWar.ModelWarHUD", nil, "sceneWar.ViewWarHUD")
     end
 end
 
@@ -175,7 +173,7 @@ function ModelWarReplay:ctor(sceneData)
     initActorTurnManager(     self, sceneData.turn)
     initActorConfirmBox(      self)
     initActorMessageIndicator(self)
-    initActorWarHud(          self, sceneData.isTotalReplay)
+    initActorWarHud(          self)
 
     return self
 end
