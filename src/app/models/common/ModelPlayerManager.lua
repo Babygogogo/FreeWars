@@ -11,7 +11,7 @@
 
 local ModelPlayerManager = requireFW("src.global.functions.class")("ModelPlayerManager")
 
-local ModelPlayer      = requireFW("src.app.models.sceneWar.ModelPlayer")
+local ModelPlayer      = requireFW("src.app.models.common.ModelPlayer")
 local SingletonGetters = requireFW("src.app.utilities.SingletonGetters")
 
 local IS_SERVER        = requireFW("src.app.utilities.GameConstantFunctions").isServer()

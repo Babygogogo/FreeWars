@@ -105,7 +105,7 @@ end
 
 local function initActorPlayerManager(self, playersData)
     if (not self.m_ActorPlayerManager) then
-        self.m_ActorPlayerManager = Actor.createWithModelAndViewName("sceneWar.ModelPlayerManager", playersData)
+        self.m_ActorPlayerManager = Actor.createWithModelAndViewName("common.ModelPlayerManager", playersData)
     else
         self.m_ActorPlayerManager:getModel():ctor(playersData)
     end
@@ -113,7 +113,7 @@ end
 
 local function initActorWeatherManager(self, weatherData)
     if (not self.m_ActorWeatherManager) then
-        self.m_ActorWeatherManager = Actor.createWithModelAndViewName("sceneWar.ModelWeatherManager", weatherData)
+        self.m_ActorWeatherManager = Actor.createWithModelAndViewName("common.ModelWeatherManager", weatherData)
     else
         self.m_ActorWeatherManager:getModel():ctor(weatherData)
     end
@@ -149,7 +149,6 @@ end
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
 function ModelWarReplay:ctor(sceneData)
-    self.m_CachedActions              = {}
     self.m_EnergyGainModifier         = sceneData.energyGainModifier
     self.m_EnterTurnTime              = sceneData.enterTurnTime
     self.m_ExecutedActions            = sceneData.executedActions
@@ -160,9 +159,7 @@ function ModelWarReplay:ctor(sceneData)
     self.m_IsPassiveSkillEnabled      = sceneData.isPassiveSkillEnabled
     self.m_IsRandomWarField           = sceneData.isRandomWarField
     self.m_IsRankMatch                = sceneData.isRankMatch
-    self.m_IsTotalReplay              = sceneData.isTotalReplay
     self.m_IsWarEnded                 = sceneData.isWarEnded
-    self.m_MaxBaseSkillPoints         = sceneData.maxBaseSkillPoints
     self.m_MaxDiffScore               = sceneData.maxDiffScore
     self.m_RemainingVotesForDraw      = sceneData.remainingVotesForDraw
     self.m_StartingEnergy             = sceneData.startingEnergy

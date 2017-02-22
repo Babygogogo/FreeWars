@@ -161,7 +161,7 @@ end
 
 local function initActorPlayerManager(self, playersData)
     if (not self.m_ActorPlayerManager) then
-        self.m_ActorPlayerManager = Actor.createWithModelAndViewName("sceneWar.ModelPlayerManager", playersData)
+        self.m_ActorPlayerManager = Actor.createWithModelAndViewName("common.ModelPlayerManager", playersData)
     else
         self.m_ActorPlayerManager:getModel():ctor(playersData)
     end
@@ -169,7 +169,7 @@ end
 
 local function initActorWeatherManager(self, weatherData)
     if (not self.m_ActorWeatherManager) then
-        self.m_ActorWeatherManager = Actor.createWithModelAndViewName("sceneWar.ModelWeatherManager", weatherData)
+        self.m_ActorWeatherManager = Actor.createWithModelAndViewName("common.ModelWeatherManager", weatherData)
     else
         self.m_ActorWeatherManager:getModel():ctor(weatherData)
     end
