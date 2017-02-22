@@ -195,7 +195,7 @@ end
 
 local function initActorTurnManager(self, turnData)
     if (not self.m_ActorTurnManager) then
-        self.m_ActorTurnManager = Actor.createWithModelAndViewName("sceneWar.ModelTurnManager", turnData, "sceneWar.ViewTurnManager")
+        self.m_ActorTurnManager = Actor.createWithModelAndViewName("sceneWar.ModelTurnManager", turnData, "common.ViewTurnManager")
     else
         self.m_ActorTurnManager:getModel():ctor(turnData)
     end

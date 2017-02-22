@@ -40,10 +40,10 @@ local UNIT_MAX_HP  = GameConstantFunctions.getUnitMaxHP()
 --------------------------------------------------------------------------------
 -- The functions for dispatching events.
 --------------------------------------------------------------------------------
-local function dispatchEvtModelPlayerUpdated(modelSceneWar, playerIndex)
-    getScriptEventDispatcher(modelSceneWar):dispatchEvent({
+local function dispatchEvtModelPlayerUpdated(modelWarReplay, playerIndex)
+    getScriptEventDispatcher(modelWarReplay):dispatchEvent({
         name        = "EvtModelPlayerUpdated",
-        modelPlayer = getModelPlayerManager(modelSceneWar):getModelPlayer(playerIndex),
+        modelPlayer = getModelPlayerManager(modelWarReplay):getModelPlayer(playerIndex),
         playerIndex = playerIndex,
     })
 end
@@ -65,21 +65,21 @@ local function isModelUnitDiving(modelUnit)
     return (modelUnit.isDiving) and (modelUnit:isDiving())
 end
 
-local function updateFundWithCost(modelSceneWar, playerIndex, cost)
-    local modelPlayer = getModelPlayerManager(modelSceneWar):getModelPlayer(playerIndex)
+local function updateFundWithCost(modelWarReplay, playerIndex, cost)
+    local modelPlayer = getModelPlayerManager(modelWarReplay):getModelPlayer(playerIndex)
     modelPlayer:setFund(modelPlayer:getFund() - cost)
-    dispatchEvtModelPlayerUpdated(modelSceneWar, playerIndex)
+    dispatchEvtModelPlayerUpdated(modelWarReplay, playerIndex)
 end
 
-local function promoteModelUnitOnProduce(modelUnit, modelSceneWar)
-    local modelPlayer = getModelPlayerManager(modelSceneWar):getModelPlayer(modelUnit:getPlayerIndex())
+local function promoteModelUnitOnProduce(modelUnit, modelWarReplay)
+    local modelPlayer = getModelPlayerManager(modelWarReplay):getModelPlayer(modelUnit:getPlayerIndex())
     local modifier    = 0 -- SkillModifierFunctions.getPassivePromotionModifier(modelPlayer:getModelSkillConfiguration())
     if ((modifier > 0) and (modelUnit.setCurrentPromotion)) then
         modelUnit:setCurrentPromotion(modifier)
     end
 end
 
-local function produceActorUnit(modelSceneWar, tiledID, unitID, gridIndex)
+local function produceActorUnit(modelWarReplay, tiledID, unitID, gridIndex)
     local actorData = {
         tiledID       = tiledID,
         unitID        = unitID,
@@ -87,17 +87,17 @@ local function produceActorUnit(modelSceneWar, tiledID, unitID, gridIndex)
     }
     local actorUnit = Actor.createWithModelAndViewName("sceneWar.ModelUnit", actorData, "sceneWar.ViewUnit")
     local modelUnit = actorUnit:getModel()
-    promoteModelUnitOnProduce(modelUnit, modelSceneWar)
+    promoteModelUnitOnProduce(modelUnit, modelWarReplay)
     modelUnit:setStateActioned()
-        :onStartRunning(modelSceneWar)
+        :onStartRunning(modelWarReplay)
 
     return actorUnit
 end
 
-local function getAndSupplyAdjacentModelUnits(modelSceneWar, supplierGridIndex, playerIndex)
+local function getAndSupplyAdjacentModelUnits(modelWarReplay, supplierGridIndex, playerIndex)
     assert(type(playerIndex) == "number", "ActionExecutorForReplay-getAndSupplyAdjacentModelUnits() invalid playerIndex: " .. (playerIndex or ""))
 
-    local modelUnitMap = getModelUnitMap(modelSceneWar)
+    local modelUnitMap = getModelUnitMap(modelWarReplay)
     local targets      = {}
     for _, adjacentGridIndex in pairs(getAdjacentGrids(supplierGridIndex, modelUnitMap:getMapSize())) do
         local target = modelUnitMap:getModelUnit(adjacentGridIndex)
