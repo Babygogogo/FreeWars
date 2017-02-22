@@ -117,79 +117,6 @@ local function getAndSupplyAdjacentModelUnits(modelSceneWar, supplierGridIndex, 
     return targets
 end
 
-local function addActorUnitsWithUnitsData(modelSceneWar, unitsData, isViewVisible)
-    assert(not IS_SERVER,                    "ActionExecutorForReplay-addActorUnitsWithUnitsData() this should not be called on the server.")
-    assert(not isTotalReplay(modelSceneWar), "ActionExecutorForReplay-addActorUnitsWithUnitsData() this shouldn't be called in the replay mode.")
-
-    if (unitsData) then
-        local modelUnitMap = getModelUnitMap(modelSceneWar)
-        for unitID, unitData in pairs(unitsData) do
-            local actorUnit = Actor.createWithModelAndViewName("sceneWar.ModelUnit", unitData, "sceneWar.ViewUnit")
-            actorUnit:getModel():onStartRunning(modelSceneWar)
-                :updateView()
-                :setViewVisible(isViewVisible)
-
-            if (unitData.isLoaded) then
-                modelUnitMap:addActorUnitLoaded(actorUnit)
-            else
-                modelUnitMap:addActorUnitOnMap(actorUnit)
-            end
-        end
-    end
-end
-
-local function updateModelTilesWithTilesData(modelSceneWar, tilesData)
-    assert(not IS_SERVER,                    "ActionExecutorForReplay-updateModelTilesWithTilesData() this shouldn't be called on the server.")
-    assert(not isTotalReplay(modelSceneWar), "ActionExecutorForReplay-updateModelTilesWithTilesData() this shouldn't be called in the replay mode.")
-
-    if (tilesData) then
-        local modelTileMap = getModelTileMap(modelSceneWar)
-        for _, tileData in pairs(tilesData) do
-            local modelTile = modelTileMap:getModelTileWithPositionIndex(tileData.positionIndex)
-            assert(modelTile:isFogEnabledOnClient(), "ActionExecutorForReplay-updateModelTilesWithTilesData() the tile has no fog.")
-            modelTile:updateAsFogDisabled(tileData)
-        end
-    end
-end
-
-local function updateTilesAndUnitsBeforeExecutingAction(action, modelSceneWar)
-    if ((not IS_SERVER) and (not isTotalReplay(modelSceneWar))) then
-        addActorUnitsWithUnitsData(   modelSceneWar, action.actingUnitsData, false)
-        addActorUnitsWithUnitsData(   modelSceneWar, action.revealedUnits,   false)
-        updateModelTilesWithTilesData(modelSceneWar, action.actingTilesData)
-        updateModelTilesWithTilesData(modelSceneWar, action.revealedTiles)
-    end
-end
-
-local function updateTileAndUnitMapOnVisibilityChanged(modelSceneWar)
-    assert(not IS_SERVER, "ActionExecutorForReplay-updateTileAndUnitMapOnVisibilityChanged(modelSceneWar) this shouldn't be called on the server.")
-    if (isTotalReplay(modelSceneWar)) then
-        getModelFogMap(modelSceneWar):updateView()
-    else
-        local playerIndex      = getPlayerIndexLoggedIn(modelSceneWar)
-        getModelTileMap(modelSceneWar):forEachModelTile(function(modelTile)
-            if (isTileVisible(modelSceneWar, modelTile:getGridIndex(), playerIndex)) then
-                modelTile:updateAsFogDisabled()
-            else
-                modelTile:updateAsFogEnabled()
-            end
-            modelTile:updateView()
-        end)
-        getModelUnitMap(modelSceneWar):forEachModelUnitOnMap(function(modelUnit)
-            local gridIndex = modelUnit:getGridIndex()
-            if (isUnitVisible(modelSceneWar, gridIndex, modelUnit:getUnitType(), isModelUnitDiving(modelUnit), modelUnit:getPlayerIndex(), playerIndex)) then
-                modelUnit:setViewVisible(true)
-            else
-                destroyActorUnitOnMap(modelSceneWar, gridIndex, true)
-            end
-        end)
-    end
-
-    getScriptEventDispatcher(modelSceneWar)
-        :dispatchEvent({name = "EvtModelTileMapUpdated"})
-        :dispatchEvent({name = "EvtModelUnitMapUpdated"})
-end
-
 local function moveModelUnitWithAction(action, modelSceneWar)
     local path               = action.path
     local pathNodes          = path.pathNodes
@@ -304,17 +231,6 @@ local function callbackOnWarEndedForClient()
     runSceneMain(getLoggedInAccountAndPassword() ~= nil)
 end
 
-local function cleanupOnReceivingResponseFromServer(modelSceneWar)
-    assert(not IS_SERVER, "ActionExecutorForReplay-cleanupOnReceivingResponseFromServer() this shouldn't be invoked on the server.")
-    assert(not isTotalReplay(modelSceneWar), "ActionExecutorForReplay-cleanupOnReceivingResponseFromServer() this shouldn't be invoked in replay mode.")
-
-    getModelMessageIndicator(modelSceneWar):hidePersistentMessage(getLocalizedText(80, "TransferingData"))
-    getScriptEventDispatcher(modelSceneWar):dispatchEvent({
-        name    = "EvtIsWaitingForServerResponse",
-        waiting = false,
-    })
-end
-
 --------------------------------------------------------------------------------
 -- The executors for web actions.
 --------------------------------------------------------------------------------
@@ -362,71 +278,57 @@ end
 --------------------------------------------------------------------------------
 -- The executors for war actions.
 --------------------------------------------------------------------------------
-local function executeActivateSkill(action, modelSceneWar)
-    if (not modelSceneWar.isModelSceneWar) then
-        return
-    end
-    modelSceneWar:setExecutingAction(true)
-    updateTilesAndUnitsBeforeExecutingAction(action, modelSceneWar)
+local function executeActivateSkill(action, modelWarReplay)
+    modelWarReplay:setExecutingAction(true)
 
     local skillID                 = action.skillID
     local skillLevel              = action.skillLevel
     local isActiveSkill           = action.isActiveSkill
-    local playerIndex             = getModelTurnManager(modelSceneWar):getPlayerIndex()
-    local modelPlayer             = getModelPlayerManager(modelSceneWar):getModelPlayer(playerIndex)
+    local playerIndex             = getModelTurnManager(modelWarReplay):getPlayerIndex()
+    local modelPlayer             = getModelPlayerManager(modelWarReplay):getModelPlayer(playerIndex)
     local modelSkillConfiguration = modelPlayer:getModelSkillConfiguration()
     modelPlayer:setEnergy(modelPlayer:getEnergy() - SkillDataAccessors.getSkillPoints(skillID, skillLevel, isActiveSkill))
     if (not isActiveSkill) then
         modelSkillConfiguration:getModelSkillGroupResearching():pushBackSkill(skillID, skillLevel)
     else
         modelPlayer:setActivatingSkill(true)
-        InstantSkillExecutor.executeInstantSkill(modelSceneWar, skillID, skillLevel)
+        InstantSkillExecutor.executeInstantSkill(modelWarReplay, skillID, skillLevel)
         modelSkillConfiguration:getModelSkillGroupActive():pushBackSkill(skillID, skillLevel)
     end
 
-    if ((IS_SERVER) or (modelSceneWar:isFastExecutingActions())) then
-        modelSceneWar:setExecutingAction(false)
-    else
-        if (not isTotalReplay(modelSceneWar)) then
-            cleanupOnReceivingResponseFromServer(modelSceneWar)
-        end
-
-        local modelGridEffect = getModelGridEffect(modelSceneWar)
+    if (not modelWarReplay:isFastExecutingActions()) then
+        local modelGridEffect = getModelGridEffect(modelWarReplay)
         local func            = function(modelUnit)
             if (modelUnit:getPlayerIndex() == playerIndex) then
                 modelGridEffect:showAnimationSkillActivation(modelUnit:getGridIndex())
                 modelUnit:updateView()
             end
         end
-        getModelUnitMap(modelSceneWar):forEachModelUnitOnMap(func)
+        getModelUnitMap(modelWarReplay):forEachModelUnitOnMap(func)
             :forEachModelUnitLoaded(func)
 
-        updateTileAndUnitMapOnVisibilityChanged(modelSceneWar)
-        dispatchEvtModelPlayerUpdated(modelSceneWar, playerIndex)
-
-        modelSceneWar:setExecutingAction(false)
+        getModelFogMap(modelWarReplay):updateView()
+        dispatchEvtModelPlayerUpdated(modelWarReplay, playerIndex)
     end
+
+    modelWarReplay:setExecutingAction(false)
 end
 
-local function executeAttack(action, modelSceneWar)
-    if (not modelSceneWar.isModelSceneWar) then
-        return
-    end
-    modelSceneWar:setExecutingAction(true)
-    updateTilesAndUnitsBeforeExecutingAction(action, modelSceneWar)
+local function executeAttack(action, modelWarReplay)
+    modelWarReplay:setExecutingAction(true)
 
     local pathNodes           = action.path.pathNodes
     local attackDamage        = action.attackDamage
     local counterDamage       = action.counterDamage
     local attackerGridIndex   = pathNodes[#pathNodes]
     local targetGridIndex     = action.targetGridIndex
-    local modelUnitMap        = getModelUnitMap(modelSceneWar)
-    local modelTileMap        = getModelTileMap(modelSceneWar)
+    local modelUnitMap        = getModelUnitMap(modelWarReplay)
+    local modelTileMap        = getModelTileMap(modelWarReplay)
     local attacker            = modelUnitMap:getFocusModelUnit(pathNodes[1], action.launchUnitID)
     local attackTarget        = modelUnitMap:getModelUnit(targetGridIndex) or modelTileMap:getModelTile(targetGridIndex)
     local attackerPlayerIndex = attacker:getPlayerIndex()
     local targetPlayerIndex   = attackTarget:getPlayerIndex()
-    moveModelUnitWithAction(action, modelSceneWar)
+    moveModelUnitWithAction(action, modelWarReplay)
     attacker:setStateActioned()
 
     if (attacker:getPrimaryWeaponBaseDamage(attackTarget:getDefenseType())) then
@@ -436,13 +338,13 @@ local function executeAttack(action, modelSceneWar)
         attackTarget:setPrimaryWeaponCurrentAmmo(attackTarget:getPrimaryWeaponCurrentAmmo() - 1)
     end
 
-    local modelPlayerManager = getModelPlayerManager(modelSceneWar)
+    local modelPlayerManager = getModelPlayerManager(modelWarReplay)
     if (attackTarget.getUnitType) then
         local attackerDamageCost  = getBaseDamageCostWithTargetAndDamage(attacker,     counterDamage or 0)
         local targetDamageCost    = getBaseDamageCostWithTargetAndDamage(attackTarget, attackDamage)
         local attackerModelPlayer = modelPlayerManager:getModelPlayer(attackerPlayerIndex)
         local targetModelPlayer   = modelPlayerManager:getModelPlayer(targetPlayerIndex)
-        local energyGainModifier  = modelSceneWar:getEnergyGainModifier()
+        local energyGainModifier  = modelWarReplay:getEnergyGainModifier()
         local attackEnergy        = getEnergyModifierWithTargetAndDamage(attackTarget, attackDamage,  energyGainModifier)
         local counterEnergy       = getEnergyModifierWithTargetAndDamage(attacker,     counterDamage, energyGainModifier)
 
@@ -453,14 +355,14 @@ local function executeAttack(action, modelSceneWar)
             targetModelPlayer  :setEnergy(targetModelPlayer:getEnergy()   + attackEnergy + counterEnergy)
         end
 
-        dispatchEvtModelPlayerUpdated(modelSceneWar, attackerPlayerIndex)
+        dispatchEvtModelPlayerUpdated(modelWarReplay, attackerPlayerIndex)
     end
 
     local attackerNewHP = math.max(0, attacker:getCurrentHP() - (counterDamage or 0))
     attacker:setCurrentHP(attackerNewHP)
     if (attackerNewHP == 0) then
         attackTarget:setCurrentPromotion(math.min(attackTarget:getMaxPromotion(), attackTarget:getCurrentPromotion() + 1))
-        destroyActorUnitOnMap(modelSceneWar, attackerGridIndex, false)
+        destroyActorUnitOnMap(modelWarReplay, attackerGridIndex, false)
     end
 
     local targetNewHP = math.max(0, attackTarget:getCurrentHP() - attackDamage)
@@ -471,9 +373,9 @@ local function executeAttack(action, modelSceneWar)
             targetVision = attackTarget:getVisionForPlayerIndex(targetPlayerIndex)
 
             attacker:setCurrentPromotion(math.min(attacker:getMaxPromotion(), attacker:getCurrentPromotion() + 1))
-            destroyActorUnitOnMap(modelSceneWar, targetGridIndex, false, true)
+            destroyActorUnitOnMap(modelWarReplay, targetGridIndex, false, true)
         else
-            if ((not IS_SERVER) and (not isTotalReplay(modelSceneWar)) and (attackTarget:isFogEnabledOnClient())) then
+            if ((not IS_SERVER) and (not isTotalReplay(modelWarReplay)) and (attackTarget:isFogEnabledOnClient())) then
                 attackTarget:updateAsFogDisabled()
             end
             attackTarget:updateWithObjectAndBaseId(0)
@@ -481,7 +383,7 @@ local function executeAttack(action, modelSceneWar)
             plasmaGridIndexes = getAdjacentPlasmaGridIndexes(targetGridIndex, modelTileMap)
             for _, gridIndex in ipairs(plasmaGridIndexes) do
                 local modelTile = modelTileMap:getModelTile(gridIndex)
-                if ((not IS_SERVER) and (not isTotalReplay(modelSceneWar)) and (modelTile:isFogEnabledOnClient())) then
+                if ((not IS_SERVER) and (not isTotalReplay(modelWarReplay)) and (modelTile:isFogEnabledOnClient())) then
                     modelTile:updateAsFogDisabled()
                 end
                 modelTile:updateWithObjectAndBaseId(0)
@@ -489,37 +391,34 @@ local function executeAttack(action, modelSceneWar)
         end
     end
 
-    local modelTurnManager   = getModelTurnManager(modelSceneWar)
+    local modelTurnManager   = getModelTurnManager(modelWarReplay)
     local lostPlayerIndex    = action.lostPlayerIndex
     local isInTurnPlayerLost = (lostPlayerIndex == attackerPlayerIndex)
     if (lostPlayerIndex) then
-        modelSceneWar:setRemainingVotesForDraw(nil)
+        modelWarReplay:setRemainingVotesForDraw(nil)
     end
 
-    if ((IS_SERVER) or (modelSceneWar:isFastExecutingActions())) then
+    if ((IS_SERVER) or (modelWarReplay:isFastExecutingActions())) then
         if (targetVision) then
-            getModelFogMap(modelSceneWar):updateMapForUnitsForPlayerIndexOnUnitLeave(targetPlayerIndex, targetGridIndex, targetVision)
+            getModelFogMap(modelWarReplay):updateMapForUnitsForPlayerIndexOnUnitLeave(targetPlayerIndex, targetGridIndex, targetVision)
         end
         if (lostPlayerIndex) then
-            Destroyers.destroyPlayerForce(modelSceneWar, lostPlayerIndex)
+            Destroyers.destroyPlayerForce(modelWarReplay, lostPlayerIndex)
             if (modelPlayerManager:getAlivePlayersCount() <= 1) then
-                modelSceneWar:setEnded(true)
+                modelWarReplay:setEnded(true)
             elseif (isInTurnPlayerLost) then
                 modelTurnManager:endTurnPhaseMain()
             end
         end
-        modelSceneWar:setExecutingAction(false)
+        modelWarReplay:setExecutingAction(false)
 
     else
-        local isReplay             = isTotalReplay(modelSceneWar)
-        local playerIndexLoggedIn  = (not isReplay) and (getPlayerIndexLoggedIn(modelSceneWar)) or (nil)
+        local isReplay             = isTotalReplay(modelWarReplay)
+        local playerIndexLoggedIn  = (not isReplay) and (getPlayerIndexLoggedIn(modelWarReplay)) or (nil)
         local isLoggedInPlayerLost = (lostPlayerIndex) and (lostPlayerIndex == playerIndexLoggedIn)
-        if (not isReplay) then
-            cleanupOnReceivingResponseFromServer(modelSceneWar)
-        end
         if ((isLoggedInPlayerLost)                                                    or
             ((lostPlayerIndex) and (modelPlayerManager:getAlivePlayersCount() <= 2))) then
-            modelSceneWar:setEnded(true)
+            modelWarReplay:setEnded(true)
         end
 
         attacker:moveViewAlongPathAndFocusOnTarget(pathNodes, isModelUnitDiving(attacker), targetGridIndex, function()
@@ -532,7 +431,7 @@ local function executeAttack(action, modelSceneWar)
                 attackTarget:removeViewFromParent()
             end
 
-            local modelGridEffect = getModelGridEffect(modelSceneWar)
+            local modelGridEffect = getModelGridEffect(modelWarReplay)
             if (attackerNewHP == 0) then
                 modelGridEffect:showAnimationExplosion(attackerGridIndex)
             elseif ((counterDamage) and (targetNewHP > 0)) then
@@ -552,25 +451,25 @@ local function executeAttack(action, modelSceneWar)
 
             if ((targetVision)                                              and
                 ((isReplay) or (targetPlayerIndex == playerIndexLoggedIn))) then
-                getModelFogMap(modelSceneWar):updateMapForUnitsForPlayerIndexOnUnitLeave(targetPlayerIndex, targetGridIndex, targetVision)
+                getModelFogMap(modelWarReplay):updateMapForUnitsForPlayerIndexOnUnitLeave(targetPlayerIndex, targetGridIndex, targetVision)
             end
             if (lostPlayerIndex) then
-                Destroyers.destroyPlayerForce(modelSceneWar, lostPlayerIndex)
-                getModelMessageIndicator(modelSceneWar):showMessage(getLocalizedText(74, "Lose", modelPlayerManager:getModelPlayer(lostPlayerIndex):getNickname()))
+                Destroyers.destroyPlayerForce(modelWarReplay, lostPlayerIndex)
+                getModelMessageIndicator(modelWarReplay):showMessage(getLocalizedText(74, "Lose", modelPlayerManager:getModelPlayer(lostPlayerIndex):getNickname()))
             end
 
-            updateTileAndUnitMapOnVisibilityChanged(modelSceneWar)
+            getModelFogMap(modelWarReplay):updateView()
 
-            if (modelSceneWar:isEnded()) then
-                if     (isReplay)             then modelSceneWar:showEffectReplayEnd(callbackOnWarEndedForClient)
-                elseif (isLoggedInPlayerLost) then modelSceneWar:showEffectLose(     callbackOnWarEndedForClient)
-                else                               modelSceneWar:showEffectWin(      callbackOnWarEndedForClient)
+            if (modelWarReplay:isEnded()) then
+                if     (isReplay)             then modelWarReplay:showEffectReplayEnd(callbackOnWarEndedForClient)
+                elseif (isLoggedInPlayerLost) then modelWarReplay:showEffectLose(     callbackOnWarEndedForClient)
+                else                               modelWarReplay:showEffectWin(      callbackOnWarEndedForClient)
                 end
             elseif (isInTurnPlayerLost) then
                 modelTurnManager:endTurnPhaseMain()
             end
 
-            modelSceneWar:setExecutingAction(false)
+            modelWarReplay:setExecutingAction(false)
         end)
     end
 end
@@ -605,9 +504,6 @@ local function executeBeginTurn(action, modelSceneWar)
         end
     else
         local isReplay = isTotalReplay(modelSceneWar)
-        if (not isReplay) then
-            cleanupOnReceivingResponseFromServer(modelSceneWar)
-        end
 
         if (not lostPlayerIndex) then
             modelTurnManager:beginTurnPhaseBeginning(action.income, action.repairData, action.supplyData, function()
@@ -635,7 +531,7 @@ local function executeBeginTurn(action, modelSceneWar)
             modelTurnManager:beginTurnPhaseBeginning(action.income, action.repairData, action.supplyData, function()
                 getModelMessageIndicator(modelSceneWar):showMessage(getLocalizedText(74, "Lose", lostModelPlayer:getNickname()))
                 Destroyers.destroyPlayerForce(modelSceneWar, lostPlayerIndex)
-                updateTileAndUnitMapOnVisibilityChanged(modelSceneWar)
+                getModelFogMap(modelSceneWar):updateView()
 
                 if (not modelSceneWar:isEnded()) then
                     modelTurnManager:endTurnPhaseMain()
@@ -658,7 +554,6 @@ local function executeBuildModelTile(action, modelSceneWar)
         return
     end
     modelSceneWar:setExecutingAction(true)
-    updateTilesAndUnitsBeforeExecutingAction(action, modelSceneWar)
 
     local pathNodes       = action.path.pathNodes
     local endingGridIndex = pathNodes[#pathNodes]
@@ -688,16 +583,13 @@ local function executeBuildModelTile(action, modelSceneWar)
     if ((IS_SERVER) or (modelSceneWar:isFastExecutingActions())) then
         modelSceneWar:setExecutingAction(false)
     else
-        if (not isTotalReplay(modelSceneWar)) then
-            cleanupOnReceivingResponseFromServer(modelSceneWar)
-        end
 
         focusModelUnit:moveViewAlongPath(pathNodes, isModelUnitDiving(focusModelUnit), function()
             focusModelUnit:updateView()
                 :showNormalAnimation()
             modelTile:updateView()
 
-            updateTileAndUnitMapOnVisibilityChanged(modelSceneWar)
+            getModelFogMap(modelSceneWar):updateView()
 
             modelSceneWar:setExecutingAction(false)
         end)
@@ -709,7 +601,6 @@ local function executeCaptureModelTile(action, modelSceneWar)
         return
     end
     modelSceneWar:setExecutingAction(true)
-    updateTilesAndUnitsBeforeExecutingAction(action, modelSceneWar)
 
     local pathNodes       = action.path.pathNodes
     local endingGridIndex = pathNodes[#pathNodes]
@@ -759,9 +650,6 @@ local function executeCaptureModelTile(action, modelSceneWar)
         end
         modelSceneWar:setExecutingAction(false)
     else
-        if (not isReplay) then
-            cleanupOnReceivingResponseFromServer(modelSceneWar)
-        end
 
         if (not lostPlayerIndex) then
             focusModelUnit:moveViewAlongPath(pathNodes, isModelUnitDiving(focusModelUnit), function()
@@ -773,7 +661,7 @@ local function executeCaptureModelTile(action, modelSceneWar)
                     ((isReplay) or (previousPlayerIndex == playerIndexLoggedIn))) then
                     modelFogMap:updateMapForTilesForPlayerIndexOnLosingOwnership(previousPlayerIndex, endingGridIndex, previousVision)
                 end
-                updateTileAndUnitMapOnVisibilityChanged(modelSceneWar)
+                getModelFogMap(modelSceneWar):updateView()
 
                 modelSceneWar:setExecutingAction(false)
             end)
@@ -791,7 +679,7 @@ local function executeCaptureModelTile(action, modelSceneWar)
 
                 getModelMessageIndicator(modelSceneWar):showMessage(getLocalizedText(74, "Lose", lostModelPlayer:getNickname()))
                 Destroyers.destroyPlayerForce(modelSceneWar, lostPlayerIndex)
-                updateTileAndUnitMapOnVisibilityChanged(modelSceneWar)
+                getModelFogMap(modelSceneWar):updateView()
 
                 if     (not modelSceneWar:isEnded()) then -- do nothing.
                 elseif (isReplay)                    then modelSceneWar:showEffectReplayEnd(callbackOnWarEndedForClient)
@@ -819,9 +707,6 @@ local function executeDeclareSkill(action, modelSceneWar)
     if ((IS_SERVER) or (modelSceneWar:isFastExecutingActions())) then
         modelSceneWar:setExecutingAction(false)
     else
-        if (not isTotalReplay(modelSceneWar)) then
-            cleanupOnReceivingResponseFromServer(modelSceneWar)
-        end
         SingletonGetters.getModelMessageIndicator(modelSceneWar):showMessage(string.format("[%s]%s!", modelPlayer:getNickname(), getLocalizedText(22, "HasDeclaredSkill")))
 
         dispatchEvtModelPlayerUpdated(modelSceneWar, playerIndex)
@@ -835,7 +720,6 @@ local function executeDestroyOwnedModelUnit(action, modelSceneWar)
         return
     end
     modelSceneWar:setExecutingAction(true)
-    updateTilesAndUnitsBeforeExecutingAction(action, modelSceneWar)
 
     local gridIndex           = action.gridIndex
     local modelUnitMap        = getModelUnitMap(modelSceneWar)
@@ -855,9 +739,6 @@ local function executeDestroyOwnedModelUnit(action, modelSceneWar)
     if ((IS_SERVER) or (modelSceneWar:isFastExecutingActions())) then
         modelSceneWar:setExecutingAction(false)
     else
-        if (not isReplay) then
-            cleanupOnReceivingResponseFromServer(modelSceneWar)
-        end
 
         if (gridIndex) then
             getModelGridEffect(modelSceneWar):showAnimationExplosion(gridIndex)
@@ -882,7 +763,6 @@ local function executeDive(action, modelSceneWar)
         return
     end
     modelSceneWar:setExecutingAction(true)
-    updateTilesAndUnitsBeforeExecutingAction(action, modelSceneWar)
 
     local launchUnitID     = action.launchUnitID
     local pathNodes        = action.path.pathNodes
@@ -895,9 +775,6 @@ local function executeDive(action, modelSceneWar)
         modelSceneWar:setExecutingAction(false)
     else
         local isReplay = isTotalReplay(modelSceneWar)
-        if (not isReplay) then
-            cleanupOnReceivingResponseFromServer(modelSceneWar)
-        end
 
         focusModelUnit:moveViewAlongPath(pathNodes, false, function()
             focusModelUnit:updateView()
@@ -917,7 +794,7 @@ local function executeDive(action, modelSceneWar)
                 end
             end
 
-            updateTileAndUnitMapOnVisibilityChanged(modelSceneWar)
+            getModelFogMap(modelSceneWar):updateView()
 
             modelSceneWar:setExecutingAction(false)
         end)
@@ -929,7 +806,6 @@ local function executeDropModelUnit(action, modelSceneWar)
         return
     end
     modelSceneWar:setExecutingAction(true)
-    updateTilesAndUnitsBeforeExecutingAction(action, modelSceneWar)
 
     local pathNodes        = action.path.pathNodes
     local modelUnitMap     = getModelUnitMap(modelSceneWar)
@@ -968,9 +844,6 @@ local function executeDropModelUnit(action, modelSceneWar)
     if ((IS_SERVER) or (modelSceneWar:isFastExecutingActions())) then
         modelSceneWar:setExecutingAction(false)
     else
-        if (not isReplay) then
-            cleanupOnReceivingResponseFromServer(modelSceneWar)
-        end
 
         focusModelUnit:moveViewAlongPath(pathNodes, isModelUnitDiving(focusModelUnit), function()
             focusModelUnit:updateView()
@@ -1007,7 +880,7 @@ local function executeDropModelUnit(action, modelSceneWar)
                 end
             end
 
-            updateTileAndUnitMapOnVisibilityChanged(modelSceneWar)
+            getModelFogMap(modelSceneWar):updateView()
 
             modelSceneWar:setExecutingAction(false)
         end)
@@ -1020,9 +893,6 @@ local function executeEndTurn(action, modelSceneWar)
     end
     modelSceneWar:setExecutingAction(true)
 
-    if ((not IS_SERVER) and (not isTotalReplay(modelSceneWar))) then
-        cleanupOnReceivingResponseFromServer(modelSceneWar)
-    end
 
     getModelTurnManager(modelSceneWar):endTurnPhaseMain()
     modelSceneWar:setExecutingAction(false)
@@ -1033,7 +903,6 @@ local function executeJoinModelUnit(action, modelSceneWar)
         return
     end
     modelSceneWar:setExecutingAction(true)
-    updateTilesAndUnitsBeforeExecutingAction(action, modelSceneWar)
 
     local launchUnitID     = action.launchUnitID
     local pathNodes        = action.path.pathNodes
@@ -1095,16 +964,13 @@ local function executeJoinModelUnit(action, modelSceneWar)
     if ((IS_SERVER) or (modelSceneWar:isFastExecutingActions())) then
         modelSceneWar:setExecutingAction(false)
     else
-        if (not isTotalReplay(modelSceneWar)) then
-            cleanupOnReceivingResponseFromServer(modelSceneWar)
-        end
 
         focusModelUnit:moveViewAlongPath(pathNodes, isModelUnitDiving(focusModelUnit), function()
             focusModelUnit:updateView()
                 :showNormalAnimation()
             targetModelUnit:removeViewFromParent()
 
-            updateTileAndUnitMapOnVisibilityChanged(modelSceneWar)
+            getModelFogMap(modelSceneWar):updateView()
 
             modelSceneWar:setExecutingAction(false)
         end)
@@ -1116,7 +982,6 @@ local function executeLaunchFlare(action, modelSceneWar)
         return
     end
     modelSceneWar:setExecutingAction(true)
-    updateTilesAndUnitsBeforeExecutingAction(action, modelSceneWar)
 
     local pathNodes           = action.path.pathNodes
     local targetGridIndex     = action.targetGridIndex
@@ -1137,9 +1002,6 @@ local function executeLaunchFlare(action, modelSceneWar)
     if ((IS_SERVER) or (modelSceneWar:isFastExecutingActions())) then
         modelSceneWar:setExecutingAction(false)
     else
-        if (not isReplay) then
-            cleanupOnReceivingResponseFromServer(modelSceneWar)
-        end
 
         focusModelUnit:moveViewAlongPath(pathNodes, isModelUnitDiving(focusModelUnit), function()
             focusModelUnit:updateView()
@@ -1152,7 +1014,7 @@ local function executeLaunchFlare(action, modelSceneWar)
                 end
             end
 
-            updateTileAndUnitMapOnVisibilityChanged(modelSceneWar)
+            getModelFogMap(modelSceneWar):updateView()
 
             modelSceneWar:setExecutingAction(false)
         end)
@@ -1164,7 +1026,6 @@ local function executeLaunchSilo(action, modelSceneWar)
         return
     end
     modelSceneWar:setExecutingAction(true)
-    updateTilesAndUnitsBeforeExecutingAction(action, modelSceneWar)
 
     local pathNodes      = action.path.pathNodes
     local modelUnitMap   = getModelUnitMap(modelSceneWar)
@@ -1192,9 +1053,6 @@ local function executeLaunchSilo(action, modelSceneWar)
     if ((IS_SERVER) or (modelSceneWar:isFastExecutingActions())) then
         modelSceneWar:setExecutingAction(false)
     else
-        if (not isReplay) then
-            cleanupOnReceivingResponseFromServer(modelSceneWar)
-        end
 
         focusModelUnit:moveViewAlongPath(pathNodes, isModelUnitDiving(focusModelUnit), function()
             focusModelUnit:updateView()
@@ -1209,7 +1067,7 @@ local function executeLaunchSilo(action, modelSceneWar)
                 modelGridEffect:showAnimationSiloAttack(gridIndex)
             end
 
-            updateTileAndUnitMapOnVisibilityChanged(modelSceneWar)
+            getModelFogMap(modelSceneWar):updateView()
 
             modelSceneWar:setExecutingAction(false)
         end)
@@ -1221,7 +1079,6 @@ local function executeLoadModelUnit(action, modelSceneWar)
         return
     end
     modelSceneWar:setExecutingAction(true)
-    updateTilesAndUnitsBeforeExecutingAction(action, modelSceneWar)
 
     local pathNodes      = action.path.pathNodes
     local modelUnitMap   = getModelUnitMap(modelSceneWar)
@@ -1240,9 +1097,6 @@ local function executeLoadModelUnit(action, modelSceneWar)
     if ((IS_SERVER) or (modelSceneWar:isFastExecutingActions())) then
         modelSceneWar:setExecutingAction(false)
     else
-        if (not isReplay) then
-            cleanupOnReceivingResponseFromServer(modelSceneWar)
-        end
 
         focusModelUnit:moveViewAlongPath(pathNodes, isModelUnitDiving(focusModelUnit), function()
             focusModelUnit:updateView()
@@ -1252,7 +1106,7 @@ local function executeLoadModelUnit(action, modelSceneWar)
                 loaderModelUnit:updateView()
             end
 
-            updateTileAndUnitMapOnVisibilityChanged(modelSceneWar)
+            getModelFogMap(modelSceneWar):updateView()
 
             modelSceneWar:setExecutingAction(false)
         end)
@@ -1264,7 +1118,6 @@ local function executeProduceModelUnitOnTile(action, modelSceneWar)
         return
     end
     modelSceneWar:setExecutingAction(true)
-    updateTilesAndUnitsBeforeExecutingAction(action, modelSceneWar)
 
     local modelUnitMap     = getModelUnitMap(modelSceneWar)
     local producedUnitID   = modelUnitMap:getAvailableUnitId()
@@ -1286,11 +1139,8 @@ local function executeProduceModelUnitOnTile(action, modelSceneWar)
     if ((IS_SERVER) or (modelSceneWar:isFastExecutingActions())) then
         modelSceneWar:setExecutingAction(false)
     else
-        if (not isTotalReplay(modelSceneWar)) then
-            cleanupOnReceivingResponseFromServer(modelSceneWar)
-        end
 
-        updateTileAndUnitMapOnVisibilityChanged(modelSceneWar)
+        getModelFogMap(modelSceneWar):updateView()
 
         modelSceneWar:setExecutingAction(false)
     end
@@ -1301,7 +1151,6 @@ local function executeProduceModelUnitOnUnit(action, modelSceneWar)
         return
     end
     modelSceneWar:setExecutingAction(true)
-    updateTilesAndUnitsBeforeExecutingAction(action, modelSceneWar)
 
     local pathNodes    = action.path.pathNodes
     local modelUnitMap = getModelUnitMap(modelSceneWar)
@@ -1322,15 +1171,12 @@ local function executeProduceModelUnitOnUnit(action, modelSceneWar)
     if ((IS_SERVER) or (modelSceneWar:isFastExecutingActions())) then
         modelSceneWar:setExecutingAction(false)
     else
-        if (not isTotalReplay(modelSceneWar)) then
-            cleanupOnReceivingResponseFromServer(modelSceneWar)
-        end
 
         producer:moveViewAlongPath(pathNodes, isModelUnitDiving(producer), function()
             producer:updateView()
                 :showNormalAnimation()
 
-            updateTileAndUnitMapOnVisibilityChanged(modelSceneWar)
+            getModelFogMap(modelSceneWar):updateView()
 
             modelSceneWar:setExecutingAction(false)
         end)
@@ -1342,7 +1188,6 @@ local function executeSupplyModelUnit(action, modelSceneWar)
         return
     end
     modelSceneWar:setExecutingAction(true)
-    updateTilesAndUnitsBeforeExecutingAction(action, modelSceneWar)
 
     local launchUnitID     = action.launchUnitID
     local pathNodes        = action.path.pathNodes
@@ -1354,9 +1199,6 @@ local function executeSupplyModelUnit(action, modelSceneWar)
     if ((IS_SERVER) or (modelSceneWar:isFastExecutingActions())) then
         modelSceneWar:setExecutingAction(false)
     else
-        if (not isTotalReplay(modelSceneWar)) then
-            cleanupOnReceivingResponseFromServer(modelSceneWar)
-        end
 
         focusModelUnit:moveViewAlongPath(pathNodes, isModelUnitDiving(focusModelUnit), function()
             focusModelUnit:updateView()
@@ -1368,7 +1210,7 @@ local function executeSupplyModelUnit(action, modelSceneWar)
                 modelGridEffect:showAnimationSupply(targetModelUnit:getGridIndex())
             end
 
-            updateTileAndUnitMapOnVisibilityChanged(modelSceneWar)
+            getModelFogMap(modelSceneWar):updateView()
 
             modelSceneWar:setExecutingAction(false)
         end)
@@ -1380,7 +1222,6 @@ local function executeSurface(action, modelSceneWar)
         return
     end
     modelSceneWar:setExecutingAction(true)
-    updateTilesAndUnitsBeforeExecutingAction(action, modelSceneWar)
 
     local launchUnitID     = action.launchUnitID
     local pathNodes        = action.path.pathNodes
@@ -1393,9 +1234,6 @@ local function executeSurface(action, modelSceneWar)
         modelSceneWar:setExecutingAction(false)
     else
         local isReplay = isTotalReplay(modelSceneWar)
-        if (not isReplay) then
-            cleanupOnReceivingResponseFromServer(modelSceneWar)
-        end
 
         focusModelUnit:moveViewAlongPath(pathNodes, true, function()
             focusModelUnit:updateView()
@@ -1412,7 +1250,7 @@ local function executeSurface(action, modelSceneWar)
                 end
             end
 
-            updateTileAndUnitMapOnVisibilityChanged(modelSceneWar)
+            getModelFogMap(modelSceneWar):updateView()
 
             modelSceneWar:setExecutingAction(false)
         end)
@@ -1441,16 +1279,13 @@ local function executeSurrender(action, modelSceneWar)
         modelSceneWar:setExecutingAction(false)
     else
         local isReplay = isTotalReplay(modelSceneWar)
-        if (not isReplay) then
-            cleanupOnReceivingResponseFromServer(modelSceneWar)
-        end
 
         local isLoggedInPlayerLost = (not isReplay) and (modelPlayer:getAccount() == getLoggedInAccountAndPassword(modelSceneWar))
         if ((modelPlayerManager:getAlivePlayersCount() <= 1) or (isLoggedInPlayerLost)) then
             modelSceneWar:setEnded(true)
         end
 
-        updateTileAndUnitMapOnVisibilityChanged(modelSceneWar)
+        getModelFogMap(modelSceneWar):updateView()
         getModelMessageIndicator(modelSceneWar):showMessage(getLocalizedText(74, "Surrender", modelPlayer:getNickname()))
 
         if (not modelSceneWar:isEnded()) then
@@ -1490,9 +1325,6 @@ local function executeVoteForDraw(action, modelSceneWar)
     if ((IS_SERVER) or (modelSceneWar:isFastExecutingActions())) then
         modelSceneWar:setExecutingAction(false)
     else
-        if (not isTotalReplay(modelSceneWar)) then
-            cleanupOnReceivingResponseFromServer(modelSceneWar)
-        end
 
         if (not doesAgree) then
             getModelMessageIndicator(modelSceneWar):showMessage(getLocalizedText(74, "DisagreeDraw", modelPlayer:getNickname()))
@@ -1518,7 +1350,6 @@ local function executeWait(action, modelSceneWar)
         return
     end
     modelSceneWar:setExecutingAction(true)
-    updateTilesAndUnitsBeforeExecutingAction(action, modelSceneWar)
 
     local path             = action.path
     local pathNodes        = path.pathNodes
@@ -1529,15 +1360,12 @@ local function executeWait(action, modelSceneWar)
     if ((IS_SERVER) or (modelSceneWar:isFastExecutingActions())) then
         modelSceneWar:setExecutingAction(false)
     else
-        if (not isTotalReplay(modelSceneWar)) then
-            cleanupOnReceivingResponseFromServer(modelSceneWar)
-        end
 
         focusModelUnit:moveViewAlongPath(pathNodes, isModelUnitDiving(focusModelUnit), function()
             focusModelUnit:updateView()
                 :showNormalAnimation()
 
-            updateTileAndUnitMapOnVisibilityChanged(modelSceneWar)
+            getModelFogMap(modelSceneWar):updateView()
 
             if (path.isBlocked) then
                 getModelGridEffect(modelSceneWar):showAnimationBlock(pathNodes[#pathNodes])

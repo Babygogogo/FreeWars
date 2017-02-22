@@ -6,8 +6,6 @@ local ActionExecutorForReplay = requireFW("src.app.utilities.ActionExecutorForRe
 local AudioManager            = requireFW("src.app.utilities.AudioManager")
 local LocalizationFunctions   = requireFW("src.app.utilities.LocalizationFunctions")
 local SerializationFunctions  = requireFW("src.app.utilities.SerializationFunctions")
-local TableFunctions          = requireFW("src.app.utilities.TableFunctions")
-local WebSocketManager        = requireFW("src.app.utilities.WebSocketManager")
 local Actor                   = requireFW("src.global.actors.Actor")
 local EventDispatcher         = requireFW("src.global.events.EventDispatcher")
 
@@ -53,6 +51,10 @@ end
 local function setActionId(self, actionID)
     assert(math.floor(actionID) == actionID, "ModelWarReplay-setActionId() invalid actionID: " .. (actionID or ""))
     self.m_ActionID = actionID
+end
+
+local function hasNextReplayAction(self)
+    return self.m_ExecutedActions[self:getActionId() + 1] ~= nil
 end
 
 local function executeNextReplayAction(self)
@@ -326,22 +328,17 @@ function ModelWarReplay:setExecutingAction(executing)
     assert(self.m_IsExecutingAction ~= executing)
     self.m_IsExecutingAction = executing
 
-    if ((not executing) and (not self:isEnded())) then
-        local actionID = self:getActionId() + 1
-        local action   = self.m_ExecutedActions[actionID]
-
-        if ((self:isAutoReplay()) and (action)) then
-            self.m_IsExecutingAction = true
-            self.m_View:runAction(cc.Sequence:create(
-                cc.DelayTime:create(TIME_INTERVAL_FOR_ACTIONS),
-                cc.CallFunc:create(function()
-                    self.m_IsExecutingAction = false
-                    if (self:isAutoReplay()) then
-                        executeNextReplayAction(self)
-                    end
-                end)
-            ))
-        end
+    if ((not executing) and (not self:isEnded()) and (self:isAutoReplay()) and (hasNextReplayAction(self))) then
+        self.m_IsExecutingAction = true
+        self.m_View:runAction(cc.Sequence:create(
+            cc.DelayTime:create(TIME_INTERVAL_FOR_ACTIONS),
+            cc.CallFunc:create(function()
+                self.m_IsExecutingAction = false
+                if (self:isAutoReplay()) then
+                    executeNextReplayAction(self)
+                end
+            end)
+        ))
     end
 
     return self
