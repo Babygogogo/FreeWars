@@ -82,7 +82,7 @@ end
 
 local function initActorActionPlanner(self)
     if (not self.m_ActorActionPlanner) then
-        self.m_ActorActionPlanner = Actor.createWithModelAndViewName("sceneWar.ModelActionPlanner", nil, "sceneWar.ViewActionPlanner")
+        self.m_ActorActionPlanner = Actor.createWithModelAndViewName("sceneWar.ModelActionPlanner", nil, "common.ViewActionPlanner")
     end
 end
 
