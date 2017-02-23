@@ -45,12 +45,16 @@ local function initActorGridEffect(self)
     end
 end
 
+local function initActorMapCursor(self)
+    if (not self.m_ActorMapCursor) then
+        self.m_ActorMapCursor = Actor.createWithModelAndViewName("warReplay.ModelMapCursorForReplay", nil, "common.ViewMapCursor")
+    end
+end
+
 local function initActorTileMap(self, tileMapData)
     if (not self.m_ActorTileMap) then
         local modelTileMap  = Actor.createModel("sceneWar.ModelTileMap", tileMapData, self.m_WarFieldFileName)
-        self.m_ActorTileMap = (IS_SERVER)                                                                  and
-            (Actor.createWithModelAndViewInstance(modelTileMap))                                           or
-            (Actor.createWithModelAndViewInstance(modelTileMap, Actor.createView("sceneWar.ViewTileMap")))
+        self.m_ActorTileMap = Actor.createWithModelAndViewInstance(modelTileMap, Actor.createView("sceneWar.ViewTileMap"))
     else
         self.m_ActorTileMap:getModel():ctor(tileMapData, self.m_WarFieldFileName)
     end
@@ -67,12 +71,6 @@ local function initActorUnitMap(self, unitMapData)
     end
 end
 
-local function initActorMapCursor(self, param)
-    if (not self.m_ActorMapCursor) then
-        self.m_ActorMapCursor = Actor.createWithModelAndViewName("warReplay.ModelMapCursorForReplay", param, "common.ViewMapCursor")
-    end
-end
-
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
@@ -82,12 +80,9 @@ function ModelWarFieldForReplay:ctor(warFieldData)
     initActorActionPlanner(self)
     initActorFogMap(       self, warFieldData.fogMap)
     initActorGridEffect(   self)
+    initActorMapCursor(    self)
     initActorTileMap(      self, warFieldData.tileMap)
     initActorUnitMap(      self, warFieldData.unitMap)
-
-    if (not IS_SERVER) then
-        initActorMapCursor(    self, {mapSize = self:getModelTileMap():getMapSize()})
-    end
 
     return self
 end

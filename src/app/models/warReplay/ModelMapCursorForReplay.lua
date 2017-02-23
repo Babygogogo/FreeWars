@@ -146,15 +146,11 @@ end
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
-function ModelMapCursorForReplay:ctor(param)
+function ModelMapCursorForReplay:ctor()
     if (not ComponentManager:getComponent(self, "GridIndexable")) then
         ComponentManager.bindComponent(self, "GridIndexable", {instantialData = {x = 1, y = 1}})
     end
 
-    self.m_MapSize = {
-        width  = param.mapSize.width,
-        height = param.mapSize.height,
-    }
     self:setMovableByPlayer(true)
 
     return self
