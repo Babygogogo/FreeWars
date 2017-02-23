@@ -3,7 +3,6 @@ local DestroyersForReplay = {}
 
 local GridIndexFunctions  = requireFW("src.app.utilities.GridIndexFunctions")
 local SingletonGetters    = requireFW("src.app.utilities.SingletonGetters")
-local VisibilityFunctions = requireFW("src.app.utilities.VisibilityFunctions")
 
 local getAdjacentGrids         = GridIndexFunctions.getAdjacentGrids
 local getModelFogMap           = SingletonGetters.getModelFogMap
@@ -11,9 +10,7 @@ local getModelGridEffect       = SingletonGetters.getModelGridEffect
 local getModelPlayerManager    = SingletonGetters.getModelPlayerManager
 local getModelTileMap          = SingletonGetters.getModelTileMap
 local getModelUnitMap          = SingletonGetters.getModelUnitMap
-local getPlayerIndexLoggedIn   = SingletonGetters.getPlayerIndexLoggedIn
 local getScriptEventDispatcher = SingletonGetters.getScriptEventDispatcher
-local isUnitVisible            = VisibilityFunctions.isUnitOnMapVisibleToPlayerIndex
 
 --------------------------------------------------------------------------------
 -- The util functions.

@@ -4,12 +4,10 @@ local ModelTileForReplay = requireFW("src.global.functions.class")("ModelTileFor
 local GameConstantFunctions = requireFW("src.app.utilities.GameConstantFunctions")
 local LocalizationFunctions = requireFW("src.app.utilities.LocalizationFunctions")
 local SingletonGetters      = requireFW("src.app.utilities.SingletonGetters")
-local VisibilityFunctions   = requireFW("src.app.utilities.VisibilityFunctions")
 local ComponentManager      = requireFW("src.global.components.ComponentManager")
 
 local string                       = string
 local getTiledIdWithTileOrUnitName = GameConstantFunctions.getTiledIdWithTileOrUnitName
-local isTileVisibleToPlayerIndex   = VisibilityFunctions.isTileVisibleToPlayerIndex
 
 --------------------------------------------------------------------------------
 -- The util functions.
