@@ -69,7 +69,7 @@ end
 
 local function initActorMapCursor(self, param)
     if (not self.m_ActorMapCursor) then
-        self.m_ActorMapCursor = Actor.createWithModelAndViewName("sceneWar.ModelMapCursor", param, "sceneWar.ViewMapCursor")
+        self.m_ActorMapCursor = Actor.createWithModelAndViewName("warReplay.ModelMapCursorForReplay", param, "common.ViewMapCursor")
     end
 end
 
