@@ -11,7 +11,28 @@
 
 local ModelMoneyEnergyInfo = class("ModelMoneyEnergyInfo")
 
-local SingletonGetters = requireFW("src.app.utilities.SingletonGetters")
+local LocalizationFunctions = requireFW("src.app.utilities.LocalizationFunctions")
+local SingletonGetters      = requireFW("src.app.utilities.SingletonGetters")
+
+local getLocalizedText       = LocalizationFunctions.getLocalizedText
+local getModelFogMap         = SingletonGetters.getModelFogMap
+local getPlayerIndexLoggedIn = SingletonGetters.getPlayerIndexLoggedIn
+local isTotalReplay          = SingletonGetters.isTotalReplay
+local string                 = string
+
+--------------------------------------------------------------------------------
+-- The util functions.
+--------------------------------------------------------------------------------
+local function generateInfoText(self)
+    local modelSceneWar = self.m_ModelSceneWar
+    local playerIndex   = self.m_PlayerIndex
+    local modelPlayer   = SingletonGetters.getModelPlayerManager(modelSceneWar):getModelPlayer(playerIndex)
+    return string.format("%s: %s\n%s: %s\n%s: %d",
+        getLocalizedText(25, "Player"),  modelPlayer:getNickname(),
+        getLocalizedText(25, "Fund"),    ((not isTotalReplay(modelSceneWar)) and (getModelFogMap(modelSceneWar):isFogOfWarCurrently()) and (playerIndex ~= getPlayerIndexLoggedIn(modelSceneWar))) and ("--") or (modelPlayer:getFund()),
+        getLocalizedText(25, "Energy"),  modelPlayer:getEnergy()
+    )
+end
 
 --------------------------------------------------------------------------------
 -- The private callback functions on script events.
@@ -25,13 +46,13 @@ local function onEvtPlayerIndexUpdated(self, event)
     local playerIndex = event.playerIndex
     self.m_PlayerIndex = playerIndex
 
-    self.m_View:updateWithModelPlayer(event.modelPlayer, playerIndex)
+    self.m_View:setInfoText(generateInfoText(self))
         :updateWithPlayerIndex(playerIndex)
 end
 
 local function onEvtModelPlayerUpdated(self, event)
     if ((self.m_PlayerIndex == event.playerIndex) and (self.m_View)) then
-        self.m_View:updateWithModelPlayer(event.modelPlayer, event.playerIndex)
+        self.m_View:setInfoText(generateInfoText(self))
     end
 end
 
@@ -64,8 +85,7 @@ function ModelMoneyEnergyInfo:onStartRunning(modelSceneWar)
     local playerIndex  = SingletonGetters.getModelTurnManager(modelSceneWar):getPlayerIndex()
     self.m_PlayerIndex = playerIndex
 
-    self.m_View:setModelSceneWar(modelSceneWar)
-        :updateWithModelPlayer(SingletonGetters.getModelPlayerManager(modelSceneWar):getModelPlayer(playerIndex), playerIndex)
+    self.m_View:setInfoText(generateInfoText(self))
         :updateWithPlayerIndex(playerIndex)
 
     return self
