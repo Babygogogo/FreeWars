@@ -26,7 +26,7 @@ local Actor = requireFW("src.global.actors.Actor")
 --------------------------------------------------------------------------------
 local function initActorWarCommandMenu(self)
     if (not self.m_ActorWarCommandMenu) then
-        self.m_ActorWarCommandMenu = Actor.createWithModelAndViewName("sceneWar.ModelWarCommandMenu", nil, "sceneWar.ViewWarCommandMenu")
+        self.m_ActorWarCommandMenu = Actor.createWithModelAndViewName("sceneWar.ModelWarCommandMenu", nil, "common.ViewWarCommandMenu")
     end
 end
 

@@ -7,11 +7,11 @@ local Actor = requireFW("src.global.actors.Actor")
 -- The composition actors.
 --------------------------------------------------------------------------------
 local function initActorWarCommandMenu(self)
-    self.m_ActorWarCommandMenu = Actor.createWithModelAndViewName("sceneWar.ModelWarCommandMenu", nil, "sceneWar.ViewWarCommandMenu")
+    self.m_ActorWarCommandMenu = Actor.createWithModelAndViewName("warReplay.ModelWarCommandMenuForReplay", nil, "common.ViewWarCommandMenu")
 end
 
 local function initActorMoneyEnergyInfo(self)
-    self.m_ActorMoneyEnergyInfo = Actor.createWithModelAndViewName("sceneWar.ModelMoneyEnergyInfo", nil, "sceneWar.ViewMoneyEnergyInfo")
+    self.m_ActorMoneyEnergyInfo = Actor.createWithModelAndViewName("warReplay.ModelMoneyEnergyInfoForReplay", nil, "sceneWar.ViewMoneyEnergyInfo")
 end
 
 local function initActorActionMenu(self)
