@@ -218,8 +218,12 @@ local function runTurnPhaseResetUnitState(self)
 end
 
 local function runTurnPhaseResetVisionForEndingTurnPlayer(self)
-    getModelFogMap(self.m_ModelWarReplay):resetMapForPathsForPlayerIndex(self:getPlayerIndex())
-        :updateView()
+    local modelFogMap = SingletonGetters.getModelFogMap(self.m_ModelWarReplay)
+    modelFogMap:resetMapForPathsForPlayerIndex(self:getPlayerIndex())
+
+    if (not self.m_ModelWarReplay:isFastExecutingActions()) then
+        modelFogMap:updateView()
+    end
 
     self.m_TurnPhaseCode = TURN_PHASE_CODES.TickTurnAndPlayerIndex
 end
@@ -259,9 +263,13 @@ end
 
 local function runTurnPhaseResetVisionForBeginningTurnPlayer(self)
     local playerIndex = self:getPlayerIndex()
-    getModelFogMap(self.m_ModelWarReplay):resetMapForTilesForPlayerIndex(playerIndex)
+    local modelFogMap = SingletonGetters.getModelFogMap(self.m_ModelWarReplay)
+    modelFogMap:resetMapForTilesForPlayerIndex(playerIndex)
         :resetMapForUnitsForPlayerIndex(playerIndex)
-        :updateView()
+
+    if (not self.m_ModelWarReplay:isFastExecutingActions()) then
+        modelFogMap:updateView()
+    end
 
     self.m_TurnPhaseCode = TURN_PHASE_CODES.ResetVotedForDraw
 end

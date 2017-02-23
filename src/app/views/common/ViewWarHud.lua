@@ -10,47 +10,45 @@ local BATTLE_INFO_Z_ORDER       = 0
 local ACTION_MENU_Z_ORDER       = 0
 
 --------------------------------------------------------------------------------
+-- The util functions.
+--------------------------------------------------------------------------------
+local function adjustPositionForSubViews(self, touch)
+    self.m_ViewMoneyEnergyInfo:adjustPositionOnTouch(touch)
+    self.m_ViewTileInfo       :adjustPositionOnTouch(touch)
+    self.m_ViewUnitInfo       :adjustPositionOnTouch(touch)
+
+    if (self.m_ViewBattleInfo) then
+        self.m_ViewBattleInfo:adjustPositionOnTouch(touch)
+    end
+    if (self.m_ViewActionMenu) then
+        self.m_ViewActionMenu:adjustPositionOnTouch(touch)
+    end
+    if (self.m_ViewReplayController) then
+        self.m_ViewReplayController:adjustPositionOnTouch(touch)
+    end
+end
+
+--------------------------------------------------------------------------------
 -- The touch listener.
 --------------------------------------------------------------------------------
 local function createTouchListener(self)
     local touchListener = cc.EventListenerTouchOneByOne:create()
 
     local function onTouchBegan(touch, event)
-        self.m_ViewMoneyEnergyInfo:adjustPositionOnTouch(touch)
-        self.m_ViewActionMenu     :adjustPositionOnTouch(touch)
-        self.m_ViewTileInfo       :adjustPositionOnTouch(touch)
-        self.m_ViewUnitInfo       :adjustPositionOnTouch(touch)
-        self.m_ViewBattleInfo     :adjustPositionOnTouch(touch)
-        if (self.m_ViewReplayController) then
-            self.m_ViewReplayController:adjustPositionOnTouch(touch)
-        end
+        adjustPositionForSubViews(self, touch)
 
         return true
     end
 
     local function onTouchMoved(touch, event)
-        self.m_ViewMoneyEnergyInfo:adjustPositionOnTouch(touch)
-        self.m_ViewActionMenu     :adjustPositionOnTouch(touch)
-        self.m_ViewTileInfo       :adjustPositionOnTouch(touch)
-        self.m_ViewUnitInfo       :adjustPositionOnTouch(touch)
-        self.m_ViewBattleInfo     :adjustPositionOnTouch(touch)
-        if (self.m_ViewReplayController) then
-            self.m_ViewReplayController:adjustPositionOnTouch(touch)
-        end
+        adjustPositionForSubViews(self, touch)
     end
 
     local function onTouchCancelled(touch, event)
     end
 
     local function onTouchEnded(touch, event)
-        self.m_ViewMoneyEnergyInfo:adjustPositionOnTouch(touch)
-        self.m_ViewActionMenu     :adjustPositionOnTouch(touch)
-        self.m_ViewTileInfo       :adjustPositionOnTouch(touch)
-        self.m_ViewUnitInfo       :adjustPositionOnTouch(touch)
-        self.m_ViewBattleInfo     :adjustPositionOnTouch(touch)
-        if (self.m_ViewReplayController) then
-            self.m_ViewReplayController:adjustPositionOnTouch(touch)
-        end
+        adjustPositionForSubViews(self, touch)
     end
 
     touchListener:registerScriptHandler(onTouchBegan,     cc.Handler.EVENT_TOUCH_BEGAN)

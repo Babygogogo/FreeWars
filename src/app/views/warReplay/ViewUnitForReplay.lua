@@ -34,6 +34,7 @@ local UNIT_SPRITE_Z_ORDER     = 0
 local function createStepsForActionMoveAlongPath(self, path, isDiving)
     local steps = {cc.CallFunc:create(function()
         getModelMapCursor(self.m_Model:getModelWar()):setMovableByPlayer(false)
+        self:setVisible(true)
     end)}
 
     local playerIndexMod = self.m_Model:getPlayerIndex() % 2

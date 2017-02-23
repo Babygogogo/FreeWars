@@ -153,6 +153,12 @@ function ModelFogMapForReplay:ctor(param, warFieldFileName)
     return self
 end
 
+function ModelFogMapForReplay:initView()
+    self.m_View:setMapSize(self.m_MapSize)
+
+    return self
+end
+
 --------------------------------------------------------------------------------
 -- The functions for serialization.
 --------------------------------------------------------------------------------
@@ -177,12 +183,27 @@ function ModelFogMapForReplay:onStartRunning(modelWarReplay)
             :resetMapForUnitsForPlayerIndex(playerIndex)
     end
 
+    if (not modelWarReplay:isFastExecutingActions()) then
+        self:updateView()
+    end
+
     return self
 end
 
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
+function ModelFogMapForReplay:updateView()
+    self.m_View:updateWithModelFogMap(self)
+
+    return self
+end
+
+function ModelFogMapForReplay:getModelWar()
+    assert(self.m_ModelWarReplay, "ModelFogMapForReplay:getModelWar() the model hasn't been set yet.")
+    return self.m_ModelWarReplay
+end
+
 function ModelFogMapForReplay:getMapSize()
     return self.m_MapSize
 end

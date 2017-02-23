@@ -31,7 +31,8 @@ end
 
 local function initActorFogMap(self, fogMapData)
     if (not self.m_ActorFogMap) then
-        self.m_ActorFogMap = Actor.createWithModelAndViewInstance(Actor.createModel("warReplay.ModelFogMapForReplay", fogMapData, self.m_WarFieldFileName))
+        local modelFogMap = Actor.createModel("warReplay.ModelFogMapForReplay", fogMapData, self.m_WarFieldFileName)
+        self.m_ActorFogMap = Actor.createWithModelAndViewInstance(modelFogMap, Actor.createView("warReplay.ViewFogMapForReplay"))
     else
         self.m_ActorFogMap:getModel():ctor(fogMapData, self.m_WarFieldFileName)
     end
@@ -85,11 +86,12 @@ end
 
 function ModelWarFieldForReplay:initView()
     assert(self.m_View, "ModelWarFieldForReplay:initView() no view is attached to the owner actor of the model.")
-    self.m_View:setViewTileMap(self.m_ActorTileMap      :getView())
-        :setViewUnitMap(       self.m_ActorUnitMap      :getView())
-        :setViewActionPlanner( self.m_ActorActionPlanner:getView())
-        :setViewMapCursor(     self.m_ActorMapCursor    :getView())
-        :setViewGridEffect(    self.m_ActorGridEffect   :getView())
+    self.m_View:setViewActionPlanner(self.m_ActorActionPlanner:getView())
+        :setViewFogMap(    self.m_ActorFogMap                 :getView())
+        :setViewTileMap(   self.m_ActorTileMap                :getView())
+        :setViewUnitMap(   self.m_ActorUnitMap                :getView())
+        :setViewMapCursor( self.m_ActorMapCursor              :getView())
+        :setViewGridEffect(self.m_ActorGridEffect             :getView())
 
         :setContentSizeWithMapSize(self:getModelTileMap():getMapSize())
 

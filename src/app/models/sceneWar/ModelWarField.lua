@@ -50,9 +50,7 @@ end
 local function initActorFogMap(self, fogMapData, isTotalReplay)
     if (not self.m_ActorFogMap) then
         local modelFogMap  = Actor.createModel("sceneWar.ModelFogMap", fogMapData, self.m_WarFieldFileName, isTotalReplay)
-        self.m_ActorFogMap = ((IS_SERVER) or (not isTotalReplay))                                        and
-            (Actor.createWithModelAndViewInstance(modelFogMap))                                          or
-            (Actor.createWithModelAndViewInstance(modelFogMap, Actor.createView("sceneWar.ViewFogMap")))
+        self.m_ActorFogMap = Actor.createWithModelAndViewInstance(modelFogMap)
     else
         self.m_ActorFogMap:getModel():ctor(fogMapData, self.m_WarFieldFileName, isTotalReplay)
     end

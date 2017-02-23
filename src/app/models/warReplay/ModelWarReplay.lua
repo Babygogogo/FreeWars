@@ -190,7 +190,7 @@ end
 function ModelWarReplay:initWarDataForEachTurn()
     assert((not self.m_WarDataForEachTurn) and (self:getActionId() == 0))
     self.m_IsFastExecutingActions = true
-    self:onStartRunning()
+    self:onStartRunning(true)
 
     local modelTurnManager           = self:getModelTurnManager()
     local turnCounter                = 0
