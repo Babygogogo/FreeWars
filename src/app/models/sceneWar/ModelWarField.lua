@@ -63,7 +63,7 @@ local function initActorTileMap(self, tileMapData)
         local modelTileMap  = Actor.createModel("sceneWar.ModelTileMap", tileMapData, self.m_WarFieldFileName)
         self.m_ActorTileMap = (IS_SERVER)                                                                  and
             (Actor.createWithModelAndViewInstance(modelTileMap))                                           or
-            (Actor.createWithModelAndViewInstance(modelTileMap, Actor.createView("sceneWar.ViewTileMap")))
+            (Actor.createWithModelAndViewInstance(modelTileMap, Actor.createView("common.ViewTileMap")))
     else
         self.m_ActorTileMap:getModel():ctor(tileMapData, self.m_WarFieldFileName)
     end
@@ -74,7 +74,7 @@ local function initActorUnitMap(self, unitMapData)
         local modelUnitMap  = Actor.createModel("sceneWar.ModelUnitMap", unitMapData, self.m_WarFieldFileName)
         self.m_ActorUnitMap = (IS_SERVER)                                                                  and
             (Actor.createWithModelAndViewInstance(modelUnitMap))                                           or
-            (Actor.createWithModelAndViewInstance(modelUnitMap, Actor.createView("sceneWar.ViewUnitMap")))
+            (Actor.createWithModelAndViewInstance(modelUnitMap, Actor.createView("common.ViewUnitMap")))
     else
         self.m_ActorUnitMap:getModel():ctor(unitMapData, self.m_WarFieldFileName)
     end

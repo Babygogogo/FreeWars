@@ -18,7 +18,7 @@ end
 --------------------------------------------------------------------------------
 local function initActorTileMap(self, warFieldFileName)
     local modelTileMap = Actor.createModel("sceneWar.ModelTileMap", nil, warFieldFileName, true)
-    local actor        = Actor.createWithModelAndViewInstance(modelTileMap, Actor.createView("sceneWar.ViewTileMap"))
+    local actor        = Actor.createWithModelAndViewInstance(modelTileMap, Actor.createView("common.ViewTileMap"))
 
     self.m_ActorTileMap = actor
 end

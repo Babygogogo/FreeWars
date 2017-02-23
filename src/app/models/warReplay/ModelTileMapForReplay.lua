@@ -25,7 +25,7 @@ local function createEmptyMap(width)
     return map
 end
 
-local function createActorTilesMapWithWarFieldFileName(warFieldFileName, isPreview)
+local function createActorTilesMapWithWarFieldFileName(warFieldFileName)
     local templateWarField = WarFieldManager.getWarFieldData(warFieldFileName)
     local width, height    = templateWarField.width, templateWarField.height
     local baseLayerData    = templateWarField.layers[1].data
@@ -41,7 +41,7 @@ local function createActorTilesMapWithWarFieldFileName(warFieldFileName, isPrevi
                 baseID        = baseLayerData[idIndex],
                 GridIndexable = {x = x, y = y},
             }
-            map[x][y] = Actor.createWithModelAndViewInstance(Actor.createModel("warReplay.ModelTileForReplay", tileData, isPreview), Actor.createView("common.ViewTile"))
+            map[x][y] = Actor.createWithModelAndViewInstance(Actor.createModel("warReplay.ModelTileForReplay", tileData), Actor.createView("common.ViewTile"))
         end
     end
 
@@ -83,12 +83,12 @@ end
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
-function ModelTileMapForReplay:ctor(param, warFieldFileName, isPreview)
+function ModelTileMapForReplay:ctor(param, warFieldFileName)
     if (self.m_ActorTilesMap) then
         resetActorTilesMap(self.m_ActorTilesMap, self.m_MapSize, warFieldFileName)
         updateActorTilesMapWithTilesData(self.m_ActorTilesMap, self.m_MapSize.height, param.tiles)
     else
-        local map, mapSize = createActorTilesMapWithWarFieldFileName(warFieldFileName, isPreview)
+        local map, mapSize = createActorTilesMapWithWarFieldFileName(warFieldFileName)
         updateActorTilesMapWithTilesData(map, mapSize.height, (param) and (param.tiles) or (nil))
 
         self.m_ActorTilesMap = map
