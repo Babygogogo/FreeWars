@@ -161,7 +161,7 @@ end
 
 local function initActorPlayerManager(self, playersData)
     if (not self.m_ActorPlayerManager) then
-        self.m_ActorPlayerManager = Actor.createWithModelAndViewName("common.ModelPlayerManager", playersData)
+        self.m_ActorPlayerManager = Actor.createWithModelAndViewName("sceneWar.ModelPlayerManager", playersData)
     else
         self.m_ActorPlayerManager:getModel():ctor(playersData)
     end

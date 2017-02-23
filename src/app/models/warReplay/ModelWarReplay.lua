@@ -105,7 +105,7 @@ end
 
 local function initActorPlayerManager(self, playersData)
     if (not self.m_ActorPlayerManager) then
-        self.m_ActorPlayerManager = Actor.createWithModelAndViewName("common.ModelPlayerManager", playersData)
+        self.m_ActorPlayerManager = Actor.createWithModelAndViewName("warReplay.ModelPlayerManagerForReplay", playersData)
     else
         self.m_ActorPlayerManager:getModel():ctor(playersData)
     end
@@ -441,30 +441,6 @@ end
 
 function ModelWarReplay:getScriptEventDispatcher()
     return self.m_ScriptEventDispatcher
-end
-
-function ModelWarReplay:showEffectEndWithDraw(callback)
-    self.m_View:showEffectEndWithDraw(callback)
-
-    return self
-end
-
-function ModelWarReplay:showEffectSurrender(callback)
-    self.m_View:showEffectSurrender(callback)
-
-    return self
-end
-
-function ModelWarReplay:showEffectWin(callback)
-    self.m_View:showEffectWin(callback)
-
-    return self
-end
-
-function ModelWarReplay:showEffectLose(callback)
-    self.m_View:showEffectLose(callback)
-
-    return self
 end
 
 function ModelWarReplay:showEffectReplayEnd(callback)
