@@ -124,8 +124,8 @@ function ModelUnitForReplay:showMovingAnimation()
     return self
 end
 
-function ModelUnitForReplay:getModelWarReplay()
-    assert(self.m_ModelWarReplay, "ModelUnitForReplay:getModelWarReplay() the model hasn't been set yet.")
+function ModelUnitForReplay:getModelWar()
+    assert(self.m_ModelWarReplay, "ModelUnitForReplay:getModelWar() the model hasn't been set yet.")
     return self.m_ModelWarReplay
 end
 

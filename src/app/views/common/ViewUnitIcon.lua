@@ -1,5 +1,5 @@
 
-local ViewUnitForReplay = class("ViewUnitForReplay", cc.Node)
+local ViewUnitIcon = class("ViewUnitIcon", cc.Node)
 
 local AnimationLoader       = requireFW("src.app.utilities.AnimationLoader")
 local GameConstantFunctions = requireFW("src.app.utilities.GameConstantFunctions")
@@ -31,65 +31,6 @@ local UNIT_SPRITE_Z_ORDER     = 0
 --------------------------------------------------------------------------------
 -- The util functions.
 --------------------------------------------------------------------------------
-local function createStepsForActionMoveAlongPath(self, path, isDiving)
-    local steps = {cc.CallFunc:create(function()
-        getModelMapCursor(self.m_Model:getModelWar()):setMovableByPlayer(false)
-    end)}
-
-    local playerIndexMod = self.m_Model:getPlayerIndex() % 2
-    for i = 2, #path do
-        local currentX, previousX = path[i].x, path[i - 1].x
-        if (currentX < previousX) then
-            steps[#steps + 1] = cc.CallFunc:create(function()
-                self.m_UnitSprite:setFlippedX(playerIndexMod == 1)
-            end)
-        elseif (currentX > previousX) then
-            steps[#steps + 1] = cc.CallFunc:create(function()
-                self.m_UnitSprite:setFlippedX(playerIndexMod == 0)
-            end)
-        end
-
-        steps[#steps + 1] = cc.MoveTo:create(MOVE_DURATION_PER_GRID, GridIndexFunctions.toPositionTable(path[i]))
-    end
-
-    return steps
-end
-
-local function createActionMoveAlongPath(self, path, isDiving, callback)
-    local steps = createStepsForActionMoveAlongPath(self, path, isDiving)
-    steps[#steps + 1] = cc.CallFunc:create(function()
-        getModelMapCursor(self.m_Model:getModelWar()):setMovableByPlayer(true)
-        self.m_UnitSprite:setFlippedX(false)
-        callback()
-    end)
-
-    return cc.Sequence:create(unpack(steps))
-end
-
-local function createActionMoveAlongPathAndFocusOnTarget(self, path, isDiving, targetGridIndex, callback)
-    local modelWarReplay = self.m_Model:getModelWar()
-    local steps          = createStepsForActionMoveAlongPath(self, path, isDiving)
-    steps[#steps + 1] = cc.CallFunc:create(function()
-        getScriptEventDispatcher(modelWarReplay):dispatchEvent({
-            name      = "EvtMapCursorMoved",
-            gridIndex = targetGridIndex,
-        })
-        getModelMapCursor(modelWarReplay):setNormalCursorVisible(false)
-            :setTargetCursorVisible(true)
-    end)
-    steps[#steps + 1] = cc.DelayTime:create(0.5)
-    steps[#steps + 1] = cc.CallFunc:create(function()
-        getModelMapCursor(modelWarReplay):setMovableByPlayer(true)
-            :setNormalCursorVisible(true)
-            :setTargetCursorVisible(false)
-
-        self.m_UnitSprite:setFlippedX(false)
-        callback()
-    end)
-
-    return cc.Sequence:create(unpack(steps))
-end
-
 local function getSkillIndicatorFrame(unit)
     local playerIndex = unit:getPlayerIndex()
     if (getModelPlayerManager(unit:getModelWar()):getModelPlayer(playerIndex):isActivatingSkill()) then
@@ -269,10 +210,9 @@ end
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
-function ViewUnitForReplay:ctor()
+function ViewUnitIcon:ctor()
     self:ignoreAnchorPointForPosition(true)
         :setCascadeColorEnabled(true)
-    self.m_IsShowingNormalAnimation = true
 
     initUnitSprite(    self)
     initHpIndicator(   self)
@@ -284,7 +224,7 @@ end
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
-function ViewUnitForReplay:updateWithModelUnit(modelUnit)
+function ViewUnitIcon:updateWithModelUnit(modelUnit)
     local tiledID     = modelUnit:getTiledId()
     local isStateIdle = modelUnit:isStateIdle()
     updateUnitSprite(    self, tiledID)
@@ -299,41 +239,4 @@ function ViewUnitForReplay:updateWithModelUnit(modelUnit)
     return self
 end
 
-function ViewUnitForReplay:showNormalAnimation()
-    if (not self.m_IsShowingNormalAnimation) then
-        self.m_UnitSprite:setFlippedX(false)
-        playSpriteAnimation(self.m_UnitSprite, self.m_TiledID, "normal")
-
-        self.m_IsShowingNormalAnimation = true
-    end
-
-    return self
-end
-
-function ViewUnitForReplay:showMovingAnimation()
-    if (self.m_IsShowingNormalAnimation) then
-        playSpriteAnimation(self.m_UnitSprite, self.m_TiledID, "moving")
-
-        self.m_IsShowingNormalAnimation = false
-    end
-
-    return self
-end
-
-function ViewUnitForReplay:moveAlongPath(path, isDiving, callbackOnFinish)
-    self:showMovingAnimation()
-        :setPosition(GridIndexFunctions.toPosition(path[1]))
-        :runAction(createActionMoveAlongPath(self, path, isDiving, callbackOnFinish))
-
-    return self
-end
-
-function ViewUnitForReplay:moveAlongPathAndFocusOnTarget(path, isDiving, targetGridIndex, callbackOnFinish)
-    self:showMovingAnimation()
-        :setPosition(GridIndexFunctions.toPosition(path[1]))
-        :runAction(createActionMoveAlongPathAndFocusOnTarget(self, path, isDiving, targetGridIndex, callbackOnFinish))
-
-    return self
-end
-
-return ViewUnitForReplay
+return ViewUnitIcon

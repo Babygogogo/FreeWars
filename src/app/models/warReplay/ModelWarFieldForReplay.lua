@@ -25,7 +25,7 @@ end
 --------------------------------------------------------------------------------
 local function initActorActionPlanner(self)
     if (not self.m_ActorActionPlanner) then
-        self.m_ActorActionPlanner = Actor.createWithModelAndViewName("warReplay.ModelActionPlannerForReplay", nil, "common.ViewActionPlanner")
+        self.m_ActorActionPlanner = Actor.createWithModelAndViewName("warReplay.ModelActionPlannerForReplay", nil, "warReplay.ViewActionPlannerForReplay")
     end
 end
 
@@ -61,7 +61,7 @@ end
 local function initActorUnitMap(self, unitMapData)
     if (not self.m_ActorUnitMap) then
         local modelUnitMap  = Actor.createModel("warReplay.ModelUnitMapForReplay", unitMapData, self.m_WarFieldFileName)
-        self.m_ActorUnitMap = Actor.createWithModelAndViewInstance(modelUnitMap, Actor.createView("common.ViewUnitMap"))
+        self.m_ActorUnitMap = Actor.createWithModelAndViewInstance(modelUnitMap, Actor.createView("warReplay.ViewUnitMapForReplay"))
     else
         self.m_ActorUnitMap:getModel():ctor(unitMapData, self.m_WarFieldFileName)
     end

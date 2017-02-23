@@ -74,7 +74,7 @@ local function initActorUnitMap(self, unitMapData)
         local modelUnitMap  = Actor.createModel("sceneWar.ModelUnitMap", unitMapData, self.m_WarFieldFileName)
         self.m_ActorUnitMap = (IS_SERVER)                                                                  and
             (Actor.createWithModelAndViewInstance(modelUnitMap))                                           or
-            (Actor.createWithModelAndViewInstance(modelUnitMap, Actor.createView("common.ViewUnitMap")))
+            (Actor.createWithModelAndViewInstance(modelUnitMap, Actor.createView("sceneWar.ViewUnitMap")))
     else
         self.m_ActorUnitMap:getModel():ctor(unitMapData, self.m_WarFieldFileName)
     end
@@ -82,7 +82,7 @@ end
 
 local function initActorActionPlanner(self)
     if (not self.m_ActorActionPlanner) then
-        self.m_ActorActionPlanner = Actor.createWithModelAndViewName("sceneWar.ModelActionPlanner", nil, "common.ViewActionPlanner")
+        self.m_ActorActionPlanner = Actor.createWithModelAndViewName("sceneWar.ModelActionPlanner", nil, "sceneWar.ViewActionPlanner")
     end
 end
 
