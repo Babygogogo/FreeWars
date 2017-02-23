@@ -12,7 +12,7 @@ local function updateWithModelTileMap(self)
     if ((menu:isEnabled()) or (menu:isHiddenWithHideUI())) then
         self.m_View:setVisible(false)
     else
-        local modelTile = SingletonGetters.getModelTileMap(self.m_ModelSceneWar):getModelTile(self.m_CursorGridIndex)
+        local modelTile = SingletonGetters.getModelTileMap(self.m_ModelWarReplay):getModelTile(self.m_CursorGridIndex)
         self.m_View:updateWithModelTile(modelTile)
             :setVisible(true)
     end
@@ -62,11 +62,11 @@ end
 --------------------------------------------------------------------------------
 -- The callback functions on start running/script events.
 --------------------------------------------------------------------------------
-function ModelTileInfoForReplay:onStartRunning(modelSceneWar)
-    self.m_ModelSceneWar       = modelSceneWar
-    self.m_ModelWarCommandMenu = SingletonGetters.getModelWarCommandMenu(modelSceneWar)
+function ModelTileInfoForReplay:onStartRunning(modelWarReplay)
+    self.m_ModelWarReplay      = modelWarReplay
+    self.m_ModelWarCommandMenu = SingletonGetters.getModelWarCommandMenu(modelWarReplay)
 
-    SingletonGetters.getScriptEventDispatcher(modelSceneWar)
+    SingletonGetters.getScriptEventDispatcher(modelWarReplay)
         :addEventListener("EvtGridSelected",          self)
         :addEventListener("EvtMapCursorMoved",        self)
         :addEventListener("EvtModelTileMapUpdated",   self)
@@ -74,7 +74,7 @@ function ModelTileInfoForReplay:onStartRunning(modelSceneWar)
         :addEventListener("EvtWarCommandMenuUpdated", self)
 
     if (self.m_View) then
-        self.m_View:updateWithPlayerIndex(SingletonGetters.getModelTurnManager(modelSceneWar):getPlayerIndex())
+        self.m_View:updateWithPlayerIndex(SingletonGetters.getModelTurnManager(modelWarReplay):getPlayerIndex())
     end
 
     updateWithModelTileMap(self)
@@ -99,7 +99,7 @@ end
 --------------------------------------------------------------------------------
 function ModelTileInfoForReplay:onPlayerTouch()
     if (self.m_ModelTileDetail) then
-        local modelTile = SingletonGetters.getModelTileMap(self.m_ModelSceneWar):getModelTile(self.m_CursorGridIndex)
+        local modelTile = SingletonGetters.getModelTileMap(self.m_ModelWarReplay):getModelTile(self.m_CursorGridIndex)
         self.m_ModelTileDetail:updateWithModelTile(modelTile)
             :setEnabled(true)
     end

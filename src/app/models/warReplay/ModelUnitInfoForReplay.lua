@@ -28,10 +28,6 @@ end
 --------------------------------------------------------------------------------
 -- The callback functions on script events.
 --------------------------------------------------------------------------------
-local function onEvtChatManagerUpdated(self, event)
-    updateWithModelUnitMap(self)
-end
-
 local function onEvtModelUnitMapUpdated(self, event)
     updateWithModelUnitMap(self)
 end

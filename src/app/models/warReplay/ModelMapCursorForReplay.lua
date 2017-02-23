@@ -35,7 +35,7 @@ local function onEvtMapCursorMoved(self, event)
     self:setGridIndex(event.gridIndex)
 end
 
-local function onEvtSceneWarStarted(self, event)
+local function onEvtWarStarted(self, event)
     dispatchEvtMapCursorMoved(self, self:getGridIndex())
 end
 
@@ -183,7 +183,7 @@ function ModelMapCursorForReplay:onStartRunning(modelWarReplay)
         :addEventListener("EvtGridSelected",      self)
         :addEventListener("EvtMapCursorMoved",    self)
         :addEventListener("EvtActionPlannerIdle", self)
-        :addEventListener("EvtSceneWarStarted",   self)
+        :addEventListener("EvtWarStarted",        self)
 
     return self
 end
@@ -192,7 +192,7 @@ function ModelMapCursorForReplay:onEvent(event)
     local eventName = event.name
     if     (eventName == "EvtGridSelected")      then onEvtGridSelected(   self, event)
     elseif (eventName == "EvtMapCursorMoved")    then onEvtMapCursorMoved( self, event)
-    elseif (eventName == "EvtSceneWarStarted")   then onEvtSceneWarStarted(self, event)
+    elseif (eventName == "EvtWarStarted")        then onEvtWarStarted(     self, event)
     elseif (eventName == "EvtActionPlannerIdle") then setCursorAppearance(self, true,  false, false)
     end
 

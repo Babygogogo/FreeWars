@@ -258,7 +258,7 @@ function ModelWarReplay:onStartRunning(ignoreWarMusic)
     self:getModelWarField()     :onStartRunning(self)
     self:getModelWarHud()       :onStartRunning(self)
 
-    self:getScriptEventDispatcher():dispatchEvent({name = "EvtSceneWarStarted"})
+    self:getScriptEventDispatcher():dispatchEvent({name = "EvtWarStarted"})
 
     if (not ignoreWarMusic) then
         AudioManager.playRandomWarMusic()
