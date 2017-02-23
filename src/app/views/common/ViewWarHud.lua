@@ -1,5 +1,5 @@
 
-local ViewWarHUD = class("ViewWarHUD", cc.Node)
+local ViewWarHud = class("ViewWarHud", cc.Node)
 
 local CONFIRM_BOX_Z_ORDER       = 99
 local WAR_COMMAND_MENU_Z_ORDER  = 3
@@ -69,14 +69,14 @@ end
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
-function ViewWarHUD:ctor(param)
+function ViewWarHud:ctor(param)
     initWithTouchListener(self, createTouchListener(self))
 
     return self
 end
 
-function ViewWarHUD:setViewMoneyEnergyInfo(view)
-    assert(self.m_ViewMoneyEnergyInfo == nil, "ViewWarHUD:setViewMoneyEnergyInfo() the view has been set.")
+function ViewWarHud:setViewMoneyEnergyInfo(view)
+    assert(self.m_ViewMoneyEnergyInfo == nil, "ViewWarHud:setViewMoneyEnergyInfo() the view has been set.")
 
     self.m_ViewMoneyEnergyInfo = view
     self:addChild(view)
@@ -84,8 +84,8 @@ function ViewWarHUD:setViewMoneyEnergyInfo(view)
     return self
 end
 
-function ViewWarHUD:setViewWarCommandMenu(view)
-    assert(self.m_ViewWarCommandMenu == nil, "ViewWarHUD:setViewWarCommandMenu() the view has been set.")
+function ViewWarHud:setViewWarCommandMenu(view)
+    assert(self.m_ViewWarCommandMenu == nil, "ViewWarHud:setViewWarCommandMenu() the view has been set.")
 
     self.m_ViewWarCommandMenu = view
     self:addChild(view, WAR_COMMAND_MENU_Z_ORDER)
@@ -93,8 +93,8 @@ function ViewWarHUD:setViewWarCommandMenu(view)
     return self
 end
 
-function ViewWarHUD:setViewActionMenu(view)
-    assert(self.m_ViewActionMenu == nil, "ViewWarHUD:setViewActionMenu() the view has been set.")
+function ViewWarHud:setViewActionMenu(view)
+    assert(self.m_ViewActionMenu == nil, "ViewWarHud:setViewActionMenu() the view has been set.")
 
     self.m_ViewActionMenu = view
     self:addChild(view, ACTION_MENU_Z_ORDER)
@@ -102,8 +102,8 @@ function ViewWarHUD:setViewActionMenu(view)
     return self
 end
 
-function ViewWarHUD:setViewTileInfo(view)
-    assert(self.m_ViewTileInfo == nil, "ViewWarHUD:setViewTileInfo() the view has been set.")
+function ViewWarHud:setViewTileInfo(view)
+    assert(self.m_ViewTileInfo == nil, "ViewWarHud:setViewTileInfo() the view has been set.")
 
     self.m_ViewTileInfo = view
     self:addChild(view)
@@ -111,8 +111,8 @@ function ViewWarHUD:setViewTileInfo(view)
     return self
 end
 
-function ViewWarHUD:setViewTileDetail(view)
-    assert(self.m_ViewTileDetail == nil, "ViewWarHUD:setViewTileDetail() the view has been set.")
+function ViewWarHud:setViewTileDetail(view)
+    assert(self.m_ViewTileDetail == nil, "ViewWarHud:setViewTileDetail() the view has been set.")
 
     view:setEnabled(false)
     self.m_ViewTileDetail = view
@@ -121,8 +121,8 @@ function ViewWarHUD:setViewTileDetail(view)
     return self
 end
 
-function ViewWarHUD:setViewUnitInfo(view)
-    assert(self.m_ViewUnitInfo == nil, "ViewWarHUD:setViewUnitInfo() the view has been set.")
+function ViewWarHud:setViewUnitInfo(view)
+    assert(self.m_ViewUnitInfo == nil, "ViewWarHud:setViewUnitInfo() the view has been set.")
 
     self.m_ViewUnitInfo = view
     self:addChild(view)
@@ -130,8 +130,8 @@ function ViewWarHUD:setViewUnitInfo(view)
     return self
 end
 
-function ViewWarHUD:setViewUnitDetail(view)
-    assert(self.m_ViewUnitDetail == nil, "ViewWarHUD:setViewUnitDetail() the view has been set.")
+function ViewWarHud:setViewUnitDetail(view)
+    assert(self.m_ViewUnitDetail == nil, "ViewWarHud:setViewUnitDetail() the view has been set.")
 
     view:setEnabled(false)
     self.m_ViewUnitDetail = view
@@ -140,8 +140,8 @@ function ViewWarHUD:setViewUnitDetail(view)
     return self
 end
 
-function ViewWarHUD:setViewBattleInfo(view)
-    assert(self.m_ViewBattleInfo == nil, "ViewWarHUD:setViewBattleInfo() the view has been set.")
+function ViewWarHud:setViewBattleInfo(view)
+    assert(self.m_ViewBattleInfo == nil, "ViewWarHud:setViewBattleInfo() the view has been set.")
 
     self.m_ViewBattleInfo = view
     self:addChild(view, BATTLE_INFO_Z_ORDER)
@@ -149,8 +149,8 @@ function ViewWarHUD:setViewBattleInfo(view)
     return self
 end
 
-function ViewWarHUD:setViewReplayController(view)
-    assert(self.m_ViewReplayController == nil, "ViewWarHUD:setViewReplayController() the view has been set already.")
+function ViewWarHud:setViewReplayController(view)
+    assert(self.m_ViewReplayController == nil, "ViewWarHud:setViewReplayController() the view has been set already.")
 
     self.m_ViewReplayController = view
     self:addChild(view, REPLAY_CONTROLLER_Z_ORDER)
@@ -158,4 +158,4 @@ function ViewWarHUD:setViewReplayController(view)
     return self
 end
 
-return ViewWarHUD
+return ViewWarHud

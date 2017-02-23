@@ -608,7 +608,7 @@ getActorSkillConfigurator = function(self)
                     :setMenuVisible(true)
             end)
 
-        local view = Actor.createView("sceneWar.ViewSkillConfigurator")
+        local view = Actor.createView("common.ViewSkillConfigurator")
         self.m_View:setViewSkillConfigurator(view)
 
         self.m_ActorSkillConfigurator = Actor.createWithModelAndViewInstance(model, view)

@@ -187,7 +187,7 @@ end
 
 local function initActorWarHud(self, isReplay)
     if (not self.m_ActorWarHud) then
-        self.m_ActorWarHud = Actor.createWithModelAndViewName("sceneWar.ModelWarHUD", isReplay, "sceneWar.ViewWarHUD")
+        self.m_ActorWarHud = Actor.createWithModelAndViewName("sceneWar.ModelWarHUD", isReplay, "common.ViewWarHud")
     else
         self.m_ActorWarHud:getModel():ctor(isReplay)
     end

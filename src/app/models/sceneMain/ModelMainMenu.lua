@@ -76,20 +76,6 @@ local function getActorJoinWarSelector(self)
     return self.m_ActorJoinWarSelector
 end
 
-local function getActorSkillConfigurator(self)
-    if (not self.m_ActorSkillConfigurator) then
-        local actor = Actor.createWithModelAndViewName("sceneMain.ModelSkillConfigurator", nil, "sceneMain.ViewSkillConfigurator")
-        actor:getModel():setModelMainMenu(self)
-            :onStartRunning(self.m_ModelSceneMain)
-            :setEnabled(false)
-
-        self.m_ActorSkillConfigurator = actor
-        self.m_View:setViewSkillConfigurator(actor:getView())
-    end
-
-    return self.m_ActorSkillConfigurator
-end
-
 local function getActorReplayManager(self)
     if (not self.m_ActorReplayManager) then
         local actor = Actor.createWithModelAndViewName("sceneMain.ModelReplayManager", nil, "sceneMain.ViewReplayManager")

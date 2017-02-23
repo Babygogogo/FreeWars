@@ -131,7 +131,7 @@ end
 
 local function initActorWarHud(self)
     if (not self.m_ActorWarHud) then
-        self.m_ActorWarHud = Actor.createWithModelAndViewName("sceneWar.ModelWarHUD", nil, "sceneWar.ViewWarHUD")
+        self.m_ActorWarHud = Actor.createWithModelAndViewName("warReplay.ModelWarHudForReplay", nil, "common.ViewWarHud")
     end
 end
 

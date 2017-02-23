@@ -29,10 +29,10 @@ local string, ipairs, pairs    = string, ipairs, pairs
 -- The util functions.
 --------------------------------------------------------------------------------
 local function generateEmptyDataForEachPlayer(self)
-    local modelSceneWar      = self.m_ModelSceneWar
-    local modelPlayerManager = getModelPlayerManager(modelSceneWar)
+    local modelWarReplay      = self.m_ModelWarReplay
+    local modelPlayerManager = getModelPlayerManager(modelWarReplay)
     local dataForEachPlayer  = {}
-    local modelFogMap        = getModelFogMap(modelSceneWar)
+    local modelFogMap        = getModelFogMap(modelWarReplay)
 
     modelPlayerManager:forEachModelPlayer(function(modelPlayer, playerIndex)
         if (modelPlayer:isAlive()) then
@@ -74,13 +74,13 @@ local function updateUnitsData(self, dataForEachPlayer)
         data.unitsValue     = data.unitsValue + round(modelUnit:getNormalizedCurrentHP() * modelUnit:getBaseProductionCost() / 10)
     end
 
-    getModelUnitMap(self.m_ModelSceneWar):forEachModelUnitOnMap(updateUnitCountAndValue)
+    getModelUnitMap(self.m_ModelWarReplay):forEachModelUnitOnMap(updateUnitCountAndValue)
         :forEachModelUnitLoaded(updateUnitCountAndValue)
 end
 
 local function updateTilesData(self, dataForEachPlayer)
-    local modelUnitMap = getModelUnitMap(self.m_ModelSceneWar)
-    getModelTileMap(self.m_ModelSceneWar):forEachModelTile(function(modelTile)
+    local modelUnitMap = getModelUnitMap(self.m_ModelWarReplay)
+    getModelTileMap(self.m_ModelWarReplay):forEachModelTile(function(modelTile)
         local playerIndex = modelTile:getPlayerIndex()
         if (playerIndex ~= 0) then
             local data = dataForEachPlayer[playerIndex]
@@ -122,9 +122,9 @@ local function getTilesInfo(tileTypeCounters, showIdleTilesCount)
 end
 
 local function getMapInfo(self)
-    local modelSceneWar = self.m_ModelSceneWar
-    local modelWarField = SingletonGetters.getModelWarField(modelSceneWar)
-    local modelTileMap  = getModelTileMap(modelSceneWar)
+    local modelWarReplay = self.m_ModelWarReplay
+    local modelWarField = SingletonGetters.getModelWarField(modelWarReplay)
+    local modelTileMap  = getModelTileMap(modelWarReplay)
     local tileTypeCounters = {
         Headquarters = 0,
         City         = 0,
@@ -146,15 +146,15 @@ local function getMapInfo(self)
     return string.format("%s: %s      %s: %s\n%s: %s      %s: %d      %s: %d\n%s\n%s: %d%%",
         getLocalizedText(65, "MapName"),            modelWarField:getWarFieldDisplayName(),
         getLocalizedText(65, "Author"),             modelWarField:getWarFieldAuthorName(),
-        getLocalizedText(65, "WarID"),              AuxiliaryFunctions.getWarNameWithWarId(SingletonGetters.getWarId(modelSceneWar)),
-        getLocalizedText(65, "TurnIndex"),          getModelTurnManager(modelSceneWar):getTurnIndex(),
-        getLocalizedText(65, "ActionID"),           getActionId(modelSceneWar),
+        getLocalizedText(65, "WarID"),              AuxiliaryFunctions.getWarNameWithWarId(SingletonGetters.getWarId(modelWarReplay)),
+        getLocalizedText(65, "TurnIndex"),          getModelTurnManager(modelWarReplay):getTurnIndex(),
+        getLocalizedText(65, "ActionID"),           getActionId(modelWarReplay),
         getTilesInfo(tileTypeCounters),
-        getLocalizedText(14, "IncomeModifier"),     modelSceneWar:getIncomeModifier()
+        getLocalizedText(14, "IncomeModifier"),     modelWarReplay:getIncomeModifier()
     )
 end
 
-local function getInTurnDescription(modelSceneWar)
+local function getInTurnDescription(modelWarReplay)
     return string.format("(%s)", getLocalizedText(49))
 end
 
@@ -163,10 +163,10 @@ local function updateStringWarInfo(self)
     updateUnitsData(self, dataForEachPlayer)
     updateTilesData(self, dataForEachPlayer)
 
-    local modelSceneWar     = self.m_ModelSceneWar
+    local modelWarReplay     = self.m_ModelWarReplay
     local stringList        = {getMapInfo(self)}
-    local playerIndexInTurn = getModelTurnManager(modelSceneWar):getPlayerIndex()
-    for i = 1, getModelPlayerManager(modelSceneWar):getPlayersCount() do
+    local playerIndexInTurn = getModelTurnManager(modelWarReplay):getPlayerIndex()
+    for i = 1, getModelPlayerManager(modelWarReplay):getPlayersCount() do
         if (not dataForEachPlayer[i]) then
             stringList[#stringList + 1] = string.format("%s %d: %s", getLocalizedText(65, "Player"), i, getLocalizedText(65, "Lost"))
         else
@@ -174,7 +174,7 @@ local function updateStringWarInfo(self)
             local isPlayerInTurn     = i == playerIndexInTurn
             stringList[#stringList + 1] = string.format("%s %d:    %s%s\n%s: %d      %s: %s\n%s: %s      %s: %d\n%s: %d%s      %s: %d\n%s: %d\n%s",
                 getLocalizedText(65, "Player"),              i,           d.nickname,
-                ((isPlayerInTurn) and (getInTurnDescription(modelSceneWar)) or ("")),
+                ((isPlayerInTurn) and (getInTurnDescription(modelWarReplay)) or ("")),
                 getLocalizedText(65, "Energy"),               d.energy,
                 getLocalizedText(22, "DeclareSkill"),         (d.isSkillDeclared) and (getLocalizedText(22, "Yes")) or (getLocalizedText(22, "No")),
                 getLocalizedText(65, "Fund"),                 "" .. d.fund,
@@ -193,7 +193,7 @@ end
 
 local function updateStringSkillInfo(self)
     local stringList = {}
-    getModelPlayerManager(self.m_ModelSceneWar):forEachModelPlayer(function(modelPlayer, playerIndex)
+    getModelPlayerManager(self.m_ModelWarReplay):forEachModelPlayer(function(modelPlayer, playerIndex)
         stringList[#stringList + 1] = string.format("%s %d: %s\n%s",
             getLocalizedText(65, "Player"), playerIndex, modelPlayer:getNickname(),
             SkillDescriptionFunctions.getBriefDescription(modelPlayer:getModelSkillConfiguration())
@@ -214,7 +214,7 @@ local function getAvailableMainItems(self)
 end
 
 local function dispatchEvtWarCommandMenuUpdated(self)
-    getScriptEventDispatcher(self.m_ModelSceneWar):dispatchEvent({
+    getScriptEventDispatcher(self.m_ModelWarReplay):dispatchEvent({
         name                = "EvtWarCommandMenuUpdated",
         modelWarCommandMenu = self,
     })
@@ -362,14 +362,12 @@ end
 -- The private callback functions on script events.
 --------------------------------------------------------------------------------
 local function onEvtGridSelected(self, event)
-    self.m_MapCursorGridIndex = GridIndexFunctions.clone(event.gridIndex)
     if (self.m_State == "stateHiddenWithHideUI") then
         setStateDisabled(self)
     end
 end
 
 local function onEvtMapCursorMoved(self, event)
-    self.m_MapCursorGridIndex = GridIndexFunctions.clone(event.gridIndex)
     if (self.m_State == "stateHiddenWithHideUI") then
         setStateDisabled(self)
     end
@@ -380,15 +378,15 @@ end
 --------------------------------------------------------------------------------
 getActorSkillConfigurator = function(self)
     if (not self.m_ActorSkillConfigurator) then
-        local model = Actor.createModel("sceneWar.ModelSkillConfigurator")
-        model:onStartRunning(self.m_ModelSceneWar)
+        local model = Actor.createModel("warReplay.ModelSkillConfiguratorForReplay")
+        model:onStartRunning(self.m_ModelWarReplay)
             :setCallbackOnButtonBackTouched(function()
                 model:setEnabled(false)
                 self.m_View:setOverviewVisible(true)
                     :setMenuVisible(true)
             end)
 
-        local view = Actor.createView("sceneWar.ViewSkillConfigurator")
+        local view = Actor.createView("common.ViewSkillConfigurator")
         self.m_View:setViewSkillConfigurator(view)
 
         self.m_ActorSkillConfigurator = Actor.createWithModelAndViewInstance(model, view)
@@ -513,7 +511,7 @@ local function initItemQuit(self)
     local item = {
         name     = getLocalizedText(65, "QuitWar"),
         callback = function()
-            getModelConfirmBox(self.m_ModelSceneWar):setConfirmText(getLocalizedText(66, "QuitWar"))
+            getModelConfirmBox(self.m_ModelWarReplay):setConfirmText(getLocalizedText(66, "QuitWar"))
                 :setOnConfirmYes(function()
                     local modelSceneMain = Actor.createModel("sceneMain.ModelSceneMain", {isPlayerLoggedIn = WebSocketManager.getLoggedInAccountAndPassword() ~= nil})
                     local actorSceneMain = Actor.createWithModelAndViewInstance(modelSceneMain, Actor.createView("sceneMain.ViewSceneMain"))
@@ -530,7 +528,7 @@ local function initItemSetMessageIndicator(self)
     self.m_ItemSetMessageIndicator = {
         name     = getLocalizedText(1, "SetMessageIndicator"),
         callback = function()
-            local indicator = SingletonGetters.getModelMessageIndicator(self.m_ModelSceneWar)
+            local indicator = SingletonGetters.getModelMessageIndicator(self.m_ModelWarReplay)
             indicator:setEnabled(not indicator:isEnabled())
         end,
     }
@@ -603,19 +601,19 @@ end
 --------------------------------------------------------------------------------
 -- The public callback function on start running or script events.
 --------------------------------------------------------------------------------
-function ModelWarCommandMenuForReplay:onStartRunning(modelSceneWar)
-    self.m_ModelSceneWar    = modelSceneWar
-    getScriptEventDispatcher(modelSceneWar)
-        :addEventListener("EvtGridSelected",               self)
-        :addEventListener("EvtMapCursorMoved",             self)
+function ModelWarCommandMenuForReplay:onStartRunning(modelWarReplay)
+    self.m_ModelWarReplay = modelWarReplay
+    getScriptEventDispatcher(modelWarReplay)
+        :addEventListener("EvtGridSelected",   self)
+        :addEventListener("EvtMapCursorMoved", self)
 
     return self
 end
 
 function ModelWarCommandMenuForReplay:onEvent(event)
     local eventName = event.name
-    if     (eventName == "EvtGridSelected")               then onEvtGridSelected(              self, event)
-    elseif (eventName == "EvtMapCursorMoved")             then onEvtMapCursorMoved(            self, event)
+    if     (eventName == "EvtGridSelected")   then onEvtGridSelected(  self, event)
+    elseif (eventName == "EvtMapCursorMoved") then onEvtMapCursorMoved(self, event)
     end
 
     return self
