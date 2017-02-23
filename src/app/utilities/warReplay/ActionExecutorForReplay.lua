@@ -85,7 +85,7 @@ local function produceActorUnit(modelWarReplay, tiledID, unitID, gridIndex)
         unitID        = unitID,
         GridIndexable = {x = gridIndex.x, y = gridIndex.y},
     }
-    local actorUnit = Actor.createWithModelAndViewName("sceneWar.ModelUnit", actorData, "sceneWar.ViewUnit")
+    local actorUnit = Actor.createWithModelAndViewName("warReplay.ModelUnitForReplay", actorData, "warReplay.ViewUnitForReplay")
     local modelUnit = actorUnit:getModel()
     promoteModelUnitOnProduce(modelUnit, modelWarReplay)
     modelUnit:setStateActioned()
