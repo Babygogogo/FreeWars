@@ -1,52 +1,36 @@
 
---[[--------------------------------------------------------------------------------
--- ModelWarField是战局场景中除了UI元素以外的其他元素的集合。
---
--- 主要职责和使用场景举例：
---   ModelWarField自身功能不多，更多的是扮演了各个子actor的容器的角色。
---
--- 其他：
---   - ModelWarField目前包括以下子actor：
---     - TileMap
---     - UnitMap
---     - MapCursor（server不含）
---     - ActionPlanner（server不含）
---     - GridEffect（server不含）
---]]--------------------------------------------------------------------------------
-
-local ModelWarField = requireFW("src.global.functions.class")("ModelWarField")
+local ModelWarFieldForReplay = requireFW("src.global.functions.class")("ModelWarFieldForReplay")
 
 local SingletonGetters = requireFW("src.app.utilities.SingletonGetters")
 local Actor            = requireFW("src.global.actors.Actor")
 
 local IS_SERVER               = requireFW("src.app.utilities.GameConstantFunctions").isServer()
-local TEMPLATE_WAR_FIELD_PATH = "res.data.templateWarField."
 
 --------------------------------------------------------------------------------
 -- The private callback functions on script events.
 --------------------------------------------------------------------------------
 local function onEvtDragField(self, event)
-    if (self.m_View) then
-        self.m_View:setPositionOnDrag(event.previousPosition, event.currentPosition)
-    end
+    self.m_View:setPositionOnDrag(event.previousPosition, event.currentPosition)
 end
 
 local function onEvtZoomFieldWithScroll(self, event)
-    if (self.m_View) then
-        local scrollEvent = event.scrollEvent
-        self.m_View:setZoomWithScroll(cc.Director:getInstance():convertToGL(scrollEvent:getLocation()), scrollEvent:getScrollY())
-    end
+    local scrollEvent = event.scrollEvent
+    self.m_View:setZoomWithScroll(cc.Director:getInstance():convertToGL(scrollEvent:getLocation()), scrollEvent:getScrollY())
 end
 
 local function onEvtZoomFieldWithTouches(self, event)
-    if (self.m_View) then
-        self.m_View:setZoomWithTouches(event.touches)
-    end
+    self.m_View:setZoomWithTouches(event.touches)
 end
 
 --------------------------------------------------------------------------------
 -- The composition elements.
 --------------------------------------------------------------------------------
+local function initActorActionPlanner(self)
+    if (not self.m_ActorActionPlanner) then
+        self.m_ActorActionPlanner = Actor.createWithModelAndViewName("sceneWar.ModelActionPlanner", nil, "sceneWar.ViewActionPlanner")
+    end
+end
+
 local function initActorFogMap(self, fogMapData, isTotalReplay)
     if (not self.m_ActorFogMap) then
         local modelFogMap  = Actor.createModel("sceneWar.ModelFogMap", fogMapData, self.m_WarFieldFileName, isTotalReplay)
@@ -55,6 +39,12 @@ local function initActorFogMap(self, fogMapData, isTotalReplay)
             (Actor.createWithModelAndViewInstance(modelFogMap, Actor.createView("sceneWar.ViewFogMap")))
     else
         self.m_ActorFogMap:getModel():ctor(fogMapData, self.m_WarFieldFileName, isTotalReplay)
+    end
+end
+
+local function initActorGridEffect(self)
+    if (not self.m_ActorGridEffect) then
+        self.m_ActorGridEffect = Actor.createWithModelAndViewName("common.ModelGridEffect", nil, "common.ViewGridEffect")
     end
 end
 
@@ -80,44 +70,33 @@ local function initActorUnitMap(self, unitMapData)
     end
 end
 
-local function initActorActionPlanner(self)
-    if (not self.m_ActorActionPlanner) then
-        self.m_ActorActionPlanner = Actor.createWithModelAndViewName("sceneWar.ModelActionPlanner", nil, "sceneWar.ViewActionPlanner")
-    end
-end
-
 local function initActorMapCursor(self, param)
     if (not self.m_ActorMapCursor) then
         self.m_ActorMapCursor = Actor.createWithModelAndViewName("sceneWar.ModelMapCursor", param, "sceneWar.ViewMapCursor")
     end
 end
 
-local function initActorGridEffect(self)
-    if (not self.m_ActorGridEffect) then
-        self.m_ActorGridEffect = Actor.createWithModelAndViewName("common.ModelGridEffect", nil, "common.ViewGridEffect")
-    end
-end
-
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
-function ModelWarField:ctor(warFieldData, isTotalReplay)
+function ModelWarFieldForReplay:ctor(warFieldData)
     self.m_WarFieldFileName = warFieldData.warFieldFileName
-    initActorFogMap( self, warFieldData.fogMap,  isTotalReplay)
-    initActorTileMap(self, warFieldData.tileMap)
-    initActorUnitMap(self, warFieldData.unitMap)
+
+    initActorActionPlanner(self)
+    initActorFogMap(       self, warFieldData.fogMap,  isTotalReplay)
+    initActorGridEffect(   self)
+    initActorTileMap(      self, warFieldData.tileMap)
+    initActorUnitMap(      self, warFieldData.unitMap)
 
     if (not IS_SERVER) then
-        initActorActionPlanner(self)
         initActorMapCursor(    self, {mapSize = self:getModelTileMap():getMapSize()})
-        initActorGridEffect(   self)
     end
 
     return self
 end
 
-function ModelWarField:initView()
-    assert(self.m_View, "ModelWarField:initView() no view is attached to the owner actor of the model.")
+function ModelWarFieldForReplay:initView()
+    assert(self.m_View, "ModelWarFieldForReplay:initView() no view is attached to the owner actor of the model.")
     self.m_View:setViewTileMap(self.m_ActorTileMap      :getView())
         :setViewUnitMap(       self.m_ActorUnitMap      :getView())
         :setViewActionPlanner( self.m_ActorActionPlanner:getView())
@@ -135,47 +114,22 @@ function ModelWarField:initView()
 end
 
 --------------------------------------------------------------------------------
--- The functions for serialization.
---------------------------------------------------------------------------------
-function ModelWarField:toSerializableTable()
-    return {
-        warFieldFileName = self.m_WarFieldFileName,
-        fogMap           = self:getModelFogMap() :toSerializableTable(),
-        tileMap          = self:getModelTileMap():toSerializableTable(),
-        unitMap          = self:getModelUnitMap():toSerializableTable(),
-    }
-end
-
-function ModelWarField:toSerializableTableForPlayerIndex(playerIndex)
-    return {
-        warFieldFileName = self.m_WarFieldFileName,
-        fogMap           = self:getModelFogMap() :toSerializableTableForPlayerIndex(playerIndex),
-        tileMap          = self:getModelTileMap():toSerializableTableForPlayerIndex(playerIndex),
-        unitMap          = self:getModelUnitMap():toSerializableTableForPlayerIndex(playerIndex),
-    }
-end
-
-function ModelWarField:toSerializableReplayData()
-    return {warFieldFileName = self.m_WarFieldFileName}
-end
-
---------------------------------------------------------------------------------
 -- The callback functions on start running/script events.
 --------------------------------------------------------------------------------
-function ModelWarField:onStartRunning(modelSceneWar)
-    self:getModelTileMap():onStartRunning(modelSceneWar)
-    self:getModelUnitMap():onStartRunning(modelSceneWar)
-    self:getModelFogMap() :onStartRunning(modelSceneWar)
+function ModelWarFieldForReplay:onStartRunning(modelWarReplay)
+    self:getModelTileMap()      :onStartRunning(modelWarReplay)
+    self:getModelUnitMap()      :onStartRunning(modelWarReplay)
+    self:getModelFogMap()       :onStartRunning(modelWarReplay)
+    self:getModelActionPlanner():onStartRunning(modelWarReplay)
 
     if (not IS_SERVER) then
-        self.m_ActorActionPlanner:getModel():onStartRunning(modelSceneWar)
-        self.m_ActorGridEffect   :getModel():onStartRunning(modelSceneWar)
-        self.m_ActorMapCursor    :getModel():onStartRunning(modelSceneWar)
+        self.m_ActorGridEffect   :getModel():onStartRunning(modelWarReplay)
+        self.m_ActorMapCursor    :getModel():onStartRunning(modelWarReplay)
 
         self:getModelTileMap():updateOnModelFogMapStartedRunning()
     end
 
-    SingletonGetters.getScriptEventDispatcher(modelSceneWar)
+    SingletonGetters.getScriptEventDispatcher(modelWarReplay)
         :addEventListener("EvtDragField",            self)
         :addEventListener("EvtZoomFieldWithScroll",  self)
         :addEventListener("EvtZoomFieldWithTouches", self)
@@ -183,7 +137,7 @@ function ModelWarField:onStartRunning(modelSceneWar)
     return self
 end
 
-function ModelWarField:onEvent(event)
+function ModelWarFieldForReplay:onEvent(event)
     local eventName = event.name
     if     (eventName == "EvtDragField")            then onEvtDragField(           self, event)
     elseif (eventName == "EvtZoomFieldWithScroll")  then onEvtZoomFieldWithScroll( self, event)
@@ -196,36 +150,32 @@ end
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
-function ModelWarField:getWarFieldDisplayName()
-    return requireFW(TEMPLATE_WAR_FIELD_PATH .. self.m_WarFieldFileName).warFieldName
+function ModelWarFieldForReplay:getWarFieldFileName()
+    return self.m_WarFieldFileName
 end
 
-function ModelWarField:getWarFieldAuthorName()
-    return requireFW(TEMPLATE_WAR_FIELD_PATH .. self.m_WarFieldFileName).authorName
-end
-
-function ModelWarField:getModelActionPlanner()
+function ModelWarFieldForReplay:getModelActionPlanner()
     return self.m_ActorActionPlanner:getModel()
 end
 
-function ModelWarField:getModelFogMap()
+function ModelWarFieldForReplay:getModelFogMap()
     return self.m_ActorFogMap:getModel()
 end
 
-function ModelWarField:getModelUnitMap()
+function ModelWarFieldForReplay:getModelUnitMap()
     return self.m_ActorUnitMap:getModel()
 end
 
-function ModelWarField:getModelTileMap()
+function ModelWarFieldForReplay:getModelTileMap()
     return self.m_ActorTileMap:getModel()
 end
 
-function ModelWarField:getModelMapCursor()
+function ModelWarFieldForReplay:getModelMapCursor()
     return self.m_ActorMapCursor:getModel()
 end
 
-function ModelWarField:getModelGridEffect()
+function ModelWarFieldForReplay:getModelGridEffect()
     return self.m_ActorGridEffect:getModel()
 end
 
-return ModelWarField
+return ModelWarFieldForReplay

@@ -8,6 +8,7 @@ local GameConstantFunctions     = requireFW("src.app.utilities.GameConstantFunct
 local GridIndexFunctions        = requireFW("src.app.utilities.GridIndexFunctions")
 local SingletonGetters          = requireFW("src.app.utilities.SingletonGetters")
 local SkillDescriptionFunctions = requireFW("src.app.utilities.SkillDescriptionFunctions")
+local WarFieldManager           = requireFW("src.app.utilities.WarFieldManager")
 local WebSocketManager          = requireFW("src.app.utilities.WebSocketManager")
 local Actor                     = requireFW("src.global.actors.Actor")
 local ActorManager              = requireFW("src.global.actors.ActorManager")
@@ -122,9 +123,9 @@ local function getTilesInfo(tileTypeCounters, showIdleTilesCount)
 end
 
 local function getMapInfo(self)
-    local modelWarReplay = self.m_ModelWarReplay
-    local modelWarField = SingletonGetters.getModelWarField(modelWarReplay)
-    local modelTileMap  = getModelTileMap(modelWarReplay)
+    local modelWarReplay   = self.m_ModelWarReplay
+    local warFieldFileName = SingletonGetters.getModelWarField(modelWarReplay):getWarFieldFileName()
+    local modelTileMap     = getModelTileMap(modelWarReplay)
     local tileTypeCounters = {
         Headquarters = 0,
         City         = 0,
@@ -144,8 +145,8 @@ local function getMapInfo(self)
     end)
 
     return string.format("%s: %s      %s: %s\n%s: %s      %s: %d      %s: %d\n%s\n%s: %d%%",
-        getLocalizedText(65, "MapName"),            modelWarField:getWarFieldDisplayName(),
-        getLocalizedText(65, "Author"),             modelWarField:getWarFieldAuthorName(),
+        getLocalizedText(65, "MapName"),            WarFieldManager.getWarFieldName(warFieldFileName),
+        getLocalizedText(65, "Author"),             WarFieldManager.getWarFieldAuthorName(warFieldFileName),
         getLocalizedText(65, "WarID"),              AuxiliaryFunctions.getWarNameWithWarId(SingletonGetters.getWarId(modelWarReplay)),
         getLocalizedText(65, "TurnIndex"),          getModelTurnManager(modelWarReplay):getTurnIndex(),
         getLocalizedText(65, "ActionID"),           getActionId(modelWarReplay),
