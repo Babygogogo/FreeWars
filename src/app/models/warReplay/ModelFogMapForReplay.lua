@@ -75,6 +75,18 @@ local function createSerializableDataForSingleMapForPaths(map, mapSize, playerIn
     }
 end
 
+local function createSerializableDataForMapsForPaths(maps, mapSize, playerIndex)
+    if (playerIndex) then
+        return {[playerIndex] = createSerializableDataForSingleMapForPaths(maps[playerIndex], mapSize, playerIndex)}
+    else
+        local data = {}
+        for index, map in ipairs(maps) do
+            data[index] = createSerializableDataForSingleMapForPaths(map, mapSize, index)
+        end
+        return data
+    end
+end
+
 local function fillMapForPathsWithData(map, mapSize, data)
     local width, height = mapSize.width, mapSize.height
     local byteFor0      = string.byte("0")
@@ -139,6 +151,18 @@ function ModelFogMapForReplay:ctor(param, warFieldFileName)
     end
 
     return self
+end
+
+--------------------------------------------------------------------------------
+-- The functions for serialization.
+--------------------------------------------------------------------------------
+function ModelFogMapForReplay:toSerializableTable()
+    return {
+        forcingFogCode                   = self.m_ForcingFogCode,
+        expiringTurnIndexForForcingFog   = self.m_ExpiringTurnIndexForForcingFog,
+        expiringPlayerIndexForForcingFog = self.m_ExpiringPlayerIndexForForcingFog,
+        mapsForPaths                     = createSerializableDataForMapsForPaths(self.m_MapsForPaths, self:getMapSize()),
+    }
 end
 
 --------------------------------------------------------------------------------

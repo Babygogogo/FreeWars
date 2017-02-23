@@ -177,8 +177,8 @@ function ModelUnit:showMovingAnimation()
     return self
 end
 
-function ModelUnit:getModelSceneWar()
-    assert(self.m_ModelSceneWar, "ModelUnit:getModelSceneWar() onStartRunning() hasn't been called yet.")
+function ModelUnit:getModelWar()
+    assert(self.m_ModelSceneWar, "ModelUnit:getModelWar() onStartRunning() hasn't been called yet.")
     return self.m_ModelSceneWar
 end
 

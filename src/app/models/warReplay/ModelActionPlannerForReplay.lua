@@ -156,31 +156,20 @@ end
 -- The public functions.
 --------------------------------------------------------------------------------
 function ModelActionPlannerForReplay:setStateIdle(resetUnitAnimation)
-    if (self.m_View) then
-        self.m_View:setReachableAreaVisible(  false)
-            :setAttackableGridsVisible(       false)
-            :setMovePathVisible(              false)
-            :setMovePathDestinationVisible(   false)
-            :setDroppableGridsVisible(        false)
-            :setPreviewDropDestinationVisible(false)
-            :setDropDestinationsVisible(      false)
-            :setPreviewAttackableAreaVisible( false)
-            :setPreviewReachableAreaVisible(  false)
-            :setFlareGridsVisible(            false)
-
-        getModelUnitMap(self.m_ModelWarReplay):setPreviewLaunchUnitVisible(false)
-        for _, modelUnit in pairs(self.m_PreviewAttackModelUnits) do
-            modelUnit:showNormalAnimation()
-        end
-        if (self.m_PreviewReachModelUnit) then
-            self.m_PreviewReachModelUnit:showNormalAnimation()
-        end
+    for _, modelUnit in pairs(self.m_PreviewAttackModelUnits) do
+        modelUnit:showNormalAnimation()
+    end
+    if (self.m_PreviewReachModelUnit) then
+        self.m_PreviewReachModelUnit:showNormalAnimation()
     end
 
     self.m_State                    = "idle"
     self.m_PreviewAttackModelUnits  = {}
     self.m_PreviewAttackableArea    = {}
     self.m_PreviewReachModelUnit    = nil
+
+    self.m_View:setPreviewAttackableAreaVisible( false)
+        :setPreviewReachableAreaVisible(  false)
 
     getScriptEventDispatcher(self.m_ModelWarReplay):dispatchEvent({name = "EvtActionPlannerIdle"})
 

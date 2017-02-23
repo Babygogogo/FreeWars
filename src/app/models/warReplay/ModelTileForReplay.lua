@@ -76,6 +76,34 @@ function ModelTileForReplay:initView()
 end
 
 --------------------------------------------------------------------------------
+-- The function for serialization.
+--------------------------------------------------------------------------------
+function ModelTileForReplay:toSerializableTable()
+    local t               = {}
+    local componentsCount = 0
+    for name, component in pairs(ComponentManager.getAllComponents(self)) do
+        if ((name ~= "GridIndexable") and (component.toSerializableTable)) then
+            local componentTable = component:toSerializableTable()
+            if (componentTable) then
+                t[name]         = componentTable
+                componentsCount = componentsCount + 1
+            end
+        end
+    end
+
+    local objectID, baseID = self:getObjectAndBaseId()
+    if ((baseID == self.m_InitialBaseID) and (objectID == self.m_InitialObjectID) and (componentsCount == 0)) then
+        return nil
+    else
+        t.positionIndex = self.m_PositionIndex
+        t.baseID        = (baseID   ~= self.m_InitialBaseID)   and (baseID)   or (nil)
+        t.objectID      = (objectID ~= self.m_InitialObjectID) and (objectID) or (nil)
+
+        return t
+    end
+end
+
+--------------------------------------------------------------------------------
 -- The public callback function on start running.
 --------------------------------------------------------------------------------
 function ModelTileForReplay:onStartRunning(modelWarReplay)

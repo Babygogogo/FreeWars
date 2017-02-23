@@ -294,6 +294,17 @@ function ModelTurnManagerForReplay:onStartRunning(modelWarReplay)
 end
 
 --------------------------------------------------------------------------------
+-- The functions for serialization.
+--------------------------------------------------------------------------------
+function ModelTurnManagerForReplay:toSerializableTable()
+    return {
+        turnIndex     = self:getTurnIndex(),
+        playerIndex   = self:getPlayerIndex(),
+        turnPhaseCode = self.m_TurnPhaseCode,
+    }
+end
+
+--------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
 function ModelTurnManagerForReplay:getTurnIndex()

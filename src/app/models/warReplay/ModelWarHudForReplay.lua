@@ -19,7 +19,7 @@ local function initActorTileDetail(self)
 end
 
 local function initActorTileInfo(self)
-    local actor = Actor.createWithModelAndViewName("common.ModelTileInfo", nil, "common.ViewTileInfo")
+    local actor = Actor.createWithModelAndViewName("warReplay.ModelTileInfoForReplay", nil, "common.ViewTileInfo")
     actor:getModel():setModelTileDetail(self.m_ActorTileDetail:getModel())
 
     self.m_ActorTileInfo = actor
@@ -30,7 +30,7 @@ local function initActorUnitDetail(self)
 end
 
 local function initActorUnitInfo(self)
-    local actor = Actor.createWithModelAndViewName("common.ModelUnitInfo", nil, "common.ViewUnitInfo")
+    local actor = Actor.createWithModelAndViewName("warReplay.ModelUnitInfoForReplay", nil, "common.ViewUnitInfo")
     actor:getModel():setModelUnitDetail(self.m_ActorUnitDetail:getModel())
 
     self.m_ActorUnitInfo = actor

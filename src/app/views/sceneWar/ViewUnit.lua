@@ -35,7 +35,7 @@ local UNIT_SPRITE_Z_ORDER     = 0
 -- The util functions.
 --------------------------------------------------------------------------------
 local function createStepsForActionMoveAlongPath(self, path, isDiving)
-    local modelSceneWar       = self.m_Model:getModelSceneWar()
+    local modelSceneWar       = self.m_Model:getModelWar()
     local isReplay            = isTotalReplay(modelSceneWar)
     local playerIndex         = self.m_Model:getPlayerIndex()
     local playerIndexMod      = playerIndex % 2
@@ -89,7 +89,7 @@ end
 local function createActionMoveAlongPath(self, path, isDiving, callback)
     local steps = createStepsForActionMoveAlongPath(self, path, isDiving)
     steps[#steps + 1] = cc.CallFunc:create(function()
-        getModelMapCursor(self.m_Model:getModelSceneWar()):setMovableByPlayer(true)
+        getModelMapCursor(self.m_Model:getModelWar()):setMovableByPlayer(true)
         self.m_UnitSprite:setFlippedX(false)
         callback()
     end)
@@ -98,7 +98,7 @@ local function createActionMoveAlongPath(self, path, isDiving, callback)
 end
 
 local function createActionMoveAlongPathAndFocusOnTarget(self, path, isDiving, targetGridIndex, callback)
-    local modelSceneWar = self.m_Model:getModelSceneWar()
+    local modelSceneWar = self.m_Model:getModelWar()
     local steps         = createStepsForActionMoveAlongPath(self, path, isDiving)
     steps[#steps + 1] = cc.CallFunc:create(function()
         getScriptEventDispatcher(modelSceneWar):dispatchEvent({
@@ -123,7 +123,7 @@ end
 
 local function getSkillIndicatorFrame(self, unit)
     local playerIndex = unit:getPlayerIndex()
-    if (getModelPlayerManager(unit:getModelSceneWar()):getModelPlayer(playerIndex):isActivatingSkill()) then
+    if (getModelPlayerManager(unit:getModelWar()):getModelPlayer(playerIndex):isActivatingSkill()) then
         return cc.SpriteFrameCache:getInstance():getSpriteFrame("c02_t99_s07_f0" .. playerIndex .. ".png")
     else
         return nil
@@ -183,7 +183,7 @@ local function getLoadIndicatorFrame(self, unit)
     if (not unit.getCurrentLoadCount) then
         return nil
     else
-        local modelSceneWar = unit:getModelSceneWar()
+        local modelSceneWar = unit:getModelWar()
         local loadCount = unit:getCurrentLoadCount()
         if ((not isTotalReplay(modelSceneWar)) and (getModelFogMap(modelSceneWar):isFogOfWarCurrently())) then
             if ((unit:getPlayerIndex() ~= getPlayerIndexLoggedIn(modelSceneWar)) or (loadCount > 0)) then
@@ -303,7 +303,7 @@ end
 
 local function updateZOrder(self, modelUnit)
     if (modelUnit.getGridIndex) then
-        local mapSize = SingletonGetters.getModelTileMap(modelUnit:getModelSceneWar()):getMapSize()
+        local mapSize = SingletonGetters.getModelTileMap(modelUnit:getModelWar()):getMapSize()
         self:setLocalZOrder(mapSize.height - modelUnit:getGridIndex().y)
     end
 end

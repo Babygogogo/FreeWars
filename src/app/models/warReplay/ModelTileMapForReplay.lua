@@ -114,6 +114,18 @@ function ModelTileMapForReplay:initView()
 end
 
 --------------------------------------------------------------------------------
+-- The function for serialization.
+--------------------------------------------------------------------------------
+function ModelTileMapForReplay:toSerializableTable()
+    local tiles = {}
+    self:forEachModelTile(function(modelTile)
+        tiles[modelTile:getPositionIndex()] = modelTile:toSerializableTable()
+    end)
+
+    return {tiles = tiles}
+end
+
+--------------------------------------------------------------------------------
 -- The callback functions on start running/script events.
 --------------------------------------------------------------------------------
 function ModelTileMapForReplay:onStartRunning(modelWarReplay)

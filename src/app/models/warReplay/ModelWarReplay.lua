@@ -220,6 +220,36 @@ function ModelWarReplay:initWarDataForEachTurn()
 end
 
 --------------------------------------------------------------------------------
+-- The functions for serialization.
+--------------------------------------------------------------------------------
+function ModelWarReplay:toSerializableTable()
+    return {
+        actionID              = self:getActionId(),
+        energyGainModifier    = self.m_EnergyGainModifier,
+        enterTurnTime         = self.m_EnterTurnTime,
+        executedActions       = self.m_ExecutedActions,
+        incomeModifier        = self.m_IncomeModifier,
+        intervalUntilBoot     = self.m_IntervalUntilBoot,
+        isActiveSkillEnabled  = self.m_IsActiveSkillEnabled,
+        isFogOfWarByDefault   = self.m_IsFogOfWarByDefault,
+        isPassiveSkillEnabled = self.m_IsPassiveSkillEnabled,
+        isRandomWarField      = self.m_IsRandomWarField,
+        isRankMatch           = self.m_IsRankMatch,
+        isWarEnded            = self.m_IsWarEnded,
+        maxDiffScore          = self.m_MaxDiffScore,
+        remainingVotesForDraw = self.m_RemainingVotesForDraw,
+        startingEnergy        = self.m_StartingEnergy,
+        startingFund          = self.m_StartingFund,
+        warID                 = self.m_WarID,
+        warPassword           = self.m_WarPassword,
+        players               = self:getModelPlayerManager() :toSerializableTable(),
+        turn                  = self:getModelTurnManager()   :toSerializableTable(),
+        warField              = self:getModelWarField()      :toSerializableTable(),
+        weather               = self:getModelWeatherManager():toSerializableTable(),
+    }
+end
+
+--------------------------------------------------------------------------------
 -- The callback functions on start/stop running and script events.
 --------------------------------------------------------------------------------
 function ModelWarReplay:onStartRunning(ignoreWarMusic)

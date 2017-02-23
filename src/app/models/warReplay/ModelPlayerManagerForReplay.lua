@@ -16,6 +16,18 @@ function ModelPlayerManagerForReplay:ctor(param)
 end
 
 --------------------------------------------------------------------------------
+-- The functions for serialization.
+--------------------------------------------------------------------------------
+function ModelPlayerManagerForReplay:toSerializableTable()
+    local t = {}
+    self:forEachModelPlayer(function(modelPlayer, playerIndex)
+        t[playerIndex] = modelPlayer:toSerializableTable()
+    end)
+
+    return t
+end
+
+--------------------------------------------------------------------------------
 -- The public callback function on start running.
 --------------------------------------------------------------------------------
 function ModelPlayerManagerForReplay:onStartRunning(modelWarReplay)

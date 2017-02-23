@@ -1,5 +1,5 @@
 
-local ModelUnitMap = requireFW("src.global.functions.class")("ModelUnitMap")
+local ModelUnitMapForReplay = requireFW("src.global.functions.class")("ModelUnitMapForReplay")
 
 local GridIndexFunctions = requireFW("src.app.utilities.GridIndexFunctions")
 local WarFieldManager    = requireFW("src.app.utilities.WarFieldManager")
@@ -10,7 +10,7 @@ local Actor              = requireFW("src.global.actors.Actor")
 --------------------------------------------------------------------------------
 local function getActorUnit(self, gridIndex)
     assert(GridIndexFunctions.isWithinMap(gridIndex, self:getMapSize()),
-        "ModelUnitMap-getActorUnit() the param gridIndex is not within the map.")
+        "ModelUnitMapForReplay-getActorUnit() the param gridIndex is not within the map.")
 
     return self.m_ActorUnitsMap[gridIndex.x][gridIndex.y]
 end
@@ -68,7 +68,7 @@ local function createActorUnitsMapWithUnitMapData(unitMapData, warFieldFileName)
     local actorUnitsMap = createEmptyMap(width)
     for _, unitData in pairs(unitMapData.unitsOnMap) do
         local gridIndex = unitData.GridIndexable
-        assert(GridIndexFunctions.isWithinMap(gridIndex, mapSize), "ModelUnitMap-createActorUnitsMapWithUnitMapData() the gridIndex is invalid.")
+        assert(GridIndexFunctions.isWithinMap(gridIndex, mapSize), "ModelUnitMapForReplay-createActorUnitsMapWithUnitMapData() the gridIndex is invalid.")
 
         actorUnitsMap[gridIndex.x][gridIndex.y] = Actor.createWithModelAndViewName("warReplay.ModelUnitForReplay", unitData, "warReplay.ViewUnitForReplay")
     end
@@ -84,7 +84,7 @@ end
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
-function ModelUnitMap:ctor(unitMapData, warFieldFileName)
+function ModelUnitMapForReplay:ctor(unitMapData, warFieldFileName)
     if (unitMapData) then
         self.m_ActorUnitsMap, self.m_MapSize, self.m_AvailableUnitID, self.m_LoadedActorUnits = createActorUnitsMapWithUnitMapData(unitMapData, warFieldFileName)
     else
@@ -98,9 +98,9 @@ function ModelUnitMap:ctor(unitMapData, warFieldFileName)
     return self
 end
 
-function ModelUnitMap:initView()
+function ModelUnitMapForReplay:initView()
     local view = self.m_View
-    assert(view, "ModelUnitMap:initView() there's no view attached to the owner actor of the model.")
+    assert(view, "ModelUnitMapForReplay:initView() there's no view attached to the owner actor of the model.")
 
     local mapSize = self:getMapSize()
     view:setMapSize(mapSize)
@@ -124,9 +124,30 @@ function ModelUnitMap:initView()
 end
 
 --------------------------------------------------------------------------------
+-- The function for serialization.
+--------------------------------------------------------------------------------
+function ModelUnitMapForReplay:toSerializableTable()
+    local unitsOnMap = {}
+    self:forEachModelUnitOnMap(function(modelUnit)
+        unitsOnMap[modelUnit:getUnitId()] = modelUnit:toSerializableTable()
+    end)
+
+    local unitsLoaded = {}
+    self:forEachModelUnitLoaded(function(modelUnit)
+        unitsLoaded[modelUnit:getUnitId()] = modelUnit:toSerializableTable()
+    end)
+
+    return {
+        availableUnitID = self.m_AvailableUnitID,
+        unitsOnMap      = unitsOnMap,
+        unitsLoaded     = unitsLoaded,
+    }
+end
+
+--------------------------------------------------------------------------------
 -- The callback functions on start running/script events.
 --------------------------------------------------------------------------------
-function ModelUnitMap:onStartRunning(modelWarReplay)
+function ModelUnitMapForReplay:onStartRunning(modelWarReplay)
     local func = function(modelUnit)
         modelUnit:onStartRunning(modelWarReplay)
     end
@@ -139,38 +160,38 @@ end
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
-function ModelUnitMap:getMapSize()
+function ModelUnitMapForReplay:getMapSize()
     return self.m_MapSize
 end
 
-function ModelUnitMap:getAvailableUnitId()
+function ModelUnitMapForReplay:getAvailableUnitId()
     return self.m_AvailableUnitID
 end
 
-function ModelUnitMap:setAvailableUnitId(unitID)
-    assert((unitID >= 0) and (math.floor(unitID) == unitID), "ModelUnitMap:setAvailableUnitId() invalid unitID: " .. (unitID or ""))
+function ModelUnitMapForReplay:setAvailableUnitId(unitID)
+    assert((unitID >= 0) and (math.floor(unitID) == unitID), "ModelUnitMapForReplay:setAvailableUnitId() invalid unitID: " .. (unitID or ""))
     self.m_AvailableUnitID = unitID
 
     return self
 end
 
-function ModelUnitMap:getFocusModelUnit(gridIndex, launchUnitID)
+function ModelUnitMapForReplay:getFocusModelUnit(gridIndex, launchUnitID)
     return (launchUnitID)                                 and
         (self:getLoadedModelUnitWithUnitId(launchUnitID)) or
         (self:getModelUnit(gridIndex))
 end
 
-function ModelUnitMap:getModelUnit(gridIndex)
+function ModelUnitMapForReplay:getModelUnit(gridIndex)
     local actorUnit = getActorUnit(self, gridIndex)
     return (actorUnit) and (actorUnit:getModel()) or (nil)
 end
 
-function ModelUnitMap:getLoadedModelUnitWithUnitId(unitID)
+function ModelUnitMapForReplay:getLoadedModelUnitWithUnitId(unitID)
     local actorUnit = getActorUnitLoaded(self, unitID)
     return (actorUnit) and (actorUnit:getModel()) or (nil)
 end
 
-function ModelUnitMap:getLoadedModelUnitsWithLoader(loaderModelUnit, isRecursive)
+function ModelUnitMapForReplay:getLoadedModelUnitsWithLoader(loaderModelUnit, isRecursive)
     if (not loaderModelUnit.getLoadUnitIdList) then
         return nil
     else
@@ -195,7 +216,7 @@ function ModelUnitMap:getLoadedModelUnitsWithLoader(loaderModelUnit, isRecursive
     end
 end
 
-function ModelUnitMap:swapActorUnit(gridIndex1, gridIndex2)
+function ModelUnitMapForReplay:swapActorUnit(gridIndex1, gridIndex2)
     if (GridIndexFunctions.isEqual(gridIndex1, gridIndex2)) then
         return self
     end
@@ -208,35 +229,35 @@ function ModelUnitMap:swapActorUnit(gridIndex1, gridIndex2)
     return self
 end
 
-function ModelUnitMap:setActorUnitLoaded(gridIndex)
+function ModelUnitMapForReplay:setActorUnitLoaded(gridIndex)
     local loaded = self.m_LoadedActorUnits
     local map    = self.m_ActorUnitsMap
     local x, y   = gridIndex.x, gridIndex.y
     local unitID = map[x][y]:getModel():getUnitId()
-    assert(loaded[unitID] == nil, "ModelUnitMap:setActorUnitLoaded() the focus unit has been loaded already.")
+    assert(loaded[unitID] == nil, "ModelUnitMapForReplay:setActorUnitLoaded() the focus unit has been loaded already.")
 
     loaded[unitID], map[x][y] = map[x][y], loaded[unitID]
 
     return self
 end
 
-function ModelUnitMap:setActorUnitUnloaded(unitID, gridIndex)
+function ModelUnitMapForReplay:setActorUnitUnloaded(unitID, gridIndex)
     local loaded = self.m_LoadedActorUnits
     local map    = self.m_ActorUnitsMap
     local x, y   = gridIndex.x, gridIndex.y
-    assert(loaded[unitID], "ModelUnitMap-setActorUnitUnloaded() the focus unit is not loaded.")
-    assert(map[x][y] == nil, "ModelUnitMap-setActorUnitUnloaded() another unit is occupying the destination.")
+    assert(loaded[unitID], "ModelUnitMapForReplay-setActorUnitUnloaded() the focus unit is not loaded.")
+    assert(map[x][y] == nil, "ModelUnitMapForReplay-setActorUnitUnloaded() another unit is occupying the destination.")
 
     loaded[unitID], map[x][y] = map[x][y], loaded[unitID]
 
     return self
 end
 
-function ModelUnitMap:addActorUnitOnMap(actorUnit)
+function ModelUnitMapForReplay:addActorUnitOnMap(actorUnit)
     local modelUnit = actorUnit:getModel()
     local gridIndex = modelUnit:getGridIndex()
     local x, y      = gridIndex.x, gridIndex.y
-    assert(not self.m_ActorUnitsMap[x][y], "ModelUnitMap:addActorUnitOnMap() there's another unit on the grid: " .. x .. " " .. y)
+    assert(not self.m_ActorUnitsMap[x][y], "ModelUnitMapForReplay:addActorUnitOnMap() there's another unit on the grid: " .. x .. " " .. y)
     self.m_ActorUnitsMap[x][y] = actorUnit
 
     if (self.m_View) then
@@ -246,18 +267,18 @@ function ModelUnitMap:addActorUnitOnMap(actorUnit)
     return self
 end
 
-function ModelUnitMap:removeActorUnitOnMap(gridIndex)
+function ModelUnitMapForReplay:removeActorUnitOnMap(gridIndex)
     local x, y = gridIndex.x, gridIndex.y
-    assert(self.m_ActorUnitsMap[x][y], "ModelUnitMap:removeActorUnitOnMap() there's no unit on the grid: " .. x .. " " .. y)
+    assert(self.m_ActorUnitsMap[x][y], "ModelUnitMapForReplay:removeActorUnitOnMap() there's no unit on the grid: " .. x .. " " .. y)
     self.m_ActorUnitsMap[x][y] = nil
 
     return self
 end
 
-function ModelUnitMap:addActorUnitLoaded(actorUnit)
+function ModelUnitMapForReplay:addActorUnitLoaded(actorUnit)
     local modelUnit = actorUnit:getModel()
     local unitID    = modelUnit:getUnitId()
-    assert(self.m_LoadedActorUnits[unitID] == nil, "ModelUnitMap:addActorUnitLoaded() the unit id is loaded already: " .. unitID)
+    assert(self.m_LoadedActorUnits[unitID] == nil, "ModelUnitMapForReplay:addActorUnitLoaded() the unit id is loaded already: " .. unitID)
     self.m_LoadedActorUnits[unitID] = actorUnit
 
     if (self.m_View) then
@@ -267,15 +288,15 @@ function ModelUnitMap:addActorUnitLoaded(actorUnit)
     return self
 end
 
-function ModelUnitMap:removeActorUnitLoaded(unitID)
+function ModelUnitMapForReplay:removeActorUnitLoaded(unitID)
     local loadedModelUnit = self:getLoadedModelUnitWithUnitId(unitID)
-    assert(loadedModelUnit, "ModelUnitMap:removeActorUnitLoaded() the unit that the unitID refers to is not loaded: " .. (unitID or ""))
+    assert(loadedModelUnit, "ModelUnitMapForReplay:removeActorUnitLoaded() the unit that the unitID refers to is not loaded: " .. (unitID or ""))
     self.m_LoadedActorUnits[unitID] = nil
 
     return self
 end
 
-function ModelUnitMap:forEachModelUnitOnMap(func)
+function ModelUnitMapForReplay:forEachModelUnitOnMap(func)
     local mapSize = self:getMapSize()
     for x = 1, mapSize.width do
         for y = 1, mapSize.height do
@@ -289,7 +310,7 @@ function ModelUnitMap:forEachModelUnitOnMap(func)
     return self
 end
 
-function ModelUnitMap:forEachModelUnitLoaded(func)
+function ModelUnitMapForReplay:forEachModelUnitLoaded(func)
     for _, actorUnit in pairs(self.m_LoadedActorUnits) do
         func(actorUnit:getModel())
     end
@@ -297,16 +318,4 @@ function ModelUnitMap:forEachModelUnitLoaded(func)
     return self
 end
 
-function ModelUnitMap:setPreviewLaunchUnit(modelUnit, gridIndex)
-    self.m_View:setPreviewLaunchUnit(modelUnit, gridIndex)
-
-    return self
-end
-
-function ModelUnitMap:setPreviewLaunchUnitVisible(visible)
-    self.m_View:setPreviewLaunchUnitVisible(visible)
-
-    return self
-end
-
-return ModelUnitMap
+return ModelUnitMapForReplay

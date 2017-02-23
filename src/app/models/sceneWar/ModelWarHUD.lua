@@ -50,7 +50,7 @@ end
 
 local function initActorUnitInfo(self)
     if (not self.m_ActorUnitInfo) then
-        local actor = Actor.createWithModelAndViewName("common.ModelUnitInfo", nil, "common.ViewUnitInfo")
+        local actor = Actor.createWithModelAndViewName("sceneWar.ModelUnitInfo", nil, "common.ViewUnitInfo")
         actor:getModel():setModelUnitDetail(self.m_ActorUnitDetail:getModel())
 
         self.m_ActorUnitInfo = actor
@@ -65,7 +65,7 @@ end
 
 local function initActorTileInfo(self)
     if (not self.m_ActorTileInfo) then
-        local actor = Actor.createWithModelAndViewName("common.ModelTileInfo", nil, "common.ViewTileInfo")
+        local actor = Actor.createWithModelAndViewName("sceneWar.ModelTileInfo", nil, "common.ViewTileInfo")
         actor:getModel():setModelTileDetail(self.m_ActorTileDetail:getModel())
 
         self.m_ActorTileInfo = actor

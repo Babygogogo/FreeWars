@@ -16,7 +16,7 @@ local function generateInfoText(self)
         getLocalizedText(25, "Player"),  modelPlayer:getNickname(),
         getLocalizedText(25, "Fund"),    modelPlayer:getFund(),
         getLocalizedText(25, "Energy"),  modelPlayer:getEnergy()
-    ))
+    )
 end
 
 --------------------------------------------------------------------------------

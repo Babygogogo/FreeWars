@@ -97,6 +97,18 @@ function ModelWarFieldForReplay:initView()
 end
 
 --------------------------------------------------------------------------------
+-- The functions for serialization.
+--------------------------------------------------------------------------------
+function ModelWarFieldForReplay:toSerializableTable()
+    return {
+        warFieldFileName = self.m_WarFieldFileName,
+        fogMap           = self:getModelFogMap() :toSerializableTable(),
+        tileMap          = self:getModelTileMap():toSerializableTable(),
+        unitMap          = self:getModelUnitMap():toSerializableTable(),
+    }
+end
+
+--------------------------------------------------------------------------------
 -- The callback functions on start running/script events.
 --------------------------------------------------------------------------------
 function ModelWarFieldForReplay:onStartRunning(modelWarReplay)

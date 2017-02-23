@@ -67,6 +67,27 @@ function ModelUnitForReplay:initView()
 end
 
 --------------------------------------------------------------------------------
+-- The function for serialization.
+--------------------------------------------------------------------------------
+function ModelUnitForReplay:toSerializableTable()
+    local t = {}
+    for name, component in pairs(ComponentManager.getAllComponents(self)) do
+        if (component.toSerializableTable) then
+            t[name] = component:toSerializableTable()
+        end
+    end
+
+    t.tiledID = self:getTiledId()
+    t.unitID  = self:getUnitId()
+    local stateCode = self.m_StateCode
+    if (stateCode ~= UNIT_STATE_CODE.Idle) then
+        t.stateCode = stateCode
+    end
+
+    return t
+end
+
+--------------------------------------------------------------------------------
 -- The callback functions on start running/script events.
 --------------------------------------------------------------------------------
 function ModelUnitForReplay:onStartRunning(modelWarReplay)
