@@ -6,54 +6,44 @@ local Actor = requireFW("src.global.actors.Actor")
 --------------------------------------------------------------------------------
 -- The composition actors.
 --------------------------------------------------------------------------------
-local function initActorWarCommandMenu(self)
-    self.m_ActorWarCommandMenu = Actor.createWithModelAndViewName("warReplay.ModelWarCommandMenuForReplay", nil, "common.ViewWarCommandMenu")
-end
-
 local function initActorMoneyEnergyInfo(self)
-    self.m_ActorMoneyEnergyInfo = Actor.createWithModelAndViewName("warReplay.ModelMoneyEnergyInfoForReplay", nil, "sceneWar.ViewMoneyEnergyInfo")
+    self.m_ActorMoneyEnergyInfo = Actor.createWithModelAndViewName("warReplay.ModelMoneyEnergyInfoForReplay", nil, "common.ViewMoneyEnergyInfo")
 end
 
-local function initActorActionMenu(self)
-    self.m_ActorActionMenu = Actor.createWithModelAndViewName("sceneWar.ModelActionMenu", nil, "sceneWar.ViewActionMenu")
-end
-
-local function initActorUnitDetail(self)
-    self.m_ActorUnitDetail = Actor.createWithModelAndViewName("sceneWar.ModelUnitDetail", nil, "sceneWar.ViewUnitDetail")
-end
-
-local function initActorUnitInfo(self)
-    local actor = Actor.createWithModelAndViewName("sceneWar.ModelUnitInfo", nil, "sceneWar.ViewUnitInfo")
-    actor:getModel():setModelUnitDetail(self.m_ActorUnitDetail:getModel())
-
-    self.m_ActorUnitInfo = actor
+local function initActorReplayController(self)
+    self.m_ActorReplayController = Actor.createWithModelAndViewName("warReplay.ModelReplayController", nil, "warReplay.ViewReplayController")
 end
 
 local function initActorTileDetail(self)
-    self.m_ActorTileDetail = Actor.createWithModelAndViewName("sceneWar.ModelTileDetail", nil, "sceneWar.ViewTileDetail")
+    self.m_ActorTileDetail = Actor.createWithModelAndViewName("common.ModelTileDetail", nil, "common.ViewTileDetail")
 end
 
 local function initActorTileInfo(self)
-    local actor = Actor.createWithModelAndViewName("sceneWar.ModelTileInfo", nil, "sceneWar.ViewTileInfo")
+    local actor = Actor.createWithModelAndViewName("common.ModelTileInfo", nil, "common.ViewTileInfo")
     actor:getModel():setModelTileDetail(self.m_ActorTileDetail:getModel())
 
     self.m_ActorTileInfo = actor
 end
 
-local function initActorBattleInfo(self)
-    self.m_ActorBattleInfo = Actor.createWithModelAndViewName("sceneWar.ModelBattleInfo", nil, "sceneWar.ViewBattleInfo")
+local function initActorUnitDetail(self)
+    self.m_ActorUnitDetail = Actor.createWithModelAndViewName("common.ModelUnitDetail", nil, "common.ViewUnitDetail")
 end
 
-local function initActorReplayController(self)
-    self.m_ActorReplayController = Actor.createWithModelAndViewName("sceneWar.ModelReplayController", nil, "sceneWar.ViewReplayController")
+local function initActorUnitInfo(self)
+    local actor = Actor.createWithModelAndViewName("common.ModelUnitInfo", nil, "common.ViewUnitInfo")
+    actor:getModel():setModelUnitDetail(self.m_ActorUnitDetail:getModel())
+
+    self.m_ActorUnitInfo = actor
+end
+
+local function initActorWarCommandMenu(self)
+    self.m_ActorWarCommandMenu = Actor.createWithModelAndViewName("warReplay.ModelWarCommandMenuForReplay", nil, "common.ViewWarCommandMenu")
 end
 
 --------------------------------------------------------------------------------
 -- The contructor and initializers.
 --------------------------------------------------------------------------------
 function ModelWarHudForReplay:ctor()
-    initActorActionMenu(      self)
-    initActorBattleInfo(      self)
     initActorMoneyEnergyInfo( self)
     initActorReplayController(self)
     initActorTileDetail(      self)
@@ -69,9 +59,7 @@ function ModelWarHudForReplay:initView()
     local view = self.m_View
     assert(view, "ModelWarHudForReplay:initView() no view is attached to the actor of the model.")
 
-    view:setViewActionMenu(      self.m_ActorActionMenu      :getView())
-        :setViewBattleInfo(      self.m_ActorBattleInfo      :getView())
-        :setViewMoneyEnergyInfo( self.m_ActorMoneyEnergyInfo :getView())
+    view:setViewMoneyEnergyInfo( self.m_ActorMoneyEnergyInfo :getView())
         :setViewReplayController(self.m_ActorReplayController:getView())
         :setViewTileDetail(      self.m_ActorTileDetail      :getView())
         :setViewTileInfo(        self.m_ActorTileInfo        :getView())
@@ -86,8 +74,6 @@ end
 -- The public callback function on start running.
 --------------------------------------------------------------------------------
 function ModelWarHudForReplay:onStartRunning(modelWarReplay)
-    self.m_ActorActionMenu      :getModel():onStartRunning(modelWarReplay)
-    self.m_ActorBattleInfo      :getModel():onStartRunning(modelWarReplay)
     self.m_ActorMoneyEnergyInfo :getModel():onStartRunning(modelWarReplay)
     self.m_ActorReplayController:getModel():onStartRunning(modelWarReplay)
     self.m_ActorTileInfo        :getModel():onStartRunning(modelWarReplay)

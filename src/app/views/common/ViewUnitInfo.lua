@@ -34,7 +34,7 @@ local function createLabel(posX, posY)
 end
 
 local function initSubView(self, index)
-    local subView = Actor.createView("sceneWar.ViewUnitInfoSingle")
+    local subView = Actor.createView("common.ViewUnitInfoSingle")
     subView:updateWithPlayerIndex(self.m_PlayerIndex)
         :setVisible(true)
         :setCallbackOnTouch(function()

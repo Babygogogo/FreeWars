@@ -1,16 +1,17 @@
 
 local ModelMoneyEnergyInfo = class("ModelMoneyEnergyInfo")
 
-local SingletonGetters = requireFW("src.app.utilities.SingletonGetters")
+local LocalizationFunctions = requireFW("src.app.utilities.LocalizationFunctions")
+local SingletonGetters      = requireFW("src.app.utilities.SingletonGetters")
 
-local string = string
+local getLocalizedText = LocalizationFunctions.getLocalizedText
+local string           = string
 
 --------------------------------------------------------------------------------
 -- The util functions.
 --------------------------------------------------------------------------------
 local function generateInfoText(self)
-    local modelWarReplay = self.m_ModelWarReplay
-    local modelPlayer    = SingletonGetters.getModelPlayerManager(modelWarReplay):getModelPlayer(self.m_PlayerIndex)
+    local modelPlayer = SingletonGetters.getModelPlayerManager(self.m_ModelWarReplay):getModelPlayer(self.m_PlayerIndex)
     return string.format("%s: %s\n%s: %s\n%s: %d",
         getLocalizedText(25, "Player"),  modelPlayer:getNickname(),
         getLocalizedText(25, "Fund"),    modelPlayer:getFund(),
