@@ -31,14 +31,11 @@ local function initActorActionPlanner(self)
     end
 end
 
-local function initActorFogMap(self, fogMapData, isTotalReplay)
+local function initActorFogMap(self, fogMapData)
     if (not self.m_ActorFogMap) then
-        local modelFogMap  = Actor.createModel("sceneWar.ModelFogMap", fogMapData, self.m_WarFieldFileName, isTotalReplay)
-        self.m_ActorFogMap = ((IS_SERVER) or (not isTotalReplay))                                        and
-            (Actor.createWithModelAndViewInstance(modelFogMap))                                          or
-            (Actor.createWithModelAndViewInstance(modelFogMap, Actor.createView("sceneWar.ViewFogMap")))
+        self.m_ActorFogMap = Actor.createWithModelAndViewInstance(Actor.createModel("warReplay.ModelFogMapForReplay", fogMapData, self.m_WarFieldFileName))
     else
-        self.m_ActorFogMap:getModel():ctor(fogMapData, self.m_WarFieldFileName, isTotalReplay)
+        self.m_ActorFogMap:getModel():ctor(fogMapData, self.m_WarFieldFileName)
     end
 end
 
@@ -83,7 +80,7 @@ function ModelWarFieldForReplay:ctor(warFieldData)
     self.m_WarFieldFileName = warFieldData.warFieldFileName
 
     initActorActionPlanner(self)
-    initActorFogMap(       self, warFieldData.fogMap,  isTotalReplay)
+    initActorFogMap(       self, warFieldData.fogMap)
     initActorGridEffect(   self)
     initActorTileMap(      self, warFieldData.tileMap)
     initActorUnitMap(      self, warFieldData.unitMap)
