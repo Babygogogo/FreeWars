@@ -4,8 +4,6 @@ local ModelWarFieldForReplay = requireFW("src.global.functions.class")("ModelWar
 local SingletonGetters = requireFW("src.app.utilities.SingletonGetters")
 local Actor            = requireFW("src.global.actors.Actor")
 
-local IS_SERVER               = requireFW("src.app.utilities.GameConstantFunctions").isServer()
-
 --------------------------------------------------------------------------------
 -- The private callback functions on script events.
 --------------------------------------------------------------------------------
@@ -62,7 +60,7 @@ end
 
 local function initActorUnitMap(self, unitMapData)
     if (not self.m_ActorUnitMap) then
-        local modelUnitMap  = Actor.createModel("sceneWar.ModelUnitMap", unitMapData, self.m_WarFieldFileName)
+        local modelUnitMap  = Actor.createModel("warReplay.ModelUnitMapForReplay", unitMapData, self.m_WarFieldFileName)
         self.m_ActorUnitMap = Actor.createWithModelAndViewInstance(modelUnitMap, Actor.createView("common.ViewUnitMap"))
     else
         self.m_ActorUnitMap:getModel():ctor(unitMapData, self.m_WarFieldFileName)
@@ -95,11 +93,6 @@ function ModelWarFieldForReplay:initView()
 
         :setContentSizeWithMapSize(self:getModelTileMap():getMapSize())
 
-    local viewFogMap = self.m_ActorFogMap:getView()
-    if (viewFogMap) then
-        self.m_View:setViewFogMap(viewFogMap)
-    end
-
     return self
 end
 
@@ -111,13 +104,8 @@ function ModelWarFieldForReplay:onStartRunning(modelWarReplay)
     self:getModelUnitMap()      :onStartRunning(modelWarReplay)
     self:getModelFogMap()       :onStartRunning(modelWarReplay)
     self:getModelActionPlanner():onStartRunning(modelWarReplay)
-
-    if (not IS_SERVER) then
-        self.m_ActorGridEffect   :getModel():onStartRunning(modelWarReplay)
-        self.m_ActorMapCursor    :getModel():onStartRunning(modelWarReplay)
-
-        self:getModelTileMap():updateOnModelFogMapStartedRunning()
-    end
+    self:getModelGridEffect()   :onStartRunning(modelWarReplay)
+    self:getModelMapCursor()    :onStartRunning(modelWarReplay)
 
     SingletonGetters.getScriptEventDispatcher(modelWarReplay)
         :addEventListener("EvtDragField",            self)

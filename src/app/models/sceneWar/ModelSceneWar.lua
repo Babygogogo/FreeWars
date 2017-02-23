@@ -178,7 +178,7 @@ end
 local function initActorWarField(self, warFieldData, isTotalReplay)
     if (not self.m_ActorWarField) then
         local modelWarField  = Actor.createModel("sceneWar.ModelWarField", warFieldData, isTotalReplay)
-        local viewWarField   = (not IS_SERVER) and (Actor.createView("sceneWar.ViewWarField")) or (nil)
+        local viewWarField   = (not IS_SERVER) and (Actor.createView("common.ViewWarField")) or (nil)
         self.m_ActorWarField = Actor.createWithModelAndViewInstance(modelWarField, viewWarField)
     else
         self.m_ActorWarField:getModel():ctor(warFieldData, isTotalReplay)

@@ -119,13 +119,11 @@ local function initActorWeatherManager(self, weatherData)
     end
 end
 
-local function initActorWarField(self, warFieldData, isTotalReplay)
+local function initActorWarField(self, warFieldData)
     if (not self.m_ActorWarField) then
-        local modelWarField  = Actor.createModel("sceneWar.ModelWarField", warFieldData, isTotalReplay)
-        local viewWarField   = Actor.createView("sceneWar.ViewWarField")
-        self.m_ActorWarField = Actor.createWithModelAndViewInstance(modelWarField, viewWarField)
+        self.m_ActorWarField = Actor.createWithModelAndViewName("warReplay.ModelWarFieldForReplay", warFieldData, "common.ViewWarField")
     else
-        self.m_ActorWarField:getModel():ctor(warFieldData, isTotalReplay)
+        self.m_ActorWarField:getModel():ctor(warFieldData)
     end
 end
 
@@ -169,7 +167,7 @@ function ModelWarReplay:ctor(sceneData)
     initScriptEventDispatcher(self)
     initActorPlayerManager(   self, sceneData.players)
     initActorWeatherManager(  self, sceneData.weather)
-    initActorWarField(        self, sceneData.warField, sceneData.isTotalReplay)
+    initActorWarField(        self, sceneData.warField)
     initActorTurnManager(     self, sceneData.turn)
     initActorConfirmBox(      self)
     initActorMessageIndicator(self)
