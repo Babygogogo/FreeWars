@@ -186,7 +186,7 @@ local function initViewMovePath(self)
 end
 
 local function initViewPreviewDropDestination(self)
-    local view = Actor.createView("sceneWar.ViewUnit")
+    local view = Actor.createView("common.ViewUnitIcon")
     view:setVisible(false)
         :setOpacity(REACHABLE_GRIDS_OPACITY)
         :setCascadeOpacityEnabled(true)
@@ -361,7 +361,7 @@ function ViewActionPlanner:setDropDestinations(destinations)
     viewDropDestinations:removeAllChildren()
 
     for _, destination in pairs(destinations) do
-        local viewUnit = Actor.createView("sceneWar.ViewUnit")
+        local viewUnit = Actor.createView("common.ViewUnitIcon")
         viewUnit:updateWithModelUnit(destination.modelUnit)
             :setPosition(GridIndexFunctions.toPosition(destination.gridIndex))
             :setCascadeOpacityEnabled(true)

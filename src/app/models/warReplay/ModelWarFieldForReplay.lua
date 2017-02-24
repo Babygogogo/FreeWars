@@ -25,7 +25,7 @@ end
 --------------------------------------------------------------------------------
 local function initActorActionPlanner(self)
     if (not self.m_ActorActionPlanner) then
-        self.m_ActorActionPlanner = Actor.createWithModelAndViewName("warReplay.ModelActionPlannerForReplay", nil, "warReplay.ViewActionPlannerForReplay")
+        self.m_ActorActionPlanner = Actor.createWithModelAndViewName("warReplay.ModelActionPlannerForReplay", nil, "common.ViewActionPlanner")
     end
 end
 
