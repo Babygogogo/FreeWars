@@ -24,10 +24,10 @@ end
 --------------------------------------------------------------------------------
 -- The callback functions on start running/script events.
 --------------------------------------------------------------------------------
-function ModelReplayController:onStartRunning(modelSceneWar)
-    self.m_ModelSceneWar       = modelSceneWar
-    self.m_ModelWarCommandMenu = SingletonGetters.getModelWarCommandMenu(modelSceneWar)
-    SingletonGetters.getScriptEventDispatcher(modelSceneWar)
+function ModelReplayController:onStartRunning(modelWarReplay)
+    self.m_ModelWarReplay      = modelWarReplay
+    self.m_ModelWarCommandMenu = SingletonGetters.getModelWarCommandMenu(modelWarReplay)
+    SingletonGetters.getScriptEventDispatcher(modelWarReplay)
         :addEventListener("EvtWarCommandMenuUpdated", self)
 
     return self
@@ -46,11 +46,11 @@ end
 -- The public functions.
 --------------------------------------------------------------------------------
 function ModelReplayController:onButtonNextTurnTouched()
-    local modelSceneWar = self.m_ModelSceneWar
-    if (not modelSceneWar:canFastForwardForReplay()) then
-        SingletonGetters.getModelMessageIndicator(modelSceneWar):showMessage(getLocalizedText(11, "NoMoreNextTurn"))
+    local modelWarReplay = self.m_ModelWarReplay
+    if (not modelWarReplay:canFastForwardForReplay()) then
+        SingletonGetters.getModelMessageIndicator(modelWarReplay):showMessage(getLocalizedText(11, "NoMoreNextTurn"))
     else
-        modelSceneWar:setAutoReplay(false)
+        modelWarReplay:setAutoReplay(false)
             :fastForwardForReplay()
         self:setButtonPlayVisible(true)
     end
@@ -59,11 +59,11 @@ function ModelReplayController:onButtonNextTurnTouched()
 end
 
 function ModelReplayController:onButtonPreviousTurnTouched()
-    local modelSceneWar = self.m_ModelSceneWar
-    if (not modelSceneWar:canFastRewindForReplay()) then
-        SingletonGetters.getModelMessageIndicator(modelSceneWar):showMessage(getLocalizedText(11, "NoMorePreviousTurn"))
+    local modelWarReplay = self.m_ModelWarReplay
+    if (not modelWarReplay:canFastRewindForReplay()) then
+        SingletonGetters.getModelMessageIndicator(modelWarReplay):showMessage(getLocalizedText(11, "NoMorePreviousTurn"))
     else
-        modelSceneWar:setAutoReplay(false)
+        modelWarReplay:setAutoReplay(false)
             :fastRewindForReplay()
         self:setButtonPlayVisible(true)
     end
@@ -72,14 +72,14 @@ function ModelReplayController:onButtonPreviousTurnTouched()
 end
 
 function ModelReplayController:onButtonPlayTouched()
-    self.m_ModelSceneWar:setAutoReplay(true)
+    self.m_ModelWarReplay:setAutoReplay(true)
     self:setButtonPlayVisible(false)
 
     return self
 end
 
 function ModelReplayController:onButtonPauseTouched()
-    self.m_ModelSceneWar:setAutoReplay(false)
+    self.m_ModelWarReplay:setAutoReplay(false)
     self:setButtonPlayVisible(true)
 
     return self

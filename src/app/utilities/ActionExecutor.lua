@@ -577,7 +577,7 @@ local function executeReloadSceneWar(action, modelScene)
             getModelMessageIndicator(modelScene):showPersistentMessage(getLocalizedText(action.messageCode, unpack(action.messageParams or {})))
         end
 
-        local actorSceneWar = Actor.createWithModelAndViewName("sceneWar.ModelSceneWar", warData, "sceneWar.ViewSceneWar")
+        local actorSceneWar = Actor.createWithModelAndViewName("sceneWar.ModelSceneWar", warData, "common.ViewSceneWar")
         ActorManager.setAndRunRootActor(actorSceneWar, "FADE", 1)
     end
 end

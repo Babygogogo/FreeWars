@@ -76,8 +76,17 @@ function WarFieldManager.getWarFieldName(warFieldFileName)
     return WarFieldManager.getWarFieldData(warFieldFileName).warFieldName
 end
 
+function WarFieldManager.getWarFieldAuthorName(warFieldFileName)
+    return WarFieldManager.getWarFieldData(warFieldFileName).authorName
+end
+
 function WarFieldManager.getPlayersCount(warFieldFileName)
     return WarFieldManager.getWarFieldData(warFieldFileName).playersCount
+end
+
+function WarFieldManager.getMapSize(warFieldFileName)
+    local data = WarFieldManager.getWarFieldData(warFieldFileName)
+    return {width = data.width, height = data.height}
 end
 
 return WarFieldManager

@@ -26,13 +26,13 @@ local Actor = requireFW("src.global.actors.Actor")
 --------------------------------------------------------------------------------
 local function initActorWarCommandMenu(self)
     if (not self.m_ActorWarCommandMenu) then
-        self.m_ActorWarCommandMenu = Actor.createWithModelAndViewName("sceneWar.ModelWarCommandMenu", nil, "sceneWar.ViewWarCommandMenu")
+        self.m_ActorWarCommandMenu = Actor.createWithModelAndViewName("sceneWar.ModelWarCommandMenu", nil, "common.ViewWarCommandMenu")
     end
 end
 
 local function initActorMoneyEnergyInfo(self)
     if (not self.m_ActorMoneyEnergyInfo) then
-        self.m_ActorMoneyEnergyInfo = Actor.createWithModelAndViewName("sceneWar.ModelMoneyEnergyInfo", nil, "sceneWar.ViewMoneyEnergyInfo")
+        self.m_ActorMoneyEnergyInfo = Actor.createWithModelAndViewName("sceneWar.ModelMoneyEnergyInfo", nil, "common.ViewMoneyEnergyInfo")
     end
 end
 
@@ -44,13 +44,13 @@ end
 
 local function initActorUnitDetail(self)
     if (not self.m_ActorUnitDetail) then
-        self.m_ActorUnitDetail = Actor.createWithModelAndViewName("sceneWar.ModelUnitDetail", nil, "sceneWar.ViewUnitDetail")
+        self.m_ActorUnitDetail = Actor.createWithModelAndViewName("common.ModelUnitDetail", nil, "common.ViewUnitDetail")
     end
 end
 
 local function initActorUnitInfo(self)
     if (not self.m_ActorUnitInfo) then
-        local actor = Actor.createWithModelAndViewName("sceneWar.ModelUnitInfo", nil, "sceneWar.ViewUnitInfo")
+        local actor = Actor.createWithModelAndViewName("sceneWar.ModelUnitInfo", nil, "common.ViewUnitInfo")
         actor:getModel():setModelUnitDetail(self.m_ActorUnitDetail:getModel())
 
         self.m_ActorUnitInfo = actor
@@ -59,13 +59,13 @@ end
 
 local function initActorTileDetail(self)
     if (not self.m_ActorTileDetail) then
-        self.m_ActorTileDetail = Actor.createWithModelAndViewName("sceneWar.ModelTileDetail", nil, "sceneWar.ViewTileDetail")
+        self.m_ActorTileDetail = Actor.createWithModelAndViewName("common.ModelTileDetail", nil, "common.ViewTileDetail")
     end
 end
 
 local function initActorTileInfo(self)
     if (not self.m_ActorTileInfo) then
-        local actor = Actor.createWithModelAndViewName("sceneWar.ModelTileInfo", nil, "sceneWar.ViewTileInfo")
+        local actor = Actor.createWithModelAndViewName("sceneWar.ModelTileInfo", nil, "common.ViewTileInfo")
         actor:getModel():setModelTileDetail(self.m_ActorTileDetail:getModel())
 
         self.m_ActorTileInfo = actor
@@ -80,7 +80,7 @@ end
 
 local function initActorReplayController(self)
     if (not self.m_ActorReplayController) then
-        self.m_ActorReplayController = Actor.createWithModelAndViewName("sceneWar.ModelReplayController", nil, "sceneWar.ViewReplayController")
+        self.m_ActorReplayController = Actor.createWithModelAndViewName("warReplay.ModelReplayController", nil, "warReplay.ViewReplayController")
     end
 end
 

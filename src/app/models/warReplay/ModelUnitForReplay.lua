@@ -1,20 +1,7 @@
 
---[[--------------------------------------------------------------------------------
--- ModelUnit是战场上的一个作战单位。
---
--- 主要职责和使用场景举例：
---   构造作战单位，维护相关数值，提供接口给外界访问
---
--- 其他：
---   - ModelUnit中的许多概念都和ModelTile很相似，包括tiledID、instantialData、构造过程等，因此可以参照ModelTile的注释，这里不赘述。
---     有点不同的是，ModelUnit只需一个tiledID即可构造，而ModelTile可能需要1-2个。
---]]--------------------------------------------------------------------------------
+local ModelUnitForReplay = requireFW("src.global.functions.class")("ModelUnitForReplay")
 
-local ModelUnit = requireFW("src.global.functions.class")("ModelUnit")
-
-local Destroyers            = requireFW("src.app.utilities.Destroyers")
 local GameConstantFunctions = requireFW("src.app.utilities.GameConstantFunctions")
-local GridIndexFunctions    = requireFW("src.app.utilities.GridIndexFunctions")
 local LocalizationFunctions = requireFW("src.app.utilities.LocalizationFunctions")
 local ComponentManager      = requireFW("src.global.components.ComponentManager")
 
@@ -30,7 +17,7 @@ local function initWithTiledID(self, tiledID)
     self.m_TiledID = tiledID
 
     local template = GameConstantFunctions.getTemplateModelUnitWithTiledId(tiledID)
-    assert(template, "ModelUnit-initWithTiledID() failed to get the template model unit with param tiledID." .. tiledID)
+    assert(template, "ModelUnitForReplay-initWithTiledID() failed to get the template model unit with param tiledID." .. tiledID)
 
     if (template ~= self.m_Template) then
         self.m_Template  = template
@@ -59,7 +46,7 @@ end
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
-function ModelUnit:ctor(param)
+function ModelUnitForReplay:ctor(param)
     initWithTiledID(   self, param.tiledID)
     loadInstantialData(self, param)
 
@@ -70,9 +57,9 @@ function ModelUnit:ctor(param)
     return self
 end
 
-function ModelUnit:initView()
+function ModelUnitForReplay:initView()
     local view = self.m_View
-    assert(view, "ModelUnit:initView() no view is attached to the actor of the model.")
+    assert(view, "ModelUnitForReplay:initView() no view is attached to the actor of the model.")
 
     self:setViewPositionWithGridIndex()
 
@@ -82,7 +69,7 @@ end
 --------------------------------------------------------------------------------
 -- The function for serialization.
 --------------------------------------------------------------------------------
-function ModelUnit:toSerializableTable()
+function ModelUnitForReplay:toSerializableTable()
     local t = {}
     for name, component in pairs(ComponentManager.getAllComponents(self)) do
         if (component.toSerializableTable) then
@@ -103,11 +90,10 @@ end
 --------------------------------------------------------------------------------
 -- The callback functions on start running/script events.
 --------------------------------------------------------------------------------
-function ModelUnit:onStartRunning(modelSceneWar)
-    assert(modelSceneWar.isModelSceneWar, "ModelUnit:onStartRunning() invalid modelSceneWar.")
-    self.m_ModelSceneWar = modelSceneWar
+function ModelUnitForReplay:onStartRunning(modelWarReplay)
+    self.m_ModelWarReplay = modelWarReplay
 
-    ComponentManager.callMethodForAllComponents(self, "onStartRunning", modelSceneWar)
+    ComponentManager.callMethodForAllComponents(self, "onStartRunning", modelWarReplay)
     self:updateView()
 
     return self
@@ -116,110 +102,92 @@ end
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
-function ModelUnit:moveViewAlongPath(path, isDiving, callbackAfterMove)
-    if (self.m_View) then
-        self.m_View:moveAlongPath(path, isDiving, callbackAfterMove)
-    elseif (callbackAfterMove) then
-        callbackAfterMove()
-    end
+function ModelUnitForReplay:moveViewAlongPath(path, isDiving, callbackAfterMove)
+    self.m_View:moveAlongPath(path, isDiving, callbackAfterMove)
 
     return self
 end
 
-function ModelUnit:moveViewAlongPathAndFocusOnTarget(path, isDiving, targetGridIndex, callbackAfterMove)
-    if (self.m_View) then
-        self.m_View:moveAlongPathAndFocusOnTarget(path, isDiving, targetGridIndex, callbackAfterMove)
-    elseif (callbackAfterMove) then
-        callbackAfterMove()
-    end
+function ModelUnitForReplay:moveViewAlongPathAndFocusOnTarget(path, isDiving, targetGridIndex, callbackAfterMove)
+    self.m_View:moveAlongPathAndFocusOnTarget(path, isDiving, targetGridIndex, callbackAfterMove)
 
     return self
 end
 
-function ModelUnit:setViewVisible(visible)
-    if (self.m_View) then
-        self.m_View:setVisible(visible)
-    end
+function ModelUnitForReplay:setViewVisible(visible)
+    self.m_View:setVisible(visible)
 
     return self
 end
 
-function ModelUnit:updateView()
-    if (self.m_View) then
-        self.m_View:updateWithModelUnit(self)
-    end
+function ModelUnitForReplay:updateView()
+    self.m_View:updateWithModelUnit(self)
 
     return self
 end
 
-function ModelUnit:removeViewFromParent()
-    if (self.m_View) then
-        self.m_View:removeFromParent()
-        self.m_View = nil
-    end
+function ModelUnitForReplay:removeViewFromParent()
+    self.m_View:removeFromParent()
+    self.m_View = nil
 
     return self
 end
 
-function ModelUnit:showNormalAnimation()
-    if (self.m_View) then
-        self.m_View:showNormalAnimation()
-    end
+function ModelUnitForReplay:showNormalAnimation()
+    self.m_View:showNormalAnimation()
 
     return self
 end
 
-function ModelUnit:showMovingAnimation()
-    if (self.m_View) then
-        self.m_View:showMovingAnimation()
-    end
+function ModelUnitForReplay:showMovingAnimation()
+    self.m_View:showMovingAnimation()
 
     return self
 end
 
-function ModelUnit:getModelWar()
-    assert(self.m_ModelSceneWar, "ModelUnit:getModelWar() onStartRunning() hasn't been called yet.")
-    return self.m_ModelSceneWar
+function ModelUnitForReplay:getModelWar()
+    assert(self.m_ModelWarReplay, "ModelUnitForReplay:getModelWar() the model hasn't been set yet.")
+    return self.m_ModelWarReplay
 end
 
-function ModelUnit:getTiledId()
+function ModelUnitForReplay:getTiledId()
     return self.m_TiledID
 end
 
-function ModelUnit:getUnitId()
+function ModelUnitForReplay:getUnitId()
     return self.m_UnitID
 end
 
-function ModelUnit:getPlayerIndex()
+function ModelUnitForReplay:getPlayerIndex()
     return GameConstantFunctions.getPlayerIndexWithTiledId(self.m_TiledID)
 end
 
-function ModelUnit:isStateIdle()
+function ModelUnitForReplay:isStateIdle()
     return self.m_StateCode == UNIT_STATE_CODE.Idle
 end
 
-function ModelUnit:setStateIdle()
+function ModelUnitForReplay:setStateIdle()
     self.m_StateCode = UNIT_STATE_CODE.Idle
 
     return self
 end
 
-function ModelUnit:setStateActioned()
+function ModelUnitForReplay:setStateActioned()
     self.m_StateCode = UNIT_STATE_CODE.Actioned
 
     return self
 end
 
-function ModelUnit:getUnitType()
+function ModelUnitForReplay:getUnitType()
     return GameConstantFunctions.getUnitTypeWithTiledId(self:getTiledId())
 end
 
-function ModelUnit:getDescription()
+function ModelUnitForReplay:getDescription()
     return LocalizationFunctions.getLocalizedText(114, self:getUnitType())
 end
 
-function ModelUnit:getUnitTypeFullName()
+function ModelUnitForReplay:getUnitTypeFullName()
     return LocalizationFunctions.getLocalizedText(113, self:getUnitType())
 end
 
-return ModelUnit
+return ModelUnitForReplay

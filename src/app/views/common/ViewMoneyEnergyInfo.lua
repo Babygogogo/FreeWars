@@ -7,7 +7,6 @@ local SingletonGetters      = requireFW("src.app.utilities.SingletonGetters")
 local getLocalizedText       = LocalizationFunctions.getLocalizedText
 local getModelFogMap         = SingletonGetters.getModelFogMap
 local getPlayerIndexLoggedIn = SingletonGetters.getPlayerIndexLoggedIn
-local isTotalReplay          = SingletonGetters.isTotalReplay
 
 local LABEL_Z_ORDER      = 1
 local BACKGROUND_Z_ORDER = 0

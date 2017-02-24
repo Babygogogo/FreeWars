@@ -169,7 +169,7 @@ end
 
 local function initActorWeatherManager(self, weatherData)
     if (not self.m_ActorWeatherManager) then
-        self.m_ActorWeatherManager = Actor.createWithModelAndViewName("sceneWar.ModelWeatherManager", weatherData)
+        self.m_ActorWeatherManager = Actor.createWithModelAndViewName("common.ModelWeatherManager", weatherData)
     else
         self.m_ActorWeatherManager:getModel():ctor(weatherData)
     end
@@ -178,7 +178,7 @@ end
 local function initActorWarField(self, warFieldData, isTotalReplay)
     if (not self.m_ActorWarField) then
         local modelWarField  = Actor.createModel("sceneWar.ModelWarField", warFieldData, isTotalReplay)
-        local viewWarField   = (not IS_SERVER) and (Actor.createView("sceneWar.ViewWarField")) or (nil)
+        local viewWarField   = (not IS_SERVER) and (Actor.createView("common.ViewWarField")) or (nil)
         self.m_ActorWarField = Actor.createWithModelAndViewInstance(modelWarField, viewWarField)
     else
         self.m_ActorWarField:getModel():ctor(warFieldData, isTotalReplay)
@@ -187,7 +187,7 @@ end
 
 local function initActorWarHud(self, isReplay)
     if (not self.m_ActorWarHud) then
-        self.m_ActorWarHud = Actor.createWithModelAndViewName("sceneWar.ModelWarHUD", isReplay, "sceneWar.ViewWarHUD")
+        self.m_ActorWarHud = Actor.createWithModelAndViewName("sceneWar.ModelWarHUD", isReplay, "common.ViewWarHud")
     else
         self.m_ActorWarHud:getModel():ctor(isReplay)
     end
@@ -195,7 +195,7 @@ end
 
 local function initActorTurnManager(self, turnData)
     if (not self.m_ActorTurnManager) then
-        self.m_ActorTurnManager = Actor.createWithModelAndViewName("sceneWar.ModelTurnManager", turnData, "sceneWar.ViewTurnManager")
+        self.m_ActorTurnManager = Actor.createWithModelAndViewName("sceneWar.ModelTurnManager", turnData, "common.ViewTurnManager")
     else
         self.m_ActorTurnManager:getModel():ctor(turnData)
     end

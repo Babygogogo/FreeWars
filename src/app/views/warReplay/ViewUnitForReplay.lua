@@ -1,19 +1,16 @@
 
-local ViewUnit = class("ViewUnit", cc.Node)
+local ViewUnitForReplay = class("ViewUnitForReplay", cc.Node)
 
 local AnimationLoader       = requireFW("src.app.utilities.AnimationLoader")
 local GameConstantFunctions = requireFW("src.app.utilities.GameConstantFunctions")
 local GridIndexFunctions    = requireFW("src.app.utilities.GridIndexFunctions")
 local SingletonGetters      = requireFW("src.app.utilities.SingletonGetters")
-local VisibilityFunctions   = requireFW("src.app.utilities.VisibilityFunctions")
 
-local getModelFogMap           = SingletonGetters.getModelFogMap
 local getModelMapCursor        = SingletonGetters.getModelMapCursor
 local getModelPlayerManager    = SingletonGetters.getModelPlayerManager
-local getPlayerIndexLoggedIn   = SingletonGetters.getPlayerIndexLoggedIn
 local getScriptEventDispatcher = SingletonGetters.getScriptEventDispatcher
-local isTotalReplay            = SingletonGetters.isTotalReplay
-local isUnitVisible            = VisibilityFunctions.isUnitOnMapVisibleToPlayerIndex
+
+local cc = cc
 
 local GRID_SIZE              = GameConstantFunctions.getGridSize()
 local COLOR_IDLE             = {r = 255, g = 255, b = 255}
@@ -22,8 +19,8 @@ local MOVE_DURATION_PER_GRID = 0.15
 
 local STATE_INDICATOR_POSITION_X = 3
 local STATE_INDICATOR_POSITION_Y = 0
-local HP_INDICATOR_POSITION_X = GRID_SIZE.width - 24 -- 24 is the width of the indicator
-local HP_INDICATOR_POSITION_Y = 0
+local HP_INDICATOR_POSITION_X    = GRID_SIZE.width - 24 -- 24 is the width of the indicator
+local HP_INDICATOR_POSITION_Y    = 0
 
 local STATE_INDICATOR_DURATION = 0.8
 
@@ -35,21 +32,12 @@ local UNIT_SPRITE_Z_ORDER     = 0
 -- The util functions.
 --------------------------------------------------------------------------------
 local function createStepsForActionMoveAlongPath(self, path, isDiving)
-    local modelSceneWar       = self.m_Model:getModelWar()
-    local isReplay            = isTotalReplay(modelSceneWar)
-    local playerIndex         = self.m_Model:getPlayerIndex()
-    local playerIndexMod      = playerIndex % 2
-    local playerIndexLoggedIn = (not isReplay) and (getPlayerIndexLoggedIn(modelSceneWar)) or (nil)
-    local unitType            = self.m_Model:getUnitType()
-    local isAlwaysVisible     = (isReplay) or (playerIndex == playerIndexLoggedIn)
-
-    local steps               = {cc.CallFunc:create(function()
-        getModelMapCursor(modelSceneWar):setMovableByPlayer(false)
-        if (isAlwaysVisible) then
-            self:setVisible(true)
-        end
+    local steps = {cc.CallFunc:create(function()
+        getModelMapCursor(self.m_Model:getModelWar()):setMovableByPlayer(false)
+        self:setVisible(true)
     end)}
 
+    local playerIndexMod = self.m_Model:getPlayerIndex() % 2
     for i = 2, #path do
         local currentX, previousX = path[i].x, path[i - 1].x
         if (currentX < previousX) then
@@ -60,24 +48,6 @@ local function createStepsForActionMoveAlongPath(self, path, isDiving)
             steps[#steps + 1] = cc.CallFunc:create(function()
                 self.m_UnitSprite:setFlippedX(playerIndexMod == 0)
             end)
-        end
-
-        if (not isAlwaysVisible) then
-            if (isDiving) then
-                if ((i == #path)                                                                                      and
-                    (isUnitVisible(modelSceneWar, path[i], unitType, isDiving, playerIndex, playerIndexLoggedIn))) then
-                    steps[#steps + 1] = cc.Show:create()
-                else
-                    steps[#steps + 1] = cc.Hide:create()
-                end
-            else
-                if ((isUnitVisible(modelSceneWar, path[i - 1], unitType, isDiving, playerIndex, playerIndexLoggedIn))  or
-                    (isUnitVisible(modelSceneWar, path[i],     unitType, isDiving, playerIndex, playerIndexLoggedIn))) then
-                    steps[#steps + 1] = cc.Show:create()
-                else
-                    steps[#steps + 1] = cc.Hide:create()
-                end
-            end
         end
 
         steps[#steps + 1] = cc.MoveTo:create(MOVE_DURATION_PER_GRID, GridIndexFunctions.toPositionTable(path[i]))
@@ -98,19 +68,19 @@ local function createActionMoveAlongPath(self, path, isDiving, callback)
 end
 
 local function createActionMoveAlongPathAndFocusOnTarget(self, path, isDiving, targetGridIndex, callback)
-    local modelSceneWar = self.m_Model:getModelWar()
-    local steps         = createStepsForActionMoveAlongPath(self, path, isDiving)
+    local modelWarReplay = self.m_Model:getModelWar()
+    local steps          = createStepsForActionMoveAlongPath(self, path, isDiving)
     steps[#steps + 1] = cc.CallFunc:create(function()
-        getScriptEventDispatcher(modelSceneWar):dispatchEvent({
+        getScriptEventDispatcher(modelWarReplay):dispatchEvent({
             name      = "EvtMapCursorMoved",
             gridIndex = targetGridIndex,
         })
-        getModelMapCursor(modelSceneWar):setNormalCursorVisible(false)
+        getModelMapCursor(modelWarReplay):setNormalCursorVisible(false)
             :setTargetCursorVisible(true)
     end)
     steps[#steps + 1] = cc.DelayTime:create(0.5)
     steps[#steps + 1] = cc.CallFunc:create(function()
-        getModelMapCursor(modelSceneWar):setMovableByPlayer(true)
+        getModelMapCursor(modelWarReplay):setMovableByPlayer(true)
             :setNormalCursorVisible(true)
             :setTargetCursorVisible(false)
 
@@ -121,7 +91,7 @@ local function createActionMoveAlongPathAndFocusOnTarget(self, path, isDiving, t
     return cc.Sequence:create(unpack(steps))
 end
 
-local function getSkillIndicatorFrame(self, unit)
+local function getSkillIndicatorFrame(unit)
     local playerIndex = unit:getPlayerIndex()
     if (getModelPlayerManager(unit:getModelWar()):getModelPlayer(playerIndex):isActivatingSkill()) then
         return cc.SpriteFrameCache:getInstance():getSpriteFrame("c02_t99_s07_f0" .. playerIndex .. ".png")
@@ -179,23 +149,11 @@ local function getBuildIndicatorFrame(unit)
     end
 end
 
-local function getLoadIndicatorFrame(self, unit)
-    if (not unit.getCurrentLoadCount) then
-        return nil
+local function getLoadIndicatorFrame(unit)
+    if ((unit.getCurrentLoadCount) and (unit:getCurrentLoadCount() > 0)) then
+        return cc.SpriteFrameCache:getInstance():getSpriteFrame("c02_t99_s06_f0" .. unit:getPlayerIndex() .. ".png")
     else
-        local modelSceneWar = unit:getModelWar()
-        local loadCount = unit:getCurrentLoadCount()
-        if ((not isTotalReplay(modelSceneWar)) and (getModelFogMap(modelSceneWar):isFogOfWarCurrently())) then
-            if ((unit:getPlayerIndex() ~= getPlayerIndexLoggedIn(modelSceneWar)) or (loadCount > 0)) then
-                return cc.SpriteFrameCache:getInstance():getSpriteFrame("c02_t99_s06_f0" .. unit:getPlayerIndex() .. ".png")
-            else
-                return nil
-            end
-        elseif (loadCount > 0) then
-            return cc.SpriteFrameCache:getInstance():getSpriteFrame("c02_t99_s06_f0" .. unit:getPlayerIndex() .. ".png")
-        else
-            return nil
-        end
+        return nil
     end
 end
 
@@ -270,26 +228,27 @@ local function updateUnitState(self, isStateIdle)
     end
 end
 
-local function updateHpIndicator(indicator, hp)
+local function updateHpIndicator(self, modelUnit)
+    local hp = modelUnit:getNormalizedCurrentHP()
     if ((hp >= 10) or (hp < 0)) then
-        indicator:setVisible(false)
+        self.m_HpIndicator:setVisible(false)
     else
-        indicator:setVisible(true)
+        self.m_HpIndicator:setVisible(true)
             :setSpriteFrame("c02_t99_s01_f0" .. hp .. ".png")
     end
 end
 
 local function updateStateIndicator(self, unit)
     local frames = {}
-    frames[#frames + 1] = getSkillIndicatorFrame(   self, unit)
-    frames[#frames + 1] = getLevelIndicatorFrame(         unit)
-    frames[#frames + 1] = getFuelIndicatorFrame(          unit)
-    frames[#frames + 1] = getAmmoIndicatorFrame(          unit)
-    frames[#frames + 1] = getDiveIndicatorFrame(          unit)
-    frames[#frames + 1] = getCaptureIndicatorFrame(       unit)
-    frames[#frames + 1] = getBuildIndicatorFrame(         unit)
-    frames[#frames + 1] = getLoadIndicatorFrame(    self, unit)
-    frames[#frames + 1] = getMaterialIndicatorFrame(      unit)
+    frames[#frames + 1] = getSkillIndicatorFrame(   unit)
+    frames[#frames + 1] = getLevelIndicatorFrame(   unit)
+    frames[#frames + 1] = getFuelIndicatorFrame(    unit)
+    frames[#frames + 1] = getAmmoIndicatorFrame(    unit)
+    frames[#frames + 1] = getDiveIndicatorFrame(    unit)
+    frames[#frames + 1] = getCaptureIndicatorFrame( unit)
+    frames[#frames + 1] = getBuildIndicatorFrame(   unit)
+    frames[#frames + 1] = getLoadIndicatorFrame(    unit)
+    frames[#frames + 1] = getMaterialIndicatorFrame(unit)
 
     local indicator = self.m_StateIndicator
     indicator:stopAllActions()
@@ -311,7 +270,7 @@ end
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
-function ViewUnit:ctor()
+function ViewUnitForReplay:ctor()
     self:ignoreAnchorPointForPosition(true)
         :setCascadeColorEnabled(true)
     self.m_IsShowingNormalAnimation = true
@@ -326,14 +285,14 @@ end
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
-function ViewUnit:updateWithModelUnit(modelUnit)
+function ViewUnitForReplay:updateWithModelUnit(modelUnit)
     local tiledID     = modelUnit:getTiledId()
     local isStateIdle = modelUnit:isStateIdle()
-    updateUnitSprite(    self,               tiledID)
-    updateUnitState(     self,               isStateIdle)
-    updateHpIndicator(   self.m_HpIndicator, modelUnit:getNormalizedCurrentHP())
-    updateStateIndicator(self,               modelUnit)
-    updateZOrder(        self,               modelUnit)
+    updateUnitSprite(    self, tiledID)
+    updateUnitState(     self, isStateIdle)
+    updateHpIndicator(   self, modelUnit)
+    updateStateIndicator(self, modelUnit)
+    updateZOrder(        self, modelUnit)
 
     self.m_TiledID     = tiledID
     self.m_IsStateIdle = isStateIdle
@@ -341,7 +300,7 @@ function ViewUnit:updateWithModelUnit(modelUnit)
     return self
 end
 
-function ViewUnit:showNormalAnimation()
+function ViewUnitForReplay:showNormalAnimation()
     if (not self.m_IsShowingNormalAnimation) then
         self.m_UnitSprite:setFlippedX(false)
         playSpriteAnimation(self.m_UnitSprite, self.m_TiledID, "normal")
@@ -352,7 +311,7 @@ function ViewUnit:showNormalAnimation()
     return self
 end
 
-function ViewUnit:showMovingAnimation()
+function ViewUnitForReplay:showMovingAnimation()
     if (self.m_IsShowingNormalAnimation) then
         playSpriteAnimation(self.m_UnitSprite, self.m_TiledID, "moving")
 
@@ -362,7 +321,7 @@ function ViewUnit:showMovingAnimation()
     return self
 end
 
-function ViewUnit:moveAlongPath(path, isDiving, callbackOnFinish)
+function ViewUnitForReplay:moveAlongPath(path, isDiving, callbackOnFinish)
     self:showMovingAnimation()
         :setPosition(GridIndexFunctions.toPosition(path[1]))
         :runAction(createActionMoveAlongPath(self, path, isDiving, callbackOnFinish))
@@ -370,7 +329,7 @@ function ViewUnit:moveAlongPath(path, isDiving, callbackOnFinish)
     return self
 end
 
-function ViewUnit:moveAlongPathAndFocusOnTarget(path, isDiving, targetGridIndex, callbackOnFinish)
+function ViewUnitForReplay:moveAlongPathAndFocusOnTarget(path, isDiving, targetGridIndex, callbackOnFinish)
     self:showMovingAnimation()
         :setPosition(GridIndexFunctions.toPosition(path[1]))
         :runAction(createActionMoveAlongPathAndFocusOnTarget(self, path, isDiving, targetGridIndex, callbackOnFinish))
@@ -378,4 +337,4 @@ function ViewUnit:moveAlongPathAndFocusOnTarget(path, isDiving, targetGridIndex,
     return self
 end
 
-return ViewUnit
+return ViewUnitForReplay

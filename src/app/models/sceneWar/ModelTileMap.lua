@@ -83,7 +83,7 @@ local function createActorTilesMapWithWarFieldFileName(warFieldFileName, isPrevi
 
             map[x][y] = (IS_SERVER)                                                                      and
                 (Actor.createWithModelAndViewInstance(modelTile))                                        or
-                (Actor.createWithModelAndViewInstance(modelTile, Actor.createView("sceneWar.ViewTile")))
+                (Actor.createWithModelAndViewInstance(modelTile, Actor.createView("common.ViewTile")))
         end
     end
 

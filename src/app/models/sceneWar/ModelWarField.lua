@@ -50,9 +50,7 @@ end
 local function initActorFogMap(self, fogMapData, isTotalReplay)
     if (not self.m_ActorFogMap) then
         local modelFogMap  = Actor.createModel("sceneWar.ModelFogMap", fogMapData, self.m_WarFieldFileName, isTotalReplay)
-        self.m_ActorFogMap = ((IS_SERVER) or (not isTotalReplay))                                        and
-            (Actor.createWithModelAndViewInstance(modelFogMap))                                          or
-            (Actor.createWithModelAndViewInstance(modelFogMap, Actor.createView("sceneWar.ViewFogMap")))
+        self.m_ActorFogMap = Actor.createWithModelAndViewInstance(modelFogMap)
     else
         self.m_ActorFogMap:getModel():ctor(fogMapData, self.m_WarFieldFileName, isTotalReplay)
     end
@@ -63,7 +61,7 @@ local function initActorTileMap(self, tileMapData)
         local modelTileMap  = Actor.createModel("sceneWar.ModelTileMap", tileMapData, self.m_WarFieldFileName)
         self.m_ActorTileMap = (IS_SERVER)                                                                  and
             (Actor.createWithModelAndViewInstance(modelTileMap))                                           or
-            (Actor.createWithModelAndViewInstance(modelTileMap, Actor.createView("sceneWar.ViewTileMap")))
+            (Actor.createWithModelAndViewInstance(modelTileMap, Actor.createView("common.ViewTileMap")))
     else
         self.m_ActorTileMap:getModel():ctor(tileMapData, self.m_WarFieldFileName)
     end
@@ -88,13 +86,13 @@ end
 
 local function initActorMapCursor(self, param)
     if (not self.m_ActorMapCursor) then
-        self.m_ActorMapCursor = Actor.createWithModelAndViewName("sceneWar.ModelMapCursor", param, "sceneWar.ViewMapCursor")
+        self.m_ActorMapCursor = Actor.createWithModelAndViewName("sceneWar.ModelMapCursor", param, "common.ViewMapCursor")
     end
 end
 
 local function initActorGridEffect(self)
     if (not self.m_ActorGridEffect) then
-        self.m_ActorGridEffect = Actor.createWithModelAndViewName("sceneWar.ModelGridEffect", nil, "sceneWar.ViewGridEffect")
+        self.m_ActorGridEffect = Actor.createWithModelAndViewName("common.ModelGridEffect", nil, "common.ViewGridEffect")
     end
 end
 
