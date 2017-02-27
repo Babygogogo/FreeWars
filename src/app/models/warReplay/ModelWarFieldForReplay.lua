@@ -62,7 +62,7 @@ end
 local function initActorUnitMap(self, unitMapData)
     if (not self.m_ActorUnitMap) then
         local modelUnitMap  = Actor.createModel("warReplay.ModelUnitMapForReplay", unitMapData, self.m_WarFieldFileName)
-        self.m_ActorUnitMap = Actor.createWithModelAndViewInstance(modelUnitMap, Actor.createView("warReplay.ViewUnitMapForReplay"))
+        self.m_ActorUnitMap = Actor.createWithModelAndViewInstance(modelUnitMap, Actor.createView("common.ViewUnitMap"))
     else
         self.m_ActorUnitMap:getModel():ctor(unitMapData, self.m_WarFieldFileName)
     end
