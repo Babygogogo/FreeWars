@@ -162,8 +162,7 @@ end
 local function generateItemsForStateMain(self)
     local modelSceneWar     = self.m_ModelSceneWar
     local playerIndexInTurn = SingletonGetters.getModelTurnManager(modelSceneWar):getPlayerIndex()
-    if ((SingletonGetters.isTotalReplay(modelSceneWar))                               or
-        (playerIndexInTurn ~= SingletonGetters.getPlayerIndexLoggedIn(modelSceneWar)) or
+    if ((playerIndexInTurn ~= SingletonGetters.getPlayerIndexLoggedIn(modelSceneWar)) or
         (self.m_IsWaitingForServerResponse))                                          then
         return {
             self.m_ItemSkillInfo,

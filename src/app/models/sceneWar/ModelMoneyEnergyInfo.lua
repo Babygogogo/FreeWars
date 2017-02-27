@@ -17,7 +17,6 @@ local SingletonGetters      = requireFW("src.app.utilities.SingletonGetters")
 local getLocalizedText       = LocalizationFunctions.getLocalizedText
 local getModelFogMap         = SingletonGetters.getModelFogMap
 local getPlayerIndexLoggedIn = SingletonGetters.getPlayerIndexLoggedIn
-local isTotalReplay          = SingletonGetters.isTotalReplay
 local string                 = string
 
 --------------------------------------------------------------------------------
@@ -29,7 +28,7 @@ local function generateInfoText(self)
     local modelPlayer   = SingletonGetters.getModelPlayerManager(modelSceneWar):getModelPlayer(playerIndex)
     return string.format("%s: %s\n%s: %s\n%s: %d",
         getLocalizedText(25, "Player"),  modelPlayer:getNickname(),
-        getLocalizedText(25, "Fund"),    ((not isTotalReplay(modelSceneWar)) and (getModelFogMap(modelSceneWar):isFogOfWarCurrently()) and (playerIndex ~= getPlayerIndexLoggedIn(modelSceneWar))) and ("--") or (modelPlayer:getFund()),
+        getLocalizedText(25, "Fund"),    ((getModelFogMap(modelSceneWar):isFogOfWarCurrently()) and (playerIndex ~= getPlayerIndexLoggedIn(modelSceneWar))) and ("--") or (modelPlayer:getFund()),
         getLocalizedText(25, "Energy"),  modelPlayer:getEnergy()
     )
 end
@@ -106,12 +105,7 @@ end
 -- The public functions.
 --------------------------------------------------------------------------------
 function ModelMoneyEnergyInfo:onPlayerTouch()
-    local modelSceneWar = self.m_ModelSceneWar
-    if ((modelSceneWar:isTotalReplay()) and (modelSceneWar:isAutoReplay())) then
-        modelSceneWar:setAutoReplay(false)
-        SingletonGetters.getModelReplayController(modelSceneWar):setButtonPlayVisible(true)
-    end
-    SingletonGetters.getModelWarCommandMenu(modelSceneWar):setEnabled(true)
+    SingletonGetters.getModelWarCommandMenu(self.m_ModelSceneWar):setEnabled(true)
 
     return self
 end

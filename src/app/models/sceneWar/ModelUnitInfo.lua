@@ -19,24 +19,19 @@ local SingletonGetters    = requireFW("src.app.utilities.SingletonGetters")
 local getModelFogMap         = SingletonGetters.getModelFogMap
 local getModelUnitMap        = SingletonGetters.getModelUnitMap
 local getPlayerIndexLoggedIn = SingletonGetters.getPlayerIndexLoggedIn
-local isTotalReplay          = SingletonGetters.isTotalReplay
 
 --------------------------------------------------------------------------------
 -- The util functions.
 --------------------------------------------------------------------------------
 local function isModelUnitVisible(modelSceneWar, modelUnit)
-    if (isTotalReplay(modelSceneWar)) then
-        return true
-    else
-        return VisibilityFunctions.isUnitOnMapVisibleToPlayerIndex(
-            modelSceneWar,
-            modelUnit:getGridIndex(),
-            modelUnit:getUnitType(),
-            (modelUnit.isDiving) and (modelUnit:isDiving()),
-            modelUnit:getPlayerIndex(),
-            getPlayerIndexLoggedIn(modelSceneWar)
-        )
-    end
+    return VisibilityFunctions.isUnitOnMapVisibleToPlayerIndex(
+        modelSceneWar,
+        modelUnit:getGridIndex(),
+        modelUnit:getUnitType(),
+        (modelUnit.isDiving) and (modelUnit:isDiving()),
+        modelUnit:getPlayerIndex(),
+        getPlayerIndexLoggedIn(modelSceneWar)
+    )
 end
 
 local function updateWithModelUnitMap(self)
@@ -51,7 +46,7 @@ local function updateWithModelUnitMap(self)
         (not isModelUnitVisible(modelSceneWar, modelUnit))) then
         self.m_View:setVisible(false)
     else
-        local loadedModelUnits = ((isTotalReplay(modelSceneWar)) or (not getModelFogMap(modelSceneWar):isFogOfWarCurrently()) or (modelUnit:getPlayerIndex() == getPlayerIndexLoggedIn(modelSceneWar))) and
+        local loadedModelUnits = ((not getModelFogMap(modelSceneWar):isFogOfWarCurrently()) or (modelUnit:getPlayerIndex() == getPlayerIndexLoggedIn(modelSceneWar))) and
             (modelUnitMap:getLoadedModelUnitsWithLoader(modelUnit))                                                                                                                                     or
             (nil)
         self.m_ModelUnitList = {modelUnit, unpack(loadedModelUnits or {})}

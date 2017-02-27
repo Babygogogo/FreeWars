@@ -12,7 +12,7 @@ local getModelMapCursor        = SingletonGetters.getModelMapCursor
 local getModelPlayerManager    = SingletonGetters.getModelPlayerManager
 local getPlayerIndexLoggedIn   = SingletonGetters.getPlayerIndexLoggedIn
 local getScriptEventDispatcher = SingletonGetters.getScriptEventDispatcher
-local isTotalReplay            = SingletonGetters.isTotalReplay
+local isWarReplay              = SingletonGetters.isWarReplay
 local isUnitVisible            = VisibilityFunctions.isUnitOnMapVisibleToPlayerIndex
 
 local GRID_SIZE              = GameConstantFunctions.getGridSize()
@@ -36,7 +36,7 @@ local UNIT_SPRITE_Z_ORDER     = 0
 --------------------------------------------------------------------------------
 local function createStepsForActionMoveAlongPath(self, path, isDiving)
     local modelSceneWar       = self.m_Model:getModelWar()
-    local isReplay            = isTotalReplay(modelSceneWar)
+    local isReplay            = isWarReplay(modelSceneWar)
     local playerIndex         = self.m_Model:getPlayerIndex()
     local playerIndexMod      = playerIndex % 2
     local playerIndexLoggedIn = (not isReplay) and (getPlayerIndexLoggedIn(modelSceneWar)) or (nil)
@@ -185,7 +185,7 @@ local function getLoadIndicatorFrame(self, unit)
     else
         local modelSceneWar = unit:getModelWar()
         local loadCount = unit:getCurrentLoadCount()
-        if ((not isTotalReplay(modelSceneWar)) and (getModelFogMap(modelSceneWar):isFogOfWarCurrently())) then
+        if ((not isWarReplay(modelSceneWar)) and (getModelFogMap(modelSceneWar):isFogOfWarCurrently())) then
             if ((unit:getPlayerIndex() ~= getPlayerIndexLoggedIn(modelSceneWar)) or (loadCount > 0)) then
                 return cc.SpriteFrameCache:getInstance():getSpriteFrame("c02_t99_s06_f0" .. unit:getPlayerIndex() .. ".png")
             else

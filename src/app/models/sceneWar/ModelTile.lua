@@ -62,7 +62,6 @@ local IS_SERVER = GameConstantFunctions.isServer()
 local string                       = string
 local getTiledIdWithTileOrUnitName = GameConstantFunctions.getTiledIdWithTileOrUnitName
 local isTileVisibleToPlayerIndex   = VisibilityFunctions.isTileVisibleToPlayerIndex
-local isTotalReplay                = SingletonGetters.isTotalReplay
 
 --------------------------------------------------------------------------------
 -- The util functions.
@@ -136,7 +135,6 @@ end
 
 function ModelTile:initHasFogOnClient(hasFog)
     assert(not IS_SERVER,                           "ModelTile:initHasFogOnClient() this shouldn't be called on the server.")
-    assert(not isTotalReplay(self.m_ModelSceneWar), "ModelTile:initHasFogOnClient() this shouldn't be called in replay mode.")
     assert(type(hasFog) == "boolean",               "ModelTile:initHasFogOnClient() invalid param hasFog.")
     assert(self.m_IsFogEnabledOnClient == nil,      "ModelTile:initHasFogOnClient() self.m_IsFogEnabledOnClient has been initialized already.")
 
@@ -318,7 +316,6 @@ end
 
 function ModelTile:isFogEnabledOnClient()
     assert(not IS_SERVER,                                  "ModelTile:isFogEnabledOnClient() this shouldn't be called on the server.")
-    assert(not isTotalReplay(self.m_ModelSceneWar),        "ModelTile:isFogEnabledOnClient() this shouldn't be called in replay mode.")
     assert(type(self.m_IsFogEnabledOnClient) == "boolean", "ModelTile:isFogEnabledOnClient() self.m_IsFogEnabledOnClient has not been initialized yet.")
 
     return self.m_IsFogEnabledOnClient

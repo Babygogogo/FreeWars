@@ -78,16 +78,10 @@ local function initActorBattleInfo(self)
     end
 end
 
-local function initActorReplayController(self)
-    if (not self.m_ActorReplayController) then
-        self.m_ActorReplayController = Actor.createWithModelAndViewName("warReplay.ModelReplayController", nil, "warReplay.ViewReplayController")
-    end
-end
-
 --------------------------------------------------------------------------------
 -- The contructor and initializers.
 --------------------------------------------------------------------------------
-function ModelWarHUD:ctor(isReplay)
+function ModelWarHUD:ctor()
     initActorWarCommandMenu( self)
     initActorMoneyEnergyInfo(self)
     initActorActionMenu(     self)
@@ -96,9 +90,6 @@ function ModelWarHUD:ctor(isReplay)
     initActorTileDetail(     self)
     initActorTileInfo(       self)
     initActorBattleInfo(     self)
-    if (isReplay) then
-        initActorReplayController(self)
-    end
 
     return self
 end
@@ -115,9 +106,6 @@ function ModelWarHUD:initView()
         :setViewUnitDetail(     self.m_ActorUnitDetail:     getView())
         :setViewUnitInfo(       self.m_ActorUnitInfo:       getView())
         :setViewWarCommandMenu( self.m_ActorWarCommandMenu: getView())
-    if (self.m_ActorReplayController) then
-        view:setViewReplayController(self.m_ActorReplayController:getView())
-    end
 
     return self
 end
@@ -132,9 +120,6 @@ function ModelWarHUD:onStartRunning(modelSceneWar)
     self.m_ActorTileInfo       :getModel():onStartRunning(modelSceneWar)
     self.m_ActorUnitInfo       :getModel():onStartRunning(modelSceneWar)
     self.m_ActorWarCommandMenu :getModel():onStartRunning(modelSceneWar)
-    if (self.m_ActorReplayController) then
-        self.m_ActorReplayController:getModel():onStartRunning(modelSceneWar)
-    end
 
     return self
 end
@@ -142,10 +127,6 @@ end
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
-function ModelWarHUD:getModelReplayController()
-    return self.m_ActorReplayController:getModel()
-end
-
 function ModelWarHUD:getModelWarCommandMenu()
     return self.m_ActorWarCommandMenu:getModel()
 end

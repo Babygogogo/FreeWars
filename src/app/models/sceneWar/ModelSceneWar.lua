@@ -47,18 +47,16 @@ local function onWebSocketOpen(self, param)
     print("ModelSceneWar-onWebSocketOpen()")
     self:getModelMessageIndicator():showMessage(getLocalizedText(30, "ConnectionEstablished"))
 
-    if (not self:isTotalReplay()) then
-        local modelTurnManager = self:getModelTurnManager()
-        if ((modelTurnManager:isTurnPhaseRequestToBegin())                                                and
-            (modelTurnManager:getPlayerIndex() == self:getModelPlayerManager():getPlayerIndexLoggedIn())) then
-            modelTurnManager:runTurn()
-        else
-            WebSocketManager.sendAction({
-                actionCode       = ActionCodeFunctions.getActionCode("ActionSyncSceneWar"),
-                actionID         = self:getActionId(),
-                warID            = self:getWarId(),
-            })
-        end
+    local modelTurnManager = self:getModelTurnManager()
+    if ((modelTurnManager:isTurnPhaseRequestToBegin())                                                and
+        (modelTurnManager:getPlayerIndex() == self:getModelPlayerManager():getPlayerIndexLoggedIn())) then
+        modelTurnManager:runTurn()
+    else
+        WebSocketManager.sendAction({
+            actionCode       = ActionCodeFunctions.getActionCode("ActionSyncSceneWar"),
+            actionID         = self:getActionId(),
+            warID            = self:getWarId(),
+        })
     end
 end
 
@@ -95,37 +93,9 @@ end
 local function cacheAction(self, action)
     local actionID = action.actionID
     assert(not IS_SERVER,                 "ModelSceneWar-cacheAction() this should not happen on the server.")
-    assert(not self:isTotalReplay(),      "ModelSceneWar-cacheAction() this should not happen when replaying.")
     assert(actionID > self:getActionId(), "ModelSceneWar-cacheAction() the action to be cached has been executed already.")
 
     self.m_CachedActions[actionID] = action
-
-    return self
-end
-
-local function executeReplayAction(self)
-    assert(self:isTotalReplay(), "ModelSceneWar-executeReplayAction() the scene is not in replay mode.")
-    assert(not self:isExecutingAction(), "ModelSceneWar-executeReplayAction() another action is being executed.")
-
-    self.m_ExecutedActionsCount = self.m_ExecutedActionsCount or #self.m_ExecutedActions
-    local actionID  = self:getActionId() + 1
-    local _, action = next(self.m_ExecutedActions[actionID])
-    if (not action) then
-        self:getModelMessageIndicator():showMessage(getLocalizedText(11, "NoMoreReplayActions"))
-    else
-        self:getModelWarField():getModelActionPlanner():setStateIdle(true)
-        self:getModelMessageIndicator():showMessage(string.format("%s: %d / %d (%s)",
-            getLocalizedText(11, "Progress"),
-            actionID,
-            self.m_ExecutedActionsCount,
-            getLocalizedText(12, ActionCodeFunctions.getActionName(action.actionCode))
-        ))
-
-        action.actionID = actionID
-        setActionId(self, actionID)
-
-        ActionExecutor.execute(action, self)
-    end
 
     return self
 end
@@ -138,67 +108,39 @@ local function initScriptEventDispatcher(self)
 end
 
 local function initActorChatManager(self, chatData)
-    if (not self.m_ActorChatManager) then
-        self.m_ActorChatManager = Actor.createWithModelAndViewName("sceneWar.ModelChatManager", chatData, "sceneWar.ViewChatManager")
-        self.m_ActorChatManager:getModel():setEnabled(false)
-    end
+    self.m_ActorChatManager = Actor.createWithModelAndViewName("sceneWar.ModelChatManager", chatData, "sceneWar.ViewChatManager")
+    self.m_ActorChatManager:getModel():setEnabled(false)
 end
 
 local function initActorConfirmBox(self)
-    if (not self.m_ActorConfirmBox) then
-        local actor = Actor.createWithModelAndViewName("common.ModelConfirmBox", nil, "common.ViewConfirmBox")
-        actor:getModel():setEnabled(false)
+    local actor = Actor.createWithModelAndViewName("common.ModelConfirmBox", nil, "common.ViewConfirmBox")
+    actor:getModel():setEnabled(false)
 
-        self.m_ActorConfirmBox = actor
-    end
+    self.m_ActorConfirmBox = actor
 end
 
 local function initActorMessageIndicator(self)
-    if (not self.m_ActorMessageIndicator) then
-        self.m_ActorMessageIndicator = Actor.createWithModelAndViewName("common.ModelMessageIndicator", nil, "common.ViewMessageIndicator")
-    end
+    self.m_ActorMessageIndicator = Actor.createWithModelAndViewName("common.ModelMessageIndicator", nil, "common.ViewMessageIndicator")
 end
 
 local function initActorPlayerManager(self, playersData)
-    if (not self.m_ActorPlayerManager) then
-        self.m_ActorPlayerManager = Actor.createWithModelAndViewName("sceneWar.ModelPlayerManager", playersData)
-    else
-        self.m_ActorPlayerManager:getModel():ctor(playersData)
-    end
+    self.m_ActorPlayerManager = Actor.createWithModelAndViewName("sceneWar.ModelPlayerManager", playersData)
 end
 
 local function initActorWeatherManager(self, weatherData)
-    if (not self.m_ActorWeatherManager) then
-        self.m_ActorWeatherManager = Actor.createWithModelAndViewName("common.ModelWeatherManager", weatherData)
-    else
-        self.m_ActorWeatherManager:getModel():ctor(weatherData)
-    end
+    self.m_ActorWeatherManager = Actor.createWithModelAndViewName("common.ModelWeatherManager", weatherData)
 end
 
-local function initActorWarField(self, warFieldData, isTotalReplay)
-    if (not self.m_ActorWarField) then
-        local modelWarField  = Actor.createModel("sceneWar.ModelWarField", warFieldData, isTotalReplay)
-        local viewWarField   = (not IS_SERVER) and (Actor.createView("common.ViewWarField")) or (nil)
-        self.m_ActorWarField = Actor.createWithModelAndViewInstance(modelWarField, viewWarField)
-    else
-        self.m_ActorWarField:getModel():ctor(warFieldData, isTotalReplay)
-    end
+local function initActorWarField(self, warFieldData)
+    self.m_ActorWarField = Actor.createWithModelAndViewName("sceneWar.ModelWarField", warFieldData, "common.ViewWarField")
 end
 
-local function initActorWarHud(self, isReplay)
-    if (not self.m_ActorWarHud) then
-        self.m_ActorWarHud = Actor.createWithModelAndViewName("sceneWar.ModelWarHUD", isReplay, "common.ViewWarHud")
-    else
-        self.m_ActorWarHud:getModel():ctor(isReplay)
-    end
+local function initActorWarHud(self)
+    self.m_ActorWarHud = Actor.createWithModelAndViewName("sceneWar.ModelWarHUD", nil, "common.ViewWarHud")
 end
 
 local function initActorTurnManager(self, turnData)
-    if (not self.m_ActorTurnManager) then
-        self.m_ActorTurnManager = Actor.createWithModelAndViewName("sceneWar.ModelTurnManager", turnData, "common.ViewTurnManager")
-    else
-        self.m_ActorTurnManager:getModel():ctor(turnData)
-    end
+    self.m_ActorTurnManager = Actor.createWithModelAndViewName("sceneWar.ModelTurnManager", turnData, "common.ViewTurnManager")
 end
 
 --------------------------------------------------------------------------------
@@ -216,7 +158,6 @@ function ModelSceneWar:ctor(sceneData)
     self.m_IsPassiveSkillEnabled      = sceneData.isPassiveSkillEnabled
     self.m_IsRandomWarField           = sceneData.isRandomWarField
     self.m_IsRankMatch                = sceneData.isRankMatch
-    self.m_IsTotalReplay              = sceneData.isTotalReplay
     self.m_IsWarEnded                 = sceneData.isWarEnded
     self.m_MaxBaseSkillPoints         = sceneData.maxBaseSkillPoints
     self.m_MaxDiffScore               = sceneData.maxDiffScore
@@ -231,13 +172,13 @@ function ModelSceneWar:ctor(sceneData)
     initActorChatManager(     self, sceneData.chatData)
     initActorPlayerManager(   self, sceneData.players)
     initActorWeatherManager(  self, sceneData.weather)
-    initActorWarField(        self, sceneData.warField, sceneData.isTotalReplay)
+    initActorWarField(        self, sceneData.warField)
     initActorTurnManager(     self, sceneData.turn)
 
     if (not IS_SERVER) then
         initActorConfirmBox(      self)
         initActorMessageIndicator(self)
-        initActorWarHud(          self, sceneData.isTotalReplay)
+        initActorWarHud(          self)
     end
 
     return self
@@ -251,39 +192,6 @@ function ModelSceneWar:initView()
         :setViewWarHud(            self.m_ActorWarHud          :getView())
         :setViewTurnManager(       self.m_ActorTurnManager     :getView())
         :setViewMessageIndicator(  self.m_ActorMessageIndicator:getView())
-
-    return self
-end
-
-function ModelSceneWar:initWarDataForEachTurn()
-    assert((self:isTotalReplay()) and (not self.m_WarDataForEachTurn) and (self:getActionId() == 0))
-
-    self.m_IsFastExecutingActions = true
-    self:onStartRunning()
-
-    local modelTurnManager           = self:getModelTurnManager()
-    local turnCounter                = 0
-    local turnCounterForEachActionID = {[0] = 0}
-    local warDataForEachTurn         = {}
-
-    for actionID, wrappedAction in ipairs(self.m_ExecutedActions) do
-        if (modelTurnManager:isTurnPhaseRequestToBegin()) then
-            turnCounter = turnCounter + 1
-            warDataForEachTurn[turnCounter]          = self:toSerializableTable()
-            turnCounterForEachActionID[actionID - 1] = turnCounterForEachActionID[actionID - 1] + 1
-        end
-        turnCounterForEachActionID[actionID] = turnCounter
-
-        local _, action = next(wrappedAction)
-        setActionId(self, actionID)
-        ActionExecutor.execute(action, self)
-    end
-
-    self.m_IsFastExecutingActions     = false
-    self.m_TurnCounterForEachActionID = turnCounterForEachActionID
-    self.m_WarDataForEachTurn         = warDataForEachTurn
-    self.m_WarDataCount               = #warDataForEachTurn
-    self:ctor(warDataForEachTurn[1])
 
     return self
 end
@@ -304,7 +212,6 @@ function ModelSceneWar:toSerializableTable()
         isPassiveSkillEnabled = self.m_IsPassiveSkillEnabled,
         isRandomWarField      = self.m_IsRandomWarField,
         isRankMatch           = self.m_IsRankMatch,
-        isTotalReplay         = self.m_IsTotalReplay,
         isWarEnded            = self.m_IsWarEnded,
         maxBaseSkillPoints    = self.m_MaxBaseSkillPoints,
         maxDiffScore          = self.m_MaxDiffScore,
@@ -334,7 +241,6 @@ function ModelSceneWar:toSerializableTableForPlayerIndex(playerIndex)
         isPassiveSkillEnabled = self.m_IsPassiveSkillEnabled,
         isRandomWarField      = self.m_IsRandomWarField,
         isRankMatch           = self.m_IsRankMatch,
-        isTotalReplay         = false,
         isWarEnded            = self.m_IsWarEnded,
         maxBaseSkillPoints    = self.m_MaxBaseSkillPoints,
         maxDiffScore          = self.m_MaxDiffScore,
@@ -364,7 +270,6 @@ function ModelSceneWar:toSerializableReplayData()
         isPassiveSkillEnabled = self.m_IsPassiveSkillEnabled,
         isRandomWarField      = self.m_IsRandomWarField,
         isRankMatch           = self.m_IsRankMatch,
-        isTotalReplay         = true,
         isWarEnded            = false,
         maxBaseSkillPoints    = self.m_MaxBaseSkillPoints,
         maxDiffScore          = self.m_MaxDiffScore,
@@ -396,9 +301,7 @@ function ModelSceneWar:onStartRunning(ignoreWarMusic)
 
     self:getScriptEventDispatcher():dispatchEvent({name = "EvtSceneWarStarted"})
 
-    if (not self:isTotalReplay()) then
-        modelTurnManager:runTurn()
-    end
+    modelTurnManager:runTurn()
     if ((not IS_SERVER) and (not ignoreWarMusic)) then
         AudioManager.playRandomWarMusic()
     end
@@ -424,6 +327,10 @@ end
 -- The public functions/accessors.
 --------------------------------------------------------------------------------
 ModelSceneWar.isModelSceneWar = true
+
+function ModelSceneWar:isWarReplay()
+    return false
+end
 
 function ModelSceneWar:executeAction(action)
     local warID        = action.warID
@@ -466,69 +373,8 @@ function ModelSceneWar:executeAction(action)
     return self
 end
 
-function ModelSceneWar:isAutoReplay()
-    assert(self:isTotalReplay(), "ModelSceneWar:isAutoReplay() it's not in replay mode.")
-    return self.m_IsAutoReplay
-end
-
-function ModelSceneWar:setAutoReplay(isAuto)
-    assert(self:isTotalReplay(), "ModelSceneWar:setAutoReplay() it's not in replay mode.")
-    self.m_IsAutoReplay = isAuto
-
-    if ((isAuto) and (not self:isExecutingAction())) then
-        executeReplayAction(self)
-    end
-
-    return self
-end
-
 function ModelSceneWar:isExecutingAction()
     return self.m_IsExecutingAction
-end
-
-function ModelSceneWar:isFastExecutingActions()
-    return self.m_IsFastExecutingActions
-end
-
-function ModelSceneWar:canFastForwardForReplay()
-    assert(self:isTotalReplay(), "ModelSceneWar:canFastForwardForReplay() this may be invoked in replay only.")
-    return self.m_TurnCounterForEachActionID[self:getActionId()] < #self.m_WarDataForEachTurn
-end
-
-function ModelSceneWar:canFastRewindForReplay()
-    assert(self:isTotalReplay(), "ModelSceneWar:canFastRewindForReplay() this may be invoked in replay only.")
-    return self:getActionId() > 0
-end
-
-function ModelSceneWar:fastForwardForReplay()
-    self:getModelWarField():getModelActionPlanner():setStateIdle(true)
-
-    local warDataIndex = self.m_TurnCounterForEachActionID[self:getActionId()] + 1
-    self:ctor(self.m_WarDataForEachTurn[warDataIndex])
-        :onStartRunning(true)
-
-    self.m_IsExecutingAction = false
-    self:getModelMessageIndicator():showMessage(string.format("%s: %d/ %d", getLocalizedText(11, "SwitchTurn"), warDataIndex, self.m_WarDataCount))
-
-    return self
-end
-
-function ModelSceneWar:fastRewindForReplay()
-    self:getModelWarField():getModelActionPlanner():setStateIdle(true)
-
-    local actionID     = self:getActionId()
-    local warDataIndex = self.m_TurnCounterForEachActionID[actionID]
-    if (warDataIndex > self.m_TurnCounterForEachActionID[actionID - 1]) then
-        warDataIndex = warDataIndex - 1
-    end
-
-    self.m_IsExecutingAction = false
-    self:ctor(self.m_WarDataForEachTurn[warDataIndex])
-        :onStartRunning(true)
-
-    self:getModelMessageIndicator():showMessage(string.format("%s: %d/ %d", getLocalizedText(11, "SwitchTurn"), warDataIndex, self.m_WarDataCount))
-
-    return self
 end
 
 function ModelSceneWar:setExecutingAction(executing)
@@ -537,34 +383,18 @@ function ModelSceneWar:setExecutingAction(executing)
 
     if ((not executing) and (not self:isEnded())) then
         local actionID = self:getActionId() + 1
-        if (not self:isTotalReplay()) then
-            local action = self.m_CachedActions[actionID]
-            if (action) then
-                assert(not IS_SERVER, "ModelSceneWar:setExecutingAction() there should not be any cached actions on the server.")
-                self.m_CachedActions[actionID] = nil
-                self.m_IsExecutingAction       = true
-                self.m_View:runAction(cc.Sequence:create(
-                    cc.DelayTime:create(TIME_INTERVAL_FOR_ACTIONS),
-                    cc.CallFunc:create(function()
-                        self.m_IsExecutingAction = false
-                        self:executeAction(action)
-                    end)
-                ))
-            end
-        else
-            local action = self.m_ExecutedActions[actionID]
-            if ((self:isAutoReplay()) and (action)) then
-                self.m_IsExecutingAction = true
-                self.m_View:runAction(cc.Sequence:create(
-                    cc.DelayTime:create(TIME_INTERVAL_FOR_ACTIONS),
-                    cc.CallFunc:create(function()
-                        self.m_IsExecutingAction = false
-                        if (self:isAutoReplay()) then
-                            executeReplayAction(self)
-                        end
-                    end)
-                ))
-            end
+        local action = self.m_CachedActions[actionID]
+        if (action) then
+            assert(not IS_SERVER, "ModelSceneWar:setExecutingAction() there should not be any cached actions on the server.")
+            self.m_CachedActions[actionID] = nil
+            self.m_IsExecutingAction       = true
+            self.m_View:runAction(cc.Sequence:create(
+                cc.DelayTime:create(TIME_INTERVAL_FOR_ACTIONS),
+                cc.CallFunc:create(function()
+                    self.m_IsExecutingAction = false
+                    self:executeAction(action)
+                end)
+            ))
         end
     end
 
@@ -633,14 +463,6 @@ function ModelSceneWar:setEnded(ended)
     self.m_IsWarEnded = ended
 
     return self
-end
-
-function ModelSceneWar:canReplay()
-    return (self:isEnded()) and (self.m_ExecutedActions ~= nil)
-end
-
-function ModelSceneWar:isTotalReplay()
-    return self.m_IsTotalReplay
 end
 
 function ModelSceneWar:getRemainingVotesForDraw()
@@ -713,13 +535,6 @@ end
 function ModelSceneWar:showEffectLose(callback)
     assert(not IS_SERVER, "ModelSceneWar:showEffectLose() should not be invoked on the server.")
     self.m_View:showEffectLose(callback)
-
-    return self
-end
-
-function ModelSceneWar:showEffectReplayEnd(callback)
-    assert(not IS_SERVER, "ModelSceneWar:showEffectReplayEnd() should not be invoked on the server.")
-    self.m_View:showEffectReplayEnd(callback)
 
     return self
 end

@@ -180,7 +180,7 @@ function ModelChatManager:onStartRunning(modelSceneWar)
     self.m_PlayersCount = playersCount
     initChannelIdMap(self, playersCount)
 
-    if ((not IS_SERVER) and (not SingletonGetters.isTotalReplay(modelSceneWar))) then
+    if (not IS_SERVER) then
         self.m_ModelMessageIndicator = SingletonGetters.getModelMessageIndicator(modelSceneWar)
         self.m_PlayerIndexLoggedIn   = self.m_ModelPlayerManager:getPlayerIndexLoggedIn()
     end

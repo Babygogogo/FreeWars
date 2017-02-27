@@ -47,61 +47,42 @@ end
 --------------------------------------------------------------------------------
 -- The composition elements.
 --------------------------------------------------------------------------------
-local function initActorFogMap(self, fogMapData, isTotalReplay)
-    if (not self.m_ActorFogMap) then
-        local modelFogMap  = Actor.createModel("sceneWar.ModelFogMap", fogMapData, self.m_WarFieldFileName, isTotalReplay)
-        self.m_ActorFogMap = Actor.createWithModelAndViewInstance(modelFogMap)
-    else
-        self.m_ActorFogMap:getModel():ctor(fogMapData, self.m_WarFieldFileName, isTotalReplay)
-    end
+local function initActorFogMap(self, fogMapData)
+    self.m_ActorFogMap = Actor.createWithModelAndViewInstance(Actor.createModel("sceneWar.ModelFogMap", fogMapData, self.m_WarFieldFileName))
 end
 
 local function initActorTileMap(self, tileMapData)
-    if (not self.m_ActorTileMap) then
-        local modelTileMap  = Actor.createModel("sceneWar.ModelTileMap", tileMapData, self.m_WarFieldFileName)
-        self.m_ActorTileMap = (IS_SERVER)                                                                  and
-            (Actor.createWithModelAndViewInstance(modelTileMap))                                           or
-            (Actor.createWithModelAndViewInstance(modelTileMap, Actor.createView("common.ViewTileMap")))
-    else
-        self.m_ActorTileMap:getModel():ctor(tileMapData, self.m_WarFieldFileName)
-    end
+    local modelTileMap  = Actor.createModel("sceneWar.ModelTileMap", tileMapData, self.m_WarFieldFileName)
+    self.m_ActorTileMap = (IS_SERVER)                                                                  and
+        (Actor.createWithModelAndViewInstance(modelTileMap))                                           or
+        (Actor.createWithModelAndViewInstance(modelTileMap, Actor.createView("common.ViewTileMap")))
 end
 
 local function initActorUnitMap(self, unitMapData)
-    if (not self.m_ActorUnitMap) then
-        local modelUnitMap  = Actor.createModel("sceneWar.ModelUnitMap", unitMapData, self.m_WarFieldFileName)
-        self.m_ActorUnitMap = (IS_SERVER)                                                                  and
-            (Actor.createWithModelAndViewInstance(modelUnitMap))                                           or
-            (Actor.createWithModelAndViewInstance(modelUnitMap, Actor.createView("sceneWar.ViewUnitMap")))
-    else
-        self.m_ActorUnitMap:getModel():ctor(unitMapData, self.m_WarFieldFileName)
-    end
+    local modelUnitMap  = Actor.createModel("sceneWar.ModelUnitMap", unitMapData, self.m_WarFieldFileName)
+    self.m_ActorUnitMap = (IS_SERVER)                                                                  and
+        (Actor.createWithModelAndViewInstance(modelUnitMap))                                           or
+        (Actor.createWithModelAndViewInstance(modelUnitMap, Actor.createView("sceneWar.ViewUnitMap")))
 end
 
 local function initActorActionPlanner(self)
-    if (not self.m_ActorActionPlanner) then
-        self.m_ActorActionPlanner = Actor.createWithModelAndViewName("sceneWar.ModelActionPlanner", nil, "common.ViewActionPlanner")
-    end
+    self.m_ActorActionPlanner = Actor.createWithModelAndViewName("sceneWar.ModelActionPlanner", nil, "common.ViewActionPlanner")
 end
 
 local function initActorMapCursor(self, param)
-    if (not self.m_ActorMapCursor) then
-        self.m_ActorMapCursor = Actor.createWithModelAndViewName("sceneWar.ModelMapCursor", param, "common.ViewMapCursor")
-    end
+    self.m_ActorMapCursor = Actor.createWithModelAndViewName("sceneWar.ModelMapCursor", param, "common.ViewMapCursor")
 end
 
 local function initActorGridEffect(self)
-    if (not self.m_ActorGridEffect) then
-        self.m_ActorGridEffect = Actor.createWithModelAndViewName("common.ModelGridEffect", nil, "common.ViewGridEffect")
-    end
+    self.m_ActorGridEffect = Actor.createWithModelAndViewName("common.ModelGridEffect", nil, "common.ViewGridEffect")
 end
 
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
-function ModelWarField:ctor(warFieldData, isTotalReplay)
+function ModelWarField:ctor(warFieldData)
     self.m_WarFieldFileName = warFieldData.warFieldFileName
-    initActorFogMap( self, warFieldData.fogMap,  isTotalReplay)
+    initActorFogMap( self, warFieldData.fogMap)
     initActorTileMap(self, warFieldData.tileMap)
     initActorUnitMap(self, warFieldData.unitMap)
 

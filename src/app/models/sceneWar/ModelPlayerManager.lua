@@ -64,7 +64,7 @@ function ModelPlayerManager:onStartRunning(modelSceneWar)
         modelPlayer:onStartRunning(modelSceneWar)
     end)
 
-    if ((not IS_SERVER) and (not SingletonGetters.isTotalReplay(modelSceneWar))) then
+    if (not IS_SERVER) then
         self.m_ModelPlayerLoggedIn, self.m_PlayerIndexLoggedIn = self:getModelPlayerWithAccount(WebSocketManager.getLoggedInAccountAndPassword())
     end
 
@@ -94,8 +94,8 @@ function ModelPlayerManager:getAlivePlayersCount()
 end
 
 function ModelPlayerManager:getPlayerIndexLoggedIn()
-    assert(not IS_SERVER,                                            "ModelPlayerManager:getPlayerIndexLoggedIn() this shouldn't be called on the server.")
-    assert(not SingletonGetters.isTotalReplay(self.m_ModelSceneWar), "ModelPlayerManager:getPlayerIndexLoggedIn() this shouldn't be called in replay.")
+    assert(not IS_SERVER,                                          "ModelPlayerManager:getPlayerIndexLoggedIn() this shouldn't be called on the server.")
+    assert(not SingletonGetters.isWarReplay(self.m_ModelSceneWar), "ModelPlayerManager:getPlayerIndexLoggedIn() this shouldn't be called in replay.")
 
     return self.m_PlayerIndexLoggedIn, self.m_ModelPlayerLoggedIn
 end

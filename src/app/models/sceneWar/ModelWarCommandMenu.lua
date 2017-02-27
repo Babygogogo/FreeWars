@@ -42,7 +42,6 @@ local getModelTurnManager      = SingletonGetters.getModelTurnManager
 local getModelUnitMap          = SingletonGetters.getModelUnitMap
 local getPlayerIndexLoggedIn   = SingletonGetters.getPlayerIndexLoggedIn
 local getScriptEventDispatcher = SingletonGetters.getScriptEventDispatcher
-local isTotalReplay            = SingletonGetters.isTotalReplay
 local round                    = requireFW("src.global.functions.round")
 local string, ipairs, pairs    = string, ipairs, pairs
 
@@ -59,14 +58,13 @@ local function generateEmptyDataForEachPlayer(self)
     local modelSceneWar      = self.m_ModelSceneWar
     local modelPlayerManager = getModelPlayerManager(modelSceneWar)
     local dataForEachPlayer  = {}
-    local isReplay           = isTotalReplay(modelSceneWar)
     local modelFogMap        = getModelFogMap(modelSceneWar)
 
     modelPlayerManager:forEachModelPlayer(function(modelPlayer, playerIndex)
         if (modelPlayer:isAlive()) then
             dataForEachPlayer[playerIndex] = {
                 nickname            = modelPlayer:getNickname(),
-                fund                = ((not isReplay) and (modelFogMap:isFogOfWarCurrently()) and ((playerIndex ~= getPlayerIndexLoggedIn(modelSceneWar)))) and ("--") or (modelPlayer:getFund()),
+                fund                = ((modelFogMap:isFogOfWarCurrently()) and ((playerIndex ~= getPlayerIndexLoggedIn(modelSceneWar)))) and ("--") or (modelPlayer:getFund()),
                 energy              = modelPlayer:getEnergy(),
                 idleUnitsCount      = 0,
                 isSkillDeclared     = modelPlayer:isSkillDeclared(),
@@ -183,12 +181,8 @@ local function getMapInfo(self)
 end
 
 local function getInTurnDescription(modelSceneWar)
-    if (isTotalReplay(modelSceneWar)) then
-        return string.format("(%s)", getLocalizedText(49))
-    else
-        local formattedCountdown = AuxiliaryFunctions.formatTimeInterval(modelSceneWar:getIntervalUntilBoot() - os.time() + modelSceneWar:getEnterTurnTime())
-        return string.format("(%s, %s: %s)", getLocalizedText(49), getLocalizedText(34, "BootCountdown"), formattedCountdown)
-    end
+    local formattedCountdown = AuxiliaryFunctions.formatTimeInterval(modelSceneWar:getIntervalUntilBoot() - os.time() + modelSceneWar:getEnterTurnTime())
+    return string.format("(%s, %s: %s)", getLocalizedText(49), getLocalizedText(34, "BootCountdown"), formattedCountdown)
 end
 
 local function updateStringWarInfo(self)
@@ -239,8 +233,7 @@ end
 local function getAvailableMainItems(self)
     local modelSceneWar     = self.m_ModelSceneWar
     local playerIndexInTurn = getModelTurnManager(modelSceneWar):getPlayerIndex()
-    if ((isTotalReplay(modelSceneWar))                               or
-        (playerIndexInTurn ~= getPlayerIndexLoggedIn(modelSceneWar)) or
+    if ((playerIndexInTurn ~= getPlayerIndexLoggedIn(modelSceneWar)) or
         (self.m_IsWaitingForServerResponse))                         then
         return {
             self.m_ItemQuit,
@@ -473,23 +466,21 @@ local function setStateAuxiliaryCommands(self)
     if (self.m_View) then
         local modelSceneWar = self.m_ModelSceneWar
         local items         = {}
-        if (not isTotalReplay(modelSceneWar)) then
-            items[#items + 1] = self.m_ItemChat
-            items[#items + 1] = self.m_ItemReload
+        items[#items + 1] = self.m_ItemChat
+        items[#items + 1] = self.m_ItemReload
 
-            local playerIndexLoggedIn = getPlayerIndexLoggedIn(modelSceneWar)
-            if ((playerIndexLoggedIn == getModelTurnManager(modelSceneWar):getPlayerIndex()) and
-                (not self.m_IsWaitingForServerResponse))                                      then
+        local playerIndexLoggedIn = getPlayerIndexLoggedIn(modelSceneWar)
+        if ((playerIndexLoggedIn == getModelTurnManager(modelSceneWar):getPlayerIndex()) and
+            (not self.m_IsWaitingForServerResponse))                                      then
 
-                local gridIndex = self.m_MapCursorGridIndex
-                local modelUnit = getModelUnitMap(modelSceneWar):getModelUnit(self.m_MapCursorGridIndex)
-                if ((modelUnit) and (modelUnit:isStateIdle()) and (modelUnit:getPlayerIndex() == playerIndexLoggedIn)) then
-                    items[#items + 1] = self.m_ItemDestroyOwnedUnit
-                end
-
-                items[#items + 1] = self.m_ItemFindIdleUnit
-                items[#items + 1] = self.m_ItemFindIdleTile
+            local gridIndex = self.m_MapCursorGridIndex
+            local modelUnit = getModelUnitMap(modelSceneWar):getModelUnit(self.m_MapCursorGridIndex)
+            if ((modelUnit) and (modelUnit:isStateIdle()) and (modelUnit:getPlayerIndex() == playerIndexLoggedIn)) then
+                items[#items + 1] = self.m_ItemDestroyOwnedUnit
             end
+
+            items[#items + 1] = self.m_ItemFindIdleUnit
+            items[#items + 1] = self.m_ItemFindIdleTile
         end
         items[#items + 1] = self.m_ItemHideUI
         items[#items + 1] = self.m_ItemSetMessageIndicator
@@ -512,7 +503,7 @@ local function setStateDrawOrSurrender(self)
     if (self.m_View) then
         local modelSceneWar     = self.m_ModelSceneWar
         local playerIndexInTurn = getModelTurnManager(modelSceneWar):getPlayerIndex()
-        assert((not isTotalReplay(modelSceneWar)) and (getPlayerIndexLoggedIn(modelSceneWar) == playerIndexInTurn) and (not self.m_IsWaitingForServerResponse))
+        assert((getPlayerIndexLoggedIn(modelSceneWar) == playerIndexInTurn) and (not self.m_IsWaitingForServerResponse))
 
         local modelPlayer = getModelPlayerManager(modelSceneWar):getModelPlayer(playerIndexInTurn)
         local items       = {self.m_ItemSurrender}

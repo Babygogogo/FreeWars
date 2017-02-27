@@ -37,7 +37,6 @@ local getModelTurnManager      = SingletonGetters.getModelTurnManager
 local getModelUnitMap          = SingletonGetters.getModelUnitMap
 local getPlayerIndexLoggedIn   = SingletonGetters.getPlayerIndexLoggedIn
 local getScriptEventDispatcher = SingletonGetters.getScriptEventDispatcher
-local isTotalReplay            = SingletonGetters.isTotalReplay
 
 --------------------------------------------------------------------------------
 -- The util functions.
@@ -718,7 +717,7 @@ local function canSetStatePreviewingAttackableArea(self, gridIndex)
     local modelUnit     = getModelUnitMap(modelSceneWar):getModelUnit(gridIndex)
     if ((not modelUnit) or (not modelUnit.getAttackRangeMinMax)) then
         return false
-    elseif ((isTotalReplay(modelSceneWar)) or (not modelUnit:isStateIdle())) then
+    elseif (not modelUnit:isStateIdle()) then
         return true
     else
         local playerIndexLoggedIn = getPlayerIndexLoggedIn(modelSceneWar)
@@ -750,7 +749,7 @@ local function canSetStatePreviewingReachableArea(self, gridIndex)
     local modelUnit     = getModelUnitMap(modelSceneWar):getModelUnit(gridIndex)
     if ((not modelUnit) or (modelUnit.getAttackRangeMinMax)) then
         return false
-    elseif ((isTotalReplay(modelSceneWar)) or (not modelUnit:isStateIdle())) then
+    elseif (not modelUnit:isStateIdle()) then
         return true
     else
         local playerIndexLoggedIn = getPlayerIndexLoggedIn(modelSceneWar)
@@ -779,20 +778,16 @@ setStatePreviewingReachableArea = function(self, gridIndex)
 end
 
 local function canSetStateChoosingProductionTarget(self, gridIndex)
-    if (isTotalReplay(self.m_ModelSceneWar)) then
+    local playerIndexLoggedIn = getPlayerIndexLoggedIn(self.m_ModelSceneWar)
+    local modelTurnManager    = getModelTurnManager(self.m_ModelSceneWar)
+    if ((modelTurnManager:getPlayerIndex() ~= playerIndexLoggedIn) or
+        (not modelTurnManager:isTurnPhaseMain()))                  then
         return false
     else
-        local playerIndexLoggedIn = getPlayerIndexLoggedIn(self.m_ModelSceneWar)
-        local modelTurnManager    = getModelTurnManager(self.m_ModelSceneWar)
-        if ((modelTurnManager:getPlayerIndex() ~= playerIndexLoggedIn) or
-            (not modelTurnManager:isTurnPhaseMain()))                  then
-            return false
-        else
-            local modelTile = getModelTileMap(self.m_ModelSceneWar):getModelTile(gridIndex)
-            return (not getModelUnitMap(self.m_ModelSceneWar):getModelUnit(gridIndex))  and
-                (modelTile:getPlayerIndex() == playerIndexLoggedIn) and
-                (modelTile.getProductionList)
-        end
+        local modelTile = getModelTileMap(self.m_ModelSceneWar):getModelTile(gridIndex)
+        return (not getModelUnitMap(self.m_ModelSceneWar):getModelUnit(gridIndex))  and
+            (modelTile:getPlayerIndex() == playerIndexLoggedIn) and
+            (modelTile.getProductionList)
     end
 end
 
@@ -814,18 +809,14 @@ setStateChoosingProductionTarget = function(self, gridIndex)
 end
 
 local function canSetStateMakingMovePath(self, beginningGridIndex, launchUnitID)
-    if (isTotalReplay(self.m_ModelSceneWar)) then
+    local playerIndexLoggedIn = getPlayerIndexLoggedIn(self.m_ModelSceneWar)
+    local modelTurnManager    = getModelTurnManager(self.m_ModelSceneWar)
+    if ((modelTurnManager:getPlayerIndex() ~= playerIndexLoggedIn) or
+        (not modelTurnManager:isTurnPhaseMain()))                  then
         return false
     else
-        local playerIndexLoggedIn = getPlayerIndexLoggedIn(self.m_ModelSceneWar)
-        local modelTurnManager    = getModelTurnManager(self.m_ModelSceneWar)
-        if ((modelTurnManager:getPlayerIndex() ~= playerIndexLoggedIn) or
-            (not modelTurnManager:isTurnPhaseMain()))                  then
-            return false
-        else
-            local modelUnit = getModelUnitMap(self.m_ModelSceneWar):getFocusModelUnit(beginningGridIndex, launchUnitID)
-            return (modelUnit) and (modelUnit:isStateIdle()) and (modelUnit:getPlayerIndex() == playerIndexLoggedIn)
-        end
+        local modelUnit = getModelUnitMap(self.m_ModelSceneWar):getFocusModelUnit(beginningGridIndex, launchUnitID)
+        return (modelUnit) and (modelUnit:isStateIdle()) and (modelUnit:getPlayerIndex() == playerIndexLoggedIn)
     end
 end
 
@@ -979,8 +970,7 @@ local function onEvtWarCommandMenuUpdated(self, event)
 end
 
 local function onEvtMapCursorMoved(self, event)
-    if ((isTotalReplay(self.m_ModelSceneWar))                                                     or
-        (self.m_IsWaitingForServerResponse)                                                       or
+    if ((self.m_IsWaitingForServerResponse)                                                       or
         (getModelTurnManager(self.m_ModelSceneWar):getPlayerIndex() ~= getPlayerIndexLoggedIn(self.m_ModelSceneWar))) then
         return
     end

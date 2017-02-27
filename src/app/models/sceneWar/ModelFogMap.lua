@@ -138,10 +138,9 @@ end
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
-function ModelFogMap:ctor(param, warFieldFileName, isTotalReplay)
+function ModelFogMap:ctor(param, warFieldFileName)
     param = param or {}
     local mapSize, playersCount             = getMapSizeAndPlayersCountWithWarFieldFileName(warFieldFileName)
-    self.m_IsTotalReplay                    = isTotalReplay
     self.m_MapSize                          = mapSize
     self.m_ForcingFogCode                   = param.forcingFogCode or FORCING_FOG_CODE.None
     self.m_ExpiringPlayerIndexForForcingFog = param.expiringPlayerIndexForForcingFog
@@ -151,7 +150,7 @@ function ModelFogMap:ctor(param, warFieldFileName, isTotalReplay)
     self.m_MapsForUnits                     = {}
 
     local mapsForPaths = param.mapsForPaths
-    if ((IS_SERVER) or (isTotalReplay)) then
+    if (IS_SERVER) then
         for playerIndex = 1, playersCount do
             self.m_MapsForPaths[playerIndex] = createSingleMap(mapSize, 0)
             self.m_MapsForTiles[playerIndex] = createSingleMap(mapSize, 0)
@@ -204,7 +203,7 @@ function ModelFogMap:onStartRunning(modelSceneWar)
     self.m_ModelSceneWar       = modelSceneWar
     self.m_IsFogOfWarByDefault = modelSceneWar:isFogOfWarByDefault()
 
-    if ((IS_SERVER) or (self.m_IsTotalReplay)) then
+    if (IS_SERVER) then
         for playerIndex = 1, getModelPlayerManager(modelSceneWar):getPlayersCount() do
             self:resetMapForTilesForPlayerIndex(playerIndex)
                 :resetMapForUnitsForPlayerIndex(playerIndex)
@@ -244,7 +243,7 @@ function ModelFogMap:isDisablingFogByForce()
 end
 
 function ModelFogMap:resetMapForPathsForPlayerIndex(playerIndex, data)
-    assert((IS_SERVER) or (not self.m_ModelSceneWar) or (self.m_IsTotalReplay) or (playerIndex == getPlayerIndexLoggedIn(self.m_ModelSceneWar)),
+    assert((IS_SERVER) or (not self.m_ModelSceneWar) or (playerIndex == getPlayerIndexLoggedIn(self.m_ModelSceneWar)),
         "ModelFogMap:resetMapForPathsForPlayerIndex() invalid playerIndex on the client: " .. (playerIndex or ""))
 
     local visibilityMap = self.m_MapsForPaths[playerIndex]
@@ -260,7 +259,7 @@ end
 
 function ModelFogMap:updateMapForPathsWithModelUnitAndPath(modelUnit, path)
     local playerIndex = modelUnit:getPlayerIndex()
-    assert((IS_SERVER) or (self.m_IsTotalReplay) or (playerIndex == getPlayerIndexLoggedIn(self.m_ModelSceneWar)),
+    assert((IS_SERVER) or (playerIndex == getPlayerIndexLoggedIn(self.m_ModelSceneWar)),
         "ModelFogMap:updateMapForPathsWithModelUnitAndPath() invalid playerIndex on the client: " .. (playerIndex or ""))
 
     local canRevealHidingPlaces = false -- canRevealHidingPlacesWithUnits(getModelPlayerManager(self.m_ModelSceneWar):getModelPlayer(playerIndex):getModelSkillConfiguration())
@@ -274,7 +273,7 @@ function ModelFogMap:updateMapForPathsWithModelUnitAndPath(modelUnit, path)
 end
 
 function ModelFogMap:updateMapForPathsForPlayerIndexWithFlare(playerIndex, origin, radius)
-    assert((IS_SERVER) or (self.m_IsTotalReplay) or (playerIndex == getPlayerIndexLoggedIn(self.m_ModelSceneWar)),
+    assert((IS_SERVER) or (playerIndex == getPlayerIndexLoggedIn(self.m_ModelSceneWar)),
         "ModelFogMap:updateMapForPathsForPlayerIndexWithFlare() invalid playerIndex on the client: " .. (playerIndex or ""))
 
     local visibilityMap = self.m_MapsForPaths[playerIndex]
@@ -286,7 +285,7 @@ function ModelFogMap:updateMapForPathsForPlayerIndexWithFlare(playerIndex, origi
 end
 
 function ModelFogMap:resetMapForTilesForPlayerIndex(playerIndex, visionModifier)
-    assert((IS_SERVER) or (self.m_IsTotalReplay) or (playerIndex == getPlayerIndexLoggedIn(self.m_ModelSceneWar)),
+    assert((IS_SERVER) or (playerIndex == getPlayerIndexLoggedIn(self.m_ModelSceneWar)),
         "ModelFogMap:resetMapForTilesForPlayerIndex() invalid playerIndex on the client: " .. (playerIndex or ""))
 
     local visibilityMap = self.m_MapsForTiles[playerIndex]
@@ -313,7 +312,7 @@ function ModelFogMap:updateMapForTilesForPlayerIndexOnLosingOwnership(playerInde
 end
 
 function ModelFogMap:resetMapForUnitsForPlayerIndex(playerIndex, visionModifier)
-    assert((IS_SERVER) or (self.m_IsTotalReplay) or (playerIndex == getPlayerIndexLoggedIn(self.m_ModelSceneWar)),
+    assert((IS_SERVER) or (playerIndex == getPlayerIndexLoggedIn(self.m_ModelSceneWar)),
         "ModelFogMap:resetMapForUnitsForPlayerIndex() invalid playerIndex on the client: " .. (playerIndex or ""))
 
     local visibilityMap = self.m_MapsForUnits[playerIndex]
@@ -350,7 +349,7 @@ function ModelFogMap:getVisibilityOnGridForPlayerIndex(gridIndex, playerIndex)
     -- The skills that enable the tiles/units to see through the hiding places are ignored for the maps for tiles/units, while they are considered for the maps for move paths.
     -- To check if a tile/unit is visible to a player, use functions in VisibilityFunctions.
 
-    assert((IS_SERVER) or (self.m_IsTotalReplay) or (playerIndex == getPlayerIndexLoggedIn(self.m_ModelSceneWar)),
+    assert((IS_SERVER) or (playerIndex == getPlayerIndexLoggedIn(self.m_ModelSceneWar)),
         "ModelFogMap:getVisibilityOnGridForPlayerIndex() invalid playerIndex on the client: " .. (playerIndex or ""))
 
     if (not self:isFogOfWarCurrently()) then
