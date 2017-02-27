@@ -284,6 +284,10 @@ end
 --------------------------------------------------------------------------------
 -- The public functions/accessors.
 --------------------------------------------------------------------------------
+function ModelWarReplay.isWarReplay()
+    return true
+end
+
 function ModelWarReplay:isAutoReplay()
     return self.m_IsAutoReplay
 end

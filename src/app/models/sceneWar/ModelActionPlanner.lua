@@ -504,7 +504,7 @@ end
 
 local function getSingleActionLaunchModelUnit(self, unitID)
     local beginningGridIndex = self.m_PathNodes[1]
-    local icon               = Actor.createView("sceneWar.ViewUnit")
+    local icon               = Actor.createView("common.ViewUnit")
     icon:updateWithModelUnit(getModelUnitMap(self.m_ModelSceneWar):getFocusModelUnit(beginningGridIndex, unitID))
         :setScale(0.5)
 
@@ -540,7 +540,7 @@ local function getActionsLaunchModelUnit(self)
 end
 
 local function getSingleActionDropModelUnit(self, unitID)
-    local icon = Actor.createView("sceneWar.ViewUnit")
+    local icon = Actor.createView("common.ViewUnit")
     icon:updateWithModelUnit(getModelUnitMap(self.m_ModelSceneWar):getLoadedModelUnitWithUnitId(unitID))
         :ignoreAnchorPointForPosition(true)
         :setScale(0.5)

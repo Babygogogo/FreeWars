@@ -55,7 +55,7 @@ local function initLayerNaval(self)
 end
 
 local function initPreviewLaunchUnit(self)
-    local view = Actor.createView("sceneWar.ViewUnit")
+    local view = Actor.createView("common.ViewUnit")
     view:setVisible(false)
 
     self.m_PreviewLaunchUnit = view

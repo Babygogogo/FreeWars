@@ -3,7 +3,7 @@ local ActionExecutorForReplay = {}
 
 local ActionCodeFunctions    = requireFW("src.app.utilities.ActionCodeFunctions")
 local AuxiliaryFunctions     = requireFW("src.app.utilities.AuxiliaryFunctions")
-local DestroyersForReplay    = requireFW("src.app.utilities.warReplay.DestroyersForReplay")
+local Destroyers             = requireFW("src.app.utilities.Destroyers")
 local GameConstantFunctions  = requireFW("src.app.utilities.GameConstantFunctions")
 local GridIndexFunctions     = requireFW("src.app.utilities.GridIndexFunctions")
 local InstantSkillExecutor   = requireFW("src.app.utilities.InstantSkillExecutor")
@@ -17,7 +17,7 @@ local WebSocketManager       = requireFW("src.app.utilities.WebSocketManager")
 local Actor                  = requireFW("src.global.actors.Actor")
 local ActorManager           = requireFW("src.global.actors.ActorManager")
 
-local destroyActorUnitOnMap         = DestroyersForReplay.destroyActorUnitOnMap
+local destroyActorUnitOnMap         = Destroyers.destroyActorUnitOnMap
 local getAdjacentGrids              = GridIndexFunctions.getAdjacentGrids
 local getGridsWithinDistance        = GridIndexFunctions.getGridsWithinDistance
 local getLocalizedText              = LocalizationFunctions.getLocalizedText
@@ -85,7 +85,7 @@ local function produceActorUnit(modelWarReplay, tiledID, unitID, gridIndex)
         unitID        = unitID,
         GridIndexable = {x = gridIndex.x, y = gridIndex.y},
     }
-    local actorUnit = Actor.createWithModelAndViewName("warReplay.ModelUnitForReplay", actorData, "warReplay.ViewUnitForReplay")
+    local actorUnit = Actor.createWithModelAndViewName("warReplay.ModelUnitForReplay", actorData, "common.ViewUnit")
     local modelUnit = actorUnit:getModel()
     promoteModelUnitOnProduce(modelUnit, modelWarReplay)
     modelUnit:setStateActioned()
@@ -380,7 +380,7 @@ local function executeAttack(action, modelWarReplay)
             getModelFogMap(modelWarReplay):updateMapForUnitsForPlayerIndexOnUnitLeave(targetPlayerIndex, targetGridIndex, targetVision)
         end
         if (lostPlayerIndex) then
-            DestroyersForReplay.destroyPlayerForce(modelWarReplay, lostPlayerIndex)
+            Destroyers.destroyPlayerForce(modelWarReplay, lostPlayerIndex)
             if (modelPlayerManager:getAlivePlayersCount() <= 1) then
                 modelWarReplay:setEnded(true)
             elseif (isInTurnPlayerLost) then
@@ -426,7 +426,7 @@ local function executeAttack(action, modelWarReplay)
                 getModelFogMap(modelWarReplay):updateMapForUnitsForPlayerIndexOnUnitLeave(targetPlayerIndex, targetGridIndex, targetVision)
             end
             if (lostPlayerIndex) then
-                DestroyersForReplay.destroyPlayerForce(modelWarReplay, lostPlayerIndex)
+                Destroyers.destroyPlayerForce(modelWarReplay, lostPlayerIndex)
                 getModelMessageIndicator(modelWarReplay):showMessage(getLocalizedText(74, "Lose", modelPlayerManager:getModelPlayer(lostPlayerIndex):getNickname()))
             end
 
@@ -461,7 +461,7 @@ local function executeBeginTurn(action, modelWarReplay)
         else
             modelWarReplay:setEnded(modelPlayerManager:getAlivePlayersCount() <= 2)
             modelTurnManager:beginTurnPhaseBeginning(action.income, action.repairData, action.supplyData, function()
-                DestroyersForReplay.destroyPlayerForce(modelWarReplay, lostPlayerIndex)
+                Destroyers.destroyPlayerForce(modelWarReplay, lostPlayerIndex)
                 if (not modelWarReplay:isEnded()) then
                     modelTurnManager:endTurnPhaseMain()
                 end
@@ -482,7 +482,7 @@ local function executeBeginTurn(action, modelWarReplay)
             modelTurnManager:beginTurnPhaseBeginning(action.income, action.repairData, action.supplyData, function()
                 local lostModelPlayer = modelPlayerManager:getModelPlayer(lostPlayerIndex)
                 getModelMessageIndicator(modelWarReplay):showMessage(getLocalizedText(74, "Lose", lostModelPlayer:getNickname()))
-                DestroyersForReplay.destroyPlayerForce(modelWarReplay, lostPlayerIndex)
+                Destroyers.destroyPlayerForce(modelWarReplay, lostPlayerIndex)
                 getModelFogMap(modelWarReplay):updateView()
 
                 if (not modelWarReplay:isEnded()) then
@@ -574,7 +574,7 @@ local function executeCaptureModelTile(action, modelWarReplay)
             modelFogMap:updateMapForTilesForPlayerIndexOnLosingOwnership(previousPlayerIndex, endingGridIndex, previousVision)
         end
         if (lostPlayerIndex) then
-            DestroyersForReplay.destroyPlayerForce(modelWarReplay, lostPlayerIndex)
+            Destroyers.destroyPlayerForce(modelWarReplay, lostPlayerIndex)
             modelWarReplay:setEnded(modelPlayerManager:getAlivePlayersCount() <= 1)
         end
         modelWarReplay:setExecutingAction(false)
@@ -605,7 +605,7 @@ local function executeCaptureModelTile(action, modelWarReplay)
                 modelTile:updateView()
 
                 getModelMessageIndicator(modelWarReplay):showMessage(getLocalizedText(74, "Lose", lostModelPlayer:getNickname()))
-                DestroyersForReplay.destroyPlayerForce(modelWarReplay, lostPlayerIndex)
+                Destroyers.destroyPlayerForce(modelWarReplay, lostPlayerIndex)
                 getModelFogMap(modelWarReplay):updateView()
 
                 if (modelWarReplay:isEnded()) then
@@ -1033,7 +1033,7 @@ local function executeSurrender(action, modelWarReplay)
     local playerIndex        = modelTurnManager:getPlayerIndex()
     local modelPlayer        = modelPlayerManager:getModelPlayer(playerIndex)
     modelWarReplay:setRemainingVotesForDraw(nil)
-    DestroyersForReplay.destroyPlayerForce(modelWarReplay, playerIndex)
+    Destroyers.destroyPlayerForce(modelWarReplay, playerIndex)
 
     if (modelWarReplay:isFastExecutingActions()) then
         if (modelPlayerManager:getAlivePlayersCount() <= 1) then

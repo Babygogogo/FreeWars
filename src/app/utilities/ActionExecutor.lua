@@ -98,7 +98,7 @@ local function produceActorUnit(modelSceneWar, tiledID, unitID, gridIndex)
         unitID        = unitID,
         GridIndexable = {x = gridIndex.x, y = gridIndex.y},
     }
-    local actorUnit = Actor.createWithModelAndViewName("sceneWar.ModelUnit", actorData, "sceneWar.ViewUnit")
+    local actorUnit = Actor.createWithModelAndViewName("sceneWar.ModelUnit", actorData, "common.ViewUnit")
     local modelUnit = actorUnit:getModel()
     promoteModelUnitOnProduce(modelUnit, modelSceneWar)
     modelUnit:setStateActioned()
@@ -128,7 +128,7 @@ local function addActorUnitsWithUnitsData(modelSceneWar, unitsData, isViewVisibl
     if (unitsData) then
         local modelUnitMap = getModelUnitMap(modelSceneWar)
         for unitID, unitData in pairs(unitsData) do
-            local actorUnit = Actor.createWithModelAndViewName("sceneWar.ModelUnit", unitData, "sceneWar.ViewUnit")
+            local actorUnit = Actor.createWithModelAndViewName("sceneWar.ModelUnit", unitData, "common.ViewUnit")
             actorUnit:getModel():onStartRunning(modelSceneWar)
                 :updateView()
                 :setViewVisible(isViewVisible)

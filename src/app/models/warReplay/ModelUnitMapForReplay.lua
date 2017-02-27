@@ -35,7 +35,7 @@ local function createActorUnit(tiledID, unitID, x, y)
         GridIndexable = {x = x, y = y},
     }
 
-    return Actor.createWithModelAndViewName("warReplay.ModelUnitForReplay", actorData, "warReplay.ViewUnitForReplay")
+    return Actor.createWithModelAndViewName("warReplay.ModelUnitForReplay", actorData, "common.ViewUnit")
 end
 
 --------------------------------------------------------------------------------
@@ -70,12 +70,12 @@ local function createActorUnitsMapWithUnitMapData(unitMapData, warFieldFileName)
         local gridIndex = unitData.GridIndexable
         assert(GridIndexFunctions.isWithinMap(gridIndex, mapSize), "ModelUnitMapForReplay-createActorUnitsMapWithUnitMapData() the gridIndex is invalid.")
 
-        actorUnitsMap[gridIndex.x][gridIndex.y] = Actor.createWithModelAndViewName("warReplay.ModelUnitForReplay", unitData, "warReplay.ViewUnitForReplay")
+        actorUnitsMap[gridIndex.x][gridIndex.y] = Actor.createWithModelAndViewName("warReplay.ModelUnitForReplay", unitData, "common.ViewUnit")
     end
 
     local loadedActorUnits = {}
     for unitID, unitData in pairs(unitMapData.unitsLoaded or {}) do
-        loadedActorUnits[unitID] = Actor.createWithModelAndViewName("warReplay.ModelUnitForReplay", unitData, "warReplay.ViewUnitForReplay")
+        loadedActorUnits[unitID] = Actor.createWithModelAndViewName("warReplay.ModelUnitForReplay", unitData, "common.ViewUnit")
     end
 
     return actorUnitsMap, mapSize, unitMapData.availableUnitID, loadedActorUnits
