@@ -79,7 +79,7 @@ local function createActorTilesMapWithWarFieldFileName(warFieldFileName, isPrevi
                 baseID        = baseLayerData[idIndex],
                 GridIndexable = {x = x, y = y},
             }
-            local modelTile = Actor.createModel("sceneWar.ModelTile", actorData, isPreview)
+            local modelTile = Actor.createModel("warOnline.ModelTile", actorData, isPreview)
 
             map[x][y] = (IS_SERVER)                                                                      and
                 (Actor.createWithModelAndViewInstance(modelTile))                                        or

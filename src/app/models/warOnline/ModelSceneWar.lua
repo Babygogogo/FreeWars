@@ -108,7 +108,7 @@ local function initScriptEventDispatcher(self)
 end
 
 local function initActorChatManager(self, chatData)
-    self.m_ActorChatManager = Actor.createWithModelAndViewName("sceneWar.ModelChatManager", chatData, "sceneWar.ViewChatManager")
+    self.m_ActorChatManager = Actor.createWithModelAndViewName("warOnline.ModelChatManager", chatData, "warOnline.ViewChatManager")
     self.m_ActorChatManager:getModel():setEnabled(false)
 end
 
@@ -124,7 +124,7 @@ local function initActorMessageIndicator(self)
 end
 
 local function initActorPlayerManager(self, playersData)
-    self.m_ActorPlayerManager = Actor.createWithModelAndViewName("sceneWar.ModelPlayerManager", playersData)
+    self.m_ActorPlayerManager = Actor.createWithModelAndViewName("warOnline.ModelPlayerManager", playersData)
 end
 
 local function initActorWeatherManager(self, weatherData)
@@ -132,15 +132,15 @@ local function initActorWeatherManager(self, weatherData)
 end
 
 local function initActorWarField(self, warFieldData)
-    self.m_ActorWarField = Actor.createWithModelAndViewName("sceneWar.ModelWarField", warFieldData, "common.ViewWarField")
+    self.m_ActorWarField = Actor.createWithModelAndViewName("warOnline.ModelWarField", warFieldData, "common.ViewWarField")
 end
 
 local function initActorWarHud(self)
-    self.m_ActorWarHud = Actor.createWithModelAndViewName("sceneWar.ModelWarHUD", nil, "common.ViewWarHud")
+    self.m_ActorWarHud = Actor.createWithModelAndViewName("warOnline.ModelWarHUD", nil, "common.ViewWarHud")
 end
 
 local function initActorTurnManager(self, turnData)
-    self.m_ActorTurnManager = Actor.createWithModelAndViewName("sceneWar.ModelTurnManager", turnData, "common.ViewTurnManager")
+    self.m_ActorTurnManager = Actor.createWithModelAndViewName("warOnline.ModelTurnManager", turnData, "common.ViewTurnManager")
 end
 
 --------------------------------------------------------------------------------

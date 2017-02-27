@@ -48,29 +48,29 @@ end
 -- The composition elements.
 --------------------------------------------------------------------------------
 local function initActorFogMap(self, fogMapData)
-    self.m_ActorFogMap = Actor.createWithModelAndViewInstance(Actor.createModel("sceneWar.ModelFogMap", fogMapData, self.m_WarFieldFileName))
+    self.m_ActorFogMap = Actor.createWithModelAndViewInstance(Actor.createModel("warOnline.ModelFogMap", fogMapData, self.m_WarFieldFileName))
 end
 
 local function initActorTileMap(self, tileMapData)
-    local modelTileMap  = Actor.createModel("sceneWar.ModelTileMap", tileMapData, self.m_WarFieldFileName)
+    local modelTileMap  = Actor.createModel("warOnline.ModelTileMap", tileMapData, self.m_WarFieldFileName)
     self.m_ActorTileMap = (IS_SERVER)                                                                  and
         (Actor.createWithModelAndViewInstance(modelTileMap))                                           or
         (Actor.createWithModelAndViewInstance(modelTileMap, Actor.createView("common.ViewTileMap")))
 end
 
 local function initActorUnitMap(self, unitMapData)
-    local modelUnitMap  = Actor.createModel("sceneWar.ModelUnitMap", unitMapData, self.m_WarFieldFileName)
+    local modelUnitMap  = Actor.createModel("warOnline.ModelUnitMap", unitMapData, self.m_WarFieldFileName)
     self.m_ActorUnitMap = (IS_SERVER)                                                                  and
         (Actor.createWithModelAndViewInstance(modelUnitMap))                                           or
         (Actor.createWithModelAndViewInstance(modelUnitMap, Actor.createView("common.ViewUnitMap")))
 end
 
 local function initActorActionPlanner(self)
-    self.m_ActorActionPlanner = Actor.createWithModelAndViewName("sceneWar.ModelActionPlanner", nil, "common.ViewActionPlanner")
+    self.m_ActorActionPlanner = Actor.createWithModelAndViewName("warOnline.ModelActionPlanner", nil, "common.ViewActionPlanner")
 end
 
 local function initActorMapCursor(self, param)
-    self.m_ActorMapCursor = Actor.createWithModelAndViewName("sceneWar.ModelMapCursor", param, "common.ViewMapCursor")
+    self.m_ActorMapCursor = Actor.createWithModelAndViewName("warOnline.ModelMapCursor", param, "common.ViewMapCursor")
 end
 
 local function initActorGridEffect(self)

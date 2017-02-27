@@ -591,7 +591,7 @@ end
 --------------------------------------------------------------------------------
 getActorSkillConfigurator = function(self)
     if (not self.m_ActorSkillConfigurator) then
-        local model = Actor.createModel("sceneWar.ModelSkillConfigurator")
+        local model = Actor.createModel("warOnline.ModelSkillConfigurator")
         model:onStartRunning(self.m_ModelSceneWar)
             :setCallbackOnButtonBackTouched(function()
                 model:setEnabled(false)

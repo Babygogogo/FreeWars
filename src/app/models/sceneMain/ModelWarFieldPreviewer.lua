@@ -17,7 +17,7 @@ end
 -- The composition elements.
 --------------------------------------------------------------------------------
 local function initActorTileMap(self, warFieldFileName)
-    local modelTileMap = Actor.createModel("sceneWar.ModelTileMap", nil, warFieldFileName, true)
+    local modelTileMap = Actor.createModel("warOnline.ModelTileMap", nil, warFieldFileName, true)
     local actor        = Actor.createWithModelAndViewInstance(modelTileMap, Actor.createView("common.ViewTileMap"))
 
     self.m_ActorTileMap = actor

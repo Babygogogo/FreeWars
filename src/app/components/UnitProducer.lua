@@ -73,7 +73,7 @@ function UnitProducer:getProductionList()
 
     for i, unitName in ipairs(self.m_Template.productionList) do
         local tiledID   = GameConstantFunctions.getTiledIdWithTileOrUnitName(unitName, playerIndex)
-        local modelUnit = Actor.createModel("sceneWar.ModelUnit", {tiledID = tiledID})
+        local modelUnit = Actor.createModel("warOnline.ModelUnit", {tiledID = tiledID})
         modelUnit:onStartRunning(modelSceneWar)
         local cost      = modelUnit:getProductionCost()
 

@@ -26,19 +26,19 @@ local Actor = requireFW("src.global.actors.Actor")
 --------------------------------------------------------------------------------
 local function initActorWarCommandMenu(self)
     if (not self.m_ActorWarCommandMenu) then
-        self.m_ActorWarCommandMenu = Actor.createWithModelAndViewName("sceneWar.ModelWarCommandMenu", nil, "common.ViewWarCommandMenu")
+        self.m_ActorWarCommandMenu = Actor.createWithModelAndViewName("warOnline.ModelWarCommandMenu", nil, "common.ViewWarCommandMenu")
     end
 end
 
 local function initActorMoneyEnergyInfo(self)
     if (not self.m_ActorMoneyEnergyInfo) then
-        self.m_ActorMoneyEnergyInfo = Actor.createWithModelAndViewName("sceneWar.ModelMoneyEnergyInfo", nil, "common.ViewMoneyEnergyInfo")
+        self.m_ActorMoneyEnergyInfo = Actor.createWithModelAndViewName("warOnline.ModelMoneyEnergyInfo", nil, "common.ViewMoneyEnergyInfo")
     end
 end
 
 local function initActorActionMenu(self)
     if (not self.m_ActorActionMenu) then
-        self.m_ActorActionMenu = Actor.createWithModelAndViewName("sceneWar.ModelActionMenu", nil, "sceneWar.ViewActionMenu")
+        self.m_ActorActionMenu = Actor.createWithModelAndViewName("warOnline.ModelActionMenu", nil, "warOnline.ViewActionMenu")
     end
 end
 
@@ -50,7 +50,7 @@ end
 
 local function initActorUnitInfo(self)
     if (not self.m_ActorUnitInfo) then
-        local actor = Actor.createWithModelAndViewName("sceneWar.ModelUnitInfo", nil, "common.ViewUnitInfo")
+        local actor = Actor.createWithModelAndViewName("warOnline.ModelUnitInfo", nil, "common.ViewUnitInfo")
         actor:getModel():setModelUnitDetail(self.m_ActorUnitDetail:getModel())
 
         self.m_ActorUnitInfo = actor
@@ -65,7 +65,7 @@ end
 
 local function initActorTileInfo(self)
     if (not self.m_ActorTileInfo) then
-        local actor = Actor.createWithModelAndViewName("sceneWar.ModelTileInfo", nil, "common.ViewTileInfo")
+        local actor = Actor.createWithModelAndViewName("warOnline.ModelTileInfo", nil, "common.ViewTileInfo")
         actor:getModel():setModelTileDetail(self.m_ActorTileDetail:getModel())
 
         self.m_ActorTileInfo = actor
@@ -74,7 +74,7 @@ end
 
 local function initActorBattleInfo(self)
     if (not self.m_ActorBattleInfo) then
-        self.m_ActorBattleInfo = Actor.createWithModelAndViewName("sceneWar.ModelBattleInfo", nil, "sceneWar.ViewBattleInfo")
+        self.m_ActorBattleInfo = Actor.createWithModelAndViewName("warOnline.ModelBattleInfo", nil, "warOnline.ViewBattleInfo")
     end
 end
 

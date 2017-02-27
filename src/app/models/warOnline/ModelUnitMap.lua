@@ -57,7 +57,7 @@ local function createActorUnit(tiledID, unitID, x, y)
         GridIndexable = {x = x, y = y},
     }
 
-    return Actor.createWithModelAndViewName("sceneWar.ModelUnit", actorData, "common.ViewUnit")
+    return Actor.createWithModelAndViewName("warOnline.ModelUnit", actorData, "common.ViewUnit")
 end
 
 --------------------------------------------------------------------------------
@@ -92,12 +92,12 @@ local function createActorUnitsMapWithUnitMapData(unitMapData, warFieldFileName)
         local gridIndex = unitData.GridIndexable
         assert(GridIndexFunctions.isWithinMap(gridIndex, mapSize), "ModelUnitMap-createActorUnitsMapWithUnitMapData() the gridIndex is invalid.")
 
-        actorUnitsMap[gridIndex.x][gridIndex.y] = Actor.createWithModelAndViewName("sceneWar.ModelUnit", unitData, "common.ViewUnit")
+        actorUnitsMap[gridIndex.x][gridIndex.y] = Actor.createWithModelAndViewName("warOnline.ModelUnit", unitData, "common.ViewUnit")
     end
 
     local loadedActorUnits = {}
     for unitID, unitData in pairs(unitMapData.unitsLoaded or {}) do
-        loadedActorUnits[unitID] = Actor.createWithModelAndViewName("sceneWar.ModelUnit", unitData, "common.ViewUnit")
+        loadedActorUnits[unitID] = Actor.createWithModelAndViewName("warOnline.ModelUnit", unitData, "common.ViewUnit")
     end
 
     return actorUnitsMap, mapSize, unitMapData.availableUnitID, loadedActorUnits
