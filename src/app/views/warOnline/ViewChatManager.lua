@@ -5,6 +5,8 @@ local LocalizationFunctions = requireFW("src.app.utilities.LocalizationFunctions
 
 local getLocalizedText = LocalizationFunctions.getLocalizedText
 
+local string = string
+
 local INPUT_BAR_Z_ORDER           = 1
 local MENU_TITLE_Z_ORDER          = 1
 local BUTTON_CLOSE_Z_ORDER        = 1
@@ -130,15 +132,11 @@ end
 -- The composition elements.
 --------------------------------------------------------------------------------
 local function initInputBar(self)
-    local background = cc.Scale9Sprite:createWithSpriteFrameName(BACKGROUND_NAME, BACKGROUND_CAPINSETS)
-    local editBox    = ccui.EditBox:create(cc.size(INPUT_BAR_WIDTH, INPUT_BAR_HEIGHT), background, background, background)
+    local editBox = ccui.EditBox:create(cc.size(INPUT_BAR_WIDTH - 80, INPUT_BAR_HEIGHT), cc.Scale9Sprite:create())
     editBox:ignoreAnchorPointForPosition(true)
         :setPosition(INPUT_BAR_POS_X, INPUT_BAR_POS_Y)
         :setFontSize(INPUT_BAR_FONT_SIZE)
         :setFontColor({r = 0, g = 0, b = 0})
-
-        :setCascadeOpacityEnabled(true)
-        :setOpacity(180)
 
         :setPlaceholderFontSize(INPUT_BAR_FONT_SIZE)
         :setPlaceholderFontColor({r = 0, g = 0, b = 0})
@@ -148,8 +146,25 @@ local function initInputBar(self)
         :setInputMode(cc.EDITBOX_INPUT_MODE_SINGLELINE)
         :setInputFlag(cc.EDITBOX_INPUT_FLAG_SENSITIVE)
 
-    self.m_InputBar = editBox
-    self:addChild(editBox, INPUT_BAR_Z_ORDER)
+        :registerScriptEditBoxHandler(function(eventType)
+            if (eventType == "return") then
+                local text = editBox:getText()
+                if ((string.len(text) > 0) and (self.m_Model)) then
+                    self.m_Model:onButtonSendTouched(text)
+                end
+            end
+        end)
+
+    local background = cc.Scale9Sprite:createWithSpriteFrameName(BACKGROUND_NAME, BACKGROUND_CAPINSETS)
+    background:ignoreAnchorPointForPosition(true)
+        :setPosition(INPUT_BAR_POS_X, INPUT_BAR_POS_Y)
+        :setContentSize(INPUT_BAR_WIDTH, INPUT_BAR_HEIGHT)
+        :setOpacity(180)
+
+    self.m_InputBarBackground = background
+    self.m_InputBar           = editBox
+    self:addChild(background, INPUT_BAR_Z_ORDER)
+        :addChild(editBox,    INPUT_BAR_Z_ORDER)
 end
 
 local function initMenuBackground(self)
@@ -338,6 +353,7 @@ function ViewChatManager:setOverviewText(text)
     local height = math.max(label:getLineHeight() * label:getStringNumLines(), OVERVIEW_SCROLLVIEW_HEIGHT)
     label:setDimensions(OVERVIEW_SCROLLVIEW_WIDTH, height)
     self.m_OverviewScrollView:setInnerContainerSize({width = OVERVIEW_SCROLLVIEW_WIDTH, height = height})
+        :jumpToBottom()
 
     return self
 end
