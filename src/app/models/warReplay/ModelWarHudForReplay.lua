@@ -30,7 +30,7 @@ local function initActorUnitDetail(self)
 end
 
 local function initActorUnitInfo(self)
-    local actor = Actor.createWithModelAndViewName("warReplay.ModelUnitInfoForReplay", nil, "common.ViewUnitInfo")
+    local actor = Actor.createWithModelAndViewName("common.ModelUnitInfo", nil, "common.ViewUnitInfo")
     actor:getModel():setModelUnitDetail(self.m_ActorUnitDetail:getModel())
 
     self.m_ActorUnitInfo = actor

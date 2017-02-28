@@ -23,33 +23,35 @@ local getPlayerIndexLoggedIn = SingletonGetters.getPlayerIndexLoggedIn
 --------------------------------------------------------------------------------
 -- The util functions.
 --------------------------------------------------------------------------------
-local function isModelUnitVisible(modelSceneWar, modelUnit)
-    return VisibilityFunctions.isUnitOnMapVisibleToPlayerIndex(
-        modelSceneWar,
-        modelUnit:getGridIndex(),
-        modelUnit:getUnitType(),
-        (modelUnit.isDiving) and (modelUnit:isDiving()),
-        modelUnit:getPlayerIndex(),
-        getPlayerIndexLoggedIn(modelSceneWar)
-    )
+local function isModelUnitVisible(self, modelUnit)
+    if (self.m_IsWarReplay) then
+        return true
+    else
+        return VisibilityFunctions.isUnitOnMapVisibleToPlayerIndex(
+            self.m_ModelWar,
+            modelUnit:getGridIndex(),
+            modelUnit:getUnitType(),
+            (modelUnit.isDiving) and (modelUnit:isDiving()),
+            modelUnit:getPlayerIndex(),
+            self.m_PlayerIndexLoggedIn
+        )
+    end
 end
 
 local function updateWithModelUnitMap(self)
-    local modelSceneWar       = self.m_ModelSceneWar
-    local modelUnitMap        = getModelUnitMap(modelSceneWar)
-    local modelUnit           = modelUnitMap:getModelUnit(self.m_CursorGridIndex)
-    local modelWarCommandMenu = self.m_ModelWarCommandMenu
-    if ((modelWarCommandMenu:isEnabled())                   or
-        (modelWarCommandMenu:isHiddenWithHideUI())          or
-        (self.m_ModelChatManager:isEnabled())               or
-        (not modelUnit)                                     or
-        (not isModelUnitVisible(modelSceneWar, modelUnit))) then
+    local modelWar     = self.m_ModelWar
+    local modelUnitMap = self.m_ModelUnitMap
+    local modelUnit    = modelUnitMap:getModelUnit(self.m_CursorGridIndex)
+    if ((not modelUnit)                                                       or
+        (self.m_ModelWarCommandMenu:isEnabled())                              or
+        (self.m_ModelWarCommandMenu:isHiddenWithHideUI())                     or
+        ((self.m_ModelChatManager) and (self.m_ModelChatManager:isEnabled())) or
+        (not isModelUnitVisible(self, modelUnit)))                            then
         self.m_View:setVisible(false)
     else
-        local loadedModelUnits = ((not getModelFogMap(modelSceneWar):isFogOfWarCurrently()) or (modelUnit:getPlayerIndex() == getPlayerIndexLoggedIn(modelSceneWar))) and
-            (modelUnitMap:getLoadedModelUnitsWithLoader(modelUnit))                                                                                                                                     or
-            (nil)
-        self.m_ModelUnitList = {modelUnit, unpack(loadedModelUnits or {})}
+        local shouldShowLoadedUnits = (self.m_IsWarReplay) or (not self.m_ModelFogMap:isFogOfWarCurrently()) or (modelUnit:getPlayerIndex() == self.m_PlayerIndexLoggedIn)
+        local loadedModelUnits      = (shouldShowLoadedUnits) and (modelUnitMap:getLoadedModelUnitsWithLoader(modelUnit)) or (nil)
+        self.m_ModelUnitList        = {modelUnit, unpack(loadedModelUnits or {})}
 
         self.m_View:updateWithModelUnit(modelUnit, loadedModelUnits)
             :setVisible(true)
@@ -104,12 +106,18 @@ end
 --------------------------------------------------------------------------------
 -- The callback functions on start running/script events.
 --------------------------------------------------------------------------------
-function ModelUnitInfo:onStartRunning(modelSceneWar)
-    self.m_ModelSceneWar       = modelSceneWar
-    self.m_ModelChatManager    = SingletonGetters.getModelChatManager(   modelSceneWar)
-    self.m_ModelWarCommandMenu = SingletonGetters.getModelWarCommandMenu(modelSceneWar)
+function ModelUnitInfo:onStartRunning(modelWar)
+    self.m_ModelWar            = modelWar
+    self.m_IsWarReplay         = SingletonGetters.isWarReplay(           modelWar)
+    self.m_ModelFogMap         = SingletonGetters.getModelFogMap(        modelWar)
+    self.m_ModelUnitMap        = SingletonGetters.getModelUnitMap(       modelWar)
+    self.m_ModelWarCommandMenu = SingletonGetters.getModelWarCommandMenu(modelWar)
+    if (not self.m_IsWarReplay) then
+        self.m_PlayerIndexLoggedIn = SingletonGetters.getPlayerIndexLoggedIn(modelWar)
+        self.m_ModelChatManager    = SingletonGetters.getModelChatManager(modelWar)
+    end
 
-    SingletonGetters.getScriptEventDispatcher(modelSceneWar)
+    SingletonGetters.getScriptEventDispatcher(modelWar)
         :addEventListener("EvtChatManagerUpdated",    self)
         :addEventListener("EvtGridSelected",          self)
         :addEventListener("EvtMapCursorMoved",        self)
@@ -117,11 +125,8 @@ function ModelUnitInfo:onStartRunning(modelSceneWar)
         :addEventListener("EvtPlayerIndexUpdated",    self)
         :addEventListener("EvtWarCommandMenuUpdated", self)
 
-    if (self.m_View) then
-        self.m_View:updateWithPlayerIndex(SingletonGetters.getModelTurnManager(modelSceneWar):getPlayerIndex())
-    end
-
     updateWithModelUnitMap(self)
+    self.m_View:updateWithPlayerIndex(SingletonGetters.getModelTurnManager(modelWar):getPlayerIndex())
 
     return self
 end
