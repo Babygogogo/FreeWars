@@ -143,14 +143,19 @@ local function initInputBar(self)
         :setPlaceHolder(getLocalizedText(65, "TouchMeToInput"))
 
         :setMaxLength(60)
-        :setInputMode(cc.EDITBOX_INPUT_MODE_SINGLELINE)
+        :setInputMode(cc.EDITBOX_INPUT_MODE_ANY)
         :setInputFlag(cc.EDITBOX_INPUT_FLAG_SENSITIVE)
 
         :registerScriptEditBoxHandler(function(eventType)
-            if (eventType == "return") then
-                local text = editBox:getText()
-                if ((string.len(text) > 0) and (self.m_Model)) then
-                    self.m_Model:onButtonSendTouched(text)
+            if (eventType == "changed") then
+                local text   = editBox:getText()
+                local length = string.len(text)
+                if ((length > 0) and (string.find(text, "\n") == length)) then
+                    if (length == 1) then
+                        editBox:setText("")
+                    elseif (self.m_Model) then
+                        self.m_Model:onButtonSendTouched(string.sub(text, 1, length - 1))
+                    end
                 end
             end
         end)
