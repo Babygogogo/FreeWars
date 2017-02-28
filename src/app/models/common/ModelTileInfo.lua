@@ -19,12 +19,12 @@ local SingletonGetters   = requireFW("src.app.utilities.SingletonGetters")
 -- The util functions.
 --------------------------------------------------------------------------------
 local function updateWithModelTileMap(self)
-    local menu = self.m_ModelWarCommandMenu
-    if ((menu:isEnabled()) or (menu:isHiddenWithHideUI()) or (self.m_ModelChatManager:isEnabled())) then
+    if ((self.m_ModelWarCommandMenu:isEnabled())                               or
+        (self.m_ModelWarCommandMenu:isHiddenWithHideUI())                      or
+        ((self.m_ModelChatManager) and (self.m_ModelChatManager:isEnabled()))) then
         self.m_View:setVisible(false)
     else
-        local modelTile = SingletonGetters.getModelTileMap(self.m_ModelSceneWar):getModelTile(self.m_CursorGridIndex)
-        self.m_View:updateWithModelTile(modelTile)
+        self.m_View:updateWithModelTile(self.m_ModelTileMap:getModelTile(self.m_CursorGridIndex))
             :setVisible(true)
     end
 end
@@ -77,12 +77,14 @@ end
 --------------------------------------------------------------------------------
 -- The callback functions on start running/script events.
 --------------------------------------------------------------------------------
-function ModelTileInfo:onStartRunning(modelSceneWar)
-    self.m_ModelSceneWar       = modelSceneWar
-    self.m_ModelChatManager    = SingletonGetters.getModelChatManager(   modelSceneWar)
-    self.m_ModelWarCommandMenu = SingletonGetters.getModelWarCommandMenu(modelSceneWar)
+function ModelTileInfo:onStartRunning(modelWar)
+    self.m_ModelTileMap        = SingletonGetters.getModelTileMap(       modelWar)
+    self.m_ModelWarCommandMenu = SingletonGetters.getModelWarCommandMenu(modelWar)
+    if (not SingletonGetters.isWarReplay(modelWar)) then
+        self.m_ModelChatManager = SingletonGetters.getModelChatManager(modelWar)
+    end
 
-    SingletonGetters.getScriptEventDispatcher(modelSceneWar)
+    SingletonGetters.getScriptEventDispatcher(modelWar)
         :addEventListener("EvtChatManagerUpdated",    self)
         :addEventListener("EvtGridSelected",          self)
         :addEventListener("EvtMapCursorMoved",        self)
@@ -90,11 +92,8 @@ function ModelTileInfo:onStartRunning(modelSceneWar)
         :addEventListener("EvtPlayerIndexUpdated",    self)
         :addEventListener("EvtWarCommandMenuUpdated", self)
 
-    if (self.m_View) then
-        self.m_View:updateWithPlayerIndex(SingletonGetters.getModelTurnManager(modelSceneWar):getPlayerIndex())
-    end
-
     updateWithModelTileMap(self)
+    self.m_View:updateWithPlayerIndex(SingletonGetters.getModelTurnManager(modelWar):getPlayerIndex())
 
     return self
 end
@@ -117,8 +116,7 @@ end
 --------------------------------------------------------------------------------
 function ModelTileInfo:onPlayerTouch()
     if (self.m_ModelTileDetail) then
-        local modelTile = SingletonGetters.getModelTileMap(self.m_ModelSceneWar):getModelTile(self.m_CursorGridIndex)
-        self.m_ModelTileDetail:updateWithModelTile(modelTile)
+        self.m_ModelTileDetail:updateWithModelTile(self.m_ModelTileMap:getModelTile(self.m_CursorGridIndex))
             :setEnabled(true)
     end
 

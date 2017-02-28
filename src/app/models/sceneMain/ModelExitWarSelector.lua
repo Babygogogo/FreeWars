@@ -18,12 +18,8 @@ local ACTION_CODE_GET_WAITING_WAR_CONFIGURATIONS = ActionCodeFunctions.getAction
 --------------------------------------------------------------------------------
 -- The util functions.
 --------------------------------------------------------------------------------
-local function getWarFieldName(fileName)
-    return requireFW("res.data.templateWarField." .. fileName).warFieldName
-end
-
 local function getPlayerNicknames(warConfiguration, currentTime)
-    local playersCount = requireFW("res.data.templateWarField." .. warConfiguration.warFieldFileName).playersCount
+    local playersCount = WarFieldManager.getPlayersCount(warConfiguration.warFieldFileName)
     local players      = warConfiguration.players
     local names        = {}
 

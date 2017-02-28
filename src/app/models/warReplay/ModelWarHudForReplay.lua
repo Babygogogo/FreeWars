@@ -19,7 +19,7 @@ local function initActorTileDetail(self)
 end
 
 local function initActorTileInfo(self)
-    local actor = Actor.createWithModelAndViewName("warReplay.ModelTileInfoForReplay", nil, "common.ViewTileInfo")
+    local actor = Actor.createWithModelAndViewName("common.ModelTileInfo", nil, "common.ViewTileInfo")
     actor:getModel():setModelTileDetail(self.m_ActorTileDetail:getModel())
 
     self.m_ActorTileInfo = actor

@@ -27,6 +27,7 @@ local GridIndexFunctions        = requireFW("src.app.utilities.GridIndexFunction
 local SingletonGetters          = requireFW("src.app.utilities.SingletonGetters")
 local SkillDataAccessors        = requireFW("src.app.utilities.SkillDataAccessors")
 local SkillDescriptionFunctions = requireFW("src.app.utilities.SkillDescriptionFunctions")
+local WarFieldManager           = requireFW("src.app.utilities.WarFieldManager")
 local WebSocketManager          = requireFW("src.app.utilities.WebSocketManager")
 local Actor                     = requireFW("src.global.actors.Actor")
 local ActorManager              = requireFW("src.global.actors.ActorManager")
@@ -169,9 +170,10 @@ local function getMapInfo(self)
         end
     end)
 
+    local warFieldFileName = modelWarField:getWarFieldFileName()
     return string.format("%s: %s      %s: %s\n%s: %s      %s: %d      %s: %d\n%s\n%s: %d%%",
-        getLocalizedText(65, "MapName"),            modelWarField:getWarFieldDisplayName(),
-        getLocalizedText(65, "Author"),             modelWarField:getWarFieldAuthorName(),
+        getLocalizedText(65, "MapName"),            WarFieldManager.getWarFieldName(warFieldFileName),
+        getLocalizedText(65, "Author"),             WarFieldManager.getWarFieldAuthorName(warFieldFileName),
         getLocalizedText(65, "WarID"),              AuxiliaryFunctions.getWarNameWithWarId(SingletonGetters.getWarId(modelSceneWar)),
         getLocalizedText(65, "TurnIndex"),          getModelTurnManager(modelSceneWar):getTurnIndex(),
         getLocalizedText(65, "ActionID"),           getActionId(modelSceneWar),

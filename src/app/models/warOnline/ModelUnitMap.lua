@@ -21,11 +21,10 @@ local ModelUnitMap = requireFW("src.global.functions.class")("ModelUnitMap")
 local Destroyers             = requireFW("src.app.utilities.Destroyers")
 local GridIndexFunctions     = requireFW("src.app.utilities.GridIndexFunctions")
 local VisibilityFunctions    = requireFW("src.app.utilities.VisibilityFunctions")
+local WarFieldManager        = requireFW("src.app.utilities.WarFieldManager")
 local Actor                  = requireFW("src.global.actors.Actor")
 
 local isUnitOnMapVisibleToPlayerIndex = VisibilityFunctions.isUnitOnMapVisibleToPlayerIndex
-
-local TEMPLATE_WAR_FIELD_PATH = "res.data.templateWarField."
 
 --------------------------------------------------------------------------------
 -- The util functions.
@@ -64,7 +63,7 @@ end
 -- The unit actors map.
 --------------------------------------------------------------------------------
 local function createActorUnitsMapWithWarFieldFileName(warFieldFileName)
-    local layer               = requireFW(TEMPLATE_WAR_FIELD_PATH .. warFieldFileName).layers[3]
+    local layer               = WarFieldManager.getWarFieldData(warFieldFileName).layers[3]
     local data, width, height = layer.data, layer.width, layer.height
     local actorUnitsMap       = createEmptyMap(width)
     local availableUnitID     = 1
@@ -83,7 +82,7 @@ local function createActorUnitsMapWithWarFieldFileName(warFieldFileName)
 end
 
 local function createActorUnitsMapWithUnitMapData(unitMapData, warFieldFileName)
-    local layer         = requireFW(TEMPLATE_WAR_FIELD_PATH .. warFieldFileName).layers[3]
+    local layer         = WarFieldManager.getWarFieldData(warFieldFileName).layers[3]
     local width, height = layer.width, layer.height
     local mapSize       = {width = width, height = height}
 

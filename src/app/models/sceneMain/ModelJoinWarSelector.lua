@@ -5,6 +5,7 @@ local ActionCodeFunctions       = requireFW("src.app.utilities.ActionCodeFunctio
 local AuxiliaryFunctions        = requireFW("src.app.utilities.AuxiliaryFunctions")
 local LocalizationFunctions     = requireFW("src.app.utilities.LocalizationFunctions")
 local SingletonGetters          = requireFW("src.app.utilities.SingletonGetters")
+local WarFieldManager           = requireFW("src.app.utilities.WarFieldManager")
 local WebSocketManager          = requireFW("src.app.utilities.WebSocketManager")
 local Actor                     = requireFW("src.global.actors.Actor")
 
@@ -16,7 +17,7 @@ local ACTION_CODE_GET_JOINABLE_WAR_CONFIGURATIONS = ActionCodeFunctions.getActio
 -- The util functions.
 --------------------------------------------------------------------------------
 local function getPlayerNicknames(warConfiguration)
-    local playersCount = requireFW("res.data.templateWarField." .. warConfiguration.warFieldFileName).playersCount
+    local playersCount = WarFieldManager.getPlayersCount(warConfiguration.warFieldFileName)
     local names = {}
     local players = warConfiguration.players
 
@@ -72,7 +73,7 @@ local function createJoinableWarList(self, list)
     for warID, warConfiguration in pairs(list or {}) do
         local warFieldFileName = warConfiguration.warFieldFileName
         warList[#warList + 1]  = {
-            warFieldName = requireFW("res.data.templateWarField." .. warFieldFileName).warFieldName,
+            warFieldName = WarFieldManager.getWarFieldName(warFieldFileName),
             warID        = warID,
 
             callback     = function()

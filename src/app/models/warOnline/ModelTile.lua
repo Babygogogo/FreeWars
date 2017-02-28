@@ -66,7 +66,7 @@ local isTileVisibleToPlayerIndex   = VisibilityFunctions.isTileVisibleToPlayerIn
 --------------------------------------------------------------------------------
 -- The util functions.
 --------------------------------------------------------------------------------
-local function initWithTiledID(self, objectID, baseID, isPreview)
+local function initWithTiledID(self, objectID, baseID)
     self.m_InitialObjectID = self.m_InitialObjectID or objectID
     self.m_InitialBaseID   = self.m_InitialBaseID   or baseID
 
@@ -74,33 +74,27 @@ local function initWithTiledID(self, objectID, baseID, isPreview)
     self.m_BaseID   = baseID   or self.m_BaseID
     assert(self.m_ObjectID and self.m_BaseID, "ModelTile-initWithTiledID() failed to init self.m_ObjectID and/or self.m_BaseID.")
 
-    if (not isPreview) then
-        local template = GameConstantFunctions.getTemplateModelTileWithObjectAndBaseId(self.m_ObjectID, self.m_BaseID)
-        assert(template, "ModelTile-initWithTiledID() failed to get the template model tile with param objectID and baseID.")
+    local template = GameConstantFunctions.getTemplateModelTileWithObjectAndBaseId(self.m_ObjectID, self.m_BaseID)
+    assert(template, "ModelTile-initWithTiledID() failed to get the template model tile with param objectID and baseID.")
 
-        if (self.m_Template ~= template) then
-            self.m_Template = template
+    if (self.m_Template ~= template) then
+        self.m_Template = template
 
-            ComponentManager.unbindAllComponents(self)
-            for name, data in pairs(template) do
-                if (string.byte(name) > string.byte("z")) or (string.byte(name) < string.byte("a")) then
-                    ComponentManager.bindComponent(self, name, {template = data, instantialData = data})
-                end
+        ComponentManager.unbindAllComponents(self)
+        for name, data in pairs(template) do
+            if (string.byte(name) > string.byte("z")) or (string.byte(name) < string.byte("a")) then
+                ComponentManager.bindComponent(self, name, {template = data, instantialData = data})
             end
         end
     end
 end
 
-local function loadInstantialData(self, param, isPreview)
-    if (isPreview) then
-        ComponentManager.bindComponent(self, "GridIndexable", {instantialData = param.GridIndexable})
-    else
-        for name, data in pairs(param) do
-            if (string.byte(name) > string.byte("z")) or (string.byte(name) < string.byte("a")) then
-                local component = ComponentManager.getComponent(self, name)
-                if (component.loadInstantialData) then
-                    component:loadInstantialData(data)
-                end
+local function loadInstantialData(self, param)
+    for name, data in pairs(param) do
+        if (string.byte(name) > string.byte("z")) or (string.byte(name) < string.byte("a")) then
+            local component = ComponentManager.getComponent(self, name)
+            if (component.loadInstantialData) then
+                component:loadInstantialData(data)
             end
         end
     end
@@ -109,12 +103,12 @@ end
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
-function ModelTile:ctor(param, isPreview)
+function ModelTile:ctor(param)
     self.m_PositionIndex = param.positionIndex
     if ((param.objectID) or (param.baseID)) then
-        initWithTiledID(self, param.objectID, param.baseID, isPreview)
+        initWithTiledID(self, param.objectID, param.baseID)
     end
-    loadInstantialData(self, param, isPreview)
+    loadInstantialData(self, param)
 
     if (self.m_View) then
         self:initView()

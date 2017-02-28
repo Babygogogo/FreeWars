@@ -27,12 +27,8 @@ local ACTION_CODE_RUN_SCENE_WAR                  = ActionCodeFunctions.getAction
 --------------------------------------------------------------------------------
 -- The util functions.
 --------------------------------------------------------------------------------
-local function getWarFieldName(fileName)
-    return requireFW("res.data.templateWarField." .. fileName).warFieldName
-end
-
 local function getPlayerNicknames(warConfiguration, currentTime)
-    local playersCount = requireFW("res.data.templateWarField." .. warConfiguration.warFieldFileName).playersCount
+    local playersCount = WarFieldManager.getPlayersCount(warConfiguration.warFieldFileName)
     local players      = warConfiguration.players
     local names        = {}
 

@@ -31,19 +31,18 @@
 local ModelTileMap = requireFW("src.global.functions.class")("ModelTileMap")
 
 local GameConstantFunctions  = requireFW("src.app.utilities.GameConstantFunctions")
-local GridIndexFunctions     = requireFW("src.app.utilities.GridIndexFunctions")
 local SerializationFunctions = requireFW("src.app.utilities.SerializationFunctions")
 local SingletonGetters       = requireFW("src.app.utilities.SingletonGetters")
 local TableFunctions         = requireFW("src.app.utilities.TableFunctions")
 local VisibilityFunctions    = requireFW("src.app.utilities.VisibilityFunctions")
+local WarFieldManager        = requireFW("src.app.utilities.WarFieldManager")
 local Actor                  = requireFW("src.global.actors.Actor")
 
 local ceil          = math.ceil
 local isTileVisible = VisibilityFunctions.isTileVisibleToPlayerIndex
 local toErrMsg      = SerializationFunctions.toErrorMessage
 
-local IS_SERVER               = GameConstantFunctions.isServer()
-local TEMPLATE_WAR_FIELD_PATH = "res.data.templateWarField."
+local IS_SERVER = GameConstantFunctions.isServer()
 
 --------------------------------------------------------------------------------
 -- The util functions.
@@ -62,10 +61,10 @@ local function createEmptyMap(width)
     return map
 end
 
-local function createActorTilesMapWithWarFieldFileName(warFieldFileName, isPreview)
-    local templateWarField = requireFW(TEMPLATE_WAR_FIELD_PATH .. warFieldFileName)
-    local baseLayer        = templateWarField.layers[1]
-    local objectLayerData  = templateWarField.layers[2].data
+local function createActorTilesMapWithWarFieldFileName(warFieldFileName)
+    local warFieldData     = WarFieldManager.getWarFieldData(warFieldFileName)
+    local baseLayer        = warFieldData.layers[1]
+    local objectLayerData  = warFieldData.layers[2].data
     local width, height    = baseLayer.width, baseLayer.height
     local baseLayerData    = baseLayer.data
     local map              = createEmptyMap(width)
@@ -79,11 +78,7 @@ local function createActorTilesMapWithWarFieldFileName(warFieldFileName, isPrevi
                 baseID        = baseLayerData[idIndex],
                 GridIndexable = {x = x, y = y},
             }
-            local modelTile = Actor.createModel("warOnline.ModelTile", actorData, isPreview)
-
-            map[x][y] = (IS_SERVER)                                                                      and
-                (Actor.createWithModelAndViewInstance(modelTile))                                        or
-                (Actor.createWithModelAndViewInstance(modelTile, Actor.createView("common.ViewTile")))
+            map[x][y] = Actor.createWithModelAndViewName("warOnline.ModelTile", actorData, "common.ViewTile")
         end
     end
 
@@ -102,9 +97,9 @@ end
 
 local function resetActorTilesMap(map, mapSize, warFieldFileName)
     local width, height    = mapSize.width, mapSize.height
-    local templateWarField = requireFW(TEMPLATE_WAR_FIELD_PATH .. warFieldFileName)
-    local baseLayerData    = templateWarField.layers[1].data
-    local objectLayerData  = templateWarField.layers[2].data
+    local warFieldData     = WarFieldManager.getWarFieldData(warFieldFileName)
+    local baseLayerData    = warFieldData.layers[1].data
+    local objectLayerData  = warFieldData.layers[2].data
 
     for x = 1, width do
         for y = 1, height do
@@ -125,12 +120,12 @@ end
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
-function ModelTileMap:ctor(param, warFieldFileName, isPreview)
+function ModelTileMap:ctor(param, warFieldFileName)
     if (self.m_ActorTilesMap) then
         resetActorTilesMap(self.m_ActorTilesMap, self.m_MapSize, warFieldFileName)
         updateActorTilesMapWithTilesData(self.m_ActorTilesMap, self.m_MapSize.height, param.tiles)
     else
-        local map, mapSize = createActorTilesMapWithWarFieldFileName(warFieldFileName, isPreview)
+        local map, mapSize = createActorTilesMapWithWarFieldFileName(warFieldFileName)
         updateActorTilesMapWithTilesData(map, mapSize.height, (param) and (param.tiles) or (nil))
 
         self.m_ActorTilesMap = map
@@ -158,9 +153,9 @@ end
 function ModelTileMap:updateOnModelFogMapStartedRunning()
     assert(not IS_SERVER, "ModelTileMap:updateOnModelFogMapStartedRunning() this shouldn't be called on the server.")
 
-    local playerIndex = SingletonGetters.getPlayerIndexLoggedIn(self.m_ModelSceneWar)
+    local playerIndex = SingletonGetters.getPlayerIndexLoggedIn(self.m_ModelWar)
     self:forEachModelTile(function(modelTile)
-        modelTile:initHasFogOnClient(not isTileVisible(self.m_ModelSceneWar, modelTile:getGridIndex(), playerIndex))
+        modelTile:initHasFogOnClient(not isTileVisible(self.m_ModelWar, modelTile:getGridIndex(), playerIndex))
             :updateView()
     end)
 
@@ -192,7 +187,7 @@ end
 -- The callback functions on start running/script events.
 --------------------------------------------------------------------------------
 function ModelTileMap:onStartRunning(modelSceneWar)
-    self.m_ModelSceneWar    = modelSceneWar
+    self.m_ModelWar    = modelSceneWar
     self:forEachModelTile(function(modelTile)
         modelTile:onStartRunning(modelSceneWar)
     end)

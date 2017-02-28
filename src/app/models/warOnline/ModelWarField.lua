@@ -19,8 +19,7 @@ local ModelWarField = requireFW("src.global.functions.class")("ModelWarField")
 local SingletonGetters = requireFW("src.app.utilities.SingletonGetters")
 local Actor            = requireFW("src.global.actors.Actor")
 
-local IS_SERVER               = requireFW("src.app.utilities.GameConstantFunctions").isServer()
-local TEMPLATE_WAR_FIELD_PATH = "res.data.templateWarField."
+local IS_SERVER = requireFW("src.app.utilities.GameConstantFunctions").isServer()
 
 --------------------------------------------------------------------------------
 -- The private callback functions on script events.
@@ -175,12 +174,8 @@ end
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
-function ModelWarField:getWarFieldDisplayName()
-    return requireFW(TEMPLATE_WAR_FIELD_PATH .. self.m_WarFieldFileName).warFieldName
-end
-
-function ModelWarField:getWarFieldAuthorName()
-    return requireFW(TEMPLATE_WAR_FIELD_PATH .. self.m_WarFieldFileName).authorName
+function ModelWarField:getWarFieldFileName()
+    return self.m_WarFieldFileName
 end
 
 function ModelWarField:getModelActionPlanner()
