@@ -70,7 +70,7 @@ local function initActorActionPlanner(self)
 end
 
 local function initActorMapCursor(self, param)
-    self.m_ActorMapCursor = Actor.createWithModelAndViewName("warOnline.ModelMapCursor", param, "common.ViewMapCursor")
+    self.m_ActorMapCursor = Actor.createWithModelAndViewName("common.ModelMapCursor", param, "common.ViewMapCursor")
 end
 
 local function initActorGridEffect(self)

@@ -46,7 +46,7 @@ end
 
 local function initActorMapCursor(self)
     if (not self.m_ActorMapCursor) then
-        self.m_ActorMapCursor = Actor.createWithModelAndViewName("warReplay.ModelMapCursorForReplay", nil, "common.ViewMapCursor")
+        self.m_ActorMapCursor = Actor.createWithModelAndViewName("common.ModelMapCursor", nil, "common.ViewMapCursor")
     end
 end
 
