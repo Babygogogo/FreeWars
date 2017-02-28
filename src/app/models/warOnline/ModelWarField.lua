@@ -48,7 +48,7 @@ end
 -- The composition elements.
 --------------------------------------------------------------------------------
 local function initActorFogMap(self, fogMapData)
-    self.m_ActorFogMap = Actor.createWithModelAndViewInstance(Actor.createModel("warOnline.ModelFogMap", fogMapData, self.m_WarFieldFileName))
+    self.m_ActorFogMap = Actor.createWithModelAndViewInstance(Actor.createModel("common.ModelFogMap", fogMapData, self.m_WarFieldFileName))
 end
 
 local function initActorTileMap(self, tileMapData)

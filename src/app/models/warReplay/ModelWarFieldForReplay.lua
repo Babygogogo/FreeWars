@@ -31,7 +31,7 @@ end
 
 local function initActorFogMap(self, fogMapData)
     if (not self.m_ActorFogMap) then
-        local modelFogMap = Actor.createModel("warReplay.ModelFogMapForReplay", fogMapData, self.m_WarFieldFileName)
+        local modelFogMap = Actor.createModel("common.ModelFogMap", fogMapData, self.m_WarFieldFileName)
         self.m_ActorFogMap = Actor.createWithModelAndViewInstance(modelFogMap, Actor.createView("warReplay.ViewFogMapForReplay"))
     else
         self.m_ActorFogMap:getModel():ctor(fogMapData, self.m_WarFieldFileName)

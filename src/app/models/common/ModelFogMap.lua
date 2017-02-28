@@ -1,5 +1,5 @@
 
-local ModelFogMapForReplay = requireFW("src.global.functions.class")("ModelFogMapForReplay")
+local ModelFogMap = requireFW("src.global.functions.class")("ModelFogMap")
 
 local GridIndexFunctions     = requireFW("src.app.utilities.GridIndexFunctions")
 local SingletonGetters       = requireFW("src.app.utilities.SingletonGetters")
@@ -11,8 +11,10 @@ local getGridsWithinDistance         = GridIndexFunctions.getGridsWithinDistance
 local getModelPlayerManager          = SingletonGetters.getModelPlayerManager
 local getModelTileMap                = SingletonGetters.getModelTileMap
 local getModelUnitMap                = SingletonGetters.getModelUnitMap
+local getPlayerIndexLoggedIn         = SingletonGetters.getPlayerIndexLoggedIn
 
-local FORCING_FOG_CODE = {
+local IS_SERVER               = requireFW("src.app.utilities.GameConstantFunctions").isServer()
+local FORCING_FOG_CODE        = {
     None  = 0,
     Fog   = 1,
     Clear = 2,
@@ -120,7 +122,7 @@ local function updateMapForPaths(map, mapSize, origin, vision, canRevealHidingPl
 end
 
 local function updateMapForTilesOrUnits(map, mapSize, origin, vision, modifier)
-    assert((modifier == 1) or (modifier == -1), "ModelFogMapForReplay-updateMapForTilesOrUnits() invalid modifier: " .. (modifier or ""))
+    assert((modifier == 1) or (modifier == -1), "ModelFogMap-updateMapForTilesOrUnits() invalid modifier: " .. (modifier or ""))
     if (vision) then
         for _, gridIndex in pairs(getGridsWithinDistance(origin, 0, vision, mapSize)) do
             map[gridIndex.x][gridIndex.y] = map[gridIndex.x][gridIndex.y] + modifier
@@ -131,10 +133,9 @@ end
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
-function ModelFogMapForReplay:ctor(param, warFieldFileName)
+function ModelFogMap:ctor(param, warFieldFileName)
     param = param or {}
-    local mapSize                           = WarFieldManager.getMapSize(warFieldFileName)
-    self.m_MapSize                          = mapSize
+    self.m_MapSize                          = WarFieldManager.getMapSize(warFieldFileName)
     self.m_ForcingFogCode                   = param.forcingFogCode or FORCING_FOG_CODE.None
     self.m_ExpiringPlayerIndexForForcingFog = param.expiringPlayerIndexForForcingFog
     self.m_ExpiringTurnIndexForForcingFog   = param.expiringTurnIndexForForcingFog
@@ -142,19 +143,23 @@ function ModelFogMapForReplay:ctor(param, warFieldFileName)
     self.m_MapsForTiles                     = {}
     self.m_MapsForUnits                     = {}
 
+    local mapSize      = self.m_MapSize
     local mapsForPaths = param.mapsForPaths
     for playerIndex = 1, WarFieldManager.getPlayersCount(warFieldFileName) do
         self.m_MapsForPaths[playerIndex] = createSingleMap(mapSize, 0)
         self.m_MapsForTiles[playerIndex] = createSingleMap(mapSize, 0)
         self.m_MapsForUnits[playerIndex] = createSingleMap(mapSize, 0)
-        self:resetMapForPathsForPlayerIndex(playerIndex, (mapsForPaths) and (mapsForPaths[playerIndex].encodedFogMapForPaths) or (nil))
+
+        if ((mapsForPaths) and (mapsForPaths[playerIndex])) then
+            self:resetMapForPathsForPlayerIndex(playerIndex, mapsForPaths[playerIndex].encodedFogMapForPaths)
+        end
     end
 
     return self
 end
 
-function ModelFogMapForReplay:initView()
-    self.m_View:setMapSize(self.m_MapSize)
+function ModelFogMap:initView()
+    self.m_View:setMapSize(self:getMapSize())
 
     return self
 end
@@ -162,7 +167,7 @@ end
 --------------------------------------------------------------------------------
 -- The functions for serialization.
 --------------------------------------------------------------------------------
-function ModelFogMapForReplay:toSerializableTable()
+function ModelFogMap:toSerializableTable()
     return {
         forcingFogCode                   = self.m_ForcingFogCode,
         expiringTurnIndexForForcingFog   = self.m_ExpiringTurnIndexForForcingFog,
@@ -171,21 +176,34 @@ function ModelFogMapForReplay:toSerializableTable()
     }
 end
 
+function ModelFogMap:toSerializableTableForPlayerIndex(playerIndex)
+    return {
+        forcingFogCode                   = self.m_ForcingFogCode,
+        expiringTurnIndexForForcingFog   = self.m_ExpiringTurnIndexForForcingFog,
+        expiringPlayerIndexForForcingFog = self.m_ExpiringPlayerIndexForForcingFog,
+        mapsForPaths                     = createSerializableDataForMapsForPaths(self.m_MapsForPaths, self:getMapSize(), playerIndex),
+    }
+end
+
 --------------------------------------------------------------------------------
 -- The callback functions on start running/script events.
 --------------------------------------------------------------------------------
-function ModelFogMapForReplay:onStartRunning(modelWarReplay)
-    self.m_ModelWarReplay      = modelWarReplay
-    self.m_IsFogOfWarByDefault = modelWarReplay:isFogOfWarByDefault()
+function ModelFogMap:onStartRunning(modelWar)
+    self.m_ModelWar            = modelWar
+    self.m_IsFogOfWarByDefault = modelWar:isFogOfWarByDefault()
 
-    for playerIndex = 1, getModelPlayerManager(modelWarReplay):getPlayersCount() do
+    if ((IS_SERVER) or (SingletonGetters.isWarReplay(modelWar))) then
+        for playerIndex = 1, getModelPlayerManager(modelWar):getPlayersCount() do
+            self:resetMapForTilesForPlayerIndex(playerIndex)
+                :resetMapForUnitsForPlayerIndex(playerIndex)
+        end
+    else
+        local playerIndex = SingletonGetters.getPlayerIndexLoggedIn(modelWar)
         self:resetMapForTilesForPlayerIndex(playerIndex)
             :resetMapForUnitsForPlayerIndex(playerIndex)
     end
 
-    if (not modelWarReplay:isFastExecutingActions()) then
-        self:updateView()
-    end
+    self:updateView()
 
     return self
 end
@@ -193,35 +211,37 @@ end
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
-function ModelFogMapForReplay:updateView()
-    self.m_View:updateWithModelFogMap(self)
+function ModelFogMap:updateView()
+    if (self.m_View) then
+        self.m_View:updateWithModelFogMap(self)
+    end
 
     return self
 end
 
-function ModelFogMapForReplay:getModelWar()
-    assert(self.m_ModelWarReplay, "ModelFogMapForReplay:getModelWar() the model hasn't been set yet.")
-    return self.m_ModelWarReplay
+function ModelFogMap:getModelWar()
+    assert(self.m_ModelWar, "ModelFogMap:getModelWar() the method onStartRunning has not been called yet.")
+    return self.m_ModelWar
 end
 
-function ModelFogMapForReplay:getMapSize()
+function ModelFogMap:getMapSize()
     return self.m_MapSize
 end
 
-function ModelFogMapForReplay:isFogOfWarCurrently()
+function ModelFogMap:isFogOfWarCurrently()
     return (self:isEnablingFogByForce())
         or ((self.m_IsFogOfWarByDefault) and (not self:isDisablingFogByForce()))
 end
 
-function ModelFogMapForReplay:isEnablingFogByForce()
-    return self.m_ForcingFogCode == "Enabled"
+function ModelFogMap:isEnablingFogByForce()
+    return self.m_ForcingFogCode == FORCING_FOG_CODE.Fog
 end
 
-function ModelFogMapForReplay:isDisablingFogByForce()
-    return self.m_ForcingFogCode == "Disabled"
+function ModelFogMap:isDisablingFogByForce()
+    return self.m_ForcingFogCode == FORCING_FOG_CODE.Clear
 end
 
-function ModelFogMapForReplay:resetMapForPathsForPlayerIndex(playerIndex, data)
+function ModelFogMap:resetMapForPathsForPlayerIndex(playerIndex, data)
     local visibilityMap = self.m_MapsForPaths[playerIndex]
     local mapSize       = self:getMapSize()
     if (data) then
@@ -233,9 +253,9 @@ function ModelFogMapForReplay:resetMapForPathsForPlayerIndex(playerIndex, data)
     return self
 end
 
-function ModelFogMapForReplay:updateMapForPathsWithModelUnitAndPath(modelUnit, path)
-    local playerIndex = modelUnit:getPlayerIndex()
-    local canRevealHidingPlaces = false -- canRevealHidingPlacesWithUnits(getModelPlayerManager(self.m_ModelWarReplay):getModelPlayer(playerIndex):getModelSkillConfiguration())
+function ModelFogMap:updateMapForPathsWithModelUnitAndPath(modelUnit, path)
+    local playerIndex           = modelUnit:getPlayerIndex()
+    local canRevealHidingPlaces = false -- canRevealHidingPlacesWithUnits(getModelPlayerManager(self.m_ModelWar):getModelPlayer(playerIndex):getModelSkillConfiguration())
     local visibilityMap         = self.m_MapsForPaths[playerIndex]
     local mapSize               = self:getMapSize()
     for _, pathNode in ipairs(path) do
@@ -245,7 +265,7 @@ function ModelFogMapForReplay:updateMapForPathsWithModelUnitAndPath(modelUnit, p
     return self
 end
 
-function ModelFogMapForReplay:updateMapForPathsForPlayerIndexWithFlare(playerIndex, origin, radius)
+function ModelFogMap:updateMapForPathsForPlayerIndexWithFlare(playerIndex, origin, radius)
     local visibilityMap = self.m_MapsForPaths[playerIndex]
     for _, gridIndex in pairs(getGridsWithinDistance(origin, 0, radius, self:getMapSize())) do
         visibilityMap[gridIndex.x][gridIndex.y] = 2
@@ -254,55 +274,55 @@ function ModelFogMapForReplay:updateMapForPathsForPlayerIndexWithFlare(playerInd
     return self
 end
 
-function ModelFogMapForReplay:resetMapForTilesForPlayerIndex(playerIndex, visionModifier)
+function ModelFogMap:resetMapForTilesForPlayerIndex(playerIndex, visionModifier)
     local visibilityMap = self.m_MapsForTiles[playerIndex]
     local mapSize       = self:getMapSize()
     visionModifier      = visionModifier or 0
     fillSingleMapWithValue(visibilityMap, mapSize, 0)
-    getModelTileMap(self.m_ModelWarReplay):forEachModelTile(function(modelTile)
-        updateMapForTilesOrUnits(visibilityMap, mapSize, modelTile:getGridIndex(), getVisionForModelTileOrUnit(modelTile, playerIndex, visionModifier), 1)
+    getModelTileMap(self.m_ModelWar):forEachModelTile(function(modelTile)
+        updateMapForTilesOrUnits(visibilityMap, mapSize, modelTile:getGridIndex(), getVisionForModelTileOrUnit(modelTile, playerIndex, visionModifier) , 1)
     end)
 
     return self
 end
 
-function ModelFogMapForReplay:updateMapForTilesForPlayerIndexOnGettingOwnership(playerIndex, gridIndex, vision)
+function ModelFogMap:updateMapForTilesForPlayerIndexOnGettingOwnership(playerIndex, gridIndex, vision)
     updateMapForTilesOrUnits(self.m_MapsForTiles[playerIndex], self:getMapSize(), gridIndex, vision, 1)
 
     return self
 end
 
-function ModelFogMapForReplay:updateMapForTilesForPlayerIndexOnLosingOwnership(playerIndex, gridIndex, vision)
+function ModelFogMap:updateMapForTilesForPlayerIndexOnLosingOwnership(playerIndex, gridIndex, vision)
     updateMapForTilesOrUnits(self.m_MapsForTiles[playerIndex], self:getMapSize(), gridIndex, vision, -1)
 
     return self
 end
 
-function ModelFogMapForReplay:resetMapForUnitsForPlayerIndex(playerIndex, visionModifier)
+function ModelFogMap:resetMapForUnitsForPlayerIndex(playerIndex, visionModifier)
     local visibilityMap = self.m_MapsForUnits[playerIndex]
     local mapSize       = self:getMapSize()
     visionModifier      = visionModifier or 0
     fillSingleMapWithValue(visibilityMap, mapSize, 0)
-    getModelUnitMap(self.m_ModelWarReplay):forEachModelUnitOnMap(function(modelUnit)
+    getModelUnitMap(self.m_ModelWar):forEachModelUnitOnMap(function(modelUnit)
         updateMapForTilesOrUnits(visibilityMap, mapSize, modelUnit:getGridIndex(), getVisionForModelTileOrUnit(modelUnit, playerIndex, visionModifier), 1)
     end)
 
     return self
 end
 
-function ModelFogMapForReplay:updateMapForUnitsForPlayerIndexOnUnitArrive(playerIndex, gridIndex, vision)
+function ModelFogMap:updateMapForUnitsForPlayerIndexOnUnitArrive(playerIndex, gridIndex, vision)
     updateMapForTilesOrUnits(self.m_MapsForUnits[playerIndex], self:getMapSize(), gridIndex, vision, 1)
 
     return self
 end
 
-function ModelFogMapForReplay:updateMapForUnitsForPlayerIndexOnUnitLeave(playerIndex, gridIndex, vision)
+function ModelFogMap:updateMapForUnitsForPlayerIndexOnUnitLeave(playerIndex, gridIndex, vision)
     updateMapForTilesOrUnits(self.m_MapsForUnits[playerIndex], self:getMapSize(), gridIndex, vision, -1)
 
     return self
 end
 
-function ModelFogMapForReplay:getVisibilityOnGridForPlayerIndex(gridIndex, playerIndex)
+function ModelFogMap:getVisibilityOnGridForPlayerIndex(gridIndex, playerIndex)
     -- This function returns 3 numbers, indicating the visibility calculated with the move paths/tiles/units of the playerIndex.
     -- Each visibility can be 0 or 1:
     -- 0: The grid is out of vision completely.
@@ -323,4 +343,4 @@ function ModelFogMapForReplay:getVisibilityOnGridForPlayerIndex(gridIndex, playe
     end
 end
 
-return ModelFogMapForReplay
+return ModelFogMap
