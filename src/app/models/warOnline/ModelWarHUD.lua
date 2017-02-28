@@ -1,12 +1,12 @@
 
 --[[--------------------------------------------------------------------------------
--- ModelWarHUD是战局场景上的各个UI的集合。
+-- ModelWarHud是战局场景上的各个UI的集合。
 --
 -- 主要职责和使用场景举例：
 --   构造和显示各个UI。
 --
 -- 其他：
---  - ModelWarHUD目前由以下子actor组成：
+--  - ModelWarHud目前由以下子actor组成：
 --    - WarCommandMenu
 --    - MoneyEnergyInfo
 --    - ActionMenu
@@ -17,7 +17,7 @@
 --    - BattleInfo
 --]]--------------------------------------------------------------------------------
 
-local ModelWarHUD = class("ModelWarHUD")
+local ModelWarHud = class("ModelWarHud")
 
 local Actor = requireFW("src.global.actors.Actor")
 
@@ -25,63 +25,47 @@ local Actor = requireFW("src.global.actors.Actor")
 -- The composition actors.
 --------------------------------------------------------------------------------
 local function initActorWarCommandMenu(self)
-    if (not self.m_ActorWarCommandMenu) then
-        self.m_ActorWarCommandMenu = Actor.createWithModelAndViewName("warOnline.ModelWarCommandMenu", nil, "common.ViewWarCommandMenu")
-    end
+    self.m_ActorWarCommandMenu = Actor.createWithModelAndViewName("warOnline.ModelWarCommandMenu", nil, "common.ViewWarCommandMenu")
 end
 
 local function initActorMoneyEnergyInfo(self)
-    if (not self.m_ActorMoneyEnergyInfo) then
-        self.m_ActorMoneyEnergyInfo = Actor.createWithModelAndViewName("warOnline.ModelMoneyEnergyInfo", nil, "common.ViewMoneyEnergyInfo")
-    end
+    self.m_ActorMoneyEnergyInfo = Actor.createWithModelAndViewName("common.ModelMoneyEnergyInfo", nil, "common.ViewMoneyEnergyInfo")
 end
 
 local function initActorActionMenu(self)
-    if (not self.m_ActorActionMenu) then
-        self.m_ActorActionMenu = Actor.createWithModelAndViewName("warOnline.ModelActionMenu", nil, "warOnline.ViewActionMenu")
-    end
+    self.m_ActorActionMenu = Actor.createWithModelAndViewName("warOnline.ModelActionMenu", nil, "warOnline.ViewActionMenu")
 end
 
 local function initActorUnitDetail(self)
-    if (not self.m_ActorUnitDetail) then
-        self.m_ActorUnitDetail = Actor.createWithModelAndViewName("common.ModelUnitDetail", nil, "common.ViewUnitDetail")
-    end
+    self.m_ActorUnitDetail = Actor.createWithModelAndViewName("common.ModelUnitDetail", nil, "common.ViewUnitDetail")
 end
 
 local function initActorUnitInfo(self)
-    if (not self.m_ActorUnitInfo) then
-        local actor = Actor.createWithModelAndViewName("warOnline.ModelUnitInfo", nil, "common.ViewUnitInfo")
-        actor:getModel():setModelUnitDetail(self.m_ActorUnitDetail:getModel())
+    local actor = Actor.createWithModelAndViewName("warOnline.ModelUnitInfo", nil, "common.ViewUnitInfo")
+    actor:getModel():setModelUnitDetail(self.m_ActorUnitDetail:getModel())
 
-        self.m_ActorUnitInfo = actor
-    end
+    self.m_ActorUnitInfo = actor
 end
 
 local function initActorTileDetail(self)
-    if (not self.m_ActorTileDetail) then
-        self.m_ActorTileDetail = Actor.createWithModelAndViewName("common.ModelTileDetail", nil, "common.ViewTileDetail")
-    end
+    self.m_ActorTileDetail = Actor.createWithModelAndViewName("common.ModelTileDetail", nil, "common.ViewTileDetail")
 end
 
 local function initActorTileInfo(self)
-    if (not self.m_ActorTileInfo) then
-        local actor = Actor.createWithModelAndViewName("warOnline.ModelTileInfo", nil, "common.ViewTileInfo")
-        actor:getModel():setModelTileDetail(self.m_ActorTileDetail:getModel())
+    local actor = Actor.createWithModelAndViewName("warOnline.ModelTileInfo", nil, "common.ViewTileInfo")
+    actor:getModel():setModelTileDetail(self.m_ActorTileDetail:getModel())
 
-        self.m_ActorTileInfo = actor
-    end
+    self.m_ActorTileInfo = actor
 end
 
 local function initActorBattleInfo(self)
-    if (not self.m_ActorBattleInfo) then
-        self.m_ActorBattleInfo = Actor.createWithModelAndViewName("warOnline.ModelBattleInfo", nil, "warOnline.ViewBattleInfo")
-    end
+    self.m_ActorBattleInfo = Actor.createWithModelAndViewName("warOnline.ModelBattleInfo", nil, "warOnline.ViewBattleInfo")
 end
 
 --------------------------------------------------------------------------------
 -- The contructor and initializers.
 --------------------------------------------------------------------------------
-function ModelWarHUD:ctor()
+function ModelWarHud:ctor()
     initActorWarCommandMenu( self)
     initActorMoneyEnergyInfo(self)
     initActorActionMenu(     self)
@@ -94,9 +78,9 @@ function ModelWarHUD:ctor()
     return self
 end
 
-function ModelWarHUD:initView()
+function ModelWarHud:initView()
     local view = self.m_View
-    assert(view, "ModelWarHUD:initView() no view is attached to the actor of the model.")
+    assert(view, "ModelWarHud:initView() no view is attached to the actor of the model.")
 
     view:setViewActionMenu(     self.m_ActorActionMenu:     getView())
         :setViewBattleInfo(     self.m_ActorBattleInfo:     getView())
@@ -113,7 +97,7 @@ end
 --------------------------------------------------------------------------------
 -- The public callback function on start running.
 --------------------------------------------------------------------------------
-function ModelWarHUD:onStartRunning(modelSceneWar)
+function ModelWarHud:onStartRunning(modelSceneWar)
     self.m_ActorActionMenu     :getModel():onStartRunning(modelSceneWar)
     self.m_ActorBattleInfo     :getModel():onStartRunning(modelSceneWar)
     self.m_ActorMoneyEnergyInfo:getModel():onStartRunning(modelSceneWar)
@@ -127,8 +111,8 @@ end
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
-function ModelWarHUD:getModelWarCommandMenu()
+function ModelWarHud:getModelWarCommandMenu()
     return self.m_ActorWarCommandMenu:getModel()
 end
 
-return ModelWarHUD
+return ModelWarHud

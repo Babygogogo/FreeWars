@@ -7,7 +7,7 @@ local Actor = requireFW("src.global.actors.Actor")
 -- The composition actors.
 --------------------------------------------------------------------------------
 local function initActorMoneyEnergyInfo(self)
-    self.m_ActorMoneyEnergyInfo = Actor.createWithModelAndViewName("warReplay.ModelMoneyEnergyInfoForReplay", nil, "common.ViewMoneyEnergyInfo")
+    self.m_ActorMoneyEnergyInfo = Actor.createWithModelAndViewName("common.ModelMoneyEnergyInfo", nil, "common.ViewMoneyEnergyInfo")
 end
 
 local function initActorReplayController(self)

@@ -136,7 +136,7 @@ local function initActorWarField(self, warFieldData)
 end
 
 local function initActorWarHud(self)
-    self.m_ActorWarHud = Actor.createWithModelAndViewName("warOnline.ModelWarHUD", nil, "common.ViewWarHud")
+    self.m_ActorWarHud = Actor.createWithModelAndViewName("warOnline.ModelWarHud", nil, "common.ViewWarHud")
 end
 
 local function initActorTurnManager(self, turnData)
