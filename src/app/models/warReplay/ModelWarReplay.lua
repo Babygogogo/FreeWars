@@ -105,7 +105,7 @@ end
 
 local function initActorPlayerManager(self, playersData)
     if (not self.m_ActorPlayerManager) then
-        self.m_ActorPlayerManager = Actor.createWithModelAndViewName("warReplay.ModelPlayerManagerForReplay", playersData)
+        self.m_ActorPlayerManager = Actor.createWithModelAndViewName("common.ModelPlayerManager", playersData)
     else
         self.m_ActorPlayerManager:getModel():ctor(playersData)
     end

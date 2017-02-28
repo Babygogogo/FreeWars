@@ -124,7 +124,7 @@ local function initActorMessageIndicator(self)
 end
 
 local function initActorPlayerManager(self, playersData)
-    self.m_ActorPlayerManager = Actor.createWithModelAndViewName("warOnline.ModelPlayerManager", playersData)
+    self.m_ActorPlayerManager = Actor.createWithModelAndViewName("common.ModelPlayerManager", playersData)
 end
 
 local function initActorWeatherManager(self, weatherData)

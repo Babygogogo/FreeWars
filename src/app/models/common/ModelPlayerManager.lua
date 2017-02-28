@@ -17,6 +17,8 @@ local SingletonGetters = requireFW("src.app.utilities.SingletonGetters")
 local IS_SERVER        = requireFW("src.app.utilities.GameConstantFunctions").isServer()
 local WebSocketManager = (not IS_SERVER) and (requireFW("src.app.utilities.WebSocketManager")) or (nil)
 
+local ipairs = ipairs
+
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
@@ -42,7 +44,6 @@ function ModelPlayerManager:toSerializableTable()
 end
 
 function ModelPlayerManager:toSerializableTableForPlayerIndex(playerIndex)
-    --TODO: deal with the fog of war.
     return self:toSerializableTable()
 end
 
@@ -58,10 +59,10 @@ end
 --------------------------------------------------------------------------------
 -- The public callback function on start running.
 --------------------------------------------------------------------------------
-function ModelPlayerManager:onStartRunning(modelSceneWar)
-    self.m_ModelSceneWar = modelSceneWar
+function ModelPlayerManager:onStartRunning(modelWar)
+    self.m_IsWarReplay = SingletonGetters.isWarReplay(modelWar)
     self:forEachModelPlayer(function(modelPlayer)
-        modelPlayer:onStartRunning(modelSceneWar)
+        modelPlayer:onStartRunning(modelWar)
     end)
 
     if (not IS_SERVER) then
@@ -94,8 +95,7 @@ function ModelPlayerManager:getAlivePlayersCount()
 end
 
 function ModelPlayerManager:getPlayerIndexLoggedIn()
-    assert(not IS_SERVER,                                          "ModelPlayerManager:getPlayerIndexLoggedIn() this shouldn't be called on the server.")
-    assert(not SingletonGetters.isWarReplay(self.m_ModelSceneWar), "ModelPlayerManager:getPlayerIndexLoggedIn() this shouldn't be called in replay.")
+    assert((not IS_SERVER) and (not self.m_IsWarReplay), "ModelPlayerManager:getPlayerIndexLoggedIn() this shouldn't be called on the server or in replay.")
 
     return self.m_PlayerIndexLoggedIn, self.m_ModelPlayerLoggedIn
 end
