@@ -1,12 +1,12 @@
 
 --[[--------------------------------------------------------------------------------
--- ModelSceneWar是战局场景，同时也是游戏中最重要的场景。
+-- ModelWarOnline是战局场景，同时也是游戏中最重要的场景。
 --
 -- 主要职责和使用场景举例：
 --   维护战局中的所有信息
 --
 -- 其他：
---  - ModelSceneWar功能很多，因此分成多个不同的子actor来共同工作。目前这些子actor包括：
+--  - ModelWarOnline功能很多，因此分成多个不同的子actor来共同工作。目前这些子actor包括：
 --    - SceneWarHUD
 --    - WarField
 --    - PlayerManager
@@ -20,7 +20,7 @@
 --    采取model先行结算的方式可以避免很多问题，所以后续开发应该遵守同样的规范。
 --]]--------------------------------------------------------------------------------
 
-local ModelSceneWar = requireFW("src.global.functions.class")("ModelSceneWar")
+local ModelWarOnline = requireFW("src.global.functions.class")("ModelWarOnline")
 
 local ActionCodeFunctions    = requireFW("src.app.utilities.ActionCodeFunctions")
 local ActionExecutor         = requireFW("src.app.utilities.ActionExecutor")
@@ -44,7 +44,7 @@ local TIME_INTERVAL_FOR_ACTIONS         = 1
 -- The private callback function on web socket events.
 --------------------------------------------------------------------------------
 local function onWebSocketOpen(self, param)
-    print("ModelSceneWar-onWebSocketOpen()")
+    print("ModelWarOnline-onWebSocketOpen()")
     self:getModelMessageIndicator():showMessage(getLocalizedText(30, "ConnectionEstablished"))
 
     local modelTurnManager = self:getModelTurnManager()
@@ -62,7 +62,7 @@ end
 
 local function onWebSocketMessage(self, param)
     local actionCode = param.action.actionCode
-    print(string.format("ModelSceneWar-onWebSocketMessage() code: %d  name: %s  length: %d",
+    print(string.format("ModelWarOnline-onWebSocketMessage() code: %d  name: %s  length: %d",
         actionCode,
         ActionCodeFunctions.getActionName(actionCode),
         string.len(param.message))
@@ -73,12 +73,12 @@ local function onWebSocketMessage(self, param)
 end
 
 local function onWebSocketClose(self, param)
-    print("ModelSceneWar-onWebSocketClose()")
+    print("ModelWarOnline-onWebSocketClose()")
     self:getModelMessageIndicator():showMessage(getLocalizedText(31))
 end
 
 local function onWebSocketError(self, param)
-    print("ModelSceneWar-onWebSocketError()")
+    print("ModelWarOnline-onWebSocketError()")
     self:getModelMessageIndicator():showMessage(getLocalizedText(32, param.error))
 end
 
@@ -86,14 +86,14 @@ end
 -- The private functions for actions.
 --------------------------------------------------------------------------------
 local function setActionId(self, actionID)
-    assert(math.floor(actionID) == actionID, "ModelSceneWar-setActionId() invalid actionID: " .. (actionID or ""))
+    assert(math.floor(actionID) == actionID, "ModelWarOnline-setActionId() invalid actionID: " .. (actionID or ""))
     self.m_ActionID = actionID
 end
 
 local function cacheAction(self, action)
     local actionID = action.actionID
-    assert(not IS_SERVER,                 "ModelSceneWar-cacheAction() this should not happen on the server.")
-    assert(actionID > self:getActionId(), "ModelSceneWar-cacheAction() the action to be cached has been executed already.")
+    assert(not IS_SERVER,                 "ModelWarOnline-cacheAction() this should not happen on the server.")
+    assert(actionID > self:getActionId(), "ModelWarOnline-cacheAction() the action to be cached has been executed already.")
 
     self.m_CachedActions[actionID] = action
 
@@ -132,21 +132,21 @@ local function initActorWeatherManager(self, weatherData)
 end
 
 local function initActorWarField(self, warFieldData)
-    self.m_ActorWarField = Actor.createWithModelAndViewName("warOnline.ModelWarField", warFieldData, "common.ViewWarField")
+    self.m_ActorWarField = Actor.createWithModelAndViewName("warOnline.ModelWarFieldForOnline", warFieldData, "common.ViewWarField")
 end
 
 local function initActorWarHud(self)
-    self.m_ActorWarHud = Actor.createWithModelAndViewName("warOnline.ModelWarHud", nil, "common.ViewWarHud")
+    self.m_ActorWarHud = Actor.createWithModelAndViewName("warOnline.ModelWarHudForOnline", nil, "common.ViewWarHud")
 end
 
 local function initActorTurnManager(self, turnData)
-    self.m_ActorTurnManager = Actor.createWithModelAndViewName("warOnline.ModelTurnManager", turnData, "common.ViewTurnManager")
+    self.m_ActorTurnManager = Actor.createWithModelAndViewName("warOnline.ModelTurnManagerForOnline", turnData, "common.ViewTurnManager")
 end
 
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
-function ModelSceneWar:ctor(sceneData)
+function ModelWarOnline:ctor(sceneData)
     self.m_CachedActions              = {}
     self.m_EnergyGainModifier         = sceneData.energyGainModifier
     self.m_EnterTurnTime              = sceneData.enterTurnTime
@@ -184,8 +184,8 @@ function ModelSceneWar:ctor(sceneData)
     return self
 end
 
-function ModelSceneWar:initView()
-    assert(self.m_View, "ModelSceneWar:initView() no view is attached to the owner actor of the model.")
+function ModelWarOnline:initView()
+    assert(self.m_View, "ModelWarOnline:initView() no view is attached to the owner actor of the model.")
     self.m_View:setViewChatManager(self.m_ActorChatManager     :getView())
         :setViewConfirmBox(        self.m_ActorConfirmBox      :getView())
         :setViewWarField(          self.m_ActorWarField        :getView())
@@ -199,7 +199,7 @@ end
 --------------------------------------------------------------------------------
 -- The functions for serialization.
 --------------------------------------------------------------------------------
-function ModelSceneWar:toSerializableTable()
+function ModelWarOnline:toSerializableTable()
     return {
         actionID              = self:getActionId(),
         energyGainModifier    = self.m_EnergyGainModifier,
@@ -228,7 +228,7 @@ function ModelSceneWar:toSerializableTable()
     }
 end
 
-function ModelSceneWar:toSerializableTableForPlayerIndex(playerIndex)
+function ModelWarOnline:toSerializableTableForPlayerIndex(playerIndex)
     return {
         actionID              = self:getActionId(),
         energyGainModifier    = self.m_EnergyGainModifier,
@@ -257,7 +257,7 @@ function ModelSceneWar:toSerializableTableForPlayerIndex(playerIndex)
     }
 end
 
-function ModelSceneWar:toSerializableReplayData()
+function ModelWarOnline:toSerializableReplayData()
     return {
         actionID              = 0,
         energyGainModifier    = self.m_EnergyGainModifier,
@@ -289,7 +289,7 @@ end
 --------------------------------------------------------------------------------
 -- The callback functions on start/stop running and script events.
 --------------------------------------------------------------------------------
-function ModelSceneWar:onStartRunning(ignoreWarMusic)
+function ModelWarOnline:onStartRunning(ignoreWarMusic)
     local modelTurnManager = self:getModelTurnManager()
     modelTurnManager            :onStartRunning(self)
     self:getModelPlayerManager():onStartRunning(self)
@@ -309,11 +309,11 @@ function ModelSceneWar:onStartRunning(ignoreWarMusic)
     return self
 end
 
-function ModelSceneWar:onStopRunning()
+function ModelWarOnline:onStopRunning()
     return self
 end
 
-function ModelSceneWar:onWebSocketEvent(eventName, param)
+function ModelWarOnline:onWebSocketEvent(eventName, param)
     if     (eventName == "open")    then onWebSocketOpen(   self, param)
     elseif (eventName == "message") then onWebSocketMessage(self, param)
     elseif (eventName == "close")   then onWebSocketClose(  self, param)
@@ -326,20 +326,20 @@ end
 --------------------------------------------------------------------------------
 -- The public functions/accessors.
 --------------------------------------------------------------------------------
-ModelSceneWar.isModelSceneWar = true
+ModelWarOnline.isModelSceneWar = true
 
-function ModelSceneWar:isWarReplay()
+function ModelWarOnline:isWarReplay()
     return false
 end
 
-function ModelSceneWar:executeAction(action)
+function ModelWarOnline:executeAction(action)
     local warID        = action.warID
     local actionID     = action.actionID
     local selfActionID = self:getActionId()
     if (IS_SERVER) then
-        assert(warID == self:getWarId(),  "ModelSceneWar:executeAction() invalid action.warID:" .. (warID or ""))
-        assert(actionID == selfActionID + 1, "ModelSceneWar:executeAction() invalid action.actionID:" .. (actionID or ""))
-        assert(not self:isExecutingAction(), "ModelSceneWar:executeAction() another action is being executed. This should not happen.")
+        assert(warID == self:getWarId(),  "ModelWarOnline:executeAction() invalid action.warID:" .. (warID or ""))
+        assert(actionID == selfActionID + 1, "ModelWarOnline:executeAction() invalid action.actionID:" .. (actionID or ""))
+        assert(not self:isExecutingAction(), "ModelWarOnline:executeAction() another action is being executed. This should not happen.")
 
         setActionId(self, actionID)
         ActionExecutor.execute(action, self)
@@ -373,11 +373,11 @@ function ModelSceneWar:executeAction(action)
     return self
 end
 
-function ModelSceneWar:isExecutingAction()
+function ModelWarOnline:isExecutingAction()
     return self.m_IsExecutingAction
 end
 
-function ModelSceneWar:setExecutingAction(executing)
+function ModelWarOnline:setExecutingAction(executing)
     assert(self.m_IsExecutingAction ~= executing)
     self.m_IsExecutingAction = executing
 
@@ -385,7 +385,7 @@ function ModelSceneWar:setExecutingAction(executing)
         local actionID = self:getActionId() + 1
         local action = self.m_CachedActions[actionID]
         if (action) then
-            assert(not IS_SERVER, "ModelSceneWar:setExecutingAction() there should not be any cached actions on the server.")
+            assert(not IS_SERVER, "ModelWarOnline:setExecutingAction() there should not be any cached actions on the server.")
             self.m_CachedActions[actionID] = nil
             self.m_IsExecutingAction       = true
             self.m_View:runAction(cc.Sequence:create(
@@ -401,142 +401,142 @@ function ModelSceneWar:setExecutingAction(executing)
     return self
 end
 
-function ModelSceneWar:getActionId()
+function ModelWarOnline:getActionId()
     return self.m_ActionID
 end
 
-function ModelSceneWar:getWarId()
+function ModelWarOnline:getWarId()
     return self.m_WarID
 end
 
-function ModelSceneWar:getEnergyGainModifier()
+function ModelWarOnline:getEnergyGainModifier()
     return self.m_EnergyGainModifier
 end
 
-function ModelSceneWar:isActiveSkillEnabled()
+function ModelWarOnline:isActiveSkillEnabled()
     return self.m_IsActiveSkillEnabled
 end
 
-function ModelSceneWar:isPassiveSkillEnabled()
+function ModelWarOnline:isPassiveSkillEnabled()
     return self.m_IsPassiveSkillEnabled
 end
 
-function ModelSceneWar:getIncomeModifier()
+function ModelWarOnline:getIncomeModifier()
     return self.m_IncomeModifier
 end
 
-function ModelSceneWar:getIntervalUntilBoot()
+function ModelWarOnline:getIntervalUntilBoot()
     return self.m_IntervalUntilBoot
 end
 
-function ModelSceneWar:isFogOfWarByDefault()
+function ModelWarOnline:isFogOfWarByDefault()
     return self.m_IsFogOfWarByDefault
 end
 
-function ModelSceneWar:isRankMatch()
+function ModelWarOnline:isRankMatch()
     return self.m_IsRankMatch
 end
 
-function ModelSceneWar:getStartingEnergy()
+function ModelWarOnline:getStartingEnergy()
     return self.m_StartingEnergy
 end
 
-function ModelSceneWar:getStartingFund()
+function ModelWarOnline:getStartingFund()
     return self.m_StartingFund
 end
 
-function ModelSceneWar:getEnterTurnTime()
+function ModelWarOnline:getEnterTurnTime()
     return self.m_EnterTurnTime
 end
 
-function ModelSceneWar:setEnterTurnTime(time)
+function ModelWarOnline:setEnterTurnTime(time)
     self.m_EnterTurnTime = time
 
     return self
 end
 
-function ModelSceneWar:isEnded()
+function ModelWarOnline:isEnded()
     return self.m_IsWarEnded
 end
 
-function ModelSceneWar:setEnded(ended)
+function ModelWarOnline:setEnded(ended)
     self.m_IsWarEnded = ended
 
     return self
 end
 
-function ModelSceneWar:getRemainingVotesForDraw()
+function ModelWarOnline:getRemainingVotesForDraw()
     return self.m_RemainingVotesForDraw
 end
 
-function ModelSceneWar:setRemainingVotesForDraw(votesCount)
+function ModelWarOnline:setRemainingVotesForDraw(votesCount)
     self.m_RemainingVotesForDraw = votesCount
 
     return self
 end
 
-function ModelSceneWar:getModelChatManager()
+function ModelWarOnline:getModelChatManager()
     return self.m_ActorChatManager:getModel()
 end
 
-function ModelSceneWar:getModelConfirmBox()
+function ModelWarOnline:getModelConfirmBox()
     return self.m_ActorConfirmBox:getModel()
 end
 
-function ModelSceneWar:getModelMessageIndicator()
+function ModelWarOnline:getModelMessageIndicator()
     return self.m_ActorMessageIndicator:getModel()
 end
 
-function ModelSceneWar:getModelTurnManager()
+function ModelWarOnline:getModelTurnManager()
     return self.m_ActorTurnManager:getModel()
 end
 
-function ModelSceneWar:getModelPlayerManager()
+function ModelWarOnline:getModelPlayerManager()
     return self.m_ActorPlayerManager:getModel()
 end
 
-function ModelSceneWar:getModelWeatherManager()
+function ModelWarOnline:getModelWeatherManager()
     return self.m_ActorWeatherManager:getModel()
 end
 
-function ModelSceneWar:getModelWarField()
+function ModelWarOnline:getModelWarField()
     return self.m_ActorWarField:getModel()
 end
 
-function ModelSceneWar:getModelWarHud()
+function ModelWarOnline:getModelWarHud()
     return self.m_ActorWarHud:getModel()
 end
 
-function ModelSceneWar:getScriptEventDispatcher()
+function ModelWarOnline:getScriptEventDispatcher()
     return self.m_ScriptEventDispatcher
 end
 
-function ModelSceneWar:showEffectEndWithDraw(callback)
-    assert(not IS_SERVER, "ModelSceneWar:showEffectEndWithDraw() should not be invoked on the server.")
+function ModelWarOnline:showEffectEndWithDraw(callback)
+    assert(not IS_SERVER, "ModelWarOnline:showEffectEndWithDraw() should not be invoked on the server.")
     self.m_View:showEffectEndWithDraw(callback)
 
     return self
 end
 
-function ModelSceneWar:showEffectSurrender(callback)
-    assert(not IS_SERVER, "ModelSceneWar:showEffectSurrender() should not be invoked on the server.")
+function ModelWarOnline:showEffectSurrender(callback)
+    assert(not IS_SERVER, "ModelWarOnline:showEffectSurrender() should not be invoked on the server.")
     self.m_View:showEffectSurrender(callback)
 
     return self
 end
 
-function ModelSceneWar:showEffectWin(callback)
-    assert(not IS_SERVER, "ModelSceneWar:showEffectWin() should not be invoked on the server.")
+function ModelWarOnline:showEffectWin(callback)
+    assert(not IS_SERVER, "ModelWarOnline:showEffectWin() should not be invoked on the server.")
     self.m_View:showEffectWin(callback)
 
     return self
 end
 
-function ModelSceneWar:showEffectLose(callback)
-    assert(not IS_SERVER, "ModelSceneWar:showEffectLose() should not be invoked on the server.")
+function ModelWarOnline:showEffectLose(callback)
+    assert(not IS_SERVER, "ModelWarOnline:showEffectLose() should not be invoked on the server.")
     self.m_View:showEffectLose(callback)
 
     return self
 end
 
-return ModelSceneWar
+return ModelWarOnline

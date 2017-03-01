@@ -1,5 +1,5 @@
 
-local ModelSkillConfigurator = class("ModelSkillConfigurator")
+local ModelSkillConfiguratorForOnline = class("ModelSkillConfiguratorForOnline")
 
 local ActionCodeFunctions       = requireFW("src.app.utilities.ActionCodeFunctions")
 local AuxiliaryFunctions        = requireFW("src.app.utilities.AuxiliaryFunctions")
@@ -349,7 +349,7 @@ end
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
-function ModelSkillConfigurator:ctor()
+function ModelSkillConfiguratorForOnline:ctor()
     initItemActivateActiveSkill( self)
     initItemCostListActiveSkill( self)
     initItemCostListPassiveSkill(self)
@@ -362,13 +362,13 @@ function ModelSkillConfigurator:ctor()
     return self
 end
 
-function ModelSkillConfigurator:setCallbackOnButtonBackTouched(callback)
+function ModelSkillConfiguratorForOnline:setCallbackOnButtonBackTouched(callback)
     self.m_OnButtonBackTouched = callback
 
     return self
 end
 
-function ModelSkillConfigurator:onStartRunning(modelSceneWar)
+function ModelSkillConfiguratorForOnline:onStartRunning(modelSceneWar)
     self.m_ModelSceneWar = modelSceneWar
     SingletonGetters.getScriptEventDispatcher(modelSceneWar)
         :addEventListener("EvtIsWaitingForServerResponse", self)
@@ -376,7 +376,7 @@ function ModelSkillConfigurator:onStartRunning(modelSceneWar)
     return self
 end
 
-function ModelSkillConfigurator:onEvent(event)
+function ModelSkillConfiguratorForOnline:onEvent(event)
     local eventName = event.name
     if (eventName == "EvtIsWaitingForServerResponse") then onEvtIsWaitingForServerResponse(self, event)
     end
@@ -387,11 +387,11 @@ end
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
-function ModelSkillConfigurator:isEnabled()
+function ModelSkillConfiguratorForOnline:isEnabled()
     return self.m_IsEnabled
 end
 
-function ModelSkillConfigurator:setEnabled(enabled)
+function ModelSkillConfiguratorForOnline:setEnabled(enabled)
     self.m_IsEnabled = enabled
     if (enabled) then
         setStateMain(self)
@@ -404,17 +404,17 @@ function ModelSkillConfigurator:setEnabled(enabled)
     return self
 end
 
-function ModelSkillConfigurator:onButtonBackTouched()
+function ModelSkillConfiguratorForOnline:onButtonBackTouched()
     local state = self.m_State
     if     (state == "stateMain")                    then self.m_OnButtonBackTouched()
     elseif (state == "stateActivateActiveSkill")     then setStateMain(self)
     elseif (state == "stateChooseActiveSkillLevel")  then setStateActivateActiveSkill(self)
     elseif (state == "stateChoosePassiveSkillLevel") then setStateResearchPassiveSkill(self)
     elseif (state == "stateResearchPassiveSkill")    then setStateMain(self)
-    else                                                  error("ModelSkillConfigurator:onButtonBackTouched() invalid state: " .. (state or ""))
+    else                                                  error("ModelSkillConfiguratorForOnline:onButtonBackTouched() invalid state: " .. (state or ""))
     end
 
     return self
 end
 
-return ModelSkillConfigurator
+return ModelSkillConfiguratorForOnline

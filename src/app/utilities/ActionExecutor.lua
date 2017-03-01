@@ -98,7 +98,7 @@ local function produceActorUnit(modelSceneWar, tiledID, unitID, gridIndex)
         unitID        = unitID,
         GridIndexable = {x = gridIndex.x, y = gridIndex.y},
     }
-    local actorUnit = Actor.createWithModelAndViewName("warOnline.ModelUnit", actorData, "common.ViewUnit")
+    local actorUnit = Actor.createWithModelAndViewName("warOnline.ModelUnitForOnline", actorData, "common.ViewUnit")
     local modelUnit = actorUnit:getModel()
     promoteModelUnitOnProduce(modelUnit, modelSceneWar)
     modelUnit:setStateActioned()
@@ -128,7 +128,7 @@ local function addActorUnitsWithUnitsData(modelSceneWar, unitsData, isViewVisibl
     if (unitsData) then
         local modelUnitMap = getModelUnitMap(modelSceneWar)
         for unitID, unitData in pairs(unitsData) do
-            local actorUnit = Actor.createWithModelAndViewName("warOnline.ModelUnit", unitData, "common.ViewUnit")
+            local actorUnit = Actor.createWithModelAndViewName("warOnline.ModelUnitForOnline", unitData, "common.ViewUnit")
             actorUnit:getModel():onStartRunning(modelSceneWar)
                 :updateView()
                 :setViewVisible(isViewVisible)
@@ -569,7 +569,7 @@ local function executeReloadSceneWar(action, modelScene)
             getModelMessageIndicator(modelScene):showPersistentMessage(getLocalizedText(action.messageCode, unpack(action.messageParams or {})))
         end
 
-        local actorSceneWar = Actor.createWithModelAndViewName("warOnline.ModelSceneWar", warData, "common.ViewSceneWar")
+        local actorSceneWar = Actor.createWithModelAndViewName("warOnline.ModelWarOnline", warData, "common.ViewSceneWar")
         ActorManager.setAndRunRootActor(actorSceneWar, "FADE", 1)
     end
 end

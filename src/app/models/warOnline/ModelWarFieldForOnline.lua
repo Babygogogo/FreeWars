@@ -1,12 +1,12 @@
 
 --[[--------------------------------------------------------------------------------
--- ModelWarField是战局场景中除了UI元素以外的其他元素的集合。
+-- ModelWarFieldForOnline是战局场景中除了UI元素以外的其他元素的集合。
 --
 -- 主要职责和使用场景举例：
---   ModelWarField自身功能不多，更多的是扮演了各个子actor的容器的角色。
+--   ModelWarFieldForOnline自身功能不多，更多的是扮演了各个子actor的容器的角色。
 --
 -- 其他：
---   - ModelWarField目前包括以下子actor：
+--   - ModelWarFieldForOnline目前包括以下子actor：
 --     - TileMap
 --     - UnitMap
 --     - MapCursor（server不含）
@@ -14,7 +14,7 @@
 --     - GridEffect（server不含）
 --]]--------------------------------------------------------------------------------
 
-local ModelWarField = requireFW("src.global.functions.class")("ModelWarField")
+local ModelWarFieldForOnline = requireFW("src.global.functions.class")("ModelWarFieldForOnline")
 
 local SingletonGetters = requireFW("src.app.utilities.SingletonGetters")
 local Actor            = requireFW("src.global.actors.Actor")
@@ -51,21 +51,21 @@ local function initActorFogMap(self, fogMapData)
 end
 
 local function initActorTileMap(self, tileMapData)
-    local modelTileMap  = Actor.createModel("warOnline.ModelTileMap", tileMapData, self.m_WarFieldFileName)
+    local modelTileMap  = Actor.createModel("warOnline.ModelTileMapForOnline", tileMapData, self.m_WarFieldFileName)
     self.m_ActorTileMap = (IS_SERVER)                                                                  and
         (Actor.createWithModelAndViewInstance(modelTileMap))                                           or
         (Actor.createWithModelAndViewInstance(modelTileMap, Actor.createView("common.ViewTileMap")))
 end
 
 local function initActorUnitMap(self, unitMapData)
-    local modelUnitMap  = Actor.createModel("warOnline.ModelUnitMap", unitMapData, self.m_WarFieldFileName)
+    local modelUnitMap  = Actor.createModel("warOnline.ModelUnitMapForOnline", unitMapData, self.m_WarFieldFileName)
     self.m_ActorUnitMap = (IS_SERVER)                                                                  and
         (Actor.createWithModelAndViewInstance(modelUnitMap))                                           or
         (Actor.createWithModelAndViewInstance(modelUnitMap, Actor.createView("common.ViewUnitMap")))
 end
 
 local function initActorActionPlanner(self)
-    self.m_ActorActionPlanner = Actor.createWithModelAndViewName("warOnline.ModelActionPlanner", nil, "common.ViewActionPlanner")
+    self.m_ActorActionPlanner = Actor.createWithModelAndViewName("warOnline.ModelActionPlannerForOnline", nil, "common.ViewActionPlanner")
 end
 
 local function initActorMapCursor(self, param)
@@ -79,7 +79,7 @@ end
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
-function ModelWarField:ctor(warFieldData)
+function ModelWarFieldForOnline:ctor(warFieldData)
     self.m_WarFieldFileName = warFieldData.warFieldFileName
     initActorFogMap( self, warFieldData.fogMap)
     initActorTileMap(self, warFieldData.tileMap)
@@ -94,8 +94,8 @@ function ModelWarField:ctor(warFieldData)
     return self
 end
 
-function ModelWarField:initView()
-    assert(self.m_View, "ModelWarField:initView() no view is attached to the owner actor of the model.")
+function ModelWarFieldForOnline:initView()
+    assert(self.m_View, "ModelWarFieldForOnline:initView() no view is attached to the owner actor of the model.")
     self.m_View:setViewTileMap(self.m_ActorTileMap      :getView())
         :setViewUnitMap(       self.m_ActorUnitMap      :getView())
         :setViewActionPlanner( self.m_ActorActionPlanner:getView())
@@ -115,7 +115,7 @@ end
 --------------------------------------------------------------------------------
 -- The functions for serialization.
 --------------------------------------------------------------------------------
-function ModelWarField:toSerializableTable()
+function ModelWarFieldForOnline:toSerializableTable()
     return {
         warFieldFileName = self.m_WarFieldFileName,
         fogMap           = self:getModelFogMap() :toSerializableTable(),
@@ -124,7 +124,7 @@ function ModelWarField:toSerializableTable()
     }
 end
 
-function ModelWarField:toSerializableTableForPlayerIndex(playerIndex)
+function ModelWarFieldForOnline:toSerializableTableForPlayerIndex(playerIndex)
     return {
         warFieldFileName = self.m_WarFieldFileName,
         fogMap           = self:getModelFogMap() :toSerializableTableForPlayerIndex(playerIndex),
@@ -133,14 +133,14 @@ function ModelWarField:toSerializableTableForPlayerIndex(playerIndex)
     }
 end
 
-function ModelWarField:toSerializableReplayData()
+function ModelWarFieldForOnline:toSerializableReplayData()
     return {warFieldFileName = self.m_WarFieldFileName}
 end
 
 --------------------------------------------------------------------------------
 -- The callback functions on start running/script events.
 --------------------------------------------------------------------------------
-function ModelWarField:onStartRunning(modelSceneWar)
+function ModelWarFieldForOnline:onStartRunning(modelSceneWar)
     self:getModelTileMap():onStartRunning(modelSceneWar)
     self:getModelUnitMap():onStartRunning(modelSceneWar)
     self:getModelFogMap() :onStartRunning(modelSceneWar)
@@ -161,7 +161,7 @@ function ModelWarField:onStartRunning(modelSceneWar)
     return self
 end
 
-function ModelWarField:onEvent(event)
+function ModelWarFieldForOnline:onEvent(event)
     local eventName = event.name
     if     (eventName == "EvtDragField")            then onEvtDragField(           self, event)
     elseif (eventName == "EvtZoomFieldWithScroll")  then onEvtZoomFieldWithScroll( self, event)
@@ -174,32 +174,32 @@ end
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
-function ModelWarField:getWarFieldFileName()
+function ModelWarFieldForOnline:getWarFieldFileName()
     return self.m_WarFieldFileName
 end
 
-function ModelWarField:getModelActionPlanner()
+function ModelWarFieldForOnline:getModelActionPlanner()
     return self.m_ActorActionPlanner:getModel()
 end
 
-function ModelWarField:getModelFogMap()
+function ModelWarFieldForOnline:getModelFogMap()
     return self.m_ActorFogMap:getModel()
 end
 
-function ModelWarField:getModelUnitMap()
+function ModelWarFieldForOnline:getModelUnitMap()
     return self.m_ActorUnitMap:getModel()
 end
 
-function ModelWarField:getModelTileMap()
+function ModelWarFieldForOnline:getModelTileMap()
     return self.m_ActorTileMap:getModel()
 end
 
-function ModelWarField:getModelMapCursor()
+function ModelWarFieldForOnline:getModelMapCursor()
     return self.m_ActorMapCursor:getModel()
 end
 
-function ModelWarField:getModelGridEffect()
+function ModelWarFieldForOnline:getModelGridEffect()
     return self.m_ActorGridEffect:getModel()
 end
 
-return ModelWarField
+return ModelWarFieldForOnline

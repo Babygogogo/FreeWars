@@ -1,13 +1,13 @@
 
 --[[--------------------------------------------------------------------------------
--- ModelTile是战场上的一块地形。
+-- ModelTileForOnline是战场上的一块地形。
 --
 -- 主要职责和使用场景举例：
 --   构造地块，维护相关数值，提供接口给外界访问
 --
 -- 其他：
 --   - ObjectID与BaseID，以及tile为何需要分层
---     ObjectID与BaseID实质上也是tiledID，但因为tile需要分层（某些情况不能只用1个tiledID来表示ModelTile），所以在tile内部根据情况，需要区分这两种id。
+--     ObjectID与BaseID实质上也是tiledID，但因为tile需要分层（某些情况不能只用1个tiledID来表示ModelTileForOnline），所以在tile内部根据情况，需要区分这两种id。
 --     - 考虑plain地形。plain没有特殊功能，因此只用一个tiledID就足够表示了。类似的情况下，该tiledID就是BaseID。
 --
 --     - 考虑meteor地形。meteor被击破后，残留的地形既可能是sea，也可能是plain或其他。
@@ -35,13 +35,13 @@
 --     顺带一提，在保存战局时，instantialData是肯定需要保存下来的。为避免保存无意义数据，相关代码需要判断tile当前状态与模板有何不同，只保存不同的部分即可。
 --     此外，ModelUnit中同样有instantialData的概念，其意义和这里所说的一致。
 --
---   - ModelTile（以及ModelUnit）是component的重度使用者。即使是GridIndex这样的所有ModelTile都具有的属性，也是通过绑定GridIndexable这个component来持有的。
---     之所以如此依赖component，是因为我认为这样可以减低ModelTile本身的理解复杂度。
---     虽然理解component机制需要花一点功夫（参看ComponentManager与各component的注释），但一旦理解，那么不管ModelTile绑定了多少component，理解起来都很轻松。
---     相对的，如果不用component，那么ModelTile很可能要写的很长（我看到长文件会晕），理解也更费力。
+--   - ModelTileForOnline（以及ModelUnit）是component的重度使用者。即使是GridIndex这样的所有ModelTileForOnline都具有的属性，也是通过绑定GridIndexable这个component来持有的。
+--     之所以如此依赖component，是因为我认为这样可以减低ModelTileForOnline本身的理解复杂度。
+--     虽然理解component机制需要花一点功夫（参看ComponentManager与各component的注释），但一旦理解，那么不管ModelTileForOnline绑定了多少component，理解起来都很轻松。
+--     相对的，如果不用component，那么ModelTileForOnline很可能要写的很长（我看到长文件会晕），理解也更费力。
 --
---   - ModelTile的构造流程（ModelUnit与此类似）
---     ModelTile需要由objectID，baseID以及instantialData来构造。
+--   - ModelTileForOnline的构造流程（ModelUnit与此类似）
+--     ModelTileForOnline需要由objectID，baseID以及instantialData来构造。
 --     1. 使用objectID与baseID，通过GameConstantFunctions获取模板（objectID可以不存在，如果构造的刚好是base地形）
 --     2. 按照模板进行构造
 --        2.1. 直接用self.m_Template指向模板（模板中存在某些常量数据，一个个拷贝到tile中没有太多意义，不如直接指向模板以便以后访问。当然，决不能改变模板中的内容）
@@ -49,7 +49,7 @@
 --     3. 读取instantialData中的数据
 --]]--------------------------------------------------------------------------------
 
-local ModelTile = requireFW("src.global.functions.class")("ModelTile")
+local ModelTileForOnline = requireFW("src.global.functions.class")("ModelTileForOnline")
 
 local GameConstantFunctions = requireFW("src.app.utilities.GameConstantFunctions")
 local LocalizationFunctions = requireFW("src.app.utilities.LocalizationFunctions")
@@ -72,10 +72,10 @@ local function initWithTiledID(self, objectID, baseID)
 
     self.m_ObjectID = objectID or self.m_ObjectID
     self.m_BaseID   = baseID   or self.m_BaseID
-    assert(self.m_ObjectID and self.m_BaseID, "ModelTile-initWithTiledID() failed to init self.m_ObjectID and/or self.m_BaseID.")
+    assert(self.m_ObjectID and self.m_BaseID, "ModelTileForOnline-initWithTiledID() failed to init self.m_ObjectID and/or self.m_BaseID.")
 
     local template = GameConstantFunctions.getTemplateModelTileWithObjectAndBaseId(self.m_ObjectID, self.m_BaseID)
-    assert(template, "ModelTile-initWithTiledID() failed to get the template model tile with param objectID and baseID.")
+    assert(template, "ModelTileForOnline-initWithTiledID() failed to get the template model tile with param objectID and baseID.")
 
     if (self.m_Template ~= template) then
         self.m_Template = template
@@ -103,7 +103,7 @@ end
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
-function ModelTile:ctor(param)
+function ModelTileForOnline:ctor(param)
     self.m_PositionIndex = param.positionIndex
     if ((param.objectID) or (param.baseID)) then
         initWithTiledID(self, param.objectID, param.baseID)
@@ -117,9 +117,9 @@ function ModelTile:ctor(param)
     return self
 end
 
-function ModelTile:initView()
+function ModelTileForOnline:initView()
     local view = self.m_View
-    assert(view, "ModelTile:initView() no view is attached to the actor of the model.")
+    assert(view, "ModelTileForOnline:initView() no view is attached to the actor of the model.")
 
     self:setViewPositionWithGridIndex()
         :updateView()
@@ -127,10 +127,10 @@ function ModelTile:initView()
     return self
 end
 
-function ModelTile:initHasFogOnClient(hasFog)
-    assert(not IS_SERVER,                           "ModelTile:initHasFogOnClient() this shouldn't be called on the server.")
-    assert(type(hasFog) == "boolean",               "ModelTile:initHasFogOnClient() invalid param hasFog.")
-    assert(self.m_IsFogEnabledOnClient == nil,      "ModelTile:initHasFogOnClient() self.m_IsFogEnabledOnClient has been initialized already.")
+function ModelTileForOnline:initHasFogOnClient(hasFog)
+    assert(not IS_SERVER,                           "ModelTileForOnline:initHasFogOnClient() this shouldn't be called on the server.")
+    assert(type(hasFog) == "boolean",               "ModelTileForOnline:initHasFogOnClient() invalid param hasFog.")
+    assert(self.m_IsFogEnabledOnClient == nil,      "ModelTileForOnline:initHasFogOnClient() self.m_IsFogEnabledOnClient has been initialized already.")
 
     self.m_IsFogEnabledOnClient = hasFog
     return self
@@ -139,7 +139,7 @@ end
 --------------------------------------------------------------------------------
 -- The function for serialization.
 --------------------------------------------------------------------------------
-function ModelTile:toSerializableTable()
+function ModelTileForOnline:toSerializableTable()
     local t               = {}
     local componentsCount = 0
     for name, component in pairs(ComponentManager.getAllComponents(self)) do
@@ -164,7 +164,7 @@ function ModelTile:toSerializableTable()
     end
 end
 
-function ModelTile:toSerializableTableForPlayerIndex(playerIndex)
+function ModelTileForOnline:toSerializableTableForPlayerIndex(playerIndex)
     if (isTileVisibleToPlayerIndex(self.m_ModelSceneWar, self:getGridIndex(), playerIndex)) then
         return self:toSerializableTable()
     end
@@ -215,7 +215,7 @@ end
 --------------------------------------------------------------------------------
 -- The public callback function on start running.
 --------------------------------------------------------------------------------
-function ModelTile:onStartRunning(modelSceneWar)
+function ModelTileForOnline:onStartRunning(modelSceneWar)
     self.m_ModelSceneWar = modelSceneWar
     ComponentManager.callMethodForAllComponents(self, "onStartRunning", modelSceneWar)
 
@@ -225,7 +225,7 @@ end
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
-function ModelTile:updateView()
+function ModelTileForOnline:updateView()
     if (self.m_View) then
         self.m_View:setViewObjectWithTiledId(self.m_ObjectID)
             :setViewBaseWithTiledId(self.m_BaseID)
@@ -235,35 +235,35 @@ function ModelTile:updateView()
     return self
 end
 
-function ModelTile:getPositionIndex()
+function ModelTileForOnline:getPositionIndex()
     return self.m_PositionIndex
 end
 
-function ModelTile:getTiledId()
+function ModelTileForOnline:getTiledId()
     return (self.m_ObjectID > 0) and (self.m_ObjectID) or (self.m_BaseID)
 end
 
-function ModelTile:getObjectAndBaseId()
+function ModelTileForOnline:getObjectAndBaseId()
     return self.m_ObjectID, self.m_BaseID
 end
 
-function ModelTile:getPlayerIndex()
+function ModelTileForOnline:getPlayerIndex()
     return GameConstantFunctions.getPlayerIndexWithTiledId(self:getTiledId())
 end
 
-function ModelTile:getTileType()
+function ModelTileForOnline:getTileType()
     return GameConstantFunctions.getTileTypeWithObjectAndBaseId(self:getObjectAndBaseId())
 end
 
-function ModelTile:getTileTypeFullName()
+function ModelTileForOnline:getTileTypeFullName()
     return LocalizationFunctions.getLocalizedText(116, self:getTileType())
 end
 
-function ModelTile:getDescription()
+function ModelTileForOnline:getDescription()
     return LocalizationFunctions.getLocalizedText(117, self:getTileType())
 end
 
-function ModelTile:updateWithObjectAndBaseId(objectID, baseID)
+function ModelTileForOnline:updateWithObjectAndBaseId(objectID, baseID)
     local gridIndex          = self:getGridIndex()
     baseID                   = baseID or self.m_BaseID
 
@@ -274,21 +274,21 @@ function ModelTile:updateWithObjectAndBaseId(objectID, baseID)
     return self
 end
 
-function ModelTile:destroyModelTileObject()
-    assert(self.m_ObjectID > 0, "ModelTile:destroyModelTileObject() there's no tile object.")
+function ModelTileForOnline:destroyModelTileObject()
+    assert(self.m_ObjectID > 0, "ModelTileForOnline:destroyModelTileObject() there's no tile object.")
     self:updateWithObjectAndBaseId(0, self.m_BaseID)
 
     return self
 end
 
-function ModelTile:destroyViewTileObject()
+function ModelTileForOnline:destroyViewTileObject()
     if (self.m_View) then
         self.m_View:setViewObjectWithTiledId(0)
     end
 end
 
-function ModelTile:updateWithPlayerIndex(playerIndex)
-    assert(self:getPlayerIndex() ~= playerIndex, "ModelTile:updateWithPlayerIndex() the param playerIndex is the same as the one of self.")
+function ModelTileForOnline:updateWithPlayerIndex(playerIndex)
+    assert(self:getPlayerIndex() ~= playerIndex, "ModelTileForOnline:updateWithPlayerIndex() the param playerIndex is the same as the one of self.")
 
     local tileName = self:getTileType()
     if (tileName ~= "Headquarters") then
@@ -308,14 +308,14 @@ function ModelTile:updateWithPlayerIndex(playerIndex)
     return self
 end
 
-function ModelTile:isFogEnabledOnClient()
-    assert(not IS_SERVER,                                  "ModelTile:isFogEnabledOnClient() this shouldn't be called on the server.")
-    assert(type(self.m_IsFogEnabledOnClient) == "boolean", "ModelTile:isFogEnabledOnClient() self.m_IsFogEnabledOnClient has not been initialized yet.")
+function ModelTileForOnline:isFogEnabledOnClient()
+    assert(not IS_SERVER,                                  "ModelTileForOnline:isFogEnabledOnClient() this shouldn't be called on the server.")
+    assert(type(self.m_IsFogEnabledOnClient) == "boolean", "ModelTileForOnline:isFogEnabledOnClient() self.m_IsFogEnabledOnClient has not been initialized yet.")
 
     return self.m_IsFogEnabledOnClient
 end
 
-function ModelTile:updateAsFogDisabled(data)
+function ModelTileForOnline:updateAsFogDisabled(data)
     if (self:isFogEnabledOnClient()) then
         self.m_IsFogEnabledOnClient = false
 
@@ -338,7 +338,7 @@ function ModelTile:updateAsFogDisabled(data)
     return self
 end
 
-function ModelTile:updateAsFogEnabled()
+function ModelTileForOnline:updateAsFogEnabled()
     if (not self:isFogEnabledOnClient()) then
         self.m_IsFogEnabledOnClient = true
 
@@ -355,4 +355,4 @@ function ModelTile:updateAsFogEnabled()
     return self
 end
 
-return ModelTile
+return ModelTileForOnline

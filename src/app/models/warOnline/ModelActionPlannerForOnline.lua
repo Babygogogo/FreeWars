@@ -1,6 +1,6 @@
 
 --[[--------------------------------------------------------------------------------
--- ModelActionPlanner用于在战局给玩家规划单位和地形的行动。
+-- ModelActionPlannerForOnline用于在战局给玩家规划单位和地形的行动。
 --
 -- 主要职责及使用场景：
 --   在玩家点击特定单位时，生成其可移动范围、可用操作菜单、可攻击范围、预估攻击伤害等相关数据
@@ -13,7 +13,7 @@
 --     而一旦玩家确定行动，则发送action到服务器，该action通常会导致战局数据按玩家操作及游戏规则而改变。
 --]]--------------------------------------------------------------------------------
 
-local ModelActionPlanner = class("ModelActionPlanner")
+local ModelActionPlannerForOnline = class("ModelActionPlannerForOnline")
 
 local Producible                  = requireFW("src.app.components.Producible")
 local ActionCodeFunctions         = requireFW("src.app.utilities.ActionCodeFunctions")
@@ -691,7 +691,7 @@ local function getAvailableActionList(self)
     list[#list + 1] = getActionProduceModelUnitOnUnit(self)
 
     local itemWait = getActionWait(self)
-    assert((#list > 0) or (itemWait), "ModelActionPlanner-getAvailableActionList() the generated list has no valid action item.")
+    assert((#list > 0) or (itemWait), "ModelActionPlannerForOnline-getAvailableActionList() the generated list has no valid action item.")
     return list, itemWait
 end
 
@@ -1087,7 +1087,7 @@ local function onEvtGridSelected(self, event)
     elseif (state == "previewingReachableArea") then
         self:setStateIdle(true)
     else
-        error("ModelActionPlanner-onEvtGridSelected() the state of the planner is invalid.")
+        error("ModelActionPlannerForOnline-onEvtGridSelected() the state of the planner is invalid.")
     end
 
     self.m_CursorGridIndex = GridIndexFunctions.clone(gridIndex)
@@ -1096,7 +1096,7 @@ end
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
-function ModelActionPlanner:ctor(param)
+function ModelActionPlannerForOnline:ctor(param)
     self.m_State                      = "idle"
     self.m_IsWaitingForServerResponse = false
     self.m_PreviewAttackModelUnits    = {}
@@ -1108,7 +1108,7 @@ end
 --------------------------------------------------------------------------------
 -- The callback functions on start running/script events.
 --------------------------------------------------------------------------------
-function ModelActionPlanner:onStartRunning(modelSceneWar)
+function ModelActionPlannerForOnline:onStartRunning(modelSceneWar)
     self.m_ModelSceneWar    = modelSceneWar
     getScriptEventDispatcher(modelSceneWar)
         :addEventListener("EvtGridSelected",               self)
@@ -1125,7 +1125,7 @@ function ModelActionPlanner:onStartRunning(modelSceneWar)
     return self
 end
 
-function ModelActionPlanner:onEvent(event)
+function ModelActionPlannerForOnline:onEvent(event)
     local name = event.name
     if     (name == "EvtGridSelected")               then onEvtGridSelected(              self, event)
     elseif (name == "EvtPlayerIndexUpdated")         then onEvtPlayerIndexUpdated(        self, event)
@@ -1140,7 +1140,7 @@ end
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
-function ModelActionPlanner:setStateIdle(resetUnitAnimation)
+function ModelActionPlannerForOnline:setStateIdle(resetUnitAnimation)
     if (self.m_View) then
         self.m_View:setReachableAreaVisible(  false)
             :setAttackableGridsVisible(       false)
@@ -1178,4 +1178,4 @@ function ModelActionPlanner:setStateIdle(resetUnitAnimation)
     return self
 end
 
-return ModelActionPlanner
+return ModelActionPlannerForOnline

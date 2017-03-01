@@ -1,6 +1,6 @@
 
 --[[--------------------------------------------------------------------------------
--- ModelTurnManager是战局中的回合控制器。
+-- ModelTurnManagerForOnline是战局中的回合控制器。
 --
 -- 主要职责和使用场景举例：
 --   维护相关数值（如当前回合数、回合阶段、当前活动玩家序号PlayerIndex等），提供接口给外界访问
@@ -17,7 +17,7 @@
 --     - 更换weather（TurnPhaseChangeWeather，目前未实现。具体切换与否，由ModelWeatherManager决定）
 --]]--------------------------------------------------------------------------------
 
-local ModelTurnManager = requireFW("src.global.functions.class")("ModelTurnManager")
+local ModelTurnManagerForOnline = requireFW("src.global.functions.class")("ModelTurnManagerForOnline")
 
 local IS_SERVER             = requireFW("src.app.utilities.GameConstantFunctions").isServer()
 local ActionCodeFunctions   = requireFW("src.app.utilities.ActionCodeFunctions")
@@ -83,7 +83,7 @@ local function getNextTurnAndPlayerIndex(self, playerManager)
             nextTurnIndex   = nextTurnIndex + 1
         end
 
-        assert(nextPlayerIndex ~= self.m_PlayerIndex, "ModelTurnManager-getNextTurnAndPlayerIndex() the number of alive players is less than 2.")
+        assert(nextPlayerIndex ~= self.m_PlayerIndex, "ModelTurnManagerForOnline-getNextTurnAndPlayerIndex() the number of alive players is less than 2.")
 
         if (playerManager:getModelPlayer(nextPlayerIndex):isAlive()) then
             return nextTurnIndex, nextPlayerIndex
@@ -109,7 +109,7 @@ local function repairModelUnit(self, modelUnit, repairAmount)
 end
 
 local function resetVisionOnClient(self)
-    assert(not IS_SERVER, "ModelTurnManager-resetVisionOnClient() this shouldn't be called on the server.")
+    assert(not IS_SERVER, "ModelTurnManagerForOnline-resetVisionOnClient() this shouldn't be called on the server.")
     local modelWar = self.m_ModelWar
     local playerIndex = getPlayerIndexLoggedIn(modelWar)
     getModelUnitMap(modelWar):forEachModelUnitOnMap(function(modelUnit)
@@ -375,7 +375,7 @@ end
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
-function ModelTurnManager:ctor(param)
+function ModelTurnManagerForOnline:ctor(param)
     self.m_TurnIndex     = param.turnIndex
     self.m_PlayerIndex   = param.playerIndex
     self.m_TurnPhaseCode = param.turnPhaseCode
@@ -386,7 +386,7 @@ end
 --------------------------------------------------------------------------------
 -- The functions for serialization.
 --------------------------------------------------------------------------------
-function ModelTurnManager:toSerializableTable()
+function ModelTurnManagerForOnline:toSerializableTable()
     return {
         turnIndex     = self:getTurnIndex(),
         playerIndex   = self:getPlayerIndex(),
@@ -394,18 +394,18 @@ function ModelTurnManager:toSerializableTable()
     }
 end
 
-function ModelTurnManager:toSerializableTableForPlayerIndex(playerIndex)
+function ModelTurnManagerForOnline:toSerializableTableForPlayerIndex(playerIndex)
     return self:toSerializableTable()
 end
 
-function ModelTurnManager:toSerializableReplayData()
+function ModelTurnManagerForOnline:toSerializableReplayData()
     return DEFAULT_TURN_DATA
 end
 
 --------------------------------------------------------------------------------
 -- The public functions for doing actions.
 --------------------------------------------------------------------------------
-function ModelTurnManager:onStartRunning(modelWar)
+function ModelTurnManagerForOnline:onStartRunning(modelWar)
     self.m_ModelWar    = modelWar
 
     return self
@@ -414,23 +414,23 @@ end
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
-function ModelTurnManager:getTurnIndex()
+function ModelTurnManagerForOnline:getTurnIndex()
     return self.m_TurnIndex
 end
 
-function ModelTurnManager:getPlayerIndex()
+function ModelTurnManagerForOnline:getPlayerIndex()
     return self.m_PlayerIndex
 end
 
-function ModelTurnManager:isTurnPhaseRequestToBegin()
+function ModelTurnManagerForOnline:isTurnPhaseRequestToBegin()
     return self.m_TurnPhaseCode == TURN_PHASE_CODES.RequestToBegin
 end
 
-function ModelTurnManager:isTurnPhaseMain()
+function ModelTurnManagerForOnline:isTurnPhaseMain()
     return self.m_TurnPhaseCode == TURN_PHASE_CODES.Main
 end
 
-function ModelTurnManager:runTurn()
+function ModelTurnManagerForOnline:runTurn()
     if (self.m_TurnPhaseCode == TURN_PHASE_CODES.Beginning)                         then runTurnPhaseBeginning(                        self) end
     if (self.m_TurnPhaseCode == TURN_PHASE_CODES.GetFund)                           then runTurnPhaseGetFund(                          self) end
     if (self.m_TurnPhaseCode == TURN_PHASE_CODES.ConsumeUnitFuel)                   then runTurnPhaseConsumeUnitFuel(                  self) end
@@ -462,8 +462,8 @@ function ModelTurnManager:runTurn()
     return self
 end
 
-function ModelTurnManager:beginTurnPhaseBeginning(income, repairData, supplyData, callbackOnEnterTurnPhaseMain)
-    assert(self:isTurnPhaseRequestToBegin(), "ModelTurnManager:beginTurnPhaseBeginning() invalid turn phase code: " .. self.m_TurnPhaseCode)
+function ModelTurnManagerForOnline:beginTurnPhaseBeginning(income, repairData, supplyData, callbackOnEnterTurnPhaseMain)
+    assert(self:isTurnPhaseRequestToBegin(), "ModelTurnManagerForOnline:beginTurnPhaseBeginning() invalid turn phase code: " .. self.m_TurnPhaseCode)
 
     self.m_IncomeForNextTurn                       = income
     self.m_RepairDataForNextTurn                   = repairData
@@ -475,12 +475,12 @@ function ModelTurnManager:beginTurnPhaseBeginning(income, repairData, supplyData
     return self
 end
 
-function ModelTurnManager:endTurnPhaseMain()
-    assert(self:isTurnPhaseMain(), "ModelTurnManager:endTurnPhaseMain() invalid turn phase code: " .. self.m_TurnPhaseCode)
+function ModelTurnManagerForOnline:endTurnPhaseMain()
+    assert(self:isTurnPhaseMain(), "ModelTurnManagerForOnline:endTurnPhaseMain() invalid turn phase code: " .. self.m_TurnPhaseCode)
     self.m_TurnPhaseCode = TURN_PHASE_CODES.ResetUnitState
     self:runTurn()
 
     return self
 end
 
-return ModelTurnManager
+return ModelTurnManagerForOnline

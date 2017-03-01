@@ -1,12 +1,12 @@
 
 --[[--------------------------------------------------------------------------------
--- ModelWarCommandMenu是战局中的命令菜单（与单位操作菜单不同），在玩家点击MoneyEnergyInfo时呼出。
+-- ModelWarCommandMenuForOnline是战局中的命令菜单（与单位操作菜单不同），在玩家点击MoneyEnergyInfo时呼出。
 --
 -- 主要职责和使用场景举例：
 --   同上
 --
 -- 其他：
---   - ModelWarCommandMenu将包括以下菜单项（可能有遗漏）：
+--   - ModelWarCommandMenuForOnline将包括以下菜单项（可能有遗漏）：
 --     - 离开战局（回退到主画面，而不是投降）
 --     - 发动co技能
 --     - 发动super技能
@@ -16,7 +16,7 @@
 --     - 结束回合
 --]]--------------------------------------------------------------------------------
 
-local ModelWarCommandMenu = class("ModelWarCommandMenu")
+local ModelWarCommandMenuForOnline = class("ModelWarCommandMenuForOnline")
 
 local ActionCodeFunctions       = requireFW("src.app.utilities.ActionCodeFunctions")
 local AudioManager              = requireFW("src.app.utilities.AudioManager")
@@ -593,7 +593,7 @@ end
 --------------------------------------------------------------------------------
 getActorSkillConfigurator = function(self)
     if (not self.m_ActorSkillConfigurator) then
-        local model = Actor.createModel("warOnline.ModelSkillConfigurator")
+        local model = Actor.createModel("warOnline.ModelSkillConfiguratorForOnline")
         model:onStartRunning(self.m_ModelSceneWar)
             :setCallbackOnButtonBackTouched(function()
                 model:setEnabled(false)
@@ -1016,7 +1016,7 @@ end
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
-function ModelWarCommandMenu:ctor(param)
+function ModelWarCommandMenuForOnline:ctor(param)
     self.m_IsWaitingForServerResponse = false
     self.m_State                      = "stateDisabled"
 
@@ -1053,7 +1053,7 @@ end
 --------------------------------------------------------------------------------
 -- The public callback function on start running or script events.
 --------------------------------------------------------------------------------
-function ModelWarCommandMenu:onStartRunning(modelSceneWar)
+function ModelWarCommandMenuForOnline:onStartRunning(modelSceneWar)
     self.m_ModelSceneWar    = modelSceneWar
     getScriptEventDispatcher(modelSceneWar)
         :addEventListener("EvtIsWaitingForServerResponse", self)
@@ -1063,7 +1063,7 @@ function ModelWarCommandMenu:onStartRunning(modelSceneWar)
     return self
 end
 
-function ModelWarCommandMenu:onEvent(event)
+function ModelWarCommandMenuForOnline:onEvent(event)
     local eventName = event.name
     if     (eventName == "EvtGridSelected")               then onEvtGridSelected(              self, event)
     elseif (eventName == "EvtMapCursorMoved")             then onEvtMapCursorMoved(            self, event)
@@ -1076,15 +1076,15 @@ end
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
-function ModelWarCommandMenu:isEnabled()
+function ModelWarCommandMenuForOnline:isEnabled()
     return (self.m_State ~= "stateDisabled") and (self.m_State ~= "stateHiddenWithHideUI")
 end
 
-function ModelWarCommandMenu:isHiddenWithHideUI()
+function ModelWarCommandMenuForOnline:isHiddenWithHideUI()
     return self.m_State == "stateHiddenWithHideUI"
 end
 
-function ModelWarCommandMenu:setEnabled(enabled)
+function ModelWarCommandMenuForOnline:setEnabled(enabled)
     if (enabled) then
         setStateMain(self)
     else
@@ -1094,17 +1094,17 @@ function ModelWarCommandMenu:setEnabled(enabled)
     return self
 end
 
-function ModelWarCommandMenu:onButtonBackTouched()
+function ModelWarCommandMenuForOnline:onButtonBackTouched()
     local state = self.m_State
     if     (state == "stateAuxiliaryCommands") then setStateMain(self)
     elseif (state == "stateDrawOrSurrender")   then setStateMain(self)
     elseif (state == "stateHelp")              then setStateMain(self)
     elseif (state == "stateMain")              then self:setEnabled(false)
     elseif (state == "stateUnitPropertyList")  then setStateHelp(self)
-    else                                       error("ModelWarCommandMenu:onButtonBackTouched() the state is invalid: " .. (state or ""))
+    else                                       error("ModelWarCommandMenuForOnline:onButtonBackTouched() the state is invalid: " .. (state or ""))
     end
 
     return self
 end
 
-return ModelWarCommandMenu
+return ModelWarCommandMenuForOnline

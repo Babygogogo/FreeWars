@@ -1,16 +1,16 @@
 
 --[[--------------------------------------------------------------------------------
--- ModelUnit是战场上的一个作战单位。
+-- ModelUnitForOnline是战场上的一个作战单位。
 --
 -- 主要职责和使用场景举例：
 --   构造作战单位，维护相关数值，提供接口给外界访问
 --
 -- 其他：
---   - ModelUnit中的许多概念都和ModelTile很相似，包括tiledID、instantialData、构造过程等，因此可以参照ModelTile的注释，这里不赘述。
---     有点不同的是，ModelUnit只需一个tiledID即可构造，而ModelTile可能需要1-2个。
+--   - ModelUnitForOnline中的许多概念都和ModelTile很相似，包括tiledID、instantialData、构造过程等，因此可以参照ModelTile的注释，这里不赘述。
+--     有点不同的是，ModelUnitForOnline只需一个tiledID即可构造，而ModelTile可能需要1-2个。
 --]]--------------------------------------------------------------------------------
 
-local ModelUnit = requireFW("src.global.functions.class")("ModelUnit")
+local ModelUnitForOnline = requireFW("src.global.functions.class")("ModelUnitForOnline")
 
 local Destroyers            = requireFW("src.app.utilities.Destroyers")
 local GameConstantFunctions = requireFW("src.app.utilities.GameConstantFunctions")
@@ -30,7 +30,7 @@ local function initWithTiledID(self, tiledID)
     self.m_TiledID = tiledID
 
     local template = GameConstantFunctions.getTemplateModelUnitWithTiledId(tiledID)
-    assert(template, "ModelUnit-initWithTiledID() failed to get the template model unit with param tiledID." .. tiledID)
+    assert(template, "ModelUnitForOnline-initWithTiledID() failed to get the template model unit with param tiledID." .. tiledID)
 
     if (template ~= self.m_Template) then
         self.m_Template  = template
@@ -59,7 +59,7 @@ end
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
-function ModelUnit:ctor(param)
+function ModelUnitForOnline:ctor(param)
     initWithTiledID(   self, param.tiledID)
     loadInstantialData(self, param)
 
@@ -70,9 +70,9 @@ function ModelUnit:ctor(param)
     return self
 end
 
-function ModelUnit:initView()
+function ModelUnitForOnline:initView()
     local view = self.m_View
-    assert(view, "ModelUnit:initView() no view is attached to the actor of the model.")
+    assert(view, "ModelUnitForOnline:initView() no view is attached to the actor of the model.")
 
     self:setViewPositionWithGridIndex()
 
@@ -82,7 +82,7 @@ end
 --------------------------------------------------------------------------------
 -- The function for serialization.
 --------------------------------------------------------------------------------
-function ModelUnit:toSerializableTable()
+function ModelUnitForOnline:toSerializableTable()
     local t = {}
     for name, component in pairs(ComponentManager.getAllComponents(self)) do
         if (component.toSerializableTable) then
@@ -103,8 +103,8 @@ end
 --------------------------------------------------------------------------------
 -- The callback functions on start running/script events.
 --------------------------------------------------------------------------------
-function ModelUnit:onStartRunning(modelSceneWar)
-    assert(modelSceneWar.isModelSceneWar, "ModelUnit:onStartRunning() invalid modelSceneWar.")
+function ModelUnitForOnline:onStartRunning(modelSceneWar)
+    assert(modelSceneWar.isModelSceneWar, "ModelUnitForOnline:onStartRunning() invalid modelSceneWar.")
     self.m_ModelSceneWar = modelSceneWar
 
     ComponentManager.callMethodForAllComponents(self, "onStartRunning", modelSceneWar)
@@ -116,7 +116,7 @@ end
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
-function ModelUnit:moveViewAlongPath(path, isDiving, callbackAfterMove)
+function ModelUnitForOnline:moveViewAlongPath(path, isDiving, callbackAfterMove)
     if (self.m_View) then
         self.m_View:moveAlongPath(path, isDiving, callbackAfterMove)
     elseif (callbackAfterMove) then
@@ -126,7 +126,7 @@ function ModelUnit:moveViewAlongPath(path, isDiving, callbackAfterMove)
     return self
 end
 
-function ModelUnit:moveViewAlongPathAndFocusOnTarget(path, isDiving, targetGridIndex, callbackAfterMove)
+function ModelUnitForOnline:moveViewAlongPathAndFocusOnTarget(path, isDiving, targetGridIndex, callbackAfterMove)
     if (self.m_View) then
         self.m_View:moveAlongPathAndFocusOnTarget(path, isDiving, targetGridIndex, callbackAfterMove)
     elseif (callbackAfterMove) then
@@ -136,7 +136,7 @@ function ModelUnit:moveViewAlongPathAndFocusOnTarget(path, isDiving, targetGridI
     return self
 end
 
-function ModelUnit:setViewVisible(visible)
+function ModelUnitForOnline:setViewVisible(visible)
     if (self.m_View) then
         self.m_View:setVisible(visible)
     end
@@ -144,7 +144,7 @@ function ModelUnit:setViewVisible(visible)
     return self
 end
 
-function ModelUnit:updateView()
+function ModelUnitForOnline:updateView()
     if (self.m_View) then
         self.m_View:updateWithModelUnit(self)
     end
@@ -152,7 +152,7 @@ function ModelUnit:updateView()
     return self
 end
 
-function ModelUnit:removeViewFromParent()
+function ModelUnitForOnline:removeViewFromParent()
     if (self.m_View) then
         self.m_View:removeFromParent()
         self.m_View = nil
@@ -161,7 +161,7 @@ function ModelUnit:removeViewFromParent()
     return self
 end
 
-function ModelUnit:showNormalAnimation()
+function ModelUnitForOnline:showNormalAnimation()
     if (self.m_View) then
         self.m_View:showNormalAnimation()
     end
@@ -169,7 +169,7 @@ function ModelUnit:showNormalAnimation()
     return self
 end
 
-function ModelUnit:showMovingAnimation()
+function ModelUnitForOnline:showMovingAnimation()
     if (self.m_View) then
         self.m_View:showMovingAnimation()
     end
@@ -177,49 +177,49 @@ function ModelUnit:showMovingAnimation()
     return self
 end
 
-function ModelUnit:getModelWar()
-    assert(self.m_ModelSceneWar, "ModelUnit:getModelWar() onStartRunning() hasn't been called yet.")
+function ModelUnitForOnline:getModelWar()
+    assert(self.m_ModelSceneWar, "ModelUnitForOnline:getModelWar() onStartRunning() hasn't been called yet.")
     return self.m_ModelSceneWar
 end
 
-function ModelUnit:getTiledId()
+function ModelUnitForOnline:getTiledId()
     return self.m_TiledID
 end
 
-function ModelUnit:getUnitId()
+function ModelUnitForOnline:getUnitId()
     return self.m_UnitID
 end
 
-function ModelUnit:getPlayerIndex()
+function ModelUnitForOnline:getPlayerIndex()
     return GameConstantFunctions.getPlayerIndexWithTiledId(self.m_TiledID)
 end
 
-function ModelUnit:isStateIdle()
+function ModelUnitForOnline:isStateIdle()
     return self.m_StateCode == UNIT_STATE_CODE.Idle
 end
 
-function ModelUnit:setStateIdle()
+function ModelUnitForOnline:setStateIdle()
     self.m_StateCode = UNIT_STATE_CODE.Idle
 
     return self
 end
 
-function ModelUnit:setStateActioned()
+function ModelUnitForOnline:setStateActioned()
     self.m_StateCode = UNIT_STATE_CODE.Actioned
 
     return self
 end
 
-function ModelUnit:getUnitType()
+function ModelUnitForOnline:getUnitType()
     return GameConstantFunctions.getUnitTypeWithTiledId(self:getTiledId())
 end
 
-function ModelUnit:getDescription()
+function ModelUnitForOnline:getDescription()
     return LocalizationFunctions.getLocalizedText(114, self:getUnitType())
 end
 
-function ModelUnit:getUnitTypeFullName()
+function ModelUnitForOnline:getUnitTypeFullName()
     return LocalizationFunctions.getLocalizedText(113, self:getUnitType())
 end
 
-return ModelUnit
+return ModelUnitForOnline
