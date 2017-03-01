@@ -309,6 +309,30 @@ local function cleanupOnReceivingResponseFromServer(modelWarOnline)
     })
 end
 
+local function prepareForExecutingWarAction(action, modelWarOnline)
+    local nextActionID    = action.actionID
+    local currentActionID = modelWarOnline:getActionId()
+
+    if ((nextActionID <= currentActionID) or (modelWarOnline:isEnded())) then
+        assert(not IS_SERVER)
+        return false
+
+    elseif ((nextActionID > currentActionID + 1) or (modelWarOnline:isExecutingAction())) then
+        assert(not IS_SERVER)
+        modelWarOnline:cacheAction(action)
+        return false
+
+    else
+        if (IS_SERVER) then
+            modelWarOnline:pushBackExecutedAction(action)
+        end
+        modelWarOnline:setActionId(nextActionID)
+            :setExecutingAction(true)
+
+        return true
+    end
+end
+
 --------------------------------------------------------------------------------
 -- The executors for non-war actions.
 --------------------------------------------------------------------------------
@@ -390,7 +414,9 @@ end
 -- The executors for war actions.
 --------------------------------------------------------------------------------
 local function executeActivateSkill(action, modelWarOnline)
-    modelWarOnline:setExecutingAction(true)
+    if (not prepareForExecutingWarAction(action, modelWarOnline)) then
+        return
+    end
     updateTilesAndUnitsBeforeExecutingAction(action, modelWarOnline)
 
     local skillID                 = action.skillID
@@ -433,7 +459,9 @@ local function executeActivateSkill(action, modelWarOnline)
 end
 
 local function executeAttack(action, modelWarOnline)
-    modelWarOnline:setExecutingAction(true)
+    if (not prepareForExecutingWarAction(action, modelWarOnline)) then
+        return
+    end
     updateTilesAndUnitsBeforeExecutingAction(action, modelWarOnline)
 
     local pathNodes           = action.path.pathNodes
@@ -597,7 +625,9 @@ local function executeAttack(action, modelWarOnline)
 end
 
 local function executeBeginTurn(action, modelWarOnline)
-    modelWarOnline:setExecutingAction(true)
+    if (not prepareForExecutingWarAction(action, modelWarOnline)) then
+        return
+    end
 
     local modelTurnManager   = getModelTurnManager(modelWarOnline)
     local lostPlayerIndex    = action.lostPlayerIndex
@@ -667,7 +697,9 @@ local function executeBeginTurn(action, modelWarOnline)
 end
 
 local function executeBuildModelTile(action, modelWarOnline)
-    modelWarOnline:setExecutingAction(true)
+    if (not prepareForExecutingWarAction(action, modelWarOnline)) then
+        return
+    end
     updateTilesAndUnitsBeforeExecutingAction(action, modelWarOnline)
 
     local pathNodes       = action.path.pathNodes
@@ -715,7 +747,9 @@ local function executeBuildModelTile(action, modelWarOnline)
 end
 
 local function executeCaptureModelTile(action, modelWarOnline)
-    modelWarOnline:setExecutingAction(true)
+    if (not prepareForExecutingWarAction(action, modelWarOnline)) then
+        return
+    end
     updateTilesAndUnitsBeforeExecutingAction(action, modelWarOnline)
 
     local pathNodes       = action.path.pathNodes
@@ -812,7 +846,9 @@ local function executeCaptureModelTile(action, modelWarOnline)
 end
 
 local function executeDeclareSkill(action, modelWarOnline)
-    modelWarOnline:setExecutingAction(true)
+    if (not prepareForExecutingWarAction(action, modelWarOnline)) then
+        return
+    end
 
     local playerIndex = getModelTurnManager(modelWarOnline):getPlayerIndex()
     local modelPlayer = getModelPlayerManager(modelWarOnline):getModelPlayer(playerIndex)
@@ -834,7 +870,9 @@ local function executeDeclareSkill(action, modelWarOnline)
 end
 
 local function executeDestroyOwnedModelUnit(action, modelWarOnline)
-    modelWarOnline:setExecutingAction(true)
+    if (not prepareForExecutingWarAction(action, modelWarOnline)) then
+        return
+    end
     updateTilesAndUnitsBeforeExecutingAction(action, modelWarOnline)
 
     local gridIndex           = action.gridIndex
@@ -877,7 +915,9 @@ local function executeDestroyOwnedModelUnit(action, modelWarOnline)
 end
 
 local function executeDive(action, modelWarOnline)
-    modelWarOnline:setExecutingAction(true)
+    if (not prepareForExecutingWarAction(action, modelWarOnline)) then
+        return
+    end
     updateTilesAndUnitsBeforeExecutingAction(action, modelWarOnline)
 
     local launchUnitID     = action.launchUnitID
@@ -916,7 +956,9 @@ local function executeDive(action, modelWarOnline)
 end
 
 local function executeDropModelUnit(action, modelWarOnline)
-    modelWarOnline:setExecutingAction(true)
+    if (not prepareForExecutingWarAction(action, modelWarOnline)) then
+        return
+    end
     updateTilesAndUnitsBeforeExecutingAction(action, modelWarOnline)
 
     local pathNodes        = action.path.pathNodes
@@ -993,7 +1035,9 @@ local function executeDropModelUnit(action, modelWarOnline)
 end
 
 local function executeEndTurn(action, modelWarOnline)
-    modelWarOnline:setExecutingAction(true)
+    if (not prepareForExecutingWarAction(action, modelWarOnline)) then
+        return
+    end
 
     if (IS_SERVER) then
         getModelTurnManager(modelWarOnline):endTurnPhaseMain()
@@ -1008,7 +1052,9 @@ local function executeEndTurn(action, modelWarOnline)
 end
 
 local function executeJoinModelUnit(action, modelWarOnline)
-    modelWarOnline:setExecutingAction(true)
+    if (not prepareForExecutingWarAction(action, modelWarOnline)) then
+        return
+    end
     updateTilesAndUnitsBeforeExecutingAction(action, modelWarOnline)
 
     local launchUnitID     = action.launchUnitID
@@ -1088,7 +1134,9 @@ local function executeJoinModelUnit(action, modelWarOnline)
 end
 
 local function executeLaunchFlare(action, modelWarOnline)
-    modelWarOnline:setExecutingAction(true)
+    if (not prepareForExecutingWarAction(action, modelWarOnline)) then
+        return
+    end
     updateTilesAndUnitsBeforeExecutingAction(action, modelWarOnline)
 
     local pathNodes           = action.path.pathNodes
@@ -1132,7 +1180,9 @@ local function executeLaunchFlare(action, modelWarOnline)
 end
 
 local function executeLaunchSilo(action, modelWarOnline)
-    modelWarOnline:setExecutingAction(true)
+    if (not prepareForExecutingWarAction(action, modelWarOnline)) then
+        return
+    end
     updateTilesAndUnitsBeforeExecutingAction(action, modelWarOnline)
 
     local pathNodes      = action.path.pathNodes
@@ -1185,7 +1235,9 @@ local function executeLaunchSilo(action, modelWarOnline)
 end
 
 local function executeLoadModelUnit(action, modelWarOnline)
-    modelWarOnline:setExecutingAction(true)
+    if (not prepareForExecutingWarAction(action, modelWarOnline)) then
+        return
+    end
     updateTilesAndUnitsBeforeExecutingAction(action, modelWarOnline)
 
     local pathNodes      = action.path.pathNodes
@@ -1224,7 +1276,9 @@ local function executeLoadModelUnit(action, modelWarOnline)
 end
 
 local function executeProduceModelUnitOnTile(action, modelWarOnline)
-    modelWarOnline:setExecutingAction(true)
+    if (not prepareForExecutingWarAction(action, modelWarOnline)) then
+        return
+    end
     updateTilesAndUnitsBeforeExecutingAction(action, modelWarOnline)
 
     local modelUnitMap     = getModelUnitMap(modelWarOnline)
@@ -1258,7 +1312,9 @@ local function executeProduceModelUnitOnTile(action, modelWarOnline)
 end
 
 local function executeProduceModelUnitOnUnit(action, modelWarOnline)
-    modelWarOnline:setExecutingAction(true)
+    if (not prepareForExecutingWarAction(action, modelWarOnline)) then
+        return
+    end
     updateTilesAndUnitsBeforeExecutingAction(action, modelWarOnline)
 
     local pathNodes    = action.path.pathNodes
@@ -1296,7 +1352,9 @@ local function executeProduceModelUnitOnUnit(action, modelWarOnline)
 end
 
 local function executeSupplyModelUnit(action, modelWarOnline)
-    modelWarOnline:setExecutingAction(true)
+    if (not prepareForExecutingWarAction(action, modelWarOnline)) then
+        return
+    end
     updateTilesAndUnitsBeforeExecutingAction(action, modelWarOnline)
 
     local launchUnitID     = action.launchUnitID
@@ -1331,7 +1389,9 @@ local function executeSupplyModelUnit(action, modelWarOnline)
 end
 
 local function executeSurface(action, modelWarOnline)
-    modelWarOnline:setExecutingAction(true)
+    if (not prepareForExecutingWarAction(action, modelWarOnline)) then
+        return
+    end
     updateTilesAndUnitsBeforeExecutingAction(action, modelWarOnline)
 
     local launchUnitID     = action.launchUnitID
@@ -1367,7 +1427,9 @@ local function executeSurface(action, modelWarOnline)
 end
 
 local function executeSurrender(action, modelWarOnline)
-    modelWarOnline:setExecutingAction(true)
+    if (not prepareForExecutingWarAction(action, modelWarOnline)) then
+        return
+    end
 
     local modelPlayerManager = getModelPlayerManager(modelWarOnline)
     local modelTurnManager   = getModelTurnManager(modelWarOnline)
@@ -1411,7 +1473,9 @@ local function executeSurrender(action, modelWarOnline)
 end
 
 local function executeVoteForDraw(action, modelWarOnline)
-    modelWarOnline:setExecutingAction(true)
+    if (not prepareForExecutingWarAction(action, modelWarOnline)) then
+        return
+    end
 
     local doesAgree          = action.doesAgree
     local modelPlayerManager = getModelPlayerManager(modelWarOnline)
@@ -1456,7 +1520,9 @@ local function executeVoteForDraw(action, modelWarOnline)
 end
 
 local function executeWait(action, modelWarOnline)
-    modelWarOnline:setExecutingAction(true)
+    if (not prepareForExecutingWarAction(action, modelWarOnline)) then
+        return
+    end
     updateTilesAndUnitsBeforeExecutingAction(action, modelWarOnline)
 
     local path             = action.path
@@ -1492,7 +1558,8 @@ end
 --------------------------------------------------------------------------------
 function ActionExecutorForWarOnline.execute(action, modelWarOnline)
     local actionCode = action.actionCode
-    assert(ActionCodeFunctions.getActionName(actionCode), "ActionExecutorForWarOnline.execute() invalid actionCode: " .. (actionCode or ""))
+    assert(ActionCodeFunctions.getActionName(actionCode),                     "ActionExecutorForWarOnline.execute() invalid actionCode: "   .. (actionCode or ""))
+    assert((not action.warID) or (action.warID == modelWarOnline:getWarId()), "ActionExecutorForWarOnline.execute() invalid action.warID: " .. (action.warID or ""))
 
     if     (actionCode == ACTION_CODES.ActionChat)                   then executeChat(                  action, modelWarOnline)
     elseif (actionCode == ACTION_CODES.ActionLogin)                  then executeLogin(                 action, modelWarOnline)

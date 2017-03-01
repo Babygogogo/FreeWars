@@ -22,13 +22,13 @@
 
 local ModelWarOnline = requireFW("src.global.functions.class")("ModelWarOnline")
 
-local ActionCodeFunctions    = requireFW("src.app.utilities.ActionCodeFunctions")
-local ActionExecutor         = requireFW("src.app.utilities.ActionExecutor")
-local LocalizationFunctions  = requireFW("src.app.utilities.LocalizationFunctions")
-local SerializationFunctions = requireFW("src.app.utilities.SerializationFunctions")
-local TableFunctions         = requireFW("src.app.utilities.TableFunctions")
-local Actor                  = requireFW("src.global.actors.Actor")
-local EventDispatcher        = requireFW("src.global.events.EventDispatcher")
+local ActionCodeFunctions        = requireFW("src.app.utilities.ActionCodeFunctions")
+local ActionExecutorForWarOnline = requireFW("src.app.utilities.actionExecutors.ActionExecutorForWarOnline")
+local LocalizationFunctions      = requireFW("src.app.utilities.LocalizationFunctions")
+local SerializationFunctions     = requireFW("src.app.utilities.SerializationFunctions")
+local TableFunctions             = requireFW("src.app.utilities.TableFunctions")
+local Actor                      = requireFW("src.global.actors.Actor")
+local EventDispatcher            = requireFW("src.global.events.EventDispatcher")
 
 local IS_SERVER        = requireFW("src.app.utilities.GameConstantFunctions").isServer()
 local AudioManager     = (not IS_SERVER) and (requireFW("src.app.utilities.AudioManager"))     or (nil)
@@ -61,15 +61,18 @@ local function onWebSocketOpen(self, param)
 end
 
 local function onWebSocketMessage(self, param)
-    local actionCode = param.action.actionCode
+    local action     = param.action
+    local actionCode = action.actionCode
     print(string.format("ModelWarOnline-onWebSocketMessage() code: %d  name: %s  length: %d",
         actionCode,
         ActionCodeFunctions.getActionName(actionCode),
         string.len(param.message))
     )
-    print(SerializationFunctions.toString(param.action))
+    print(SerializationFunctions.toString(action))
 
-    self:executeAction(param.action)
+    if ((not action.warID) or (action.warID == self:getWarId())) then
+        ActionExecutorForWarOnline.execute(action, self)
+    end
 end
 
 local function onWebSocketClose(self, param)
@@ -80,24 +83,6 @@ end
 local function onWebSocketError(self, param)
     print("ModelWarOnline-onWebSocketError()")
     self:getModelMessageIndicator():showMessage(getLocalizedText(32, param.error))
-end
-
---------------------------------------------------------------------------------
--- The private functions for actions.
---------------------------------------------------------------------------------
-local function setActionId(self, actionID)
-    assert(math.floor(actionID) == actionID, "ModelWarOnline-setActionId() invalid actionID: " .. (actionID or ""))
-    self.m_ActionID = actionID
-end
-
-local function cacheAction(self, action)
-    local actionID = action.actionID
-    assert(not IS_SERVER,                 "ModelWarOnline-cacheAction() this should not happen on the server.")
-    assert(actionID > self:getActionId(), "ModelWarOnline-cacheAction() the action to be cached has been executed already.")
-
-    self.m_CachedActions[actionID] = action
-
-    return self
 end
 
 --------------------------------------------------------------------------------
@@ -147,26 +132,26 @@ end
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
 function ModelWarOnline:ctor(sceneData)
-    self.m_CachedActions              = {}
-    self.m_EnergyGainModifier         = sceneData.energyGainModifier
-    self.m_EnterTurnTime              = sceneData.enterTurnTime
-    self.m_ExecutedActions            = sceneData.executedActions
-    self.m_IncomeModifier             = sceneData.incomeModifier
-    self.m_IntervalUntilBoot          = sceneData.intervalUntilBoot
-    self.m_IsActiveSkillEnabled       = sceneData.isActiveSkillEnabled
-    self.m_IsFogOfWarByDefault        = sceneData.isFogOfWarByDefault
-    self.m_IsPassiveSkillEnabled      = sceneData.isPassiveSkillEnabled
-    self.m_IsRandomWarField           = sceneData.isRandomWarField
-    self.m_IsRankMatch                = sceneData.isRankMatch
-    self.m_IsWarEnded                 = sceneData.isWarEnded
-    self.m_MaxBaseSkillPoints         = sceneData.maxBaseSkillPoints
-    self.m_MaxDiffScore               = sceneData.maxDiffScore
-    self.m_RemainingVotesForDraw      = sceneData.remainingVotesForDraw
-    self.m_StartingEnergy             = sceneData.startingEnergy
-    self.m_StartingFund               = sceneData.startingFund
-    self.m_WarID                      = sceneData.warID
-    self.m_WarPassword                = sceneData.warPassword
-    setActionId(self, sceneData.actionID)
+    self.m_CachedActions         = {}
+    self.m_ActionID              = sceneData.actionID
+    self.m_EnergyGainModifier    = sceneData.energyGainModifier
+    self.m_EnterTurnTime         = sceneData.enterTurnTime
+    self.m_ExecutedActions       = sceneData.executedActions
+    self.m_IncomeModifier        = sceneData.incomeModifier
+    self.m_IntervalUntilBoot     = sceneData.intervalUntilBoot
+    self.m_IsActiveSkillEnabled  = sceneData.isActiveSkillEnabled
+    self.m_IsFogOfWarByDefault   = sceneData.isFogOfWarByDefault
+    self.m_IsPassiveSkillEnabled = sceneData.isPassiveSkillEnabled
+    self.m_IsRandomWarField      = sceneData.isRandomWarField
+    self.m_IsRankMatch           = sceneData.isRankMatch
+    self.m_IsWarEnded            = sceneData.isWarEnded
+    self.m_MaxBaseSkillPoints    = sceneData.maxBaseSkillPoints
+    self.m_MaxDiffScore          = sceneData.maxDiffScore
+    self.m_RemainingVotesForDraw = sceneData.remainingVotesForDraw
+    self.m_StartingEnergy        = sceneData.startingEnergy
+    self.m_StartingFund          = sceneData.startingFund
+    self.m_WarID                 = sceneData.warID
+    self.m_WarPassword           = sceneData.warPassword
 
     initScriptEventDispatcher(self)
     initActorChatManager(     self, sceneData.chatData)
@@ -332,47 +317,6 @@ function ModelWarOnline:isWarReplay()
     return false
 end
 
-function ModelWarOnline:executeAction(action)
-    local warID        = action.warID
-    local actionID     = action.actionID
-    local selfActionID = self:getActionId()
-    if (IS_SERVER) then
-        assert(warID == self:getWarId(),  "ModelWarOnline:executeAction() invalid action.warID:" .. (warID or ""))
-        assert(actionID == selfActionID + 1, "ModelWarOnline:executeAction() invalid action.actionID:" .. (actionID or ""))
-        assert(not self:isExecutingAction(), "ModelWarOnline:executeAction() another action is being executed. This should not happen.")
-
-        setActionId(self, actionID)
-        ActionExecutor.execute(action, self)
-
-        if (self.m_ExecutedActions) then
-            self.m_ExecutedActions[actionID] = {
-                [ActionCodeFunctions.getActionName(action.actionCode)] = TableFunctions.clone(action, IGNORED_KEYS_FOR_EXECUTED_ACTIONS)
-            }
-        end
-
-    elseif (not warID) then
-        ActionExecutor.execute(action, self)
-
-    elseif (warID ~= self:getWarId()) then
-        -- The action is not for this war. Do nothing.
-
-    elseif (not actionID) then
-        ActionExecutor.execute(action, self)
-
-    elseif ((actionID <= selfActionID) or (self:isEnded())) then
-        -- The action has been executed already, or the war is ended for the client. Do nothing.
-
-    elseif ((actionID > selfActionID + 1) or (self:isExecutingAction())) then
-        cacheAction(self, action)
-
-    else
-        setActionId(self, actionID)
-        ActionExecutor.execute(action, self)
-    end
-
-    return self
-end
-
 function ModelWarOnline:isExecutingAction()
     return self.m_IsExecutingAction
 end
@@ -381,18 +325,19 @@ function ModelWarOnline:setExecutingAction(executing)
     assert(self.m_IsExecutingAction ~= executing)
     self.m_IsExecutingAction = executing
 
-    if ((not executing) and (not self:isEnded())) then
+    if ((not IS_SERVER) and (not executing) and (not self:isEnded())) then
         local actionID = self:getActionId() + 1
-        local action = self.m_CachedActions[actionID]
+        local action   = self.m_CachedActions[actionID]
+
         if (action) then
-            assert(not IS_SERVER, "ModelWarOnline:setExecutingAction() there should not be any cached actions on the server.")
             self.m_CachedActions[actionID] = nil
             self.m_IsExecutingAction       = true
+
             self.m_View:runAction(cc.Sequence:create(
                 cc.DelayTime:create(TIME_INTERVAL_FOR_ACTIONS),
                 cc.CallFunc:create(function()
                     self.m_IsExecutingAction = false
-                    self:executeAction(action)
+                    ActionExecutorForWarOnline.execute(action, self)
                 end)
             ))
         end
@@ -403,6 +348,31 @@ end
 
 function ModelWarOnline:getActionId()
     return self.m_ActionID
+end
+
+function ModelWarOnline:setActionId(actionID)
+    self.m_ActionID = actionID
+
+    return self
+end
+
+function ModelWarOnline:cacheAction(action)
+    local actionID = action.actionID
+    assert(not IS_SERVER,                 "ModelWarOnline:cacheAction() this should not happen on the server.")
+    assert(actionID > self:getActionId(), "ModelWarOnline:cacheAction() the action to be cached has been executed already.")
+
+    self.m_CachedActions[actionID] = action
+
+    return self
+end
+
+function ModelWarOnline:pushBackExecutedAction(action)
+    assert(IS_SERVER, "ModelWarOnline:pushBackExecutedAction() should not be invoked on the client.")
+    self.m_ExecutedActions[action.actionID] = {
+        [ActionCodeFunctions.getActionName(action.actionCode)] = TableFunctions.clone(action, IGNORED_KEYS_FOR_EXECUTED_ACTIONS)
+    }
+
+    return self
 end
 
 function ModelWarOnline:getWarId()
