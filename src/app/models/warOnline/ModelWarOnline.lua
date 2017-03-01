@@ -61,6 +61,7 @@ local function onWebSocketOpen(self, param)
 end
 
 local function onWebSocketMessage(self, param)
+    ---[[
     local action     = param.action
     local actionCode = action.actionCode
     print(string.format("ModelWarOnline-onWebSocketMessage() code: %d  name: %s  length: %d",
@@ -69,10 +70,9 @@ local function onWebSocketMessage(self, param)
         string.len(param.message))
     )
     print(SerializationFunctions.toString(action))
+    --]]
 
-    if ((not action.warID) or (action.warID == self:getWarId())) then
-        ActionExecutorForWarOnline.execute(action, self)
-    end
+    ActionExecutorForWarOnline.execute(param.action, self)
 end
 
 local function onWebSocketClose(self, param)

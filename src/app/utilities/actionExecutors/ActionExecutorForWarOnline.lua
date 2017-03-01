@@ -310,10 +310,11 @@ local function cleanupOnReceivingResponseFromServer(modelWarOnline)
 end
 
 local function prepareForExecutingWarAction(action, modelWarOnline)
-    local nextActionID    = action.actionID
     local currentActionID = modelWarOnline:getActionId()
+    local nextActionID    = action.actionID
+    local warID           = action.warID
 
-    if ((nextActionID <= currentActionID) or (modelWarOnline:isEnded())) then
+    if ((not warID) or (warID ~= modelWarOnline:getWarId()) or (nextActionID <= currentActionID) or (modelWarOnline:isEnded())) then
         assert(not IS_SERVER)
         return false
 
@@ -1558,8 +1559,7 @@ end
 --------------------------------------------------------------------------------
 function ActionExecutorForWarOnline.execute(action, modelWarOnline)
     local actionCode = action.actionCode
-    assert(ActionCodeFunctions.getActionName(actionCode),                     "ActionExecutorForWarOnline.execute() invalid actionCode: "   .. (actionCode or ""))
-    assert((not action.warID) or (action.warID == modelWarOnline:getWarId()), "ActionExecutorForWarOnline.execute() invalid action.warID: " .. (action.warID or ""))
+    assert(ActionCodeFunctions.getActionName(actionCode), "ActionExecutorForWarOnline.execute() invalid actionCode: " .. (actionCode or ""))
 
     if     (actionCode == ACTION_CODES.ActionChat)                   then executeChat(                  action, modelWarOnline)
     elseif (actionCode == ACTION_CODES.ActionLogin)                  then executeLogin(                 action, modelWarOnline)
