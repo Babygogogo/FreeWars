@@ -1,5 +1,5 @@
 
-local ActionExecutorForReplay = {}
+local ActionExecutorForWarReplay = {}
 
 local ActionCodeFunctions    = requireFW("src.app.utilities.ActionCodeFunctions")
 local AuxiliaryFunctions     = requireFW("src.app.utilities.AuxiliaryFunctions")
@@ -95,7 +95,7 @@ local function produceActorUnit(modelWarReplay, tiledID, unitID, gridIndex)
 end
 
 local function getAndSupplyAdjacentModelUnits(modelWarReplay, supplierGridIndex, playerIndex)
-    assert(type(playerIndex) == "number", "ActionExecutorForReplay-getAndSupplyAdjacentModelUnits() invalid playerIndex: " .. (playerIndex or ""))
+    assert(type(playerIndex) == "number", "ActionExecutorForWarReplay-getAndSupplyAdjacentModelUnits() invalid playerIndex: " .. (playerIndex or ""))
 
     local modelUnitMap = getModelUnitMap(modelWarReplay)
     local targets      = {}
@@ -1125,9 +1125,9 @@ end
 --------------------------------------------------------------------------------
 -- The public function.
 --------------------------------------------------------------------------------
-function ActionExecutorForReplay.executeReplayAction(action, modelWarReplay)
+function ActionExecutorForWarReplay.executeReplayAction(action, modelWarReplay)
     local actionCode = action.actionCode
-    assert(ActionCodeFunctions.getActionName(actionCode), "ActionExecutorForReplay.executeReplayAction() invalid actionCode: " .. (actionCode or ""))
+    assert(ActionCodeFunctions.getActionName(actionCode), "ActionExecutorForWarReplay.executeReplayAction() invalid actionCode: " .. (actionCode or ""))
 
     if     (actionCode == ACTION_CODES.ActionActivateSkill)          then executeActivateSkill(         action, modelWarReplay)
     elseif (actionCode == ACTION_CODES.ActionAttack)                 then executeAttack(                action, modelWarReplay)
@@ -1150,15 +1150,15 @@ function ActionExecutorForReplay.executeReplayAction(action, modelWarReplay)
     elseif (actionCode == ACTION_CODES.ActionSurrender)              then executeSurrender(             action, modelWarReplay)
     elseif (actionCode == ACTION_CODES.ActionVoteForDraw)            then executeVoteForDraw(           action, modelWarReplay)
     elseif (actionCode == ACTION_CODES.ActionWait)                   then executeWait(                  action, modelWarReplay)
-    else                                                                  error("ActionExecutorForReplay.executeReplayAction() invalid action: " .. SerializationFunctions.toString(action))
+    else                                                                  error("ActionExecutorForWarReplay.executeReplayAction() invalid action: " .. SerializationFunctions.toString(action))
     end
 
-    return ActionExecutorForReplay
+    return ActionExecutorForWarReplay
 end
 
-function ActionExecutorForReplay.executeWebAction(action, modelWarReplay)
+function ActionExecutorForWarReplay.executeWebAction(action, modelWarReplay)
     local actionCode = action.actionCode
-    assert(ActionCodeFunctions.getActionName(actionCode), "ActionExecutorForReplay.executeWebAction() invalid actionCode: " .. (actionCode or ""))
+    assert(ActionCodeFunctions.getActionName(actionCode), "ActionExecutorForWarReplay.executeWebAction() invalid actionCode: " .. (actionCode or ""))
 
     if     (actionCode == ACTION_CODES.ActionChat)     then executeWebChat(    action, modelWarReplay)
     elseif (actionCode == ACTION_CODES.ActionLogin)    then executeWebLogin(   action, modelWarReplay)
@@ -1167,7 +1167,7 @@ function ActionExecutorForReplay.executeWebAction(action, modelWarReplay)
     elseif (actionCode == ACTION_CODES.ActionRegister) then executeWebRegister(action, modelWarReplay)
     end
 
-    return ActionExecutorForReplay
+    return ActionExecutorForWarReplay
 end
 
-return ActionExecutorForReplay
+return ActionExecutorForWarReplay
