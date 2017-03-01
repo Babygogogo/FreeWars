@@ -529,7 +529,7 @@ local function executeAttack(action, modelWarOnline)
                 modelTurnManager:endTurnPhaseMain()
             end
 
-            PlayerProfileManager.updateProfilesWithModelSceneWar(modelWarOnline)
+            PlayerProfileManager.updateProfilesWithModelWarOnline(modelWarOnline)
         end
 
         modelWarOnline:setExecutingAction(false)
@@ -617,7 +617,7 @@ local function executeBeginTurn(action, modelWarOnline)
                 modelTurnManager:endTurnPhaseMain()
             end
 
-            PlayerProfileManager.updateProfilesWithModelSceneWar(modelWarOnline)
+            PlayerProfileManager.updateProfilesWithModelWarOnline(modelWarOnline)
         end
 
         modelWarOnline:setExecutingAction(false)
@@ -762,7 +762,7 @@ local function executeCaptureModelTile(action, modelWarOnline)
         if (lostPlayerIndex) then
             Destroyers.destroyPlayerForce(modelWarOnline, lostPlayerIndex)
             modelWarOnline:setEnded(modelPlayerManager:getAlivePlayersCount() <= 1)
-            PlayerProfileManager.updateProfilesWithModelSceneWar(modelWarOnline)
+            PlayerProfileManager.updateProfilesWithModelWarOnline(modelWarOnline)
         end
 
         modelWarOnline:setExecutingAction(false)
@@ -1384,7 +1384,7 @@ local function executeSurrender(action, modelWarOnline)
         end
 
         modelWarOnline:setExecutingAction(false)
-        PlayerProfileManager.updateProfilesWithModelSceneWar(modelWarOnline)
+        PlayerProfileManager.updateProfilesWithModelWarOnline(modelWarOnline)
         SceneWarManager.updateWithModelWarOnline(modelWarOnline)
 
     else
@@ -1430,7 +1430,7 @@ local function executeVoteForDraw(action, modelWarOnline)
     if (IS_SERVER) then
         modelWarOnline:setExecutingAction(false)
         if (modelWarOnline:isEnded()) then
-            PlayerProfileManager.updateProfilesWithModelSceneWar(modelWarOnline)
+            PlayerProfileManager.updateProfilesWithModelWarOnline(modelWarOnline)
         end
         SceneWarManager.updateWithModelWarOnline(modelWarOnline)
 
@@ -1494,37 +1494,38 @@ function ActionExecutorForWarOnline.execute(action, modelWarOnline)
     local actionCode = action.actionCode
     assert(ActionCodeFunctions.getActionName(actionCode), "ActionExecutorForWarOnline.execute() invalid actionCode: " .. (actionCode or ""))
 
-    if     (actionCode == ACTION_CODES.ActionChat)                         then executeChat(                        action, modelWarOnline)
-    elseif (actionCode == ACTION_CODES.ActionLogin)                        then executeLogin(                       action, modelWarOnline)
-    elseif (actionCode == ACTION_CODES.ActionLogout)                       then executeLogout(                      action, modelWarOnline)
-    elseif (actionCode == ACTION_CODES.ActionMessage)                      then executeMessage(                     action, modelWarOnline)
-    elseif (actionCode == ACTION_CODES.ActionNetworkHeartbeat)             then executeNetworkHeartbeat(            action, modelWarOnline)
-    elseif (actionCode == ACTION_CODES.ActionRegister)                     then executeRegister(                    action, modelWarOnline)
-    elseif (actionCode == ACTION_CODES.ActionReloadSceneWar)               then executeReloadSceneWar(              action, modelWarOnline)
-    elseif (actionCode == ACTION_CODES.ActionRunSceneMain)                 then executeRunSceneMain(                action, modelWarOnline)
-    elseif (actionCode == ACTION_CODES.ActionActivateSkill)                then executeActivateSkill(               action, modelWarOnline)
-    elseif (actionCode == ACTION_CODES.ActionAttack)                       then executeAttack(                      action, modelWarOnline)
-    elseif (actionCode == ACTION_CODES.ActionBeginTurn)                    then executeBeginTurn(                   action, modelWarOnline)
-    elseif (actionCode == ACTION_CODES.ActionBuildModelTile)               then executeBuildModelTile(              action, modelWarOnline)
-    elseif (actionCode == ACTION_CODES.ActionCaptureModelTile)             then executeCaptureModelTile(            action, modelWarOnline)
-    elseif (actionCode == ACTION_CODES.ActionDeclareSkill)                 then executeDeclareSkill(                action, modelWarOnline)
-    elseif (actionCode == ACTION_CODES.ActionDestroyOwnedModelUnit)        then executeDestroyOwnedModelUnit(       action, modelWarOnline)
-    elseif (actionCode == ACTION_CODES.ActionDive)                         then executeDive(                        action, modelWarOnline)
-    elseif (actionCode == ACTION_CODES.ActionDropModelUnit)                then executeDropModelUnit(               action, modelWarOnline)
-    elseif (actionCode == ACTION_CODES.ActionEndTurn)                      then executeEndTurn(                     action, modelWarOnline)
-    elseif (actionCode == ACTION_CODES.ActionJoinModelUnit)                then executeJoinModelUnit(               action, modelWarOnline)
-    elseif (actionCode == ACTION_CODES.ActionLaunchFlare)                  then executeLaunchFlare(                 action, modelWarOnline)
-    elseif (actionCode == ACTION_CODES.ActionLaunchSilo)                   then executeLaunchSilo(                  action, modelWarOnline)
-    elseif (actionCode == ACTION_CODES.ActionLoadModelUnit)                then executeLoadModelUnit(               action, modelWarOnline)
-    elseif (actionCode == ACTION_CODES.ActionProduceModelUnitOnTile)       then executeProduceModelUnitOnTile(      action, modelWarOnline)
-    elseif (actionCode == ACTION_CODES.ActionProduceModelUnitOnUnit)       then executeProduceModelUnitOnUnit(      action, modelWarOnline)
-    elseif (actionCode == ACTION_CODES.ActionSupplyModelUnit)              then executeSupplyModelUnit(             action, modelWarOnline)
-    elseif (actionCode == ACTION_CODES.ActionSurface)                      then executeSurface(                     action, modelWarOnline)
-    elseif (actionCode == ACTION_CODES.ActionSurrender)                    then executeSurrender(                   action, modelWarOnline)
-    elseif (actionCode == ACTION_CODES.ActionVoteForDraw)                  then executeVoteForDraw(                 action, modelWarOnline)
-    elseif (actionCode == ACTION_CODES.ActionWait)                         then executeWait(                        action, modelWarOnline)
-    else                                                                        error("ActionExecutorForWarOnline.execute() invalid action: " .. SerializationFunctions.toString(action))
+    if     (actionCode == ACTION_CODES.ActionChat)                   then executeChat(                  action, modelWarOnline)
+    elseif (actionCode == ACTION_CODES.ActionLogin)                  then executeLogin(                 action, modelWarOnline)
+    elseif (actionCode == ACTION_CODES.ActionLogout)                 then executeLogout(                action, modelWarOnline)
+    elseif (actionCode == ACTION_CODES.ActionMessage)                then executeMessage(               action, modelWarOnline)
+    elseif (actionCode == ACTION_CODES.ActionNetworkHeartbeat)       then executeNetworkHeartbeat(      action, modelWarOnline)
+    elseif (actionCode == ACTION_CODES.ActionRegister)               then executeRegister(              action, modelWarOnline)
+    elseif (actionCode == ACTION_CODES.ActionReloadSceneWar)         then executeReloadSceneWar(        action, modelWarOnline)
+    elseif (actionCode == ACTION_CODES.ActionRunSceneMain)           then executeRunSceneMain(          action, modelWarOnline)
+    elseif (actionCode == ACTION_CODES.ActionActivateSkill)          then executeActivateSkill(         action, modelWarOnline)
+    elseif (actionCode == ACTION_CODES.ActionAttack)                 then executeAttack(                action, modelWarOnline)
+    elseif (actionCode == ACTION_CODES.ActionBeginTurn)              then executeBeginTurn(             action, modelWarOnline)
+    elseif (actionCode == ACTION_CODES.ActionBuildModelTile)         then executeBuildModelTile(        action, modelWarOnline)
+    elseif (actionCode == ACTION_CODES.ActionCaptureModelTile)       then executeCaptureModelTile(      action, modelWarOnline)
+    elseif (actionCode == ACTION_CODES.ActionDeclareSkill)           then executeDeclareSkill(          action, modelWarOnline)
+    elseif (actionCode == ACTION_CODES.ActionDestroyOwnedModelUnit)  then executeDestroyOwnedModelUnit( action, modelWarOnline)
+    elseif (actionCode == ACTION_CODES.ActionDive)                   then executeDive(                  action, modelWarOnline)
+    elseif (actionCode == ACTION_CODES.ActionDropModelUnit)          then executeDropModelUnit(         action, modelWarOnline)
+    elseif (actionCode == ACTION_CODES.ActionEndTurn)                then executeEndTurn(               action, modelWarOnline)
+    elseif (actionCode == ACTION_CODES.ActionJoinModelUnit)          then executeJoinModelUnit(         action, modelWarOnline)
+    elseif (actionCode == ACTION_CODES.ActionLaunchFlare)            then executeLaunchFlare(           action, modelWarOnline)
+    elseif (actionCode == ACTION_CODES.ActionLaunchSilo)             then executeLaunchSilo(            action, modelWarOnline)
+    elseif (actionCode == ACTION_CODES.ActionLoadModelUnit)          then executeLoadModelUnit(         action, modelWarOnline)
+    elseif (actionCode == ACTION_CODES.ActionProduceModelUnitOnTile) then executeProduceModelUnitOnTile(action, modelWarOnline)
+    elseif (actionCode == ACTION_CODES.ActionProduceModelUnitOnUnit) then executeProduceModelUnitOnUnit(action, modelWarOnline)
+    elseif (actionCode == ACTION_CODES.ActionSupplyModelUnit)        then executeSupplyModelUnit(       action, modelWarOnline)
+    elseif (actionCode == ACTION_CODES.ActionSurface)                then executeSurface(               action, modelWarOnline)
+    elseif (actionCode == ACTION_CODES.ActionSurrender)              then executeSurrender(             action, modelWarOnline)
+    elseif (actionCode == ACTION_CODES.ActionVoteForDraw)            then executeVoteForDraw(           action, modelWarOnline)
+    elseif (actionCode == ACTION_CODES.ActionWait)                   then executeWait(                  action, modelWarOnline)
     end
+
+    return ActionExecutorForWarOnline
 end
 
 return ActionExecutorForWarOnline
