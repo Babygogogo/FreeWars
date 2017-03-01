@@ -1,13 +1,13 @@
 
 local ModelWarReplay = requireFW("src.global.functions.class")("ModelWarReplay")
 
-local ActionCodeFunctions    = requireFW("src.app.utilities.ActionCodeFunctions")
-local ActionExecutor         = requireFW("src.app.utilities.actionExecutors.ActionExecutorForWarReplay")
-local AudioManager           = requireFW("src.app.utilities.AudioManager")
-local LocalizationFunctions  = requireFW("src.app.utilities.LocalizationFunctions")
-local SerializationFunctions = requireFW("src.app.utilities.SerializationFunctions")
-local Actor                  = requireFW("src.global.actors.Actor")
-local EventDispatcher        = requireFW("src.global.events.EventDispatcher")
+local ActionCodeFunctions        = requireFW("src.app.utilities.ActionCodeFunctions")
+local ActionExecutorForWarReplay = requireFW("src.app.utilities.actionExecutors.ActionExecutorForWarReplay")
+local AudioManager               = requireFW("src.app.utilities.AudioManager")
+local LocalizationFunctions      = requireFW("src.app.utilities.LocalizationFunctions")
+local SerializationFunctions     = requireFW("src.app.utilities.SerializationFunctions")
+local Actor                      = requireFW("src.global.actors.Actor")
+local EventDispatcher            = requireFW("src.global.events.EventDispatcher")
 
 local cc, math, string    = cc, math, string
 local ipairs, next, print = ipairs, next, print
@@ -32,7 +32,7 @@ local function onWebSocketMessage(self, param)
     )
     print(SerializationFunctions.toString(param.action))
 
-    ActionExecutor.executeWebAction(param.action, self)
+    ActionExecutorForWarReplay.executeWebAction(param.action, self)
 end
 
 local function onWebSocketClose(self, param)
@@ -75,7 +75,7 @@ local function executeNextReplayAction(self)
         ))
 
         setActionId(self, actionID)
-        ActionExecutor.executeReplayAction(action, self)
+        ActionExecutorForWarReplay.executeReplayAction(action, self)
     end
 
     return self
@@ -207,7 +207,7 @@ function ModelWarReplay:initWarDataForEachTurn()
 
         local _, action = next(wrappedAction)
         setActionId(self, actionID)
-        ActionExecutor.executeReplayAction(action, self)
+        ActionExecutorForWarReplay.executeReplayAction(action, self)
     end
 
     self.m_IsFastExecutingActions     = false
