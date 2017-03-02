@@ -132,26 +132,27 @@ end
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
 function ModelWarOnline:ctor(sceneData)
-    self.m_CachedActions         = {}
-    self.m_ActionID              = sceneData.actionID
-    self.m_EnergyGainModifier    = sceneData.energyGainModifier
-    self.m_EnterTurnTime         = sceneData.enterTurnTime
-    self.m_ExecutedActions       = sceneData.executedActions
-    self.m_IncomeModifier        = sceneData.incomeModifier
-    self.m_IntervalUntilBoot     = sceneData.intervalUntilBoot
-    self.m_IsActiveSkillEnabled  = sceneData.isActiveSkillEnabled
-    self.m_IsFogOfWarByDefault   = sceneData.isFogOfWarByDefault
-    self.m_IsPassiveSkillEnabled = sceneData.isPassiveSkillEnabled
-    self.m_IsRandomWarField      = sceneData.isRandomWarField
-    self.m_IsRankMatch           = sceneData.isRankMatch
-    self.m_IsWarEnded            = sceneData.isWarEnded
-    self.m_MaxBaseSkillPoints    = sceneData.maxBaseSkillPoints
-    self.m_MaxDiffScore          = sceneData.maxDiffScore
-    self.m_RemainingVotesForDraw = sceneData.remainingVotesForDraw
-    self.m_StartingEnergy        = sceneData.startingEnergy
-    self.m_StartingFund          = sceneData.startingFund
-    self.m_WarID                 = sceneData.warID
-    self.m_WarPassword           = sceneData.warPassword
+    self.m_CachedActions             = {}
+    self.m_ActionID                  = sceneData.actionID
+    self.m_EnergyGainModifier        = sceneData.energyGainModifier
+    self.m_EnterTurnTime             = sceneData.enterTurnTime
+    self.m_ExecutedActions           = sceneData.executedActions
+    self.m_IncomeModifier            = sceneData.incomeModifier
+    self.m_IntervalUntilBoot         = sceneData.intervalUntilBoot
+    self.m_IsActiveSkillEnabled      = sceneData.isActiveSkillEnabled
+    self.m_IsFogOfWarByDefault       = sceneData.isFogOfWarByDefault
+    self.m_IsPassiveSkillEnabled     = sceneData.isPassiveSkillEnabled
+    self.m_IsRandomWarField          = sceneData.isRandomWarField
+    self.m_IsRankMatch               = sceneData.isRankMatch
+    self.m_IsSkillDeclarationEnabled = sceneData.isSkillDeclarationEnabled
+    self.m_IsWarEnded                = sceneData.isWarEnded
+    self.m_MaxBaseSkillPoints        = sceneData.maxBaseSkillPoints
+    self.m_MaxDiffScore              = sceneData.maxDiffScore
+    self.m_RemainingVotesForDraw     = sceneData.remainingVotesForDraw
+    self.m_StartingEnergy            = sceneData.startingEnergy
+    self.m_StartingFund              = sceneData.startingFund
+    self.m_WarID                     = sceneData.warID
+    self.m_WarPassword               = sceneData.warPassword
 
     initScriptEventDispatcher(self)
     initActorChatManager(     self, sceneData.chatData)
@@ -186,88 +187,91 @@ end
 --------------------------------------------------------------------------------
 function ModelWarOnline:toSerializableTable()
     return {
-        actionID              = self:getActionId(),
-        energyGainModifier    = self.m_EnergyGainModifier,
-        enterTurnTime         = self.m_EnterTurnTime,
-        executedActions       = self.m_ExecutedActions,
-        incomeModifier        = self.m_IncomeModifier,
-        intervalUntilBoot     = self.m_IntervalUntilBoot,
-        isActiveSkillEnabled  = self.m_IsActiveSkillEnabled,
-        isFogOfWarByDefault   = self.m_IsFogOfWarByDefault,
-        isPassiveSkillEnabled = self.m_IsPassiveSkillEnabled,
-        isRandomWarField      = self.m_IsRandomWarField,
-        isRankMatch           = self.m_IsRankMatch,
-        isWarEnded            = self.m_IsWarEnded,
-        maxBaseSkillPoints    = self.m_MaxBaseSkillPoints,
-        maxDiffScore          = self.m_MaxDiffScore,
-        remainingVotesForDraw = self.m_RemainingVotesForDraw,
-        startingEnergy        = self.m_StartingEnergy,
-        startingFund          = self.m_StartingFund,
-        warID                 = self.m_WarID,
-        warPassword           = self.m_WarPassword,
-        chatData              = self:getModelChatManager()   :toSerializableTable(),
-        players               = self:getModelPlayerManager() :toSerializableTable(),
-        turn                  = self:getModelTurnManager()   :toSerializableTable(),
-        warField              = self:getModelWarField()      :toSerializableTable(),
-        weather               = self:getModelWeatherManager():toSerializableTable(),
+        actionID                  = self:getActionId(),
+        energyGainModifier        = self.m_EnergyGainModifier,
+        enterTurnTime             = self.m_EnterTurnTime,
+        executedActions           = self.m_ExecutedActions,
+        incomeModifier            = self.m_IncomeModifier,
+        intervalUntilBoot         = self.m_IntervalUntilBoot,
+        isActiveSkillEnabled      = self.m_IsActiveSkillEnabled,
+        isFogOfWarByDefault       = self.m_IsFogOfWarByDefault,
+        isPassiveSkillEnabled     = self.m_IsPassiveSkillEnabled,
+        isRandomWarField          = self.m_IsRandomWarField,
+        isRankMatch               = self.m_IsRankMatch,
+        isSkillDeclarationEnabled = self.m_IsSkillDeclarationEnabled,
+        isWarEnded                = self.m_IsWarEnded,
+        maxBaseSkillPoints        = self.m_MaxBaseSkillPoints,
+        maxDiffScore              = self.m_MaxDiffScore,
+        remainingVotesForDraw     = self.m_RemainingVotesForDraw,
+        startingEnergy            = self.m_StartingEnergy,
+        startingFund              = self.m_StartingFund,
+        warID                     = self.m_WarID,
+        warPassword               = self.m_WarPassword,
+        chatData                  = self:getModelChatManager()   :toSerializableTable(),
+        players                   = self:getModelPlayerManager() :toSerializableTable(),
+        turn                      = self:getModelTurnManager()   :toSerializableTable(),
+        warField                  = self:getModelWarField()      :toSerializableTable(),
+        weather                   = self:getModelWeatherManager():toSerializableTable(),
     }
 end
 
 function ModelWarOnline:toSerializableTableForPlayerIndex(playerIndex)
     return {
-        actionID              = self:getActionId(),
-        energyGainModifier    = self.m_EnergyGainModifier,
-        enterTurnTime         = self.m_EnterTurnTime,
-        executedActions       = nil,
-        incomeModifier        = self.m_IncomeModifier,
-        intervalUntilBoot     = self.m_IntervalUntilBoot,
-        isActiveSkillEnabled  = self.m_IsActiveSkillEnabled,
-        isFogOfWarByDefault   = self.m_IsFogOfWarByDefault,
-        isPassiveSkillEnabled = self.m_IsPassiveSkillEnabled,
-        isRandomWarField      = self.m_IsRandomWarField,
-        isRankMatch           = self.m_IsRankMatch,
-        isWarEnded            = self.m_IsWarEnded,
-        maxBaseSkillPoints    = self.m_MaxBaseSkillPoints,
-        maxDiffScore          = self.m_MaxDiffScore,
-        remainingVotesForDraw = self.m_RemainingVotesForDraw,
-        startingEnergy        = self.m_StartingEnergy,
-        startingFund          = self.m_StartingFund,
-        warID                 = self.m_WarID,
-        warPassword           = self.m_WarPassword,
-        chatData              = self:getModelChatManager()   :toSerializableTableForPlayerIndex(playerIndex),
-        players               = self:getModelPlayerManager() :toSerializableTableForPlayerIndex(playerIndex),
-        turn                  = self:getModelTurnManager()   :toSerializableTableForPlayerIndex(playerIndex),
-        warField              = self:getModelWarField()      :toSerializableTableForPlayerIndex(playerIndex),
-        weather               = self:getModelWeatherManager():toSerializableTableForPlayerIndex(playerIndex),
+        actionID                  = self:getActionId(),
+        energyGainModifier        = self.m_EnergyGainModifier,
+        enterTurnTime             = self.m_EnterTurnTime,
+        executedActions           = nil,
+        incomeModifier            = self.m_IncomeModifier,
+        intervalUntilBoot         = self.m_IntervalUntilBoot,
+        isActiveSkillEnabled      = self.m_IsActiveSkillEnabled,
+        isFogOfWarByDefault       = self.m_IsFogOfWarByDefault,
+        isPassiveSkillEnabled     = self.m_IsPassiveSkillEnabled,
+        isRandomWarField          = self.m_IsRandomWarField,
+        isRankMatch               = self.m_IsRankMatch,
+        isSkillDeclarationEnabled = self.m_IsSkillDeclarationEnabled,
+        isWarEnded                = self.m_IsWarEnded,
+        maxBaseSkillPoints        = self.m_MaxBaseSkillPoints,
+        maxDiffScore              = self.m_MaxDiffScore,
+        remainingVotesForDraw     = self.m_RemainingVotesForDraw,
+        startingEnergy            = self.m_StartingEnergy,
+        startingFund              = self.m_StartingFund,
+        warID                     = self.m_WarID,
+        warPassword               = self.m_WarPassword,
+        chatData                  = self:getModelChatManager()   :toSerializableTableForPlayerIndex(playerIndex),
+        players                   = self:getModelPlayerManager() :toSerializableTableForPlayerIndex(playerIndex),
+        turn                      = self:getModelTurnManager()   :toSerializableTableForPlayerIndex(playerIndex),
+        warField                  = self:getModelWarField()      :toSerializableTableForPlayerIndex(playerIndex),
+        weather                   = self:getModelWeatherManager():toSerializableTableForPlayerIndex(playerIndex),
     }
 end
 
 function ModelWarOnline:toSerializableReplayData()
     return {
-        actionID              = 0,
-        energyGainModifier    = self.m_EnergyGainModifier,
-        enterTurnTime         = nil,
-        executedActions       = self.m_ExecutedActions,
-        incomeModifier        = self.m_IncomeModifier,
-        intervalUntilBoot     = self.m_IntervalUntilBoot,
-        isActiveSkillEnabled  = self.m_IsActiveSkillEnabled,
-        isFogOfWarByDefault   = self.m_IsFogOfWarByDefault,
-        isPassiveSkillEnabled = self.m_IsPassiveSkillEnabled,
-        isRandomWarField      = self.m_IsRandomWarField,
-        isRankMatch           = self.m_IsRankMatch,
-        isWarEnded            = false,
-        maxBaseSkillPoints    = self.m_MaxBaseSkillPoints,
-        maxDiffScore          = self.m_MaxDiffScore,
-        remainingVotesForDraw = nil,
-        startingEnergy        = self.m_StartingEnergy,
-        startingFund          = self.m_StartingFund,
-        warID                 = self.m_WarID,
-        warPassword           = self.m_WarPassword,
-        chatData              = nil,
-        players               = self:getModelPlayerManager() :toSerializableReplayData(),
-        turn                  = self:getModelTurnManager()   :toSerializableReplayData(),
-        warField              = self:getModelWarField()      :toSerializableReplayData(),
-        weather               = self:getModelWeatherManager():toSerializableReplayData(),
+        actionID                  = 0,
+        energyGainModifier        = self.m_EnergyGainModifier,
+        enterTurnTime             = nil,
+        executedActions           = self.m_ExecutedActions,
+        incomeModifier            = self.m_IncomeModifier,
+        intervalUntilBoot         = self.m_IntervalUntilBoot,
+        isActiveSkillEnabled      = self.m_IsActiveSkillEnabled,
+        isFogOfWarByDefault       = self.m_IsFogOfWarByDefault,
+        isPassiveSkillEnabled     = self.m_IsPassiveSkillEnabled,
+        isRandomWarField          = self.m_IsRandomWarField,
+        isRankMatch               = self.m_IsRankMatch,
+        isSkillDeclarationEnabled = self.m_IsSkillDeclarationEnabled,
+        isWarEnded                = false,
+        maxBaseSkillPoints        = self.m_MaxBaseSkillPoints,
+        maxDiffScore              = self.m_MaxDiffScore,
+        remainingVotesForDraw     = nil,
+        startingEnergy            = self.m_StartingEnergy,
+        startingFund              = self.m_StartingFund,
+        warID                     = self.m_WarID,
+        warPassword               = self.m_WarPassword,
+        chatData                  = nil,
+        players                   = self:getModelPlayerManager() :toSerializableReplayData(),
+        turn                      = self:getModelTurnManager()   :toSerializableReplayData(),
+        warField                  = self:getModelWarField()      :toSerializableReplayData(),
+        weather                   = self:getModelWeatherManager():toSerializableReplayData(),
     }
 end
 
@@ -389,6 +393,10 @@ end
 
 function ModelWarOnline:isPassiveSkillEnabled()
     return self.m_IsPassiveSkillEnabled
+end
+
+function ModelWarOnline:isSkillDeclarationEnabled()
+    return self.m_IsSkillDeclarationEnabled
 end
 
 function ModelWarOnline:getIncomeModifier()

@@ -338,6 +338,19 @@ local s_LongText18_2 = [[
 Untranslated...
 ]]
 
+local s_LongText19_1 = [[
+本选项规定本战局所有玩家发动特技前是否需要宣言。
+
+如果选“是”，则玩家需要提前一个回合进行宣言，下回合才能发动特技（也可以不发动）。宣言需要消耗一定能量。
+如果选“否”，则玩家只要能量足够，就可以随时发动特技。
+
+默认为“是”。
+]]
+
+local s_LongText19_2 = [[
+Untranslated...
+]]
+
 --------------------------------------------------------------------------------
 -- The private functions.
 --------------------------------------------------------------------------------
@@ -837,6 +850,7 @@ local s_Texts = {
             elseif (textType == "DisableSkills")                then return "禁用技能"
             elseif (textType == "EnableActiveSkill")            then return "启用主动技"
             elseif (textType == "EnablePassiveSkill")           then return "启用日常技"
+            elseif (textType == "EnableSkillDeclaration")       then return "启用宣言"
             elseif (textType == "Energy Gain Modifier")         then return "能 量 增 速"
             elseif (textType == "EnergyGainModifier")           then return "能量增速"
             elseif (textType == "ExitWar")                      then return "退 出 战 局"
@@ -884,6 +898,7 @@ local s_Texts = {
             elseif (textType == "DisableSkills")                then return "Disable Skills"
             elseif (textType == "EnableActiveSkill")            then return "EnableActiveSkill"
             elseif (textType == "EnablePassiveSkill")           then return "EnablePassiveSkill"
+            elseif (textType == "EnableSkillDeclaration")       then return "EnableSkillDeclaration"
             elseif (textType == "Energy Gain Modifier")         then return "EnergyGain"
             elseif (textType == "EnergyGainModifier")           then return "EnergyGain"
             elseif (textType == "ExitWar")                      then return "Exit War"
@@ -1135,33 +1150,35 @@ local s_Texts = {
     },
     [35] = {
         [1] = function(textType)
-            if     (textType == "HelpForEnableActiveSkill")  then return s_LongText8_1
-            elseif (textType == "HelpForEnablePassiveSkill") then return s_LongText9_1
-            elseif (textType == "HelpForEnergyGainModifier") then return s_LongText10_1
-            elseif (textType == "HelpForFogOfWar")           then return s_LongText11_1
-            elseif (textType == "HelpForIncomeModifier")     then return s_LongText12_1
-            elseif (textType == "HelpForIntervalUntilBoot")  then return s_LongText13_1
-            elseif (textType == "HelpForMaxDiffScore")       then return s_LongText14_1
-            elseif (textType == "HelpForPlayerIndex")        then return s_LongText15_1
-            elseif (textType == "HelpForRankMatch")          then return s_LongText16_1
-            elseif (textType == "HelpForStartingEnergy")     then return s_LongText17_1
-            elseif (textType == "HelpForStartingFund")       then return s_LongText18_1
-            else                                                  return "未知35:" .. (textType or "")
+            if     (textType == "HelpForEnableActiveSkill")      then return s_LongText8_1
+            elseif (textType == "HelpForEnablePassiveSkill")     then return s_LongText9_1
+            elseif (textType == "HelpForEnableSkillDeclaration") then return s_LongText19_1
+            elseif (textType == "HelpForEnergyGainModifier")     then return s_LongText10_1
+            elseif (textType == "HelpForFogOfWar")               then return s_LongText11_1
+            elseif (textType == "HelpForIncomeModifier")         then return s_LongText12_1
+            elseif (textType == "HelpForIntervalUntilBoot")      then return s_LongText13_1
+            elseif (textType == "HelpForMaxDiffScore")           then return s_LongText14_1
+            elseif (textType == "HelpForPlayerIndex")            then return s_LongText15_1
+            elseif (textType == "HelpForRankMatch")              then return s_LongText16_1
+            elseif (textType == "HelpForStartingEnergy")         then return s_LongText17_1
+            elseif (textType == "HelpForStartingFund")           then return s_LongText18_1
+            else                                                      return "未知35:" .. (textType or "")
             end
         end,
         [2] = function(textType)
-            if     (textType == "HelpForEnableActiveSkill")  then return s_LongText8_2
-            elseif (textType == "HelpForEnablePassiveSkill") then return s_LongText9_2
-            elseif (textType == "HelpForEnergyGainModifier") then return s_LongText10_2
-            elseif (textType == "HelpForFogOfWar")           then return s_LongText11_2
-            elseif (textType == "HelpForIncomeModifier")     then return s_LongText12_2
-            elseif (textType == "HelpForIntervalUntilBoot")  then return s_LongText13_2
-            elseif (textType == "HelpForMaxDiffScore")       then return s_LongText14_2
-            elseif (textType == "HelpForPlayerIndex")        then return s_LongText15_2
-            elseif (textType == "HelpForRankMatch")          then return s_LongText16_2
-            elseif (textType == "HelpForStartingEnergy")     then return s_LongText17_2
-            elseif (textType == "HelpForStartingFund")       then return s_LongText18_2
-            else                                                  return "Unknown35:" .. (textType or "")
+            if     (textType == "HelpForEnableActiveSkill")      then return s_LongText8_2
+            elseif (textType == "HelpForEnablePassiveSkill")     then return s_LongText9_2
+            elseif (textType == "HelpForEnableSkillDeclaration") then return s_LongText19_1
+            elseif (textType == "HelpForEnergyGainModifier")     then return s_LongText10_2
+            elseif (textType == "HelpForFogOfWar")               then return s_LongText11_2
+            elseif (textType == "HelpForIncomeModifier")         then return s_LongText12_2
+            elseif (textType == "HelpForIntervalUntilBoot")      then return s_LongText13_2
+            elseif (textType == "HelpForMaxDiffScore")           then return s_LongText14_2
+            elseif (textType == "HelpForPlayerIndex")            then return s_LongText15_2
+            elseif (textType == "HelpForRankMatch")              then return s_LongText16_2
+            elseif (textType == "HelpForStartingEnergy")         then return s_LongText17_2
+            elseif (textType == "HelpForStartingFund")           then return s_LongText18_2
+            else                                                      return "Unknown35:" .. (textType or "")
             end
         end,
     },

@@ -22,14 +22,15 @@ local SKILL_DECLARATION_COST     = SkillDataAccessors.getSkillDeclarationCost()
 -- The util functions.
 --------------------------------------------------------------------------------
 local function generateSkillInfoText(self)
-    local modelSceneWar = self.m_ModelSceneWar
-    local stringList    = {string.format("%s: %d%%         %s: %s         %s: %s",
-        getLocalizedText(14, "EnergyGainModifier"), modelSceneWar:getEnergyGainModifier(),
-        getLocalizedText(14, "EnablePassiveSkill"), getLocalizedText(14, (modelSceneWar:isPassiveSkillEnabled()) and ("Yes") or ("No")),
-        getLocalizedText(14, "EnableActiveSkill"),  getLocalizedText(14, (modelSceneWar:isActiveSkillEnabled())  and ("Yes") or ("No"))
+    local modelWar   = self.m_ModelWar
+    local stringList = {string.format("%s: %d%%    %s: %s    %s: %s    %s: %s",
+        getLocalizedText(14, "EnergyGainModifier"),     modelWar:getEnergyGainModifier(),
+        getLocalizedText(14, "EnablePassiveSkill"),     getLocalizedText(14, (modelWar:isPassiveSkillEnabled())      and ("Yes") or ("No")),
+        getLocalizedText(14, "EnableActiveSkill"),      getLocalizedText(14, (modelWar:isActiveSkillEnabled())       and ("Yes") or ("No")),
+        getLocalizedText(14, "EnableSkillDeclaration"), getLocalizedText(14, (modelWar:isSkillDeclarationEnabled())  and ("Yes") or ("No"))
     )}
 
-    SingletonGetters.getModelPlayerManager(modelSceneWar):forEachModelPlayer(function(modelPlayer, playerIndex)
+    SingletonGetters.getModelPlayerManager(modelWar):forEachModelPlayer(function(modelPlayer, playerIndex)
         stringList[#stringList + 1] = string.format("%s %d: %s    %s: %d    %s: %s\n%s",
             getLocalizedText(65, "Player"), playerIndex, modelPlayer:getNickname(),
             getLocalizedText(22, "CurrentEnergy"), modelPlayer:getEnergy(),
@@ -105,13 +106,13 @@ local function sendActionDeclareSkill(warID, actionID)
     })
 end
 
-local function cleanupAfterSendAction(modelSceneWar)
-    SingletonGetters.getModelMessageIndicator(modelSceneWar):showPersistentMessage(getLocalizedText(80, "TransferingData"))
-    SingletonGetters.getScriptEventDispatcher(modelSceneWar):dispatchEvent({
+local function cleanupAfterSendAction(modelWar)
+    SingletonGetters.getModelMessageIndicator(modelWar):showPersistentMessage(getLocalizedText(80, "TransferingData"))
+    SingletonGetters.getScriptEventDispatcher(modelWar):dispatchEvent({
         name    = "EvtIsWaitingForServerResponse",
         waiting = true,
     })
-    SingletonGetters.getModelWarCommandMenu(modelSceneWar):setEnabled(false)
+    SingletonGetters.getModelWarCommandMenu(modelWar):setEnabled(false)
 end
 
 --------------------------------------------------------------------------------
@@ -124,11 +125,11 @@ local setStateMain
 local setStateResearchPassiveSkill
 
 local function generateItemsSkillLevels(self, skillID, isActiveSkill)
-    local modelSceneWar   = self.m_ModelSceneWar
-    local warID           = SingletonGetters.getWarId(modelSceneWar)
-    local actionID        = SingletonGetters.getActionId(modelSceneWar) + 1
-    local modelConfirmBox = SingletonGetters.getModelConfirmBox(modelSceneWar)
-    local _, modelPlayer  = SingletonGetters.getModelPlayerManager(modelSceneWar):getPlayerIndexLoggedIn()
+    local modelWar   = self.m_ModelWar
+    local warID           = SingletonGetters.getWarId(modelWar)
+    local actionID        = SingletonGetters.getActionId(modelWar) + 1
+    local modelConfirmBox = SingletonGetters.getModelConfirmBox(modelWar)
+    local _, modelPlayer  = SingletonGetters.getModelPlayerManager(modelWar):getPlayerIndexLoggedIn()
     local energy          = modelPlayer:getEnergy()
     local skillData       = SkillDataAccessors.getSkillData(skillID)
     local minLevel        = (isActiveSkill) and (skillData.minLevelActive) or (skillData.minLevelPassive)
@@ -148,7 +149,7 @@ local function generateItemsSkillLevels(self, skillID, isActiveSkill)
                 modelConfirmBox:setConfirmText(generateActivateSkillConfirmationText(skillID, level, isActiveSkill))
                     :setOnConfirmYes(function()
                         sendActionActivateSkill(warID, actionID, skillID, level, isActiveSkill)
-                        cleanupAfterSendAction(modelSceneWar)
+                        cleanupAfterSendAction(modelWar)
                         modelConfirmBox:setEnabled(false)
                     end)
                     :setEnabled(true)
@@ -160,9 +161,9 @@ local function generateItemsSkillLevels(self, skillID, isActiveSkill)
 end
 
 local function generateItemsForStateMain(self)
-    local modelSceneWar     = self.m_ModelSceneWar
-    local playerIndexInTurn = SingletonGetters.getModelTurnManager(modelSceneWar):getPlayerIndex()
-    if ((playerIndexInTurn ~= SingletonGetters.getPlayerIndexLoggedIn(modelSceneWar)) or
+    local modelWar     = self.m_ModelWar
+    local playerIndexInTurn = SingletonGetters.getModelTurnManager(modelWar):getPlayerIndex()
+    if ((playerIndexInTurn ~= SingletonGetters.getPlayerIndexLoggedIn(modelWar)) or
         (self.m_IsWaitingForServerResponse))                                          then
         return {
             self.m_ItemSkillInfo,
@@ -170,15 +171,16 @@ local function generateItemsForStateMain(self)
             self.m_ItemCostListActiveSkill,
         }
     else
-        local modelPlayer = SingletonGetters.getModelPlayerManager(modelSceneWar):getModelPlayer(playerIndexInTurn)
+        local modelPlayer = SingletonGetters.getModelPlayerManager(modelWar):getModelPlayer(playerIndexInTurn)
         local items       = {}
-        if (modelSceneWar:isPassiveSkillEnabled()) then
+        if (modelWar:isPassiveSkillEnabled()) then
             items[#items + 1] = self.m_ItemResearchPassiveSkill
         end
-        if ((modelSceneWar:isActiveSkillEnabled()) and (not modelPlayer:isSkillDeclared()) and (modelPlayer:getEnergy() >= SKILL_DECLARATION_COST)) then
+        if ((modelWar:isSkillDeclarationEnabled()) and (modelWar:isActiveSkillEnabled()) and (not modelPlayer:isSkillDeclared()) and (modelPlayer:getEnergy() >= SKILL_DECLARATION_COST)) then
             items[#items + 1] = self.m_ItemDeclareSkill
         end
-        if (modelPlayer:canActivateSkill()) then
+        if ((modelWar:isActiveSkillEnabled()) and
+            ((modelPlayer:canActivateSkill() or (not modelWar:isSkillDeclarationEnabled())))) then
             items[#items + 1] = self.m_ItemActivateActiveSkill
         end
         items[#items + 1] = self.m_ItemSkillInfo
@@ -227,7 +229,7 @@ end
 setStateActivateActiveSkill = function(self)
     self.m_State = "stateActivateActiveSkill"
 
-    local _, modelPlayer = SingletonGetters.getModelPlayerManager(self.m_ModelSceneWar):getPlayerIndexLoggedIn()
+    local _, modelPlayer = SingletonGetters.getModelPlayerManager(self.m_ModelWar):getPlayerIndexLoggedIn()
     self.m_View:setMenuItems(generateItemsForStateActivateSkill(self))
         :setMenuTitleText(getLocalizedText(22, "ActivateSkill"))
         :setOverviewText(string.format("%s: %d\n\n%s", getLocalizedText(22, "CurrentEnergy"), modelPlayer:getEnergy(), self.m_TextActiveSkillOverview))
@@ -275,12 +277,12 @@ local function initItemDeclareSkill(self)
     self.m_ItemDeclareSkill = {
         name     = getLocalizedText(22, "DeclareSkill"),
         callback = function()
-            local modelSceneWar   = self.m_ModelSceneWar
-            local modelConfirmBox = SingletonGetters.getModelConfirmBox(modelSceneWar)
+            local modelWar   = self.m_ModelWar
+            local modelConfirmBox = SingletonGetters.getModelConfirmBox(modelWar)
             modelConfirmBox:setConfirmText(getLocalizedText(22, "ConfirmationDeclareSkill"))
                 :setOnConfirmYes(function()
-                    sendActionDeclareSkill(SingletonGetters.getWarId(modelSceneWar), SingletonGetters.getActionId(modelSceneWar) + 1)
-                    cleanupAfterSendAction(modelSceneWar)
+                    sendActionDeclareSkill(SingletonGetters.getWarId(modelWar), SingletonGetters.getActionId(modelWar) + 1)
+                    cleanupAfterSendAction(modelWar)
                     modelConfirmBox:setEnabled(false)
                 end)
                 :setEnabled(true)
@@ -368,9 +370,9 @@ function ModelSkillConfiguratorForOnline:setCallbackOnButtonBackTouched(callback
     return self
 end
 
-function ModelSkillConfiguratorForOnline:onStartRunning(modelSceneWar)
-    self.m_ModelSceneWar = modelSceneWar
-    SingletonGetters.getScriptEventDispatcher(modelSceneWar)
+function ModelSkillConfiguratorForOnline:onStartRunning(modelWar)
+    self.m_ModelWar = modelWar
+    SingletonGetters.getScriptEventDispatcher(modelWar)
         :addEventListener("EvtIsWaitingForServerResponse", self)
 
     return self
