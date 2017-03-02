@@ -125,7 +125,7 @@ local setStateMain
 local setStateResearchPassiveSkill
 
 local function generateItemsSkillLevels(self, skillID, isActiveSkill)
-    local modelWar   = self.m_ModelWar
+    local modelWar        = self.m_ModelWar
     local warID           = SingletonGetters.getWarId(modelWar)
     local actionID        = SingletonGetters.getActionId(modelWar) + 1
     local modelConfirmBox = SingletonGetters.getModelConfirmBox(modelWar)
@@ -161,7 +161,7 @@ local function generateItemsSkillLevels(self, skillID, isActiveSkill)
 end
 
 local function generateItemsForStateMain(self)
-    local modelWar     = self.m_ModelWar
+    local modelWar          = self.m_ModelWar
     local playerIndexInTurn = SingletonGetters.getModelTurnManager(modelWar):getPlayerIndex()
     if ((playerIndexInTurn ~= SingletonGetters.getPlayerIndexLoggedIn(modelWar)) or
         (self.m_IsWaitingForServerResponse))                                          then

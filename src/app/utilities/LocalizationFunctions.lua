@@ -516,6 +516,7 @@ local s_Texts = {
             elseif (skillID == 8)  then return "我方所有建筑的金钱收入"
             elseif (skillID == 9)  then return "增加我方资金，数量为我军当前收入的"
             elseif (skillID == 10) then return "对方能量值"
+            elseif (skillID == 11) then return "我方建筑及部队的维修量"
             else                        return "未知4:" .. (skillID or "")
             end
         end,
@@ -535,6 +536,7 @@ local s_Texts = {
             elseif (skillID == 8)  then return "我军收入"
             elseif (skillID == 9)  then return "我军资金"
             elseif (skillID == 10) then return "敌军能量值"
+            elseif (skillID == 11) then return "我军维修量"
             else                        return "未知5:" .. (skillID or "")
             end
         end,
@@ -1025,6 +1027,7 @@ local s_Texts = {
             elseif (skillID == 8)  then return "增加我方所有建筑的金钱收入。"
             elseif (skillID == 9)  then return "以我军当前收入的某个百分比，增加我军资金。"
             elseif (skillID == 10) then return "减少所有对手的能量值，但最少剩余0。"
+            elseif (skillID == 11) then return "增加我方建筑及部队的维修量。"
             else                        return "未知23:" .. (skillID or "")
             end
         end,
