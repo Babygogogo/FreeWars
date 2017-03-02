@@ -125,7 +125,7 @@ local function createItemsForStatePlayerIndex(self)
                 callback    = function()
                     self.m_PlayerIndex = playerIndex
 
-                    setStateMain(self, true)
+                    setStateMain(self)
                 end,
             }
         end
@@ -188,76 +188,84 @@ local function setStateEnableActiveSkill(self)
     self.m_State = "stateEnableActiveSkill"
     self.m_View:setMenuTitleText(getLocalizedText(14, "EnableActiveSkill"))
         :setItems(self.m_ItemsForStateEnableActiveSkill)
+        :setOverviewText(getLocalizedText(35, "HelpForEnableActiveSkill"))
 end
 
 local function setStateEnablePassiveSkill(self)
     self.m_State = "stateEnablePassiveSkill"
     self.m_View:setMenuTitleText(getLocalizedText(14, "EnablePassiveSkill"))
         :setItems(self.m_ItemsForStateEnablePassiveSkill)
+        :setOverviewText(getLocalizedText(35, "HelpForEnablePassiveSkill"))
 end
 
 local function setStateEnergyGainModifier(self)
     self.m_State = "stateEnergyModifier"
     self.m_View:setMenuTitleText(getLocalizedText(14, "Energy Gain Modifier"))
         :setItems(self.m_ItemsForStateEnergyGainModifier)
+        :setOverviewText(getLocalizedText(35, "HelpForEnergyGainModifier"))
 end
 
 local function setStateFogOfWar(self)
     self.m_State = "stateFogOfWar"
     self.m_View:setMenuTitleText(getLocalizedText(34, "FogOfWar"))
         :setItems(self.m_ItemsForStateFogOfWar)
+        :setOverviewText(getLocalizedText(35, "HelpForFogOfWar"))
 end
 
 local function setStateIncomeModifier(self)
     self.m_State = "stateIncomeModifier"
     self.m_View:setMenuTitleText(getLocalizedText(14, "Income Modifier"))
         :setItems(self.m_ItemsForStateIncomeModifier)
+        :setOverviewText(getLocalizedText(35, "HelpForIncomeModifier"))
 end
 
 local function setStateIntervalUntilBoot(self)
     self.m_State = "stateIntervalUntilBoot"
     self.m_View:setMenuTitleText(getLocalizedText(14, "IntervalUntilBoot"))
         :setItems(self.m_ItemsForStateIntervalUntilBoot)
+        :setOverviewText(getLocalizedText(35, "HelpForIntervalUntilBoot"))
 end
 
-setStateMain = function(self, shouldUpdateOverview)
+setStateMain = function(self)
     self.m_State = "stateMain"
     self.m_View:setMenuTitleText(self.m_MenuTitleTextForMode)
         :setItems(createItemsForStateMain(self))
-
-    if (shouldUpdateOverview) then
-        self.m_View:setOverviewText(generateOverviewText(self))
-    end
+        :setOverviewText(generateOverviewText(self))
 end
 
 local function setStateMaxDiffScore(self)
     self.m_State = "stateMaxDiffScore"
     self.m_View:setMenuTitleText(getLocalizedText(34, "MaxDiffScore"))
         :setItems(self.m_ItemsForStateMaxDiffScore)
+        :setOverviewText(getLocalizedText(35, "HelpForMaxDiffScore"))
 end
 
 local function setStatePlayerIndex(self)
     self.m_State = "statePlayerIndex"
     self.m_View:setMenuTitleText(getLocalizedText(34, "PlayerIndex"))
         :setItems(self.m_ItemsForStatePlayerIndex)
+        :setOverviewText(getLocalizedText(35, "HelpForPlayerIndex"))
 end
 
 local function setStateRankMatch(self)
     self.m_State = "stateRankMatch"
     self.m_View:setMenuTitleText(getLocalizedText(34, "RankMatch"))
         :setItems(self.m_ItemsForStateRankMatch)
+        :setOverviewText(getLocalizedText(35, "HelpForRankMatch"))
 end
 
 local function setStateStartingEnergy(self)
     self.m_State = "stateStartingEnergy"
     self.m_View:setMenuTitleText(getLocalizedText(14, "Starting Energy"))
         :setItems(self.m_ItemsForStateStartingEnergy)
+        :setOverviewText(getLocalizedText(35, "HelpForStartingEnergy"))
 end
 
 local function setStateStartingFund(self)
     self.m_State = "stateStartingFund"
     self.m_View:setMenuTitleText(getLocalizedText(14, "Starting Fund"))
         :setItems(self.m_ItemsForStateStartingFund)
+        :setOverviewText(getLocalizedText(35, "HelpForStartingFund"))
 end
 
 --------------------------------------------------------------------------------
@@ -376,14 +384,14 @@ local function initItemsForStateEnableActiveSkill(self)
             name     = getLocalizedText(14, "Yes"),
             callback = function()
                 self.m_IsActiveSkillEnabled = true
-                setStateMain(self, true)
+                setStateMain(self)
             end,
         },
         {
             name     = getLocalizedText(14, "No"),
             callback = function()
                 self.m_IsActiveSkillEnabled = false
-                setStateMain(self, true)
+                setStateMain(self)
             end,
         }
     }
@@ -395,14 +403,14 @@ local function initItemsForStateEnablePassiveSkill(self)
             name     = getLocalizedText(14, "Yes"),
             callback = function()
                 self.m_IsPassiveSkillEnabled = true
-                setStateMain(self, true)
+                setStateMain(self)
             end,
         },
         {
             name     = getLocalizedText(14, "No"),
             callback = function()
                 self.m_IsPassiveSkillEnabled = false
-                setStateMain(self, true)
+                setStateMain(self)
             end,
         }
     }
@@ -415,7 +423,7 @@ local function initItemsForStateEnergyGainModifier(self)
             name     = (modifier ~= 100) and (string.format("%d%%", modifier)) or (string.format("%d%%(%s)", modifier, getLocalizedText(14, "Default"))),
             callback = function()
                 self.m_EnergyGainModifier = modifier
-                setStateMain(self, true)
+                setStateMain(self)
             end,
         }
     end
@@ -430,7 +438,7 @@ local function initItemsForStateFogOfWar(self)
             callback = function()
                 self.m_IsFogOfWarByDefault = false
 
-                setStateMain(self, true)
+                setStateMain(self)
             end,
         },
         {
@@ -438,7 +446,7 @@ local function initItemsForStateFogOfWar(self)
             callback = function()
                 self.m_IsFogOfWarByDefault = true
 
-                setStateMain(self, true)
+                setStateMain(self)
             end,
         },
     }
@@ -451,7 +459,7 @@ local function initItemsForStateIncomeModifier(self)
             name     = (modifier ~= 100) and (string.format("%d%%", modifier)) or (string.format("%d%%(%s)", modifier, getLocalizedText(14, "Default"))),
             callback = function()
                 self.m_IncomeModifier = modifier
-                setStateMain(self, true)
+                setStateMain(self)
             end,
         }
     end
@@ -467,7 +475,7 @@ local function initItemsForStateIntervalUntilBoot(self)
             callback = function()
                 self.m_IntervalUntilBoot = interval
 
-                setStateMain(self, true)
+                setStateMain(self)
             end
         }
     end
@@ -483,7 +491,7 @@ local function initItemsForStateMaxDiffScore(self)
             callback = function()
                 self.m_MaxDiffScore = maxDiffScore
 
-                setStateMain(self, true)
+                setStateMain(self)
             end,
         }
     end
@@ -492,7 +500,7 @@ local function initItemsForStateMaxDiffScore(self)
         callback = function()
             self.m_MaxDiffScore = nil
 
-            setStateMain(self, true)
+            setStateMain(self)
         end,
     }
 
@@ -506,7 +514,7 @@ local function initItemsForStateRankMatch(self)
             callback = function()
                 self.m_IsRankMatch = false
 
-                setStateMain(self, true)
+                setStateMain(self)
             end,
         },
         {
@@ -514,7 +522,7 @@ local function initItemsForStateRankMatch(self)
             callback = function()
                 self.m_IsRankMatch = true
 
-                setStateMain(self, true)
+                setStateMain(self)
             end,
         },
     }
@@ -527,7 +535,7 @@ local function initItemsForStateStartingEnergy(self)
             name     = (energy ~= 0) and ("" .. energy) or (string.format("%d(%s)", energy, getLocalizedText(14, "Default"))),
             callback = function()
                 self.m_StartingEnergy = energy
-                setStateMain(self, true)
+                setStateMain(self)
             end
         }
     end
@@ -542,7 +550,7 @@ local function initItemsForStateStartingFund(self)
             name     = (fund ~= 0) and ("" .. fund) or (string.format("%d(%s)", fund, getLocalizedText(14, "Default"))),
             callback = function()
                 self.m_StartingFund = fund
-                setStateMain(self, true)
+                setStateMain(self)
             end
         }
     end
@@ -743,7 +751,7 @@ function ModelWarConfigurator:resetWithWarConfiguration(warConfiguration)
         error("ModelWarConfigurator:resetWithWarConfiguration() the mode of the configurator is invalid: " .. (mode or ""))
     end
 
-    setStateMain(self, true)
+    setStateMain(self)
 
     return self
 end

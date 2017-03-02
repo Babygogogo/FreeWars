@@ -2,6 +2,7 @@
 local ModelSkillGroupPassive = requireFW("src.global.functions.class")("ModelSkillGroupPassive")
 
 local SkillDataAccessors = requireFW("src.app.utilities.SkillDataAccessors")
+local TableFunctions     = requireFW("src.app.utilities.TableFunctions")
 
 local ipairs = ipairs
 
@@ -23,7 +24,7 @@ end
 -- The constructor and initializer.
 --------------------------------------------------------------------------------
 function ModelSkillGroupPassive:ctor(param)
-    self.m_Slots = param or {}
+    self.m_Slots = TableFunctions.deepClone(param) or {}
 
     return self
 end
@@ -32,7 +33,7 @@ end
 -- The functions for serialization.
 --------------------------------------------------------------------------------
 function ModelSkillGroupPassive:toSerializableTable()
-    return self.m_Slots
+    return TableFunctions.deepClone(self.m_Slots)
 end
 
 --------------------------------------------------------------------------------
