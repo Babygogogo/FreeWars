@@ -155,6 +155,7 @@ function ModelWarReplay:ctor(sceneData)
     self.m_IsPassiveSkillEnabled      = sceneData.isPassiveSkillEnabled
     self.m_IsRandomWarField           = sceneData.isRandomWarField
     self.m_IsRankMatch                = sceneData.isRankMatch
+    self.m_IsSkillDeclarationEnabled  = sceneData.isSkillDeclarationEnabled
     self.m_IsWarEnded                 = sceneData.isWarEnded
     self.m_MaxDiffScore               = sceneData.maxDiffScore
     self.m_RemainingVotesForDraw      = sceneData.remainingVotesForDraw
@@ -163,6 +164,10 @@ function ModelWarReplay:ctor(sceneData)
     self.m_WarID                      = sceneData.warID
     self.m_WarPassword                = sceneData.warPassword
     setActionId(self, sceneData.actionID)
+
+    if (self.m_IsSkillDeclarationEnabled == nil) then
+        self.m_IsSkillDeclarationEnabled = true
+    end
 
     initScriptEventDispatcher(self)
     initActorPlayerManager(   self, sceneData.players)
@@ -224,28 +229,29 @@ end
 --------------------------------------------------------------------------------
 function ModelWarReplay:toSerializableTable()
     return {
-        actionID              = self:getActionId(),
-        energyGainModifier    = self.m_EnergyGainModifier,
-        enterTurnTime         = self.m_EnterTurnTime,
-        executedActions       = self.m_ExecutedActions,
-        incomeModifier        = self.m_IncomeModifier,
-        intervalUntilBoot     = self.m_IntervalUntilBoot,
-        isActiveSkillEnabled  = self.m_IsActiveSkillEnabled,
-        isFogOfWarByDefault   = self.m_IsFogOfWarByDefault,
-        isPassiveSkillEnabled = self.m_IsPassiveSkillEnabled,
-        isRandomWarField      = self.m_IsRandomWarField,
-        isRankMatch           = self.m_IsRankMatch,
-        isWarEnded            = self.m_IsWarEnded,
-        maxDiffScore          = self.m_MaxDiffScore,
-        remainingVotesForDraw = self.m_RemainingVotesForDraw,
-        startingEnergy        = self.m_StartingEnergy,
-        startingFund          = self.m_StartingFund,
-        warID                 = self.m_WarID,
-        warPassword           = self.m_WarPassword,
-        players               = self:getModelPlayerManager() :toSerializableTable(),
-        turn                  = self:getModelTurnManager()   :toSerializableTable(),
-        warField              = self:getModelWarField()      :toSerializableTable(),
-        weather               = self:getModelWeatherManager():toSerializableTable(),
+        actionID                  = self:getActionId(),
+        energyGainModifier        = self.m_EnergyGainModifier,
+        enterTurnTime             = self.m_EnterTurnTime,
+        executedActions           = self.m_ExecutedActions,
+        incomeModifier            = self.m_IncomeModifier,
+        intervalUntilBoot         = self.m_IntervalUntilBoot,
+        isActiveSkillEnabled      = self.m_IsActiveSkillEnabled,
+        isFogOfWarByDefault       = self.m_IsFogOfWarByDefault,
+        isPassiveSkillEnabled     = self.m_IsPassiveSkillEnabled,
+        isRandomWarField          = self.m_IsRandomWarField,
+        isRankMatch               = self.m_IsRankMatch,
+        isSkillDeclarationEnabled = self.m_IsSkillDeclarationEnabled,
+        isWarEnded                = self.m_IsWarEnded,
+        maxDiffScore              = self.m_MaxDiffScore,
+        remainingVotesForDraw     = self.m_RemainingVotesForDraw,
+        startingEnergy            = self.m_StartingEnergy,
+        startingFund              = self.m_StartingFund,
+        warID                     = self.m_WarID,
+        warPassword               = self.m_WarPassword,
+        players                   = self:getModelPlayerManager() :toSerializableTable(),
+        turn                      = self:getModelTurnManager()   :toSerializableTable(),
+        warField                  = self:getModelWarField()      :toSerializableTable(),
+        weather                   = self:getModelWeatherManager():toSerializableTable(),
     }
 end
 
@@ -387,6 +393,10 @@ end
 
 function ModelWarReplay:isPassiveSkillEnabled()
     return self.m_IsPassiveSkillEnabled
+end
+
+function ModelWarReplay:isSkillDeclarationEnabled()
+    return self.m_IsSkillDeclarationEnabled
 end
 
 function ModelWarReplay:getIncomeModifier()
