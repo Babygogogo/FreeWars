@@ -1,11 +1,11 @@
 
 local ModelTurnManagerForReplay = requireFW("src.global.functions.class")("ModelTurnManagerForReplay")
 
-local DestroyersForReplay   = requireFW("src.app.utilities.warReplay.DestroyersForReplay")
-local SingletonGetters      = requireFW("src.app.utilities.SingletonGetters")
-local SupplyFunctions       = requireFW("src.app.utilities.SupplyFunctions")
+local Destroyers       = requireFW("src.app.utilities.Destroyers")
+local SingletonGetters = requireFW("src.app.utilities.SingletonGetters")
+local SupplyFunctions  = requireFW("src.app.utilities.SupplyFunctions")
 
-local destroyActorUnitOnMap    = DestroyersForReplay.destroyActorUnitOnMap
+local destroyActorUnitOnMap    = Destroyers.destroyActorUnitOnMap
 local getModelPlayerManager    = SingletonGetters.getModelPlayerManager
 local getModelFogMap           = SingletonGetters.getModelFogMap
 local getModelTileMap          = SingletonGetters.getModelTileMap

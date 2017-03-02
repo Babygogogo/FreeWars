@@ -56,6 +56,7 @@ local function getSkillModifierForDisplay(id, modifier)
     elseif (id == 8)  then return transformModifier3(modifier,  modifierUnit)
     elseif (id == 9)  then return transformModifier3(modifier,  modifierUnit)
     elseif (id == 10) then return transformModifier3(modifier,  modifierUnit)
+    elseif (id == 11) then return transformModifier3(modifier,  modifierUnit)
     else                   error("SkillDescriptionFunctions-getSkillModifierForDisplay() invalid skill id: " .. (id or ""))
     end
 end

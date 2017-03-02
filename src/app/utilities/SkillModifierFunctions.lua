@@ -87,6 +87,19 @@ local function getIncomeModifierForSkillGroup(modelSkillGroup)
     return modifier
 end
 
+local function getRepairAmountModifierForSkillGroup(modelSkillGroup)
+    local modifier      = 0
+    local isActiveSkill = modelSkillGroup.isSkillGroupActive
+    for _, skill in ipairs(modelSkillGroup:getAllSkills()) do
+        local skillID = skill.id
+        if (skillID == 11) then
+            modifier = modifier + getSkillModifierWithSkillData(skill, isActiveSkill)
+        end
+    end
+
+    return modifier
+end
+
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
@@ -118,6 +131,10 @@ end
 
 function SkillModifierFunctions.getIncomeModifier(configuration)
     return getIncomeModifierForSkillGroup(configuration:getModelSkillGroupPassive())
+end
+
+function SkillModifierFunctions.getRepairAmountModifier(configuration)
+    return getRepairAmountModifierForSkillGroup(configuration:getModelSkillGroupPassive())
 end
 
 return SkillModifierFunctions

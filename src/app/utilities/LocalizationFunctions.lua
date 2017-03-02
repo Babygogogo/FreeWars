@@ -153,7 +153,7 @@ local s_LongText5_2 = "Untranslated"
 
 local s_LongText6_1 = [[
 请注意：
-1. 您必须提前一回合发出特技宣言，才能发动特技。
+1. 默认情况下，您必须提前一回合发出特技宣言，才能发动特技。
 2. 大部分特技的效果只维持到您下个回合初。
 3. 一旦发动特技，则直至您下个回合开始前，您都无法再通过战斗获得能量。
 4. 您可以多次发动同一个特技；如果可能，其效果将被自动叠加（比如全军加攻等技能）。
@@ -185,6 +185,170 @@ Note:
 3. You may research a same skill multiple times. The effects will be automatically summarized.
 4. You may research any skills any times at any time in your turn.
 5. If your energy is not enough, some buttons will be unavailable.
+]]
+
+local s_LongText8_1 = [[
+本选项控制战局内所有玩家能否使用主动技（特技）。
+
+主动技（特技）是使用能量购买（即发动）后即时生效，直至您的下个回合初失效的技能。
+任意玩家都可以任意发动不限种类和次数的主动技。
+
+默认为“是”。
+]]
+
+local s_LongText8_2 = [[
+Untranslated...
+]]
+
+local s_LongText9_1 = [[
+本选项可控制战局内所有玩家能否使用日常技。
+
+日常技是使用能量购买后，从您的下个回合初开始生效，直至战局结束才失效的技能。
+任意玩家都可以任意购买不限种类和次数的日常技。
+
+默认为“是”。
+]]
+
+local s_LongText9_2 = [[
+Untranslated...
+]]
+
+local s_LongText10_1 = [[
+本选项影响战局内所有玩家获取能量的速度。
+
+默认（100%）情况下，您的部队每受到1HP伤害、或每对敌军造成1HP伤害，则您获得100能量。其他玩家亦然。
+如选择“0%”，则全体玩家都不能通过战斗获取能量。
+
+默认为“100%”。
+]]
+
+local s_LongText10_2 = [[
+Untranslated...
+]]
+
+local s_LongText11_1 = [[
+本选项影响战局是明战或雾战。
+
+明战下，您可以观察到整个战场的情况。雾战下，您只能看到自己军队的视野内的战场情况。
+雾战难度相对较大。如果您是新手，建议先通过明战熟悉游戏系统，再尝试雾战模式。
+
+默认为“否”（即明战）。
+]]
+
+local s_LongText11_2 = [[
+Untranslated...
+]]
+
+local s_LongText12_1 = [[
+本选项影响所有玩家的回合收入。
+
+默认（100%）情况下，您的每个建筑在每个回合初为您提供1000金钱（少数特殊建筑除外）。其他玩家亦然。
+如选择0%，则全体玩家都没有金钱收入。
+
+默认为“100%”。
+]]
+
+local s_LongText12_2 = [[
+Untranslated...
+]]
+
+local s_LongText13_1 = [[
+本选项影响所有玩家的每回合的时限。
+
+如果某个玩家的回合时间超出了本限制，则服务器将自动为该玩家执行投降操作。
+当战局满员，或某个玩家结束回合后，则服务器自动开始下个玩家回合的倒计时（无论该玩家是否在线）。
+因此，请仅在已约好对手的情况下才选择“15分”，以免造成不必要的败绩。
+
+默认为“3天”。
+]]
+
+local s_LongText13_2 = [[
+Untranslated...
+]]
+
+local s_LongText14_1 = [[
+本选项影响参战玩家之间的最大积分差距。
+
+积分代表着一个玩家的实力。通过本选项，您可以限制参战玩家之间的积分差距，以避免实力差距过大而影响游戏体验。
+请注意，此选项不限制正负差距。也就是说，参战玩家的积分既可能比您的少，也可能比您的多。
+
+默认为“100”。
+]]
+
+local s_LongText14_2 = [[
+Untranslated...
+]]
+
+local s_LongText15_1 = [[
+本选项影响您在回合中的行动顺序。
+
+本游戏固定了每回合中的行动顺序为：
+1 红方
+2 蓝方
+3 黄方
+4 黑方
+其中，2人局不存在黄方和黑方，3人局不存在黑方。
+每个玩家只能选择其中一项，不能重复。
+
+默认为当前可用选项中最靠前的一项。
+]]
+
+local s_LongText15_2 = [[
+Untranslated...
+]]
+
+local s_LongText16_1 = [[
+本选项规定本战局的结果是否影响玩家的积分。
+
+积分代表着一个玩家的实力。
+积分赛中，如果您获胜，则您的积分将增加，败者的积分将减少。您原本的积分越是比对方少，则获得的积分越多，反之亦然。
+如果和局，且您的分数较对手少，则您也可以获得少量积分，反之亦然。
+非积分赛中，无论战果如何，您的积分都不会受到影响。
+
+很显然，积分赛中，您的对手不会轻易认输。如果要玩积分赛，请全力以赴吧。
+
+默认为“否”（即非积分赛）。
+]]
+
+local s_LongText16_2 = [[
+Untranslated...
+]]
+
+local s_LongText17_1 = [[
+本选项规定本战局所有玩家的初始能量值。
+
+能量值可以用来发动主动技或购买日常技，是游戏中重要的资源。
+
+默认为“0”。
+]]
+
+local s_LongText17_2 = [[
+Untranslated...
+]]
+
+local s_LongText18_1 = [[
+本选项规定本战局所有玩家的初始资金。
+
+资金可以用来购买新的单位，是游戏中重要的资源。
+
+默认为“0”。
+]]
+
+local s_LongText18_2 = [[
+Untranslated...
+]]
+
+local s_LongText19_1 = [[
+本选项规定本战局所有玩家发动特技前是否需要宣言。
+
+如果选“是”，则玩家需要提前一个回合进行宣言，下回合才能发动特技（也可以不发动）。宣言需要消耗一定能量。
+如果选“否”，则玩家只要能量足够，就可以随时发动特技。
+
+默认为“是”。
+]]
+
+local s_LongText19_2 = [[
+Untranslated...
 ]]
 
 --------------------------------------------------------------------------------
@@ -352,6 +516,7 @@ local s_Texts = {
             elseif (skillID == 8)  then return "我方所有建筑的金钱收入"
             elseif (skillID == 9)  then return "增加我方资金，数量为我军当前收入的"
             elseif (skillID == 10) then return "对方能量值"
+            elseif (skillID == 11) then return "我方建筑及部队的维修量"
             else                        return "未知4:" .. (skillID or "")
             end
         end,
@@ -371,6 +536,7 @@ local s_Texts = {
             elseif (skillID == 8)  then return "我军收入"
             elseif (skillID == 9)  then return "我军资金"
             elseif (skillID == 10) then return "敌军能量值"
+            elseif (skillID == 11) then return "我军维修量"
             else                        return "未知5:" .. (skillID or "")
             end
         end,
@@ -686,6 +852,7 @@ local s_Texts = {
             elseif (textType == "DisableSkills")                then return "禁用技能"
             elseif (textType == "EnableActiveSkill")            then return "启用主动技"
             elseif (textType == "EnablePassiveSkill")           then return "启用日常技"
+            elseif (textType == "EnableSkillDeclaration")       then return "启用宣言"
             elseif (textType == "Energy Gain Modifier")         then return "能 量 增 速"
             elseif (textType == "EnergyGainModifier")           then return "能量增速"
             elseif (textType == "ExitWar")                      then return "退 出 战 局"
@@ -733,6 +900,7 @@ local s_Texts = {
             elseif (textType == "DisableSkills")                then return "Disable Skills"
             elseif (textType == "EnableActiveSkill")            then return "EnableActiveSkill"
             elseif (textType == "EnablePassiveSkill")           then return "EnablePassiveSkill"
+            elseif (textType == "EnableSkillDeclaration")       then return "EnableSkillDeclaration"
             elseif (textType == "Energy Gain Modifier")         then return "EnergyGain"
             elseif (textType == "EnergyGainModifier")           then return "EnergyGain"
             elseif (textType == "ExitWar")                      then return "Exit War"
@@ -859,6 +1027,7 @@ local s_Texts = {
             elseif (skillID == 8)  then return "增加我方所有建筑的金钱收入。"
             elseif (skillID == 9)  then return "以我军当前收入的某个百分比，增加我军资金。"
             elseif (skillID == 10) then return "减少所有对手的能量值，但最少剩余0。"
+            elseif (skillID == 11) then return "增加我方建筑及部队的维修量。"
             else                        return "未知23:" .. (skillID or "")
             end
         end,
@@ -982,11 +1151,41 @@ local s_Texts = {
             end
         end,
     },
-    --[[
     [35] = {
-        [1] = function() return "战 争 迷 雾" end,
-        [2] = function() return "Fog of War" end,
+        [1] = function(textType)
+            if     (textType == "HelpForEnableActiveSkill")      then return s_LongText8_1
+            elseif (textType == "HelpForEnablePassiveSkill")     then return s_LongText9_1
+            elseif (textType == "HelpForEnableSkillDeclaration") then return s_LongText19_1
+            elseif (textType == "HelpForEnergyGainModifier")     then return s_LongText10_1
+            elseif (textType == "HelpForFogOfWar")               then return s_LongText11_1
+            elseif (textType == "HelpForIncomeModifier")         then return s_LongText12_1
+            elseif (textType == "HelpForIntervalUntilBoot")      then return s_LongText13_1
+            elseif (textType == "HelpForMaxDiffScore")           then return s_LongText14_1
+            elseif (textType == "HelpForPlayerIndex")            then return s_LongText15_1
+            elseif (textType == "HelpForRankMatch")              then return s_LongText16_1
+            elseif (textType == "HelpForStartingEnergy")         then return s_LongText17_1
+            elseif (textType == "HelpForStartingFund")           then return s_LongText18_1
+            else                                                      return "未知35:" .. (textType or "")
+            end
+        end,
+        [2] = function(textType)
+            if     (textType == "HelpForEnableActiveSkill")      then return s_LongText8_2
+            elseif (textType == "HelpForEnablePassiveSkill")     then return s_LongText9_2
+            elseif (textType == "HelpForEnableSkillDeclaration") then return s_LongText19_1
+            elseif (textType == "HelpForEnergyGainModifier")     then return s_LongText10_2
+            elseif (textType == "HelpForFogOfWar")               then return s_LongText11_2
+            elseif (textType == "HelpForIncomeModifier")         then return s_LongText12_2
+            elseif (textType == "HelpForIntervalUntilBoot")      then return s_LongText13_2
+            elseif (textType == "HelpForMaxDiffScore")           then return s_LongText14_2
+            elseif (textType == "HelpForPlayerIndex")            then return s_LongText15_2
+            elseif (textType == "HelpForRankMatch")              then return s_LongText16_2
+            elseif (textType == "HelpForStartingEnergy")         then return s_LongText17_2
+            elseif (textType == "HelpForStartingFund")           then return s_LongText18_2
+            else                                                      return "Unknown35:" .. (textType or "")
+            end
+        end,
     },
+    --[[
     [36] = {
         [1] = function() return "天 气"   end,
         [2] = function() return "Weather" end,

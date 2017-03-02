@@ -1,13 +1,13 @@
 
 local ModelWarReplay = requireFW("src.global.functions.class")("ModelWarReplay")
 
-local ActionCodeFunctions     = requireFW("src.app.utilities.ActionCodeFunctions")
-local ActionExecutorForReplay = requireFW("src.app.utilities.warReplay.ActionExecutorForReplay")
-local AudioManager            = requireFW("src.app.utilities.AudioManager")
-local LocalizationFunctions   = requireFW("src.app.utilities.LocalizationFunctions")
-local SerializationFunctions  = requireFW("src.app.utilities.SerializationFunctions")
-local Actor                   = requireFW("src.global.actors.Actor")
-local EventDispatcher         = requireFW("src.global.events.EventDispatcher")
+local ActionCodeFunctions        = requireFW("src.app.utilities.ActionCodeFunctions")
+local ActionExecutorForWarReplay = requireFW("src.app.utilities.actionExecutors.ActionExecutorForWarReplay")
+local AudioManager               = requireFW("src.app.utilities.AudioManager")
+local LocalizationFunctions      = requireFW("src.app.utilities.LocalizationFunctions")
+local SerializationFunctions     = requireFW("src.app.utilities.SerializationFunctions")
+local Actor                      = requireFW("src.global.actors.Actor")
+local EventDispatcher            = requireFW("src.global.events.EventDispatcher")
 
 local cc, math, string    = cc, math, string
 local ipairs, next, print = ipairs, next, print
@@ -32,7 +32,7 @@ local function onWebSocketMessage(self, param)
     )
     print(SerializationFunctions.toString(param.action))
 
-    ActionExecutorForReplay.executeWebAction(param.action, self)
+    ActionExecutorForWarReplay.executeWebAction(param.action, self)
 end
 
 local function onWebSocketClose(self, param)
@@ -75,7 +75,7 @@ local function executeNextReplayAction(self)
         ))
 
         setActionId(self, actionID)
-        ActionExecutorForReplay.executeReplayAction(action, self)
+        ActionExecutorForWarReplay.executeReplayAction(action, self)
     end
 
     return self
@@ -105,7 +105,7 @@ end
 
 local function initActorPlayerManager(self, playersData)
     if (not self.m_ActorPlayerManager) then
-        self.m_ActorPlayerManager = Actor.createWithModelAndViewName("warReplay.ModelPlayerManagerForReplay", playersData)
+        self.m_ActorPlayerManager = Actor.createWithModelAndViewName("common.ModelPlayerManager", playersData)
     else
         self.m_ActorPlayerManager:getModel():ctor(playersData)
     end
@@ -155,6 +155,7 @@ function ModelWarReplay:ctor(sceneData)
     self.m_IsPassiveSkillEnabled      = sceneData.isPassiveSkillEnabled
     self.m_IsRandomWarField           = sceneData.isRandomWarField
     self.m_IsRankMatch                = sceneData.isRankMatch
+    self.m_IsSkillDeclarationEnabled  = sceneData.isSkillDeclarationEnabled
     self.m_IsWarEnded                 = sceneData.isWarEnded
     self.m_MaxDiffScore               = sceneData.maxDiffScore
     self.m_RemainingVotesForDraw      = sceneData.remainingVotesForDraw
@@ -163,6 +164,10 @@ function ModelWarReplay:ctor(sceneData)
     self.m_WarID                      = sceneData.warID
     self.m_WarPassword                = sceneData.warPassword
     setActionId(self, sceneData.actionID)
+
+    if (self.m_IsSkillDeclarationEnabled == nil) then
+        self.m_IsSkillDeclarationEnabled = true
+    end
 
     initScriptEventDispatcher(self)
     initActorPlayerManager(   self, sceneData.players)
@@ -207,7 +212,7 @@ function ModelWarReplay:initWarDataForEachTurn()
 
         local _, action = next(wrappedAction)
         setActionId(self, actionID)
-        ActionExecutorForReplay.executeReplayAction(action, self)
+        ActionExecutorForWarReplay.executeReplayAction(action, self)
     end
 
     self.m_IsFastExecutingActions     = false
@@ -224,28 +229,29 @@ end
 --------------------------------------------------------------------------------
 function ModelWarReplay:toSerializableTable()
     return {
-        actionID              = self:getActionId(),
-        energyGainModifier    = self.m_EnergyGainModifier,
-        enterTurnTime         = self.m_EnterTurnTime,
-        executedActions       = self.m_ExecutedActions,
-        incomeModifier        = self.m_IncomeModifier,
-        intervalUntilBoot     = self.m_IntervalUntilBoot,
-        isActiveSkillEnabled  = self.m_IsActiveSkillEnabled,
-        isFogOfWarByDefault   = self.m_IsFogOfWarByDefault,
-        isPassiveSkillEnabled = self.m_IsPassiveSkillEnabled,
-        isRandomWarField      = self.m_IsRandomWarField,
-        isRankMatch           = self.m_IsRankMatch,
-        isWarEnded            = self.m_IsWarEnded,
-        maxDiffScore          = self.m_MaxDiffScore,
-        remainingVotesForDraw = self.m_RemainingVotesForDraw,
-        startingEnergy        = self.m_StartingEnergy,
-        startingFund          = self.m_StartingFund,
-        warID                 = self.m_WarID,
-        warPassword           = self.m_WarPassword,
-        players               = self:getModelPlayerManager() :toSerializableTable(),
-        turn                  = self:getModelTurnManager()   :toSerializableTable(),
-        warField              = self:getModelWarField()      :toSerializableTable(),
-        weather               = self:getModelWeatherManager():toSerializableTable(),
+        actionID                  = self:getActionId(),
+        energyGainModifier        = self.m_EnergyGainModifier,
+        enterTurnTime             = self.m_EnterTurnTime,
+        executedActions           = self.m_ExecutedActions,
+        incomeModifier            = self.m_IncomeModifier,
+        intervalUntilBoot         = self.m_IntervalUntilBoot,
+        isActiveSkillEnabled      = self.m_IsActiveSkillEnabled,
+        isFogOfWarByDefault       = self.m_IsFogOfWarByDefault,
+        isPassiveSkillEnabled     = self.m_IsPassiveSkillEnabled,
+        isRandomWarField          = self.m_IsRandomWarField,
+        isRankMatch               = self.m_IsRankMatch,
+        isSkillDeclarationEnabled = self.m_IsSkillDeclarationEnabled,
+        isWarEnded                = self.m_IsWarEnded,
+        maxDiffScore              = self.m_MaxDiffScore,
+        remainingVotesForDraw     = self.m_RemainingVotesForDraw,
+        startingEnergy            = self.m_StartingEnergy,
+        startingFund              = self.m_StartingFund,
+        warID                     = self.m_WarID,
+        warPassword               = self.m_WarPassword,
+        players                   = self:getModelPlayerManager() :toSerializableTable(),
+        turn                      = self:getModelTurnManager()   :toSerializableTable(),
+        warField                  = self:getModelWarField()      :toSerializableTable(),
+        weather                   = self:getModelWeatherManager():toSerializableTable(),
     }
 end
 
@@ -284,6 +290,10 @@ end
 --------------------------------------------------------------------------------
 -- The public functions/accessors.
 --------------------------------------------------------------------------------
+function ModelWarReplay.isWarReplay()
+    return true
+end
+
 function ModelWarReplay:isAutoReplay()
     return self.m_IsAutoReplay
 end
@@ -383,6 +393,10 @@ end
 
 function ModelWarReplay:isPassiveSkillEnabled()
     return self.m_IsPassiveSkillEnabled
+end
+
+function ModelWarReplay:isSkillDeclarationEnabled()
+    return self.m_IsSkillDeclarationEnabled
 end
 
 function ModelWarReplay:getIncomeModifier()

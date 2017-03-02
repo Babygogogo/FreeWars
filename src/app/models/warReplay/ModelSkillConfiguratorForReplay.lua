@@ -13,14 +13,15 @@ local getLocalizedText = LocalizationFunctions.getLocalizedText
 -- The util functions.
 --------------------------------------------------------------------------------
 local function generateSkillInfoText(self)
-    local modelWarReplay = self.m_ModelWarReplay
-    local stringList    = {string.format("%s: %d%%         %s: %s         %s: %s",
-        getLocalizedText(14, "EnergyGainModifier"), modelWarReplay:getEnergyGainModifier(),
-        getLocalizedText(14, "EnablePassiveSkill"), getLocalizedText(14, (modelWarReplay:isPassiveSkillEnabled()) and ("Yes") or ("No")),
-        getLocalizedText(14, "EnableActiveSkill"),  getLocalizedText(14, (modelWarReplay:isActiveSkillEnabled())  and ("Yes") or ("No"))
+    local modelWar   = self.m_ModelWar
+    local stringList = {string.format("%s: %d%%    %s: %s    %s: %s    %s: %s",
+        getLocalizedText(14, "EnergyGainModifier"),     modelWar:getEnergyGainModifier(),
+        getLocalizedText(14, "EnablePassiveSkill"),     getLocalizedText(14, (modelWar:isPassiveSkillEnabled())      and ("Yes") or ("No")),
+        getLocalizedText(14, "EnableActiveSkill"),      getLocalizedText(14, (modelWar:isActiveSkillEnabled())       and ("Yes") or ("No")),
+        getLocalizedText(14, "EnableSkillDeclaration"), getLocalizedText(14, (modelWar:isSkillDeclarationEnabled())  and ("Yes") or ("No"))
     )}
 
-    SingletonGetters.getModelPlayerManager(modelWarReplay):forEachModelPlayer(function(modelPlayer, playerIndex)
+    SingletonGetters.getModelPlayerManager(modelWar):forEachModelPlayer(function(modelPlayer, playerIndex)
         stringList[#stringList + 1] = string.format("%s %d: %s    %s: %d    %s: %s\n%s",
             getLocalizedText(65, "Player"), playerIndex, modelPlayer:getNickname(),
             getLocalizedText(22, "CurrentEnergy"), modelPlayer:getEnergy(),
@@ -145,8 +146,8 @@ function ModelSkillConfiguratorForReplay:setCallbackOnButtonBackTouched(callback
     return self
 end
 
-function ModelSkillConfiguratorForReplay:onStartRunning(modelWarReplay)
-    self.m_ModelWarReplay = modelWarReplay
+function ModelSkillConfiguratorForReplay:onStartRunning(modelWar)
+    self.m_ModelWar = modelWar
 
     return self
 end

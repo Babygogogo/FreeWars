@@ -150,9 +150,7 @@ end
 
 function ModelPlayer:setActivatingSkill(isActivating)
     self.m_IsActivatingSkill = isActivating
-    if (isActivating) then
-        assert(self.m_CanActivateSkill)
-    else
+    if (not isActivating) then
         self.m_ModelSkillConfiguration:getModelSkillGroupActive():clearAllSkills()
     end
 

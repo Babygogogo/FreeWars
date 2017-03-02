@@ -26,10 +26,10 @@ local function createEmptyMap(width)
 end
 
 local function createActorTilesMapWithWarFieldFileName(warFieldFileName)
-    local templateWarField = WarFieldManager.getWarFieldData(warFieldFileName)
-    local width, height    = templateWarField.width, templateWarField.height
-    local baseLayerData    = templateWarField.layers[1].data
-    local objectLayerData  = templateWarField.layers[2].data
+    local warFieldData     = WarFieldManager.getWarFieldData(warFieldFileName)
+    local width, height    = warFieldData.width, warFieldData.height
+    local baseLayerData    = warFieldData.layers[1].data
+    local objectLayerData  = warFieldData.layers[2].data
     local map              = createEmptyMap(width)
 
     for x = 1, width do
@@ -60,9 +60,9 @@ end
 
 local function resetActorTilesMap(map, mapSize, warFieldFileName)
     local width, height    = mapSize.width, mapSize.height
-    local templateWarField = WarFieldManager.getWarFieldData(warFieldFileName)
-    local baseLayerData    = templateWarField.layers[1].data
-    local objectLayerData  = templateWarField.layers[2].data
+    local warFieldData = WarFieldManager.getWarFieldData(warFieldFileName)
+    local baseLayerData    = warFieldData.layers[1].data
+    local objectLayerData  = warFieldData.layers[2].data
 
     for x = 1, width do
         for y = 1, height do

@@ -1,11 +1,13 @@
 
 local ModelSkillGroupActive = requireFW("src.global.functions.class")("ModelSkillGroupActive")
 
+local TableFunctions = requireFW("src.app.utilities.TableFunctions")
+
 --------------------------------------------------------------------------------
 -- The constructor and initializer.
 --------------------------------------------------------------------------------
 function ModelSkillGroupActive:ctor(param)
-    self.m_Slots = param or {}
+    self.m_Slots = TableFunctions.deepClone(param) or {}
 
     return self
 end
@@ -14,7 +16,7 @@ end
 -- The functions for serialization.
 --------------------------------------------------------------------------------
 function ModelSkillGroupActive:toSerializableTable()
-    return self.m_Slots
+    return TableFunctions.deepClone(self.m_Slots)
 end
 
 --------------------------------------------------------------------------------

@@ -9,7 +9,7 @@ SkillData.categories = {
     },
 
     ["SkillsPassive"] = {
-        1, 2, 5, 6, 8,
+        1, 2, 5, 6, 8, 11,
     },
 }
 
@@ -167,6 +167,22 @@ SkillData.skills = {
             [3] = {modifierPassive = nil, pointsPassive = nil, modifierActive = -12000, pointsActive = 15000},
             [4] = {modifierPassive = nil, pointsPassive = nil, modifierActive = -16000, pointsActive = 20000},
             [5] = {modifierPassive = nil, pointsPassive = nil, modifierActive = -20000, pointsActive = 25000},
+        },
+    },
+
+    -- Modify the repair amount of units and tiles of the owner player.
+    [11] = {
+        minLevelPassive = 1,
+        maxLevelPassive = 5,
+        minLevelActive  = nil,
+        maxLevelActive  = nil,
+        modifierUnit    = "",
+        levels       = {
+            [1] = {modifierPassive = 1, pointsPassive = 5000, modifierActive = nil, pointsActive = nil},
+            [2] = {modifierPassive = 2, pointsPassive = 10000, modifierActive = nil, pointsActive = nil},
+            [3] = {modifierPassive = 3, pointsPassive = 15000, modifierActive = nil, pointsActive = nil},
+            [4] = {modifierPassive = 4, pointsPassive = 20000, modifierActive = nil, pointsActive = nil},
+            [5] = {modifierPassive = 5, pointsPassive = 25000, modifierActive = nil, pointsActive = nil},
         },
     },
 }

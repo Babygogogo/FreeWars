@@ -48,8 +48,8 @@ function SingletonGetters.getScriptEventDispatcher(modelSceneWar)
     return modelSceneWar:getScriptEventDispatcher()
 end
 
-function SingletonGetters.isTotalReplay(modelSceneWar)
-    return modelSceneWar:isTotalReplay()
+function SingletonGetters.isWarReplay(modelWar)
+    return modelWar.isWarReplay()
 end
 
 --------------------------------------------------------------------------------

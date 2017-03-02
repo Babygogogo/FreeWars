@@ -3,7 +3,7 @@ local ViewFogMapForReplay = requireFW("src.global.functions.class")("ViewFogMapF
 
 local GridIndexFunctions  = requireFW("src.app.utilities.GridIndexFunctions")
 local SingletonGetters    = requireFW("src.app.utilities.SingletonGetters")
-local VisibilityFunctions = requireFW("src.app.utilities.warReplay.VisibilityFunctionsForReplay")
+local VisibilityFunctions = requireFW("src.app.utilities.VisibilityFunctions")
 
 local isTileVisible       = VisibilityFunctions.isTileVisibleToPlayerIndex
 local toPositionWithXY    = GridIndexFunctions.toPositionWithXY

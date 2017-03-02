@@ -15,16 +15,16 @@
 
 local ModelSceneMain = class("ModelSceneMain")
 
-local ActionCodeFunctions    = requireFW("src.app.utilities.ActionCodeFunctions")
-local ActionExecutor         = requireFW("src.app.utilities.ActionExecutor")
-local AudioManager           = requireFW("src.app.utilities.AudioManager")
-local GameConstantFunctions  = requireFW("src.app.utilities.GameConstantFunctions")
-local LocalizationFunctions  = requireFW("src.app.utilities.LocalizationFunctions")
-local SerializationFunctions = requireFW("src.app.utilities.SerializationFunctions")
-local WebSocketManager       = requireFW("src.app.utilities.WebSocketManager")
-local Actor                  = requireFW("src.global.actors.Actor")
-local ActorManager           = requireFW("src.global.actors.ActorManager")
-local EventDispatcher        = requireFW("src.global.events.EventDispatcher")
+local ActionCodeFunctions        = requireFW("src.app.utilities.ActionCodeFunctions")
+local ActionExecutorForSceneMain = requireFW("src.app.utilities.actionExecutors.ActionExecutorForSceneMain")
+local AudioManager               = requireFW("src.app.utilities.AudioManager")
+local GameConstantFunctions      = requireFW("src.app.utilities.GameConstantFunctions")
+local LocalizationFunctions      = requireFW("src.app.utilities.LocalizationFunctions")
+local SerializationFunctions     = requireFW("src.app.utilities.SerializationFunctions")
+local WebSocketManager           = requireFW("src.app.utilities.WebSocketManager")
+local Actor                      = requireFW("src.global.actors.Actor")
+local ActorManager               = requireFW("src.global.actors.ActorManager")
+local EventDispatcher            = requireFW("src.global.events.EventDispatcher")
 
 local getLocalizedText = LocalizationFunctions.getLocalizedText
 local string           = string
@@ -46,7 +46,7 @@ local function onWebSocketMessage(self, param)
     )
     print(SerializationFunctions.toString(param.action))
 
-    ActionExecutor.execute(param.action, self)
+    ActionExecutorForSceneMain.execute(param.action, self)
 end
 
 local function onWebSocketClose(self, param)

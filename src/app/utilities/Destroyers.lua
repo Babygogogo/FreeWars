@@ -2,29 +2,22 @@
 local Destroyers = {}
 
 local IS_SERVER           = requireFW("src.app.utilities.GameConstantFunctions").isServer()
-local GridIndexFunctions  = requireFW("src.app.utilities.GridIndexFunctions")
 local SingletonGetters    = requireFW("src.app.utilities.SingletonGetters")
-local TableFunctions      = requireFW("src.app.utilities.TableFunctions")
-local VisibilityFunctions = requireFW("src.app.utilities.VisibilityFunctions")
 local WebSocketManager    = (not IS_SERVER) and (requireFW("src.app.utilities.WebSocketManager")) or (nil)
 
-local appendList               = TableFunctions.appendList
-local getAdjacentGrids         = GridIndexFunctions.getAdjacentGrids
 local getModelFogMap           = SingletonGetters.getModelFogMap
 local getModelGridEffect       = SingletonGetters.getModelGridEffect
 local getModelPlayerManager    = SingletonGetters.getModelPlayerManager
 local getModelTileMap          = SingletonGetters.getModelTileMap
 local getModelUnitMap          = SingletonGetters.getModelUnitMap
 local getPlayerIndexLoggedIn   = SingletonGetters.getPlayerIndexLoggedIn
-local getScriptEventDispatcher = SingletonGetters.getScriptEventDispatcher
-local isTotalReplay            = SingletonGetters.isTotalReplay
-local isUnitVisible            = VisibilityFunctions.isUnitOnMapVisibleToPlayerIndex
+local isWarReplay              = SingletonGetters.isWarReplay
 
 --------------------------------------------------------------------------------
 -- The util functions.
 --------------------------------------------------------------------------------
-local function resetModelTile(modelSceneWar, gridIndex)
-    local modelTile = getModelTileMap(modelSceneWar):getModelTile(gridIndex)
+local function resetModelTile(modelWar, gridIndex)
+    local modelTile = getModelTileMap(modelWar):getModelTile(gridIndex)
     if (modelTile.setCurrentBuildPoint) then
         modelTile:setCurrentBuildPoint(modelTile:getMaxBuildPoint())
     end
@@ -45,8 +38,8 @@ end
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
-function Destroyers.destroyActorUnitLoaded(modelSceneWar, unitID, shouldRemoveView)
-    local modelUnitMap    = getModelUnitMap(modelSceneWar)
+function Destroyers.destroyActorUnitLoaded(modelWar, unitID, shouldRemoveView)
+    local modelUnitMap    = getModelUnitMap(modelWar)
     local modelUnitLoaded = modelUnitMap:getLoadedModelUnitWithUnitId(unitID)
     local destroyedUnits  = {}
     shouldRemoveView      = (not IS_SERVER) and (shouldRemoveView)
@@ -59,10 +52,10 @@ function Destroyers.destroyActorUnitLoaded(modelSceneWar, unitID, shouldRemoveVi
     return destroyedUnits
 end
 
-function Destroyers.destroyActorUnitOnMap(modelSceneWar, gridIndex, shouldRemoveView, shouldRetainVisibility)
-    resetModelTile(modelSceneWar, gridIndex)
+function Destroyers.destroyActorUnitOnMap(modelWar, gridIndex, shouldRemoveView, shouldRetainVisibility)
+    resetModelTile(modelWar, gridIndex)
 
-    local modelUnitMap   = getModelUnitMap(modelSceneWar)
+    local modelUnitMap   = getModelUnitMap(modelWar)
     local modelUnit      = modelUnitMap:getModelUnit(gridIndex)
     local destroyedUnits = {modelUnit}
     shouldRemoveView     = (not IS_SERVER) and (shouldRemoveView)
@@ -77,20 +70,25 @@ function Destroyers.destroyActorUnitOnMap(modelSceneWar, gridIndex, shouldRemove
 
     if (not shouldRetainVisibility) then
         local playerIndex = modelUnit:getPlayerIndex()
-        if ((IS_SERVER) or (isTotalReplay(modelSceneWar)) or (playerIndex == getPlayerIndexLoggedIn(modelSceneWar))) then
-            getModelFogMap(modelSceneWar):updateMapForUnitsForPlayerIndexOnUnitLeave(playerIndex, gridIndex, modelUnit:getVisionForPlayerIndex(playerIndex))
+        if ((IS_SERVER) or (isWarReplay(modelWar)) or (playerIndex == getPlayerIndexLoggedIn(modelWar))) then
+            getModelFogMap(modelWar):updateMapForUnitsForPlayerIndexOnUnitLeave(playerIndex, gridIndex, modelUnit:getVisionForPlayerIndex(playerIndex))
         end
     end
 
     return destroyedUnits
 end
 
-function Destroyers.destroyPlayerForce(modelSceneWar, playerIndex)
-    local modelGridEffect = ((not IS_SERVER) and (not modelSceneWar:isFastExecutingActions())) and (getModelGridEffect(modelSceneWar)) or (nil)
-    getModelUnitMap(modelSceneWar):forEachModelUnitOnMap(function(modelUnit)
+function Destroyers.destroyPlayerForce(modelWar, playerIndex)
+    local modelGridEffect
+    if ((not IS_SERVER)                                                           and
+        ((not isWarReplay(modelWar)) or (not modelWar:isFastExecutingActions()))) then
+        modelGridEffect = SingletonGetters.getModelGridEffect(modelWar)
+    end
+
+    getModelUnitMap(modelWar):forEachModelUnitOnMap(function(modelUnit)
         if (modelUnit:getPlayerIndex() == playerIndex) then
             local gridIndex = modelUnit:getGridIndex()
-            Destroyers.destroyActorUnitOnMap(modelSceneWar, gridIndex, true, true)
+            Destroyers.destroyActorUnitOnMap(modelWar, gridIndex, true, true)
 
             if (modelGridEffect) then
                 modelGridEffect:showAnimationExplosion(gridIndex)
@@ -98,20 +96,20 @@ function Destroyers.destroyPlayerForce(modelSceneWar, playerIndex)
         end
     end)
 
-    getModelTileMap(modelSceneWar):forEachModelTile(function(modelTile)
+    getModelTileMap(modelWar):forEachModelTile(function(modelTile)
         if (modelTile:getPlayerIndex() == playerIndex) then
             modelTile:updateWithPlayerIndex(0)
                 :updateView()
         end
     end)
 
-    if ((IS_SERVER) or (isTotalReplay(modelSceneWar)) or (playerIndex == getPlayerIndexLoggedIn(modelSceneWar))) then
-        getModelFogMap(modelSceneWar):resetMapForPathsForPlayerIndex(playerIndex)
+    if ((IS_SERVER) or (isWarReplay(modelWar)) or (playerIndex == getPlayerIndexLoggedIn(modelWar))) then
+        getModelFogMap(modelWar):resetMapForPathsForPlayerIndex(playerIndex)
             :resetMapForTilesForPlayerIndex(playerIndex)
             :resetMapForUnitsForPlayerIndex(playerIndex)
     end
 
-    getModelPlayerManager(modelSceneWar):getModelPlayer(playerIndex):setAlive(false)
+    getModelPlayerManager(modelWar):getModelPlayer(playerIndex):setAlive(false)
 end
 
 return Destroyers

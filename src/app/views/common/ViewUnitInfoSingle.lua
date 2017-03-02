@@ -112,7 +112,7 @@ local function initBackground(self)
 end
 
 local function initUnitIcon(self)
-    local icon = Actor.createView("common.ViewUnitIcon")
+    local icon = Actor.createView("common.ViewUnit")
     icon:setPosition(UNIT_ICON_POS_X, UNIT_ICON_POS_Y)
         :setScale(UNIT_ICON_SCALE)
 
