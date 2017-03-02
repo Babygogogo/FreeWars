@@ -21,6 +21,7 @@ local ModelTurnManagerForOnline = requireFW("src.global.functions.class")("Model
 
 local IS_SERVER             = requireFW("src.app.utilities.GameConstantFunctions").isServer()
 local ActionCodeFunctions   = requireFW("src.app.utilities.ActionCodeFunctions")
+local AuxiliaryFunctions    = requireFW("src.app.utilities.AuxiliaryFunctions")
 local Destroyers            = requireFW("src.app.utilities.Destroyers")
 local GridIndexFunctions    = requireFW("src.app.utilities.GridIndexFunctions")
 local LocalizationFunctions = requireFW("src.app.utilities.LocalizationFunctions")
@@ -32,7 +33,6 @@ local WebSocketManager      = (not IS_SERVER) and (requireFW("src.app.utilities.
 local destroyActorUnitOnMap    = Destroyers.destroyActorUnitOnMap
 local getAdjacentGrids         = GridIndexFunctions.getAdjacentGrids
 local getLocalizedText         = LocalizationFunctions.getLocalizedText
-local getModelMessageIndicator = SingletonGetters.getModelMessageIndicator
 local getModelPlayerManager    = SingletonGetters.getModelPlayerManager
 local getModelFogMap           = SingletonGetters.getModelFogMap
 local getModelTileMap          = SingletonGetters.getModelTileMap
@@ -42,6 +42,9 @@ local getScriptEventDispatcher = SingletonGetters.getScriptEventDispatcher
 local isUnitVisible            = VisibilityFunctions.isUnitOnMapVisibleToPlayerIndex
 local isTileVisible            = VisibilityFunctions.isTileVisibleToPlayerIndex
 local supplyWithAmmoAndFuel    = SupplyFunctions.supplyWithAmmoAndFuel
+
+local cc, ngx          = cc, ngx
+local math, os, string = math, os, string
 
 local ACTION_CODE_BEGIN_TURN = ActionCodeFunctions.getActionCode("ActionBeginTurn")
 local TURN_PHASE_CODES = {
@@ -64,6 +67,8 @@ local DEFAULT_TURN_DATA = {
     playerIndex   = 1,
     turnPhaseCode = TURN_PHASE_CODES.RequestToBegin,
 }
+local BOOT_REMINDER_INTERVAL      = 20
+local BOOT_REMINDER_STARTING_TIME = 60 * 30
 
 --------------------------------------------------------------------------------
 -- The util functions.
@@ -125,6 +130,36 @@ local function resetVisionOnClient(self)
                 :updateView()
         end
     end)
+end
+
+local function createStepForBootReminder(self, delayTime)
+    return cc.Sequence:create(
+        cc.DelayTime:create(delayTime),
+        cc.CallFunc:create(function()
+            local countdown = self.m_ModelWar:getIntervalUntilBoot() - os.time() + self.m_ModelWar:getEnterTurnTime()
+            self.m_ModelMessageIndiator:showMessage(string.format("%s: %s", getLocalizedText(34, "BootCountdown"), AuxiliaryFunctions.formatTimeInterval(countdown)))
+        end)
+    )
+end
+
+local function resetBootReminder(self)
+    assert(not IS_SERVER, "ModelTurnManagerForOnline:resetBootReminder() should not be invoked on the server.")
+
+    if (self.m_BootReminder) then
+        self.m_View:stopAction(self.m_BootReminder)
+    end
+
+    local countdown = self.m_ModelWar:getIntervalUntilBoot() - os.time() + self.m_ModelWar:getEnterTurnTime()
+    self.m_ModelMessageIndiator:showMessage(string.format("%s: %s", getLocalizedText(34, "BootCountdown"), AuxiliaryFunctions.formatTimeInterval(countdown)))
+
+    local firstDelayTime = (countdown > BOOT_REMINDER_STARTING_TIME)                                                    and
+        (countdown - BOOT_REMINDER_STARTING_TIME)                                                                       or
+        ((countdown % BOOT_REMINDER_INTERVAL > 0) and (countdown % BOOT_REMINDER_INTERVAL) or (BOOT_REMINDER_INTERVAL))
+    self.m_BootReminder = cc.Sequence:create(
+        createStepForBootReminder(self, firstDelayTime),
+        cc.Repeat:create(createStepForBootReminder(self, BOOT_REMINDER_INTERVAL), math.floor((countdown - firstDelayTime) / BOOT_REMINDER_INTERVAL))
+    )
+    self.m_View:runAction(self.m_BootReminder)
 end
 
 --------------------------------------------------------------------------------
@@ -307,6 +342,11 @@ end
 local function runTurnPhaseTickTurnAndPlayerIndex(self)
     local modelPlayerManager = getModelPlayerManager(self.m_ModelWar)
     self.m_TurnIndex, self.m_PlayerIndex = getNextTurnAndPlayerIndex(self, modelPlayerManager)
+    if (IS_SERVER) then
+        self.m_ModelWar:setEnterTurnTime(ngx.time())
+    else
+        self.m_ModelWar:setEnterTurnTime(os.time())
+    end
 
     getScriptEventDispatcher(self.m_ModelWar):dispatchEvent({
         name        = "EvtPlayerIndexUpdated",
@@ -406,7 +446,10 @@ end
 -- The public functions for doing actions.
 --------------------------------------------------------------------------------
 function ModelTurnManagerForOnline:onStartRunning(modelWar)
-    self.m_ModelWar    = modelWar
+    self.m_ModelWar = modelWar
+    if (not IS_SERVER) then
+        self.m_ModelMessageIndiator = SingletonGetters.getModelMessageIndicator(modelWar)
+    end
 
     return self
 end
@@ -450,13 +493,14 @@ function ModelTurnManagerForOnline:runTurn()
         self.m_CallbackOnEnterTurnPhaseMainForNextTurn = nil
     end
 
-    local modelWar = self.m_ModelWar
     if (not IS_SERVER) then
-        if (self:getPlayerIndex() == getPlayerIndexLoggedIn(modelWar)) then
-            getModelMessageIndicator(modelWar):hidePersistentMessage(getLocalizedText(80, "NotInTurn"))
+        if (self:getPlayerIndex() == getPlayerIndexLoggedIn(self.m_ModelWar)) then
+            self.m_ModelMessageIndiator:hidePersistentMessage(getLocalizedText(80, "NotInTurn"))
         else
-            getModelMessageIndicator(modelWar):showPersistentMessage(getLocalizedText(80, "NotInTurn"))
+            self.m_ModelMessageIndiator:showPersistentMessage(getLocalizedText(80, "NotInTurn"))
         end
+
+        resetBootReminder(self)
     end
 
     return self
