@@ -67,8 +67,8 @@ function ModelPlayer:toSerializableReplayData()
     return {
         account             = self:getAccount(),
         canActivateSkill    = false,
-        energy              = self.m_ModelSceneWar:getStartingEnergy(),
-        fund                = self.m_ModelSceneWar:getStartingFund(),
+        energy              = self.m_ModelWar:getStartingEnergy(),
+        fund                = self.m_ModelWar:getStartingFund(),
         hasVotedForDraw     = nil,
         isActivatingSkill   = false,
         isAlive             = true,
@@ -79,8 +79,12 @@ function ModelPlayer:toSerializableReplayData()
     }
 end
 
-function ModelPlayer:onStartRunning(modelSceneWar)
-    self.m_ModelSceneWar = modelSceneWar
+--------------------------------------------------------------------------------
+-- The callback function on start running.
+--------------------------------------------------------------------------------
+function ModelPlayer:onStartRunning(modelWar)
+    self.m_ModelWar = modelWar
+    self.m_ModelSkillConfiguration:onStartRunning(modelWar)
 
     return self
 end

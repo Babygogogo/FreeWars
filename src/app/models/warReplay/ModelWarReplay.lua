@@ -111,6 +111,12 @@ local function initActorPlayerManager(self, playersData)
     end
 end
 
+local function initActorSkillDataManager(self, skillData)
+    if (not self.m_ActorSkillDataManager) then
+        self.m_ActorSkillDataManager = Actor.createWithModelAndViewName("common.ModelSkillDataManager", skillData)
+    end
+end
+
 local function initActorWeatherManager(self, weatherData)
     if (not self.m_ActorWeatherManager) then
         self.m_ActorWeatherManager = Actor.createWithModelAndViewName("common.ModelWeatherManager", weatherData)
@@ -173,6 +179,7 @@ function ModelWarReplay:ctor(sceneData)
     initActorPlayerManager(   self, sceneData.players)
     initActorWeatherManager(  self, sceneData.weather)
     initActorWarField(        self, sceneData.warField)
+    initActorSkillDataManager(self, sceneData.skillData)
     initActorTurnManager(     self, sceneData.turn)
     initActorConfirmBox(      self)
     initActorMessageIndicator(self)
@@ -248,10 +255,11 @@ function ModelWarReplay:toSerializableTable()
         startingFund              = self.m_StartingFund,
         warID                     = self.m_WarID,
         warPassword               = self.m_WarPassword,
-        players                   = self:getModelPlayerManager() :toSerializableTable(),
-        turn                      = self:getModelTurnManager()   :toSerializableTable(),
-        warField                  = self:getModelWarField()      :toSerializableTable(),
-        weather                   = self:getModelWeatherManager():toSerializableTable(),
+        players                   = self:getModelPlayerManager()   :toSerializableTable(),
+        skillData                 = self:getModelSkillDataManager():toSerializableTable(),
+        turn                      = self:getModelTurnManager()     :toSerializableTable(),
+        warField                  = self:getModelWarField()        :toSerializableTable(),
+        weather                   = self:getModelWeatherManager()  :toSerializableTable(),
     }
 end
 
@@ -467,6 +475,10 @@ end
 
 function ModelWarReplay:getModelPlayerManager()
     return self.m_ActorPlayerManager:getModel()
+end
+
+function ModelWarReplay:getModelSkillDataManager()
+    return self.m_ActorSkillDataManager:getModel()
 end
 
 function ModelWarReplay:getModelWeatherManager()

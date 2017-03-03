@@ -39,8 +39,8 @@ end
 --------------------------------------------------------------------------------
 -- The public callback function on start running.
 --------------------------------------------------------------------------------
-function IncomeProvider:onStartRunning(modelSceneWar)
-    self.m_ModelSceneWar = modelSceneWar
+function IncomeProvider:onStartRunning(modelWar)
+    self.m_ModelWar = modelWar
 
     return self
 end
@@ -49,13 +49,13 @@ end
 -- The exported functions.
 --------------------------------------------------------------------------------
 function IncomeProvider:getIncomeAmount()
-    local modelSceneWar = self.m_ModelSceneWar
-    local playerIndex   = self.m_Owner:getPlayerIndex()
-    local baseAmount    = self.m_Template.amount * modelSceneWar:getIncomeModifier() / 100
+    local modelWar    = self.m_ModelWar
+    local playerIndex = self.m_Owner:getPlayerIndex()
+    local baseAmount  = self.m_Template.amount * modelWar:getIncomeModifier() / 100
     if (playerIndex == 0) then
         return math.floor(baseAmount)
     else
-        local modelSkillConfiguration = SingletonGetters.getModelPlayerManager(modelSceneWar):getModelPlayer(playerIndex):getModelSkillConfiguration()
+        local modelSkillConfiguration = SingletonGetters.getModelPlayerManager(modelWar):getModelPlayer(playerIndex):getModelSkillConfiguration()
         local modifier                = SkillModifierFunctions.getIncomeModifier(modelSkillConfiguration)
         return math.floor(baseAmount * (100 + modifier) / 100)
     end

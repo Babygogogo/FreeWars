@@ -783,6 +783,7 @@
     startingFund              24 :  integer
     chatData                  25 :  ChatData
     isSkillDeclarationEnabled 26 :  boolean
+    skillData                 27 :  SkillData
 }
 
 .WarIdForIndexing {
@@ -810,6 +811,33 @@
     passiveSkills     1 : *SingleSkillPassive
     researchingSkills 2 : *SingleSkillPassive
     activeSkills      3 : *SingleSkillActive
+}
+
+.SkillData {
+    .SkillCategories {
+        SkillsActive  0 : *integer
+        SkillsPassive 1 : *integer
+    }
+
+    .SingleSkillData {
+        .SingleSkillLevel {
+            modifierPassive 0 : integer
+            pointsPassive   1 : integer
+            modifierActive  2 : integer
+            pointsActive    3 : integer
+        }
+
+        minLevelPassive 0 :  integer
+        maxLevelPassive 1 :  integer
+        minLevelActive  2 :  integer
+        maxLevelActive  3 :  integer
+        modifierUnit    4 :  string
+        levels          5 : *SingleSkillLevel
+    }
+
+    skillDeclarationCost 0 :  integer
+    categories           1 :  SkillCategories
+    skills               2 : *SingleSkillData
 }
 
 .TileData {

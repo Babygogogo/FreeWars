@@ -5,7 +5,6 @@ local ActionCodeFunctions       = requireFW("src.app.utilities.ActionCodeFunctio
 local AuxiliaryFunctions        = requireFW("src.app.utilities.AuxiliaryFunctions")
 local LocalizationFunctions     = requireFW("src.app.utilities.LocalizationFunctions")
 local SingletonGetters          = requireFW("src.app.utilities.SingletonGetters")
-local SkillDataAccessors        = requireFW("src.app.utilities.SkillDataAccessors")
 local SkillDescriptionFunctions = requireFW("src.app.utilities.SkillDescriptionFunctions")
 local WarFieldManager           = requireFW("src.app.utilities.WarFieldManager")
 local WebSocketManager          = requireFW("src.app.utilities.WebSocketManager")
@@ -16,7 +15,6 @@ local getLocalizedText = LocalizationFunctions.getLocalizedText
 
 local ACTION_CODE_ACTIVATE_SKILL = ActionCodeFunctions.getActionCode("ActionActivateSkill")
 local ACTION_CODE_DECLARE_SKILL  = ActionCodeFunctions.getActionCode("ActionDeclareSkill")
-local SKILL_DECLARATION_COST     = SkillDataAccessors.getSkillDeclarationCost()
 
 --------------------------------------------------------------------------------
 -- The util functions.
@@ -35,14 +33,14 @@ local function generateSkillInfoText(self)
             getLocalizedText(65, "Player"), playerIndex, modelPlayer:getNickname(),
             getLocalizedText(22, "CurrentEnergy"), modelPlayer:getEnergy(),
             getLocalizedText(22, "DeclareSkill"),  getLocalizedText(22, modelPlayer:isSkillDeclared() and "Yes" or "No"),
-            SkillDescriptionFunctions.getBriefDescription(modelPlayer:getModelSkillConfiguration())
+            SkillDescriptionFunctions.getBriefDescription(modelWar, modelPlayer:getModelSkillConfiguration())
         )
     end)
 
     return table.concat(stringList, "\n--------------------\n")
 end
 
-local function generateSkillDetailText(skillID, isActiveSkill)
+local function generateSkillDetailText(self, skillID, isActiveSkill)
     local textList = {
         string.format("%s: %s\n%s / %s / %s",
             getLocalizedText(5, skillID), getLocalizedText(23, skillID),
@@ -50,7 +48,7 @@ local function generateSkillDetailText(skillID, isActiveSkill)
         ),
     }
 
-    local skillData         = SkillDataAccessors.getSkillData(skillID)
+    local skillData         = self.m_ModelSkillDataManager:getSkillData(skillID)
     local modifierUnit      = skillData.modifierUnit
     local pointsFieldName   = (isActiveSkill) and ("pointsActive")   or ("pointsPassive")
     local modifierFieldName = (isActiveSkill) and ("modifierActive") or ("modifierPassive")
@@ -63,8 +61,8 @@ local function generateSkillDetailText(skillID, isActiveSkill)
     return table.concat(textList, "\n")
 end
 
-local function generateActivateSkillConfirmationText(skillID, skillLevel, isActiveSkill)
-    local skillData      = SkillDataAccessors.getSkillData(skillID)
+local function generateActivateSkillConfirmationText(self, skillID, skillLevel, isActiveSkill)
+    local skillData      = self.m_ModelSkillDataManager:getSkillData(skillID)
     local modifierUnit   = skillData.modifierUnit
     local levelData      = skillData.levels[skillLevel]
     local modifier       = (isActiveSkill) and (levelData.modifierActive) or (levelData.modifierPassive)
@@ -131,7 +129,7 @@ local function generateItemsSkillLevels(self, skillID, isActiveSkill)
     local modelConfirmBox = SingletonGetters.getModelConfirmBox(modelWar)
     local _, modelPlayer  = SingletonGetters.getModelPlayerManager(modelWar):getPlayerIndexLoggedIn()
     local energy          = modelPlayer:getEnergy()
-    local skillData       = SkillDataAccessors.getSkillData(skillID)
+    local skillData       = self.m_ModelSkillDataManager:getSkillData(skillID)
     local minLevel        = (isActiveSkill) and (skillData.minLevelActive) or (skillData.minLevelPassive)
     local maxLevel        = (isActiveSkill) and (skillData.maxLevelActive) or (skillData.maxLevelPassive)
     local pointsFieldName = (isActiveSkill) and ("pointsActive")           or ("pointsPassive")
@@ -146,7 +144,7 @@ local function generateItemsSkillLevels(self, skillID, isActiveSkill)
             name        = getLocalizedText(22, "Level") .. level,
             isAvailable = isAvailable,
             callback    = function()
-                modelConfirmBox:setConfirmText(generateActivateSkillConfirmationText(skillID, level, isActiveSkill))
+                modelConfirmBox:setConfirmText(generateActivateSkillConfirmationText(self, skillID, level, isActiveSkill))
                     :setOnConfirmYes(function()
                         sendActionActivateSkill(warID, actionID, skillID, level, isActiveSkill)
                         cleanupAfterSendAction(modelWar)
@@ -176,7 +174,7 @@ local function generateItemsForStateMain(self)
         if (modelWar:isPassiveSkillEnabled()) then
             items[#items + 1] = self.m_ItemResearchPassiveSkill
         end
-        if ((modelWar:isSkillDeclarationEnabled()) and (modelWar:isActiveSkillEnabled()) and (not modelPlayer:isSkillDeclared()) and (modelPlayer:getEnergy() >= SKILL_DECLARATION_COST)) then
+        if ((modelWar:isSkillDeclarationEnabled()) and (modelWar:isActiveSkillEnabled()) and (not modelPlayer:isSkillDeclared()) and (modelPlayer:getEnergy() >= self.m_SkillDeclarationCost)) then
             items[#items + 1] = self.m_ItemDeclareSkill
         end
         if ((modelWar:isActiveSkillEnabled()) and
@@ -193,7 +191,7 @@ end
 
 local function generateItemsForStateActivateSkill(self)
     local items = {}
-    for _, skillID in ipairs(SkillDataAccessors.getSkillCategory("SkillsActive")) do
+    for _, skillID in ipairs(self.m_ModelSkillDataManager:getSkillCategory("SkillsActive")) do
         local subItems, hasAvailableSubItem = generateItemsSkillLevels(self, skillID, true)
         items[#items + 1] = {
             name        = getLocalizedText(5, skillID),
@@ -209,7 +207,7 @@ end
 
 local function generateItemsForStateResearchPassiveSkill(self)
     local items = {}
-    for _, skillID in ipairs(SkillDataAccessors.getSkillCategory("SkillsPassive")) do
+    for _, skillID in ipairs(self.m_ModelSkillDataManager:getSkillCategory("SkillsPassive")) do
         local subItems, hasAvailableSubItem = generateItemsSkillLevels(self, skillID, false)
         items[#items + 1] = {
             name        = getLocalizedText(5, skillID),
@@ -238,13 +236,13 @@ end
 setStateChooseActiveSkillLevel = function(self, skillID, menuItemsForStateChooseActiveSkillLevel)
     self.m_State = "stateChooseActiveSkillLevel"
     self.m_View:setMenuItems(menuItemsForStateChooseActiveSkillLevel)
-        :setOverviewText(generateSkillDetailText(skillID, true))
+        :setOverviewText(generateSkillDetailText(self, skillID, true))
 end
 
 setStateChoosePassiveSkillLevel = function(self, skillID, menuItems)
     self.m_State = "stateChoosePassiveSkillLevel"
     self.m_View:setMenuItems(menuItems)
-        :setOverviewText(generateSkillDetailText(skillID, false))
+        :setOverviewText(generateSkillDetailText(self, skillID, false))
 end
 
 setStateMain = function(self)
@@ -328,8 +326,8 @@ end
 
 local function initTextActiveSkillOverview(self)
     local textList = {}
-    for _, skillID in ipairs(SkillDataAccessors.getSkillCategory("SkillsActive")) do
-        textList[#textList + 1] = generateSkillDetailText(skillID, true)
+    for _, skillID in ipairs(self.m_ModelSkillDataManager:getSkillCategory("SkillsActive")) do
+        textList[#textList + 1] = generateSkillDetailText(self, skillID, true)
     end
 
     textList[#textList + 1] = getLocalizedText(22, "HelpForActiveSkill")
@@ -339,8 +337,8 @@ end
 
 local function initTextPassiveSkillOverview(self)
     local textList = {}
-    for _, skillID in ipairs(SkillDataAccessors.getSkillCategory("SkillsPassive")) do
-        textList[#textList + 1] = generateSkillDetailText(skillID, false)
+    for _, skillID in ipairs(self.m_ModelSkillDataManager:getSkillCategory("SkillsPassive")) do
+        textList[#textList + 1] = generateSkillDetailText(self, skillID, false)
     end
 
     textList[#textList + 1] = getLocalizedText(22, "HelpForPassiveSkill")
@@ -358,8 +356,6 @@ function ModelSkillConfiguratorForOnline:ctor()
     initItemDeclareSkill(        self)
     initItemResearchPassiveSkill(self)
     initItemSkillInfo(           self)
-    initTextActiveSkillOverview( self)
-    initTextPassiveSkillOverview(self)
 
     return self
 end
@@ -371,7 +367,13 @@ function ModelSkillConfiguratorForOnline:setCallbackOnButtonBackTouched(callback
 end
 
 function ModelSkillConfiguratorForOnline:onStartRunning(modelWar)
-    self.m_ModelWar = modelWar
+    self.m_ModelWar              = modelWar
+    self.m_ModelSkillDataManager = modelWar:getModelSkillDataManager()
+    self.m_SkillDeclarationCost  = self.m_ModelSkillDataManager:getSkillDeclarationCost()
+
+    initTextActiveSkillOverview( self)
+    initTextPassiveSkillOverview(self)
+
     SingletonGetters.getScriptEventDispatcher(modelWar)
         :addEventListener("EvtIsWaitingForServerResponse", self)
 

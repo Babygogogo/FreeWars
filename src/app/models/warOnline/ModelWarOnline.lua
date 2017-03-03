@@ -112,6 +112,10 @@ local function initActorPlayerManager(self, playersData)
     self.m_ActorPlayerManager = Actor.createWithModelAndViewName("common.ModelPlayerManager", playersData)
 end
 
+local function initActorSkillDataManager(self, skillData)
+    self.m_ActorSkillDataManager = Actor.createWithModelAndViewName("common.ModelSkillDataManager", skillData)
+end
+
 local function initActorWeatherManager(self, weatherData)
     self.m_ActorWeatherManager = Actor.createWithModelAndViewName("common.ModelWeatherManager", weatherData)
 end
@@ -157,6 +161,7 @@ function ModelWarOnline:ctor(sceneData)
     initScriptEventDispatcher(self)
     initActorChatManager(     self, sceneData.chatData)
     initActorPlayerManager(   self, sceneData.players)
+    initActorSkillDataManager(self, sceneData.skillData)
     initActorWeatherManager(  self, sceneData.weather)
     initActorWarField(        self, sceneData.warField)
     initActorTurnManager(     self, sceneData.turn)
@@ -207,11 +212,12 @@ function ModelWarOnline:toSerializableTable()
         startingFund              = self.m_StartingFund,
         warID                     = self.m_WarID,
         warPassword               = self.m_WarPassword,
-        chatData                  = self:getModelChatManager()   :toSerializableTable(),
-        players                   = self:getModelPlayerManager() :toSerializableTable(),
-        turn                      = self:getModelTurnManager()   :toSerializableTable(),
-        warField                  = self:getModelWarField()      :toSerializableTable(),
-        weather                   = self:getModelWeatherManager():toSerializableTable(),
+        chatData                  = self:getModelChatManager()     :toSerializableTable(),
+        players                   = self:getModelPlayerManager()   :toSerializableTable(),
+        skillData                 = self:getModelSkillDataManager():toSerializableTable(),
+        turn                      = self:getModelTurnManager()     :toSerializableTable(),
+        warField                  = self:getModelWarField()        :toSerializableTable(),
+        weather                   = self:getModelWeatherManager()  :toSerializableTable(),
     }
 end
 
@@ -237,11 +243,12 @@ function ModelWarOnline:toSerializableTableForPlayerIndex(playerIndex)
         startingFund              = self.m_StartingFund,
         warID                     = self.m_WarID,
         warPassword               = self.m_WarPassword,
-        chatData                  = self:getModelChatManager()   :toSerializableTableForPlayerIndex(playerIndex),
-        players                   = self:getModelPlayerManager() :toSerializableTableForPlayerIndex(playerIndex),
-        turn                      = self:getModelTurnManager()   :toSerializableTableForPlayerIndex(playerIndex),
-        warField                  = self:getModelWarField()      :toSerializableTableForPlayerIndex(playerIndex),
-        weather                   = self:getModelWeatherManager():toSerializableTableForPlayerIndex(playerIndex),
+        chatData                  = self:getModelChatManager()     :toSerializableTableForPlayerIndex(playerIndex),
+        players                   = self:getModelPlayerManager()   :toSerializableTableForPlayerIndex(playerIndex),
+        skillData                 = self:getModelSkillDataManager():toSerializableTableForPlayerIndex(),
+        turn                      = self:getModelTurnManager()     :toSerializableTableForPlayerIndex(playerIndex),
+        warField                  = self:getModelWarField()        :toSerializableTableForPlayerIndex(playerIndex),
+        weather                   = self:getModelWeatherManager()  :toSerializableTableForPlayerIndex(playerIndex),
     }
 end
 
@@ -268,10 +275,11 @@ function ModelWarOnline:toSerializableReplayData()
         warID                     = self.m_WarID,
         warPassword               = self.m_WarPassword,
         chatData                  = nil,
-        players                   = self:getModelPlayerManager() :toSerializableReplayData(),
-        turn                      = self:getModelTurnManager()   :toSerializableReplayData(),
-        warField                  = self:getModelWarField()      :toSerializableReplayData(),
-        weather                   = self:getModelWeatherManager():toSerializableReplayData(),
+        players                   = self:getModelPlayerManager()   :toSerializableReplayData(),
+        skillData                 = self:getModelSkillDataManager():toSerializableReplayData(),
+        turn                      = self:getModelTurnManager()     :toSerializableReplayData(),
+        warField                  = self:getModelWarField()        :toSerializableReplayData(),
+        weather                   = self:getModelWeatherManager()  :toSerializableReplayData(),
     }
 end
 
@@ -471,6 +479,10 @@ end
 
 function ModelWarOnline:getModelPlayerManager()
     return self.m_ActorPlayerManager:getModel()
+end
+
+function ModelWarOnline:getModelSkillDataManager()
+    return self.m_ActorSkillDataManager:getModel()
 end
 
 function ModelWarOnline:getModelWeatherManager()

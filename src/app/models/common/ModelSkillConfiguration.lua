@@ -36,6 +36,17 @@ function ModelSkillConfiguration:toSerializableReplayData()
 end
 
 --------------------------------------------------------------------------------
+-- The callback function on start running.
+--------------------------------------------------------------------------------
+function ModelSkillConfiguration:onStartRunning(modelWar)
+    self.m_ModelSkillGroupPassive    :onStartRunning(modelWar)
+    self.m_ModelSkillGroupResearching:onStartRunning(modelWar)
+    self.m_ModelSkillGroupActive     :onStartRunning(modelWar)
+
+    return self
+end
+
+--------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
 function ModelSkillConfiguration:getModelSkillGroupPassive()

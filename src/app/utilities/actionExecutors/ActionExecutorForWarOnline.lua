@@ -9,7 +9,6 @@ local InstantSkillExecutor   = requireFW("src.app.utilities.InstantSkillExecutor
 local LocalizationFunctions  = requireFW("src.app.utilities.LocalizationFunctions")
 local SerializationFunctions = requireFW("src.app.utilities.SerializationFunctions")
 local SingletonGetters       = requireFW("src.app.utilities.SingletonGetters")
-local SkillDataAccessors     = requireFW("src.app.utilities.SkillDataAccessors")
 local SkillModifierFunctions = requireFW("src.app.utilities.SkillModifierFunctions")
 local SupplyFunctions        = requireFW("src.app.utilities.SupplyFunctions")
 local VisibilityFunctions    = requireFW("src.app.utilities.VisibilityFunctions")
@@ -426,7 +425,7 @@ local function executeActivateSkill(action, modelWarOnline)
     local playerIndex             = getModelTurnManager(modelWarOnline):getPlayerIndex()
     local modelPlayer             = getModelPlayerManager(modelWarOnline):getModelPlayer(playerIndex)
     local modelSkillConfiguration = modelPlayer:getModelSkillConfiguration()
-    modelPlayer:setEnergy(modelPlayer:getEnergy() - SkillDataAccessors.getSkillPoints(skillID, skillLevel, isActiveSkill))
+    modelPlayer:setEnergy(modelPlayer:getEnergy() - modelWarOnline:getModelSkillDataManager():getSkillPoints(skillID, skillLevel, isActiveSkill))
     if (not isActiveSkill) then
         modelSkillConfiguration:getModelSkillGroupResearching():pushBackSkill(skillID, skillLevel)
     else
@@ -853,7 +852,7 @@ local function executeDeclareSkill(action, modelWarOnline)
 
     local playerIndex = getModelTurnManager(modelWarOnline):getPlayerIndex()
     local modelPlayer = getModelPlayerManager(modelWarOnline):getModelPlayer(playerIndex)
-    modelPlayer:setEnergy(modelPlayer:getEnergy() - SkillDataAccessors.getSkillDeclarationCost())
+    modelPlayer:setEnergy(modelPlayer:getEnergy() - modelWarOnline:getModelSkillDataManager():getSkillDeclarationCost())
         :setSkillDeclared(true)
 
     if (IS_SERVER) then
