@@ -194,10 +194,11 @@ end
 
 local function updateStringSkillInfo(self)
     local stringList = {}
-    getModelPlayerManager(self.m_ModelWarReplay):forEachModelPlayer(function(modelPlayer, playerIndex)
+    local modelWar   = self.m_ModelWarReplay
+    getModelPlayerManager(modelWar):forEachModelPlayer(function(modelPlayer, playerIndex)
         stringList[#stringList + 1] = string.format("%s %d: %s\n%s",
             getLocalizedText(65, "Player"), playerIndex, modelPlayer:getNickname(),
-            SkillDescriptionFunctions.getBriefDescription(modelPlayer:getModelSkillConfiguration())
+            SkillDescriptionFunctions.getBriefDescription(modelWar, modelPlayer:getModelSkillConfiguration())
         )
     end)
 

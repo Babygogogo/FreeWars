@@ -1,8 +1,7 @@
 
 local ModelSkillGroupPassive = requireFW("src.global.functions.class")("ModelSkillGroupPassive")
 
-local SkillDataAccessors = requireFW("src.app.utilities.SkillDataAccessors")
-local TableFunctions     = requireFW("src.app.utilities.TableFunctions")
+local TableFunctions = requireFW("src.app.utilities.TableFunctions")
 
 local ipairs = ipairs
 
@@ -37,9 +36,22 @@ function ModelSkillGroupPassive:toSerializableTable()
 end
 
 --------------------------------------------------------------------------------
+-- The callback function on start running.
+--------------------------------------------------------------------------------
+function ModelSkillGroupPassive:onStartRunning(modelWar)
+    self.m_ModelSkillDataManager = modelWar:getModelSkillDataManager()
+
+    return self
+end
+
+--------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
 ModelSkillGroupPassive.isSkillGroupPassive = true
+
+function ModelSkillGroupPassive:getModelSkillDataManager()
+    return self.m_ModelSkillDataManager
+end
 
 function ModelSkillGroupPassive:isEmpty()
     return #self.m_Slots == 0
@@ -52,7 +64,7 @@ end
 function ModelSkillGroupPassive:pushBackSkill(skillID, skillLevel)
     self.m_Slots[#self.m_Slots + 1] = {
         id       = skillID,
-        modifier = SkillDataAccessors.getSkillModifier(skillID, skillLevel, false),
+        modifier = self.m_ModelSkillDataManager:getSkillModifier(skillID, skillLevel, false),
     }
 
     return self

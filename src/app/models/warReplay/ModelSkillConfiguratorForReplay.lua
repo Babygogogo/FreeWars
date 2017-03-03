@@ -3,7 +3,6 @@ local ModelSkillConfiguratorForReplay = class("ModelSkillConfiguratorForReplay")
 
 local LocalizationFunctions     = requireFW("src.app.utilities.LocalizationFunctions")
 local SingletonGetters          = requireFW("src.app.utilities.SingletonGetters")
-local SkillDataAccessors        = requireFW("src.app.utilities.SkillDataAccessors")
 local SkillDescriptionFunctions = requireFW("src.app.utilities.SkillDescriptionFunctions")
 
 local string, table    = string, table
@@ -26,14 +25,14 @@ local function generateSkillInfoText(self)
             getLocalizedText(65, "Player"), playerIndex, modelPlayer:getNickname(),
             getLocalizedText(22, "CurrentEnergy"), modelPlayer:getEnergy(),
             getLocalizedText(22, "DeclareSkill"),  getLocalizedText(22, modelPlayer:isSkillDeclared() and "Yes" or "No"),
-            SkillDescriptionFunctions.getBriefDescription(modelPlayer:getModelSkillConfiguration())
+            SkillDescriptionFunctions.getBriefDescription(modelWar, modelPlayer:getModelSkillConfiguration())
         )
     end)
 
     return table.concat(stringList, "\n--------------------\n")
 end
 
-local function generateSkillDetailText(skillID, isActiveSkill)
+local function generateSkillDetailText(self, skillID, isActiveSkill)
     local textList = {
         string.format("%s: %s\n%s / %s / %s",
             getLocalizedText(5, skillID), getLocalizedText(23, skillID),
@@ -41,7 +40,7 @@ local function generateSkillDetailText(skillID, isActiveSkill)
         ),
     }
 
-    local skillData         = SkillDataAccessors.getSkillData(skillID)
+    local skillData         = self.m_ModelSkillDataManager:getSkillData(skillID)
     local modifierUnit      = skillData.modifierUnit
     local pointsFieldName   = (isActiveSkill) and ("pointsActive")   or ("pointsPassive")
     local modifierFieldName = (isActiveSkill) and ("modifierActive") or ("modifierPassive")
@@ -107,8 +106,8 @@ end
 
 local function initTextActiveSkillOverview(self)
     local textList = {}
-    for _, skillID in ipairs(SkillDataAccessors.getSkillCategory("SkillsActive")) do
-        textList[#textList + 1] = generateSkillDetailText(skillID, true)
+    for _, skillID in ipairs(self.m_ModelSkillDataManager:getSkillCategory("SkillsActive")) do
+        textList[#textList + 1] = generateSkillDetailText(self, skillID, true)
     end
 
     textList[#textList + 1] = getLocalizedText(22, "HelpForActiveSkill")
@@ -118,8 +117,8 @@ end
 
 local function initTextPassiveSkillOverview(self)
     local textList = {}
-    for _, skillID in ipairs(SkillDataAccessors.getSkillCategory("SkillsPassive")) do
-        textList[#textList + 1] = generateSkillDetailText(skillID, false)
+    for _, skillID in ipairs(self.m_ModelSkillDataManager:getSkillCategory("SkillsPassive")) do
+        textList[#textList + 1] = generateSkillDetailText(self, skillID, false)
     end
 
     textList[#textList + 1] = getLocalizedText(22, "HelpForPassiveSkill")
@@ -134,8 +133,6 @@ function ModelSkillConfiguratorForReplay:ctor()
     initItemCostListActiveSkill( self)
     initItemCostListPassiveSkill(self)
     initItemSkillInfo(           self)
-    initTextActiveSkillOverview( self)
-    initTextPassiveSkillOverview(self)
 
     return self
 end
@@ -147,7 +144,11 @@ function ModelSkillConfiguratorForReplay:setCallbackOnButtonBackTouched(callback
 end
 
 function ModelSkillConfiguratorForReplay:onStartRunning(modelWar)
-    self.m_ModelWar = modelWar
+    self.m_ModelWar              = modelWar
+    self.m_ModelSkillDataManager = modelWar:getModelSkillDataManager()
+
+    initTextActiveSkillOverview( self)
+    initTextPassiveSkillOverview(self)
 
     return self
 end

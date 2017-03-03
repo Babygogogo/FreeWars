@@ -25,7 +25,6 @@ local LocalizationFunctions     = requireFW("src.app.utilities.LocalizationFunct
 local GameConstantFunctions     = requireFW("src.app.utilities.GameConstantFunctions")
 local GridIndexFunctions        = requireFW("src.app.utilities.GridIndexFunctions")
 local SingletonGetters          = requireFW("src.app.utilities.SingletonGetters")
-local SkillDataAccessors        = requireFW("src.app.utilities.SkillDataAccessors")
 local SkillDescriptionFunctions = requireFW("src.app.utilities.SkillDescriptionFunctions")
 local WarFieldManager           = requireFW("src.app.utilities.WarFieldManager")
 local WebSocketManager          = requireFW("src.app.utilities.WebSocketManager")
@@ -56,16 +55,16 @@ local ACTION_CODE_VOTE_FOR_DRAW        = ActionCodeFunctions.getActionCode("Acti
 -- The util functions.
 --------------------------------------------------------------------------------
 local function generateEmptyDataForEachPlayer(self)
-    local modelSceneWar      = self.m_ModelSceneWar
-    local modelPlayerManager = getModelPlayerManager(modelSceneWar)
+    local modelWar      = self.m_ModelWar
+    local modelPlayerManager = getModelPlayerManager(modelWar)
     local dataForEachPlayer  = {}
-    local modelFogMap        = getModelFogMap(modelSceneWar)
+    local modelFogMap        = getModelFogMap(modelWar)
 
     modelPlayerManager:forEachModelPlayer(function(modelPlayer, playerIndex)
         if (modelPlayer:isAlive()) then
             dataForEachPlayer[playerIndex] = {
                 nickname            = modelPlayer:getNickname(),
-                fund                = ((modelFogMap:isFogOfWarCurrently()) and ((playerIndex ~= getPlayerIndexLoggedIn(modelSceneWar)))) and ("--") or (modelPlayer:getFund()),
+                fund                = ((modelFogMap:isFogOfWarCurrently()) and ((playerIndex ~= getPlayerIndexLoggedIn(modelWar)))) and ("--") or (modelPlayer:getFund()),
                 energy              = modelPlayer:getEnergy(),
                 idleUnitsCount      = 0,
                 isSkillDeclared     = modelPlayer:isSkillDeclared(),
@@ -101,13 +100,13 @@ local function updateUnitsData(self, dataForEachPlayer)
         data.unitsValue     = data.unitsValue + round(modelUnit:getNormalizedCurrentHP() * modelUnit:getBaseProductionCost() / 10)
     end
 
-    getModelUnitMap(self.m_ModelSceneWar):forEachModelUnitOnMap(updateUnitCountAndValue)
+    getModelUnitMap(self.m_ModelWar):forEachModelUnitOnMap(updateUnitCountAndValue)
         :forEachModelUnitLoaded(updateUnitCountAndValue)
 end
 
 local function updateTilesData(self, dataForEachPlayer)
-    local modelUnitMap = getModelUnitMap(self.m_ModelSceneWar)
-    getModelTileMap(self.m_ModelSceneWar):forEachModelTile(function(modelTile)
+    local modelUnitMap = getModelUnitMap(self.m_ModelWar)
+    getModelTileMap(self.m_ModelWar):forEachModelTile(function(modelTile)
         local playerIndex = modelTile:getPlayerIndex()
         if (playerIndex ~= 0) then
             local data = dataForEachPlayer[playerIndex]
@@ -149,9 +148,9 @@ local function getTilesInfo(tileTypeCounters, showIdleTilesCount)
 end
 
 local function getMapInfo(self)
-    local modelSceneWar = self.m_ModelSceneWar
-    local modelWarField = SingletonGetters.getModelWarField(modelSceneWar)
-    local modelTileMap  = getModelTileMap(modelSceneWar)
+    local modelWar = self.m_ModelWar
+    local modelWarField = SingletonGetters.getModelWarField(modelWar)
+    local modelTileMap  = getModelTileMap(modelWar)
     local tileTypeCounters = {
         Headquarters = 0,
         City         = 0,
@@ -174,16 +173,16 @@ local function getMapInfo(self)
     return string.format("%s: %s      %s: %s\n%s: %s      %s: %d      %s: %d\n%s\n%s: %d%%",
         getLocalizedText(65, "MapName"),            WarFieldManager.getWarFieldName(warFieldFileName),
         getLocalizedText(65, "Author"),             WarFieldManager.getWarFieldAuthorName(warFieldFileName),
-        getLocalizedText(65, "WarID"),              AuxiliaryFunctions.getWarNameWithWarId(SingletonGetters.getWarId(modelSceneWar)),
-        getLocalizedText(65, "TurnIndex"),          getModelTurnManager(modelSceneWar):getTurnIndex(),
-        getLocalizedText(65, "ActionID"),           getActionId(modelSceneWar),
+        getLocalizedText(65, "WarID"),              AuxiliaryFunctions.getWarNameWithWarId(SingletonGetters.getWarId(modelWar)),
+        getLocalizedText(65, "TurnIndex"),          getModelTurnManager(modelWar):getTurnIndex(),
+        getLocalizedText(65, "ActionID"),           getActionId(modelWar),
         getTilesInfo(tileTypeCounters),
-        getLocalizedText(14, "IncomeModifier"),     modelSceneWar:getIncomeModifier()
+        getLocalizedText(14, "IncomeModifier"),     modelWar:getIncomeModifier()
     )
 end
 
-local function getInTurnDescription(modelSceneWar)
-    local formattedCountdown = AuxiliaryFunctions.formatTimeInterval(modelSceneWar:getIntervalUntilBoot() - os.time() + modelSceneWar:getEnterTurnTime())
+local function getInTurnDescription(modelWar)
+    local formattedCountdown = AuxiliaryFunctions.formatTimeInterval(modelWar:getIntervalUntilBoot() - os.time() + modelWar:getEnterTurnTime())
     return string.format("(%s, %s: %s)", getLocalizedText(49), getLocalizedText(34, "BootCountdown"), formattedCountdown)
 end
 
@@ -192,10 +191,10 @@ local function updateStringWarInfo(self)
     updateUnitsData(self, dataForEachPlayer)
     updateTilesData(self, dataForEachPlayer)
 
-    local modelSceneWar     = self.m_ModelSceneWar
+    local modelWar     = self.m_ModelWar
     local stringList        = {getMapInfo(self)}
-    local playerIndexInTurn = getModelTurnManager(modelSceneWar):getPlayerIndex()
-    for i = 1, getModelPlayerManager(modelSceneWar):getPlayersCount() do
+    local playerIndexInTurn = getModelTurnManager(modelWar):getPlayerIndex()
+    for i = 1, getModelPlayerManager(modelWar):getPlayersCount() do
         if (not dataForEachPlayer[i]) then
             stringList[#stringList + 1] = string.format("%s %d: %s", getLocalizedText(65, "Player"), i, getLocalizedText(65, "Lost"))
         else
@@ -203,7 +202,7 @@ local function updateStringWarInfo(self)
             local isPlayerInTurn     = i == playerIndexInTurn
             stringList[#stringList + 1] = string.format("%s %d:    %s%s\n%s: %d      %s: %s\n%s: %s      %s: %d\n%s: %d%s      %s: %d\n%s: %d\n%s",
                 getLocalizedText(65, "Player"),              i,           d.nickname,
-                ((isPlayerInTurn) and (getInTurnDescription(modelSceneWar)) or ("")),
+                ((isPlayerInTurn) and (getInTurnDescription(modelWar)) or ("")),
                 getLocalizedText(65, "Energy"),               d.energy,
                 getLocalizedText(22, "DeclareSkill"),         (d.isSkillDeclared) and (getLocalizedText(22, "Yes")) or (getLocalizedText(22, "No")),
                 getLocalizedText(65, "Fund"),                 "" .. d.fund,
@@ -222,10 +221,11 @@ end
 
 local function updateStringSkillInfo(self)
     local stringList = {}
-    getModelPlayerManager(self.m_ModelSceneWar):forEachModelPlayer(function(modelPlayer, playerIndex)
+    local modelWar   = self.m_ModelWar
+    getModelPlayerManager(modelWar):forEachModelPlayer(function(modelPlayer, playerIndex)
         stringList[#stringList + 1] = string.format("%s %d: %s\n%s",
             getLocalizedText(65, "Player"), playerIndex, modelPlayer:getNickname(),
-            SkillDescriptionFunctions.getBriefDescription(modelPlayer:getModelSkillConfiguration())
+            SkillDescriptionFunctions.getBriefDescription(modelWar, modelPlayer:getModelSkillConfiguration())
         )
     end)
 
@@ -233,9 +233,9 @@ local function updateStringSkillInfo(self)
 end
 
 local function getAvailableMainItems(self)
-    local modelSceneWar     = self.m_ModelSceneWar
-    local playerIndexInTurn = getModelTurnManager(modelSceneWar):getPlayerIndex()
-    if ((playerIndexInTurn ~= getPlayerIndexLoggedIn(modelSceneWar)) or
+    local modelWar     = self.m_ModelWar
+    local playerIndexInTurn = getModelTurnManager(modelWar):getPlayerIndex()
+    if ((playerIndexInTurn ~= getPlayerIndexLoggedIn(modelWar)) or
         (self.m_IsWaitingForServerResponse))                         then
         return {
             self.m_ItemQuit,
@@ -245,7 +245,7 @@ local function getAvailableMainItems(self)
             self.m_ItemHelp,
         }
     else
-        local modelPlayer = getModelPlayerManager(modelSceneWar):getModelPlayer(playerIndexInTurn)
+        local modelPlayer = getModelPlayerManager(modelWar):getModelPlayer(playerIndexInTurn)
         local items = {
             self.m_ItemQuit,
             self.m_ItemDrawOrSurrender,
@@ -261,14 +261,14 @@ local function getAvailableMainItems(self)
 end
 
 local function dispatchEvtMapCursorMoved(self, gridIndex)
-    getScriptEventDispatcher(self.m_ModelSceneWar):dispatchEvent({
+    getScriptEventDispatcher(self.m_ModelWar):dispatchEvent({
         name      = "EvtMapCursorMoved",
         gridIndex = gridIndex,
     })
 end
 
 local function dispatchEvtWarCommandMenuUpdated(self)
-    getScriptEventDispatcher(self.m_ModelSceneWar):dispatchEvent({
+    getScriptEventDispatcher(self.m_ModelWar):dispatchEvent({
         name                = "EvtWarCommandMenuUpdated",
         modelWarCommandMenu = self,
     })
@@ -347,12 +347,12 @@ local function createUnitPropertyText(unitType)
 end
 
 local function getIdleTilesCount(self)
-    local modelSceneWar = self.m_ModelSceneWar
-    local modelUnitMap  = getModelUnitMap(modelSceneWar)
-    local playerIndex   = getModelTurnManager(modelSceneWar):getPlayerIndex()
+    local modelWar = self.m_ModelWar
+    local modelUnitMap  = getModelUnitMap(modelWar)
+    local playerIndex   = getModelTurnManager(modelWar):getPlayerIndex()
     local idleFactoriesCount, idleAirportsCount, idleSeaportsCount = 0, 0, 0
 
-    getModelTileMap(modelSceneWar):forEachModelTile(function(modelTile)
+    getModelTileMap(modelWar):forEachModelTile(function(modelTile)
         if ((modelTile:getPlayerIndex() == playerIndex) and (not modelUnitMap:getModelUnit(modelTile:getGridIndex()))) then
             local tileType = modelTile:getTileType()
             if     (tileType == "Airport") then idleAirportsCount  = idleAirportsCount  + 1
@@ -366,11 +366,11 @@ local function getIdleTilesCount(self)
 end
 
 local function getIdleUnitsCount(self)
-    local modelSceneWar = self.m_ModelSceneWar
-    local playerIndex   = getModelTurnManager(modelSceneWar):getPlayerIndex()
+    local modelWar = self.m_ModelWar
+    local playerIndex   = getModelTurnManager(modelWar):getPlayerIndex()
     local count         = 0
 
-    getModelUnitMap(modelSceneWar):forEachModelUnitOnMap(function(modelUnit)
+    getModelUnitMap(modelWar):forEachModelUnitOnMap(function(modelUnit)
         if ((modelUnit:getPlayerIndex() == playerIndex) and (modelUnit:isStateIdle())) then
             count = count + 1
         end
@@ -391,9 +391,12 @@ local function createEndTurnText(self)
         textList[#textList + 1] = string.format("%s:  %d    %d    %d", getLocalizedText(65, "IdleTiles"), idleFactoriesCount, idleAirportsCount, idleSeaportsCount)
     end
 
-    local modelSceneWar  = self.m_ModelSceneWar
-    local _, modelPlayer = getPlayerIndexLoggedIn(modelSceneWar)
-    if ((modelSceneWar:isActiveSkillEnabled()) and (not modelPlayer:isSkillDeclared()) and (modelPlayer:getEnergy() >= SkillDataAccessors.getSkillDeclarationCost())) then
+    local modelWar  = self.m_ModelWar
+    local _, modelPlayer = getPlayerIndexLoggedIn(modelWar)
+    if ((modelWar:isActiveSkillEnabled())                         and
+        (modelWar:isSkillDeclarationEnabled())                    and
+        (not modelPlayer:isSkillDeclared())                       and
+        (modelPlayer:getEnergy() >= self.m_SkillDeclarationCost)) then
         textList[#textList + 1] = getLocalizedText(66, "SkillNotDeclared")
     end
 
@@ -409,15 +412,15 @@ end
 -- The functions for sending actions.
 --------------------------------------------------------------------------------
 local function createAndSendAction(self, rawAction, needActionID)
-    local modelSceneWar = self.m_ModelSceneWar
+    local modelWar = self.m_ModelWar
     if (needActionID) then
-        rawAction.actionID = getActionId(modelSceneWar) + 1
-        rawAction.warID    = SingletonGetters.getWarId(self.m_ModelSceneWar)
+        rawAction.actionID = getActionId(modelWar) + 1
+        rawAction.warID    = SingletonGetters.getWarId(self.m_ModelWar)
     end
 
     WebSocketManager.sendAction(rawAction)
-    getModelMessageIndicator(modelSceneWar):showPersistentMessage(getLocalizedText(80, "TransferingData"))
-    getScriptEventDispatcher(modelSceneWar):dispatchEvent({
+    getModelMessageIndicator(modelWar):showPersistentMessage(getLocalizedText(80, "TransferingData"))
+    getScriptEventDispatcher(modelWar):dispatchEvent({
         name    = "EvtIsWaitingForServerResponse",
         waiting = true,
     })
@@ -451,7 +454,7 @@ end
 local function sendActionReloadSceneWar(self)
     createAndSendAction(self, {
         actionCode = ACTION_CODE_RELOAD_SCENE_WAR,
-        warID      = SingletonGetters.getWarId(self.m_ModelSceneWar),
+        warID      = SingletonGetters.getWarId(self.m_ModelWar),
     }, false)
 end
 
@@ -466,17 +469,17 @@ local function setStateAuxiliaryCommands(self)
     self.m_State = "stateAuxiliaryCommands"
 
     if (self.m_View) then
-        local modelSceneWar = self.m_ModelSceneWar
+        local modelWar = self.m_ModelWar
         local items         = {}
         items[#items + 1] = self.m_ItemChat
         items[#items + 1] = self.m_ItemReload
 
-        local playerIndexLoggedIn = getPlayerIndexLoggedIn(modelSceneWar)
-        if ((playerIndexLoggedIn == getModelTurnManager(modelSceneWar):getPlayerIndex()) and
+        local playerIndexLoggedIn = getPlayerIndexLoggedIn(modelWar)
+        if ((playerIndexLoggedIn == getModelTurnManager(modelWar):getPlayerIndex()) and
             (not self.m_IsWaitingForServerResponse))                                      then
 
             local gridIndex = self.m_MapCursorGridIndex
-            local modelUnit = getModelUnitMap(modelSceneWar):getModelUnit(self.m_MapCursorGridIndex)
+            local modelUnit = getModelUnitMap(modelWar):getModelUnit(self.m_MapCursorGridIndex)
             if ((modelUnit) and (modelUnit:isStateIdle()) and (modelUnit:getPlayerIndex() == playerIndexLoggedIn)) then
                 items[#items + 1] = self.m_ItemDestroyOwnedUnit
             end
@@ -503,15 +506,15 @@ local function setStateDrawOrSurrender(self)
     self.m_State = "stateDrawOrSurrender"
 
     if (self.m_View) then
-        local modelSceneWar     = self.m_ModelSceneWar
-        local playerIndexInTurn = getModelTurnManager(modelSceneWar):getPlayerIndex()
-        assert((getPlayerIndexLoggedIn(modelSceneWar) == playerIndexInTurn) and (not self.m_IsWaitingForServerResponse))
+        local modelWar     = self.m_ModelWar
+        local playerIndexInTurn = getModelTurnManager(modelWar):getPlayerIndex()
+        assert((getPlayerIndexLoggedIn(modelWar) == playerIndexInTurn) and (not self.m_IsWaitingForServerResponse))
 
-        local modelPlayer = getModelPlayerManager(modelSceneWar):getModelPlayer(playerIndexInTurn)
+        local modelPlayer = getModelPlayerManager(modelWar):getModelPlayer(playerIndexInTurn)
         local items       = {self.m_ItemSurrender}
         if (modelPlayer:hasVotedForDraw()) then
             -- do nothing.
-        elseif (not modelSceneWar:getRemainingVotesForDraw()) then
+        elseif (not modelWar:getRemainingVotesForDraw()) then
             items[#items + 1] = self.m_ItemProposeDraw
         else
             items[#items + 1] = self.m_ItemAgreeDraw
@@ -594,7 +597,7 @@ end
 getActorSkillConfigurator = function(self)
     if (not self.m_ActorSkillConfigurator) then
         local model = Actor.createModel("warOnline.ModelSkillConfiguratorForOnline")
-        model:onStartRunning(self.m_ModelSceneWar)
+        model:onStartRunning(self.m_ModelWar)
             :setCallbackOnButtonBackTouched(function()
                 model:setEnabled(false)
                 self.m_View:setOverviewVisible(true)
@@ -623,7 +626,7 @@ local function initItemAgreeDraw(self)
     self.m_ItemAgreeDraw = {
         name = getLocalizedText(65, "AgreeDraw"),
         callback = function()
-            local modelConfirmBox = getModelConfirmBox(self.m_ModelSceneWar)
+            local modelConfirmBox = getModelConfirmBox(self.m_ModelWar)
             modelConfirmBox:setConfirmText(getLocalizedText(66, "AgreeDraw"))
                 :setOnConfirmYes(function()
                     sendActionVoteForDraw(self, true)
@@ -648,7 +651,7 @@ local function initItemChat(self)
     self.m_ItemChat = {
         name     = getLocalizedText(65, "Chat"),
         callback = function()
-            SingletonGetters.getModelChatManager(self.m_ModelSceneWar):setEnabled(true)
+            SingletonGetters.getModelChatManager(self.m_ModelWar):setEnabled(true)
             setStateDisabled(self)
         end,
     }
@@ -658,7 +661,7 @@ local function initItemDestroyOwnedUnit(self)
     self.m_ItemDestroyOwnedUnit = {
         name     = getLocalizedText(65, "DestroyOwnedUnit"),
         callback = function()
-            local modelConfirmBox = getModelConfirmBox(self.m_ModelSceneWar)
+            local modelConfirmBox = getModelConfirmBox(self.m_ModelWar)
             modelConfirmBox:setConfirmText(getLocalizedText(66, "DestroyOwnedUnit"))
                 :setOnConfirmYes(function()
                     modelConfirmBox:setEnabled(false)
@@ -674,7 +677,7 @@ local function initItemDisagreeDraw(self)
     self.m_ItemDisagreeDraw = {
         name = getLocalizedText(65, "DisagreeDraw"),
         callback = function()
-            local modelConfirmBox = getModelConfirmBox(self.m_ModelSceneWar)
+            local modelConfirmBox = getModelConfirmBox(self.m_ModelWar)
             modelConfirmBox:setConfirmText(getLocalizedText(66, "DisagreeDraw"))
                 :setOnConfirmYes(function()
                     sendActionVoteForDraw(self, false)
@@ -699,12 +702,12 @@ local function initItemEndTurn(self)
     self.m_ItemEndTurn = {
         name     = getLocalizedText(65, "EndTurn"),
         callback = function()
-            local modelSceneWar = self.m_ModelSceneWar
-            if ((modelSceneWar:getRemainingVotesForDraw())                                                                                          and
-                (not getModelPlayerManager(modelSceneWar):getModelPlayer(getModelTurnManager(modelSceneWar):getPlayerIndex()):hasVotedForDraw())) then
-                getModelMessageIndicator(modelSceneWar):showMessage(getLocalizedText(66, "RequireVoteForDraw"))
+            local modelWar = self.m_ModelWar
+            if ((modelWar:getRemainingVotesForDraw())                                                                                          and
+                (not getModelPlayerManager(modelWar):getModelPlayer(getModelTurnManager(modelWar):getPlayerIndex()):hasVotedForDraw())) then
+                getModelMessageIndicator(modelWar):showMessage(getLocalizedText(66, "RequireVoteForDraw"))
             else
-                local modelConfirmBox = getModelConfirmBox(modelSceneWar)
+                local modelConfirmBox = getModelConfirmBox(modelWar)
                 modelConfirmBox:setConfirmText(createEndTurnText(self))
                     :setOnConfirmYes(function()
                         modelConfirmBox:setEnabled(false)
@@ -730,10 +733,10 @@ local function initItemFindIdleUnit(self)
     local item = {
         name     = getLocalizedText(65, "FindIdleUnit"),
         callback = function()
-            local modelUnitMap        = getModelUnitMap(self.m_ModelSceneWar)
+            local modelUnitMap        = getModelUnitMap(self.m_ModelWar)
             local mapSize             = modelUnitMap:getMapSize()
             local cursorX, cursorY    = self.m_MapCursorGridIndex.x, self.m_MapCursorGridIndex.y
-            local playerIndexLoggedIn = getPlayerIndexLoggedIn(self.m_ModelSceneWar)
+            local playerIndexLoggedIn = getPlayerIndexLoggedIn(self.m_ModelWar)
             local firstGridIndex
 
             for y = 1, mapSize.height do
@@ -758,7 +761,7 @@ local function initItemFindIdleUnit(self)
             if (firstGridIndex) then
                 dispatchEvtMapCursorMoved(self, firstGridIndex)
             else
-                getModelMessageIndicator(self.m_ModelSceneWar):showMessage(getLocalizedText(66, "NoIdleUnit"))
+                getModelMessageIndicator(self.m_ModelWar):showMessage(getLocalizedText(66, "NoIdleUnit"))
             end
             self:setEnabled(false)
         end,
@@ -771,10 +774,10 @@ local function initItemFindIdleTile(self)
     local item = {
         name     = getLocalizedText(65, "FindIdleTile"),
         callback = function()
-            local modelSceneWar       = self.m_ModelSceneWar
-            local playerIndexLoggedIn = getPlayerIndexLoggedIn(modelSceneWar)
-            local modelUnitMap        = getModelUnitMap(modelSceneWar)
-            local modelTileMap        = getModelTileMap(modelSceneWar)
+            local modelWar       = self.m_ModelWar
+            local playerIndexLoggedIn = getPlayerIndexLoggedIn(modelWar)
+            local modelUnitMap        = getModelUnitMap(modelWar)
+            local modelTileMap        = getModelTileMap(modelWar)
             local mapSize             = modelUnitMap:getMapSize()
             local cursorX, cursorY    = self.m_MapCursorGridIndex.x, self.m_MapCursorGridIndex.y
             local firstGridIndex
@@ -801,7 +804,7 @@ local function initItemFindIdleTile(self)
             if (firstGridIndex) then
                 dispatchEvtMapCursorMoved(self, firstGridIndex)
             else
-                getModelMessageIndicator(self.m_ModelSceneWar):showMessage(getLocalizedText(66, "NoIdleTile"))
+                getModelMessageIndicator(self.m_ModelWar):showMessage(getLocalizedText(66, "NoIdleTile"))
             end
             self:setEnabled(false)
         end,
@@ -849,7 +852,7 @@ local function initItemProposeDraw(self)
     self.m_ItemProposeDraw = {
         name     = getLocalizedText(65, "ProposeDraw"),
         callback = function()
-            local modelConfirmBox = getModelConfirmBox(self.m_ModelSceneWar)
+            local modelConfirmBox = getModelConfirmBox(self.m_ModelWar)
             modelConfirmBox:setConfirmText(getLocalizedText(66, "ProposeDraw"))
                 :setOnConfirmYes(function()
                     sendActionVoteForDraw(self, true)
@@ -915,7 +918,7 @@ local function initItemQuit(self)
     local item = {
         name     = getLocalizedText(65, "QuitWar"),
         callback = function()
-            getModelConfirmBox(self.m_ModelSceneWar):setConfirmText(getLocalizedText(66, "QuitWar"))
+            getModelConfirmBox(self.m_ModelWar):setConfirmText(getLocalizedText(66, "QuitWar"))
                 :setOnConfirmYes(function()
                     local modelSceneMain = Actor.createModel("sceneMain.ModelSceneMain", {isPlayerLoggedIn = WebSocketManager.getLoggedInAccountAndPassword() ~= nil})
                     local actorSceneMain = Actor.createWithModelAndViewInstance(modelSceneMain, Actor.createView("sceneMain.ViewSceneMain"))
@@ -932,7 +935,7 @@ local function initItemReload(self)
     local item = {
         name     = getLocalizedText(65, "ReloadWar"),
         callback = function()
-            local modelConfirmBox = getModelConfirmBox(self.m_ModelSceneWar)
+            local modelConfirmBox = getModelConfirmBox(self.m_ModelWar)
             modelConfirmBox:setConfirmText(getLocalizedText(66, "ReloadWar"))
                 :setOnConfirmYes(function()
                     modelConfirmBox:setEnabled(false)
@@ -950,7 +953,7 @@ local function initItemSetMessageIndicator(self)
     self.m_ItemSetMessageIndicator = {
         name     = getLocalizedText(1, "SetMessageIndicator"),
         callback = function()
-            local indicator = SingletonGetters.getModelMessageIndicator(self.m_ModelSceneWar)
+            local indicator = SingletonGetters.getModelMessageIndicator(self.m_ModelWar)
             indicator:setEnabled(not indicator:isEnabled())
         end,
     }
@@ -975,7 +978,7 @@ local function initItemSurrender(self)
     local item = {
         name     = getLocalizedText(65, "Surrender"),
         callback = function()
-            local modelConfirmBox = getModelConfirmBox(self.m_ModelSceneWar)
+            local modelConfirmBox = getModelConfirmBox(self.m_ModelWar)
             modelConfirmBox:setConfirmText(getLocalizedText(66, "Surrender"))
                 :setOnConfirmYes(function()
                     modelConfirmBox:setEnabled(false)
@@ -1053,9 +1056,11 @@ end
 --------------------------------------------------------------------------------
 -- The public callback function on start running or script events.
 --------------------------------------------------------------------------------
-function ModelWarCommandMenuForOnline:onStartRunning(modelSceneWar)
-    self.m_ModelSceneWar    = modelSceneWar
-    getScriptEventDispatcher(modelSceneWar)
+function ModelWarCommandMenuForOnline:onStartRunning(modelWar)
+    self.m_ModelWar             = modelWar
+    self.m_SkillDeclarationCost = modelWar:getModelSkillDataManager():getSkillDeclarationCost()
+
+    getScriptEventDispatcher(modelWar)
         :addEventListener("EvtIsWaitingForServerResponse", self)
         :addEventListener("EvtGridSelected",               self)
         :addEventListener("EvtMapCursorMoved",             self)

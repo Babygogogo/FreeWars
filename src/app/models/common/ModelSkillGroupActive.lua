@@ -20,9 +20,22 @@ function ModelSkillGroupActive:toSerializableTable()
 end
 
 --------------------------------------------------------------------------------
+-- The callback function on start running.
+--------------------------------------------------------------------------------
+function ModelSkillGroupActive:onStartRunning(modelWar)
+    self.m_ModelSkillDataManager = modelWar:getModelSkillDataManager()
+
+    return self
+end
+
+--------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
 ModelSkillGroupActive.isSkillGroupActive = true
+
+function ModelSkillGroupActive:getModelSkillDataManager()
+    return self.m_ModelSkillDataManager
+end
 
 function ModelSkillGroupActive:isEmpty()
     return #self.m_Slots == 0
