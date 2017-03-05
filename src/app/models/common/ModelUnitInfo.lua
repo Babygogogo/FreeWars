@@ -125,8 +125,8 @@ function ModelUnitInfo:onStartRunning(modelWar)
         :addEventListener("EvtPlayerIndexUpdated",    self)
         :addEventListener("EvtWarCommandMenuUpdated", self)
 
-    updateWithModelUnitMap(self)
     self.m_View:updateWithPlayerIndex(SingletonGetters.getModelTurnManager(modelWar):getPlayerIndex())
+    updateWithModelUnitMap(self)
 
     return self
 end
