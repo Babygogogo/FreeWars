@@ -21,6 +21,9 @@ local ComponentManager       = requireFW("src.global.components.ComponentManager
 
 local MOVE_TYPES = requireFW("res.data.GameConstant").moveTypes
 
+local math           = math
+local assert, ipairs = assert, ipairs
+
 MoveDoer.EXPORTED_METHODS = {
     "getMoveRange",
     "getMoveType",
@@ -64,8 +67,8 @@ end
 --------------------------------------------------------------------------------
 -- The public callback function on start running.
 --------------------------------------------------------------------------------
-function MoveDoer:onStartRunning(modelSceneWar)
-    self.m_ModelSceneWar = modelSceneWar
+function MoveDoer:onStartRunning(modelWar)
+    self.m_ModelWar = modelWar
 
     return self
 end
@@ -74,10 +77,9 @@ end
 -- The exported functions.
 --------------------------------------------------------------------------------
 function MoveDoer:getMoveRange()
-    -- TODO: Take modelPlayer and modelWeather into account.
     local owner       = self.m_Owner
-    local modelPlayer = SingletonGetters.getModelPlayerManager(self.m_ModelSceneWar):getModelPlayer(owner:getPlayerIndex())
-    return math.max(1, self.m_Template.range + SkillModifierFunctions.getMoveRangeModifier(modelPlayer:getModelSkillConfiguration(), owner))
+    local modelPlayer = SingletonGetters.getModelPlayerManager(self.m_ModelWar):getModelPlayer(owner:getPlayerIndex())
+    return math.max(1, self.m_Template.range + self.m_ModelWar:getMoveRangeModifier() + SkillModifierFunctions.getMoveRangeModifier(modelPlayer:getModelSkillConfiguration(), owner))
 end
 
 function MoveDoer:getMoveType()

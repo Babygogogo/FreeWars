@@ -152,6 +152,7 @@ function ModelWarOnline:ctor(sceneData)
     self.m_IsWarEnded                = sceneData.isWarEnded
     self.m_MaxBaseSkillPoints        = sceneData.maxBaseSkillPoints
     self.m_MaxDiffScore              = sceneData.maxDiffScore
+    self.m_MoveRangeModifier         = sceneData.moveRangeModifier
     self.m_RemainingVotesForDraw     = sceneData.remainingVotesForDraw
     self.m_StartingEnergy            = sceneData.startingEnergy
     self.m_StartingFund              = sceneData.startingFund
@@ -207,6 +208,7 @@ function ModelWarOnline:toSerializableTable()
         isWarEnded                = self.m_IsWarEnded,
         maxBaseSkillPoints        = self.m_MaxBaseSkillPoints,
         maxDiffScore              = self.m_MaxDiffScore,
+        moveRangeModifier         = self.m_MoveRangeModifier,
         remainingVotesForDraw     = self.m_RemainingVotesForDraw,
         startingEnergy            = self.m_StartingEnergy,
         startingFund              = self.m_StartingFund,
@@ -238,6 +240,7 @@ function ModelWarOnline:toSerializableTableForPlayerIndex(playerIndex)
         isWarEnded                = self.m_IsWarEnded,
         maxBaseSkillPoints        = self.m_MaxBaseSkillPoints,
         maxDiffScore              = self.m_MaxDiffScore,
+        moveRangeModifier         = self.m_MoveRangeModifier,
         remainingVotesForDraw     = self.m_RemainingVotesForDraw,
         startingEnergy            = self.m_StartingEnergy,
         startingFund              = self.m_StartingFund,
@@ -269,6 +272,7 @@ function ModelWarOnline:toSerializableReplayData()
         isWarEnded                = false,
         maxBaseSkillPoints        = self.m_MaxBaseSkillPoints,
         maxDiffScore              = self.m_MaxDiffScore,
+        moveRangeModifier         = self.m_MoveRangeModifier,
         remainingVotesForDraw     = nil,
         startingEnergy            = self.m_StartingEnergy,
         startingFund              = self.m_StartingFund,
@@ -417,6 +421,10 @@ end
 
 function ModelWarOnline:isFogOfWarByDefault()
     return self.m_IsFogOfWarByDefault
+end
+
+function ModelWarOnline:getMoveRangeModifier()
+    return self.m_MoveRangeModifier
 end
 
 function ModelWarOnline:isRankMatch()

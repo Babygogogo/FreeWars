@@ -112,6 +112,14 @@ local function generateTextForEnableSkillDeclaration(isSkillDeclarationEnabled)
     end
 end
 
+local function generateTextForMoveRangeModifier(moveRangeModifier)
+    if (moveRangeModifier == 0) then
+        return nil
+    else
+        return string.format("%s:     %d", getLocalizedText(14, "MoveRangeModifier"), moveRangeModifier)
+    end
+end
+
 local function generateTextForAdvancedSettings(self)
     local textList = {getLocalizedText(14, "Advanced Settings") .. ":"}
     textList[#textList + 1] = generateTextForStartingFund(          self.m_StartingFund)
@@ -121,6 +129,7 @@ local function generateTextForAdvancedSettings(self)
     textList[#textList + 1] = generateTextForEnablePassiveSkill(    self.m_IsPassiveSkillEnabled)
     textList[#textList + 1] = generateTextForEnableActiveSkill(     self.m_IsActiveSkillEnabled)
     textList[#textList + 1] = generateTextForEnableSkillDeclaration(self.m_IsSkillDeclarationEnabled)
+    textList[#textList + 1] = generateTextForMoveRangeModifier(     self.m_MoveRangeModifier)
 
     if (#textList == 1) then
         textList[#textList + 1] = getLocalizedText(14, "None")
@@ -235,6 +244,7 @@ local function sendActionNewWar(self)
         isFogOfWarByDefault       = self.m_IsFogOfWarByDefault,
         isRankMatch               = self.m_IsRankMatch,
         maxDiffScore              = self.m_MaxDiffScore,
+        moveRangeModifier         = self.m_MoveRangeModifier,
         playerIndex               = self.m_PlayerIndex,
         startingEnergy            = self.m_StartingEnergy,
         startingFund              = self.m_StartingFund,
@@ -321,6 +331,13 @@ local function setStateMaxDiffScore(self)
     self.m_View:setMenuTitleText(getLocalizedText(34, "MaxDiffScore"))
         :setItems(self.m_ItemsForStateMaxDiffScore)
         :setOverviewText(getLocalizedText(35, "HelpForMaxDiffScore"))
+end
+
+local function setStateMoveRangeModifier(self)
+    self.m_State = "stateMoveRangeModifier"
+    self.m_View:setMenuTitleText(getLocalizedText(14, "MoveRangeModifier"))
+        :setItems(self.m_ItemsForStateMoveRangeModifier)
+        :setOverviewText(getLocalizedText(35, "HelpForMoveRangeModifier"))
 end
 
 local function setStatePlayerIndex(self)
@@ -435,6 +452,15 @@ local function initItemMaxDiffScore(self)
     }
 end
 
+local function initItemMoveRangeModifier(self)
+    self.m_ItemMoveRangeModifier = {
+        name     = getLocalizedText(14, "MoveRangeModifier"),
+        callback = function()
+            setStateMoveRangeModifier(self)
+        end,
+    }
+end
+
 local function initItemPlayerIndex(self)
     self.m_ItemPlayerIndex = {
         name     = getLocalizedText(34, "PlayerIndex"),
@@ -488,6 +514,7 @@ local function initItemsForStateAdvancedSettings(self)
         self.m_ItemEnablePassiveSkill,
         self.m_ItemEnableActiveSkill,
         self.m_ItemEnableSkillDeclaration,
+        self.m_ItemMoveRangeModifier,
     }
 end
 
@@ -639,6 +666,21 @@ local function initItemsForStateMaxDiffScore(self)
     self.m_ItemsForStateMaxDiffScore = items
 end
 
+local function initItemsForStateMoveRangeModifier(self)
+    local items = {}
+    for modifier = 1, -1, -1 do
+        items[#items + 1] = {
+            name     = "" .. modifier,
+            callback = function()
+                self.m_MoveRangeModifier = modifier
+                setStateMain(self)
+            end,
+        }
+    end
+
+    self.m_ItemsForStateMoveRangeModifier = items
+end
+
 local function initItemsForStateRankMatch(self)
     self.m_ItemsForStateRankMatch = {
         {
@@ -703,6 +745,7 @@ function ModelWarConfigurator:ctor()
     initItemIncomeModifier(        self)
     initItemIntervalUntilBoot(     self)
     initItemMaxDiffScore(          self)
+    initItemMoveRangeModifier(     self)
     initItemPlayerIndex(           self)
     initItemPlaceHolder(           self)
     initItemRankMatch(             self)
@@ -718,6 +761,7 @@ function ModelWarConfigurator:ctor()
     initItemsForStateIncomeModifier(        self)
     initItemsForStateIntervalUntilBoot(     self)
     initItemsForStateMaxDiffScore(          self)
+    initItemsForStateMoveRangeModifier(     self)
     initItemsForStateRankMatch(             self)
     initItemsForStateStartingEnergy(        self)
     initItemsForStateStartingFund(          self)
@@ -830,6 +874,7 @@ function ModelWarConfigurator:resetWithWarConfiguration(warConfiguration)
         self.m_IsSkillDeclarationEnabled = true
         self.m_ItemsForStatePlayerIndex  = createItemsForStatePlayerIndex(self)
         self.m_MaxDiffScore              = 100
+        self.m_MoveRangeModifier         = 0
         self.m_PlayerIndex               = 1
         self.m_StartingEnergy            = 0
         self.m_StartingFund              = 0
@@ -847,6 +892,7 @@ function ModelWarConfigurator:resetWithWarConfiguration(warConfiguration)
         self.m_IsSkillDeclarationEnabled = warConfiguration.isSkillDeclarationEnabled
         self.m_ItemsForStatePlayerIndex  = createItemsForStatePlayerIndex(self)
         self.m_MaxDiffScore              = warConfiguration.maxDiffScore
+        self.m_MoveRangeModifier         = warConfiguration.moveRangeModifier
         self.m_PlayerIndex               = self.m_ItemsForStatePlayerIndex[1].playerIndex
         self.m_StartingEnergy            = warConfiguration.startingEnergy
         self.m_StartingFund              = warConfiguration.startingFund
@@ -864,6 +910,7 @@ function ModelWarConfigurator:resetWithWarConfiguration(warConfiguration)
         self.m_IsSkillDeclarationEnabled = warConfiguration.isSkillDeclarationEnabled
         self.m_ItemsForStatePlayerIndex  = nil
         self.m_MaxDiffScore              = warConfiguration.maxDiffScore
+        self.m_MoveRangeModifier         = warConfiguration.moveRangeModifier
         self.m_PlayerIndex               = getPlayerIndexForWarConfiguration(warConfiguration)
         self.m_StartingEnergy            = warConfiguration.startingEnergy
         self.m_StartingFund              = warConfiguration.startingFund
@@ -881,6 +928,7 @@ function ModelWarConfigurator:resetWithWarConfiguration(warConfiguration)
         self.m_IsSkillDeclarationEnabled = warConfiguration.isSkillDeclarationEnabled
         self.m_ItemsForStatePlayerIndex  = nil
         self.m_MaxDiffScore              = warConfiguration.maxDiffScore
+        self.m_MoveRangeModifier         = warConfiguration.moveRangeModifier
         self.m_PlayerIndex               = getPlayerIndexForWarConfiguration(warConfiguration)
         self.m_StartingEnergy            = warConfiguration.startingEnergy
         self.m_StartingFund              = warConfiguration.startingFund

@@ -351,6 +351,19 @@ local s_LongText19_2 = [[
 Untranslated...
 ]]
 
+local s_LongText20_1 = [[
+本选项规定本战局所有玩家所有部队的移动力加成。
+
+如果选正数，则部队的移动力相应增加，反之亦然。
+部队的最终移动力最低为1。
+
+默认为“0”。
+]]
+
+local s_LongText20_2 = [[
+Untranslated...
+]]
+
 --------------------------------------------------------------------------------
 -- The private functions.
 --------------------------------------------------------------------------------
@@ -865,6 +878,7 @@ local s_Texts = {
             elseif (textType == "JoinWar")                      then return "参 战"
             elseif (textType == "MaxBaseSkillPoints")           then return "全员技能基准点上限"
             elseif (textType == "MaxDiffScore")                 then return "最大分差"
+            elseif (textType == "MoveRangeModifier")            then return "移动力加成"
             elseif (textType == "No")                           then return "否"
             elseif (textType == "NoAvailableOption")            then return "无可用选项"
             elseif (textType == "NoLimit")                      then return "不限"
@@ -914,6 +928,7 @@ local s_Texts = {
             elseif (textType == "JoinWar")                      then return "Join War"
             elseif (textType == "MaxBaseSkillPoints")           then return "Max Skill Points"
             elseif (textType == "MaxDiffScore")                 then return "Max Diff Score"
+            elseif (textType == "MoveRangeModifier")            then return "MobilityModifier"
             elseif (textType == "No")                           then return "No"
             elseif (textType == "NoAvailableOption")            then return "No Options"
             elseif (textType == "NoLimit")                      then return "No Limit"
@@ -1163,6 +1178,7 @@ local s_Texts = {
             elseif (textType == "HelpForIncomeModifier")         then return s_LongText12_1
             elseif (textType == "HelpForIntervalUntilBoot")      then return s_LongText13_1
             elseif (textType == "HelpForMaxDiffScore")           then return s_LongText14_1
+            elseif (textType == "HelpForMoveRangeModifier")      then return s_LongText20_1
             elseif (textType == "HelpForPlayerIndex")            then return s_LongText15_1
             elseif (textType == "HelpForRankMatch")              then return s_LongText16_1
             elseif (textType == "HelpForStartingEnergy")         then return s_LongText17_1
@@ -1173,12 +1189,13 @@ local s_Texts = {
         [2] = function(textType)
             if     (textType == "HelpForEnableActiveSkill")      then return s_LongText8_2
             elseif (textType == "HelpForEnablePassiveSkill")     then return s_LongText9_2
-            elseif (textType == "HelpForEnableSkillDeclaration") then return s_LongText19_1
+            elseif (textType == "HelpForEnableSkillDeclaration") then return s_LongText19_2
             elseif (textType == "HelpForEnergyGainModifier")     then return s_LongText10_2
             elseif (textType == "HelpForFogOfWar")               then return s_LongText11_2
             elseif (textType == "HelpForIncomeModifier")         then return s_LongText12_2
             elseif (textType == "HelpForIntervalUntilBoot")      then return s_LongText13_2
             elseif (textType == "HelpForMaxDiffScore")           then return s_LongText14_2
+            elseif (textType == "HelpForMoveRangeModifier")      then return s_LongText20_2
             elseif (textType == "HelpForPlayerIndex")            then return s_LongText15_2
             elseif (textType == "HelpForRankMatch")              then return s_LongText16_2
             elseif (textType == "HelpForStartingEnergy")         then return s_LongText17_2

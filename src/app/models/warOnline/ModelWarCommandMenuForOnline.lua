@@ -130,13 +130,20 @@ end
 
 local function getMapInfo(self)
     local modelWar = self.m_ModelWar
-    return string.format("%s\n%s: %s      %s: %d      %s: %d\n%s: %d%%",
-        generateMapTitle(SingletonGetters.getModelWarField(modelWar):getWarFieldFileName()),
-        getLocalizedText(65, "WarID"),              AuxiliaryFunctions.getWarNameWithWarId(SingletonGetters.getWarId(modelWar)),
-        getLocalizedText(65, "TurnIndex"),          getModelTurnManager(modelWar):getTurnIndex(),
-        getLocalizedText(65, "ActionID"),           getActionId(modelWar),
-        getLocalizedText(14, "IncomeModifier"),     modelWar:getIncomeModifier()
-    )
+    local textList = {
+        string.format("%s\n%s: %s      %s: %d      %s: %d",
+            generateMapTitle(SingletonGetters.getModelWarField(modelWar):getWarFieldFileName()),
+            getLocalizedText(65, "WarID"),             AuxiliaryFunctions.getWarNameWithWarId(SingletonGetters.getWarId(modelWar)),
+            getLocalizedText(65, "TurnIndex"),         getModelTurnManager(modelWar):getTurnIndex(),
+            getLocalizedText(65, "ActionID"),          getActionId(modelWar)
+        ),
+        string.format("%s: %d%%    %s: %d",
+            getLocalizedText(14, "IncomeModifier"),    modelWar:getIncomeModifier(),
+            getLocalizedText(14, "MoveRangeModifier"), modelWar:getMoveRangeModifier()
+        ),
+    }
+
+    return table.concat(textList, "\n--------------------\n")
 end
 
 local function getInTurnDescription(modelWar)
