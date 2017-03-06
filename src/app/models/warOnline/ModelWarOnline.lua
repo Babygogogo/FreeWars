@@ -138,6 +138,7 @@ end
 function ModelWarOnline:ctor(sceneData)
     self.m_CachedActions             = {}
     self.m_ActionID                  = sceneData.actionID
+    self.m_AttackModifier            = sceneData.attackModifier
     self.m_EnergyGainModifier        = sceneData.energyGainModifier
     self.m_EnterTurnTime             = sceneData.enterTurnTime
     self.m_ExecutedActions           = sceneData.executedActions
@@ -194,6 +195,7 @@ end
 function ModelWarOnline:toSerializableTable()
     return {
         actionID                  = self:getActionId(),
+        attackModifier            = self.m_AttackModifier,
         energyGainModifier        = self.m_EnergyGainModifier,
         enterTurnTime             = self.m_EnterTurnTime,
         executedActions           = self.m_ExecutedActions,
@@ -226,6 +228,7 @@ end
 function ModelWarOnline:toSerializableTableForPlayerIndex(playerIndex)
     return {
         actionID                  = self:getActionId(),
+        attackModifier            = self.m_AttackModifier,
         energyGainModifier        = self.m_EnergyGainModifier,
         enterTurnTime             = self.m_EnterTurnTime,
         executedActions           = nil,
@@ -258,6 +261,7 @@ end
 function ModelWarOnline:toSerializableReplayData()
     return {
         actionID                  = 0,
+        attackModifier            = self.m_AttackModifier,
         energyGainModifier        = self.m_EnergyGainModifier,
         enterTurnTime             = nil,
         executedActions           = self.m_ExecutedActions,
@@ -393,6 +397,10 @@ end
 
 function ModelWarOnline:getWarId()
     return self.m_WarID
+end
+
+function ModelWarOnline:getAttackModifier()
+    return self.m_AttackModifier
 end
 
 function ModelWarOnline:getEnergyGainModifier()

@@ -151,6 +151,7 @@ end
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
 function ModelWarReplay:ctor(sceneData)
+    self.m_AttackModifier            = sceneData.attackModifier             or 0
     self.m_EnergyGainModifier        = sceneData.energyGainModifier
     self.m_EnterTurnTime             = sceneData.enterTurnTime
     self.m_ExecutedActions           = sceneData.executedActions
@@ -238,6 +239,7 @@ end
 function ModelWarReplay:toSerializableTable()
     return {
         actionID                  = self:getActionId(),
+        attackModifier            = self.m_AttackModifier,
         energyGainModifier        = self.m_EnergyGainModifier,
         enterTurnTime             = self.m_EnterTurnTime,
         executedActions           = self.m_ExecutedActions,
@@ -391,6 +393,10 @@ end
 
 function ModelWarReplay:getWarId()
     return self.m_WarID
+end
+
+function ModelWarReplay:getAttackModifier()
+    return self.m_AttackModifier
 end
 
 function ModelWarReplay:getEnergyGainModifier()

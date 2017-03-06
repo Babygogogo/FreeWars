@@ -364,6 +364,19 @@ local s_LongText20_2 = [[
 Untranslated...
 ]]
 
+local s_LongText21_1 = [[
+本选项规定本战局所有玩家所有部队的攻击力加成。
+
+如果选正数，则部队的攻击力相应增加，反之亦然。
+本加成与其他加成（如技能、部队等级、指挥塔等）是线性叠加的。也就是说，如果其他加成合计为+20%，而本加成为-30%攻，则合计为-10%攻。
+
+默认为“0%”。
+]]
+
+local s_LongText21_2 = [[
+Untranslated...
+]]
+
 --------------------------------------------------------------------------------
 -- The private functions.
 --------------------------------------------------------------------------------
@@ -855,6 +868,7 @@ local s_Texts = {
     [14] = {
         [1] = function(textType)
             if     (textType == "Advanced Settings")            then return "高 级 设 置"
+            elseif (textType == "AttackModifier")               then return "攻击力加成"
             elseif (textType == "ConfirmContinueWar")           then return "进 入 战 局"
             elseif (textType == "ConfirmCreateWar")             then return "确 认 新 建 战 局"
             elseif (textType == "ConfirmExitWar")               then return "确 认 退 出 战 局"
@@ -905,6 +919,7 @@ local s_Texts = {
         end,
         [2] = function(textType)
             if     (textType == "Advanced Settings")            then return "Advanced"
+            elseif (textType == "AttackModifier")               then return "AttackModifier"
             elseif (textType == "ConfirmContinueWar")           then return "Confirm"
             elseif (textType == "ConfirmCreateWar")             then return "Confirm"
             elseif (textType == "ConfirmExitWar")               then return "Confirm"
@@ -1170,7 +1185,8 @@ local s_Texts = {
     },
     [35] = {
         [1] = function(textType)
-            if     (textType == "HelpForEnableActiveSkill")      then return s_LongText8_1
+            if     (textType == "HelpForAttackModifier")         then return s_LongText21_1
+            elseif (textType == "HelpForEnableActiveSkill")      then return s_LongText8_1
             elseif (textType == "HelpForEnablePassiveSkill")     then return s_LongText9_1
             elseif (textType == "HelpForEnableSkillDeclaration") then return s_LongText19_1
             elseif (textType == "HelpForEnergyGainModifier")     then return s_LongText10_1
@@ -1187,7 +1203,8 @@ local s_Texts = {
             end
         end,
         [2] = function(textType)
-            if     (textType == "HelpForEnableActiveSkill")      then return s_LongText8_2
+            if     (textType == "HelpForAttackModifier")         then return s_LongText21_2
+            elseif (textType == "HelpForEnableActiveSkill")      then return s_LongText8_2
             elseif (textType == "HelpForEnablePassiveSkill")     then return s_LongText9_2
             elseif (textType == "HelpForEnableSkillDeclaration") then return s_LongText19_2
             elseif (textType == "HelpForEnergyGainModifier")     then return s_LongText10_2

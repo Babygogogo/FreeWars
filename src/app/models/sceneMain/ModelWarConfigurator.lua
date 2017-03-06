@@ -120,6 +120,14 @@ local function generateTextForMoveRangeModifier(moveRangeModifier)
     end
 end
 
+local function generateTextForAttackModifier(attackModifier)
+    if (attackModifier == 0) then
+        return nil
+    else
+        return string.format("%s:     %d%%", getLocalizedText(14, "AttackModifier"), attackModifier)
+    end
+end
+
 local function generateTextForAdvancedSettings(self)
     local textList = {getLocalizedText(14, "Advanced Settings") .. ":"}
     textList[#textList + 1] = generateTextForStartingFund(          self.m_StartingFund)
@@ -130,6 +138,7 @@ local function generateTextForAdvancedSettings(self)
     textList[#textList + 1] = generateTextForEnableActiveSkill(     self.m_IsActiveSkillEnabled)
     textList[#textList + 1] = generateTextForEnableSkillDeclaration(self.m_IsSkillDeclarationEnabled)
     textList[#textList + 1] = generateTextForMoveRangeModifier(     self.m_MoveRangeModifier)
+    textList[#textList + 1] = generateTextForAttackModifier(        self.m_AttackModifier)
 
     if (#textList == 1) then
         textList[#textList + 1] = getLocalizedText(14, "None")
@@ -235,6 +244,7 @@ local function sendActionNewWar(self)
     WebSocketManager.sendAction({
         actionCode                = ACTION_CODE_NEW_WAR,
         defaultWeatherCode        = 1, --TODO: add an option for the weather.
+        attackModifier            = self.m_AttackModifier,
         energyGainModifier        = self.m_EnergyGainModifier,
         incomeModifier            = self.m_IncomeModifier,
         intervalUntilBoot         = self.m_IntervalUntilBoot,
@@ -268,6 +278,13 @@ local function setStateAdvancedSettings(self)
     self.m_View:setMenuTitleText(getLocalizedText(14, "Advanced Settings"))
         :setItems(self.m_ItemsForStateAdvancedSettings)
         :setOverviewText(generateOverviewText(self))
+end
+
+local function setStateAttackModifier(self)
+    self.m_State = "stateAttackModifier"
+    self.m_View:setMenuTitleText(getLocalizedText(14, "AttackModifier"))
+        :setItems(self.m_ItemsForStateAttackModifier)
+        :setOverviewText(getLocalizedText(35, "HelpForAttackModifier"))
 end
 
 local function setStateEnableActiveSkill(self)
@@ -376,6 +393,15 @@ local function initItemAdvancedSettings(self)
         name     = getLocalizedText(14, "Advanced Settings"),
         callback = function()
             setStateAdvancedSettings(self)
+        end,
+    }
+end
+
+local function initItemAttackModifier(self)
+    self.m_ItemAttackModifier = {
+        name     = getLocalizedText(14, "AttackModifier"),
+        callback = function()
+            setStateAttackModifier(self)
         end,
     }
 end
@@ -515,7 +541,23 @@ local function initItemsForStateAdvancedSettings(self)
         self.m_ItemEnableActiveSkill,
         self.m_ItemEnableSkillDeclaration,
         self.m_ItemMoveRangeModifier,
+        self.m_ItemAttackModifier,
     }
+end
+
+local function initItemsForStateAttackModifier(self)
+    local items = {}
+    for modifier = 30, -30, -30 do
+        items[#items + 1] = {
+            name     = "" .. modifier .. "%",
+            callback = function()
+                self.m_AttackModifier = modifier
+                setStateMain(self)
+            end,
+        }
+    end
+
+    self.m_ItemsForStateAttackModifier = items
 end
 
 local function initItemsForStateEnableActiveSkill(self)
@@ -737,6 +779,7 @@ end
 --------------------------------------------------------------------------------
 function ModelWarConfigurator:ctor()
     initItemAdvancedSettings(      self)
+    initItemAttackModifier(        self)
     initItemEnableActiveSkill(     self)
     initItemEnablePassiveSkill(    self)
     initItemEnableSkillDeclaration(self)
@@ -753,6 +796,7 @@ function ModelWarConfigurator:ctor()
     initItemStartingFund(          self)
 
     initItemsForStateAdvancedSettings(      self)
+    initItemsForStateAttackModifier(        self)
     initItemsForStateEnableActiveSkill(     self)
     initItemsForStateEnablePassiveSkill(    self)
     initItemsForStateEnableSkillDeclaration(self)
@@ -864,6 +908,7 @@ function ModelWarConfigurator:resetWithWarConfiguration(warConfiguration)
     self.m_WarConfiguration = warConfiguration
     local mode = self.m_Mode
     if (mode == "modeCreate") then
+        self.m_AttackModifier            = 0
         self.m_EnergyGainModifier        = 100
         self.m_IncomeModifier            = 100
         self.m_IntervalUntilBoot         = 3600 * 24 * 3
@@ -882,6 +927,7 @@ function ModelWarConfigurator:resetWithWarConfiguration(warConfiguration)
         self.m_View:setButtonConfirmText(getLocalizedText(14, "ConfirmCreateWar"))
 
     elseif (mode == "modeJoin") then
+        self.m_AttackModifier            = warConfiguration.attackModifier
         self.m_EnergyGainModifier        = warConfiguration.energyGainModifier
         self.m_IncomeModifier            = warConfiguration.incomeModifier
         self.m_IntervalUntilBoot         = warConfiguration.intervalUntilBoot
@@ -900,6 +946,7 @@ function ModelWarConfigurator:resetWithWarConfiguration(warConfiguration)
         self.m_View:setButtonConfirmText(getLocalizedText(14, "ConfirmJoinWar"))
 
     elseif (mode == "modeContinue") then
+        self.m_AttackModifier            = warConfiguration.attackModifier
         self.m_EnergyGainModifier        = warConfiguration.energyGainModifier
         self.m_IncomeModifier            = warConfiguration.incomeModifier
         self.m_IntervalUntilBoot         = warConfiguration.intervalUntilBoot
@@ -918,6 +965,7 @@ function ModelWarConfigurator:resetWithWarConfiguration(warConfiguration)
         self.m_View:setButtonConfirmText(getLocalizedText(14, "ConfirmContinueWar"))
 
     elseif (mode == "modeExit") then
+        self.m_AttackModifier            = warConfiguration.attackModifier
         self.m_EnergyGainModifier        = warConfiguration.energyGainModifier
         self.m_IncomeModifier            = warConfiguration.incomeModifier
         self.m_IntervalUntilBoot         = warConfiguration.intervalUntilBoot
@@ -985,6 +1033,7 @@ end
 function ModelWarConfigurator:onButtonBackTouched()
     local state = self.m_State
     if     (state == "stateAdvancedSettings")       then setStateMain(self)
+    elseif (state == "stateAttackModifier")         then setStateAdvancedSettings(self)
     elseif (state == "stateEnableActiveSkill")      then setStateAdvancedSettings(self)
     elseif (state == "stateEnablePassiveSkill")     then setStateAdvancedSettings(self)
     elseif (state == "stateEnableSkillDeclaration") then setStateAdvancedSettings(self)
@@ -993,6 +1042,7 @@ function ModelWarConfigurator:onButtonBackTouched()
     elseif (state == "stateIncomeModifier")         then setStateAdvancedSettings(self)
     elseif (state == "stateIntervalUntilBoot")      then setStateMain(self)
     elseif (state == "stateMaxDiffScore")           then setStateMain(self)
+    elseif (state == "stateMoveRangeModifier")      then setStateAdvancedSettings(self)
     elseif (state == "statePlayerIndex")            then setStateMain(self)
     elseif (state == "stateRankMatch")              then setStateMain(self)
     elseif (state == "stateStartingEnergy")         then setStateAdvancedSettings(self)

@@ -6,6 +6,8 @@ local GridIndexFunctions     = requireFW("src.app.utilities.GridIndexFunctions")
 local SkillModifierFunctions = requireFW("src.app.utilities.SkillModifierFunctions")
 local ComponentManager       = requireFW("src.global.components.ComponentManager")
 
+local math = math
+
 local COMMAND_TOWER_ATTACK_BONUS  = GameConstantFunctions.getCommandTowerAttackBonus()
 local COMMAND_TOWER_DEFENSE_BONUS = GameConstantFunctions.getCommandTowerDefenseBonus()
 
@@ -25,23 +27,14 @@ local function getEndingGridIndex(movePath)
     return movePath[#movePath]
 end
 
-local function getLuckValue(playerIndex, modelSceneWar)
+local function getLuckValue(playerIndex, modelWar)
     return math.random(0, 10)
-    --[[
-    local modelSkillConfiguration = modelSceneWar:getModelPlayerManager():getModelPlayer(playerIndex):getModelSkillConfiguration()
-    local upperModifier           = SkillModifierFunctions.getLuckDamageUpperModifier(modelSkillConfiguration)
-    local lowerModifier           = SkillModifierFunctions.getLuckDamageLowerModifier(modelSkillConfiguration)
-    local upperBound              = upperModifier + 10
-    local lowerBound              = math.min(lowerModifier, upperBound)
-
-    return math.random(lowerBound, upperBound)
-    --]]
 end
 
-local function getAttackBonusMultiplier(attacker, attackerGridIndex, target, targetGridIndex, modelSceneWar)
-    local modelTileMap = modelSceneWar:getModelWarField():getModelTileMap()
+local function getAttackBonusMultiplier(attacker, attackerGridIndex, target, targetGridIndex, modelWar)
+    local modelTileMap = modelWar:getModelWarField():getModelTileMap()
     local playerIndex  = attacker:getPlayerIndex()
-    local bonus        = 0
+    local bonus        = modelWar:getAttackModifier()
 
     bonus = bonus + ((attacker.getPromotionAttackBonus) and (attacker:getPromotionAttackBonus()) or 0)
     modelTileMap:forEachModelTile(function(modelTile)
@@ -51,20 +44,20 @@ local function getAttackBonusMultiplier(attacker, attackerGridIndex, target, tar
         end
     end)
 
-    bonus = bonus + SkillModifierFunctions.getAttackModifier(attacker, attackerGridIndex, target, targetGridIndex, modelSceneWar)
+    bonus = bonus + SkillModifierFunctions.getAttackModifier(attacker, attackerGridIndex, target, targetGridIndex, modelWar)
 
     return math.max(1 + bonus / 100, 0)
 end
 
-local function getDefenseBonusMultiplier(attacker, attackerGridIndex, target, targetGridIndex, modelSceneWar)
+local function getDefenseBonusMultiplier(attacker, attackerGridIndex, target, targetGridIndex, modelWar)
     if (not target.getUnitType) then
         return 1
     end
 
-    local targetTile = modelSceneWar:getModelWarField():getModelTileMap():getModelTile(targetGridIndex)
+    local targetTile = modelWar:getModelWarField():getModelTileMap():getModelTile(targetGridIndex)
     local bonus      = 0
 
-    modelSceneWar:getModelWarField():getModelTileMap():forEachModelTile(function(modelTile)
+    modelWar:getModelWarField():getModelTileMap():forEachModelTile(function(modelTile)
         if ((modelTile:getPlayerIndex() == target:getPlayerIndex()) and
             (modelTile:getTileType() == "CommandTower"))            then
             bonus = bonus + COMMAND_TOWER_DEFENSE_BONUS
@@ -77,7 +70,7 @@ local function getDefenseBonusMultiplier(attacker, attackerGridIndex, target, ta
         (target:getPromotionDefenseBonus())            or
         (0))
 
-    bonus = bonus + SkillModifierFunctions.getDefenseModifier(attacker, attackerGridIndex, target, targetGridIndex, modelSceneWar)
+    bonus = bonus + SkillModifierFunctions.getDefenseModifier(attacker, attackerGridIndex, target, targetGridIndex, modelWar)
 
     if (bonus >= 0) then
         return 1 / (1 + bonus / 100)
@@ -110,7 +103,7 @@ local function canAttack(attacker, attackerMovePath, target, targetMovePath)
     return attackDoer:getBaseDamage(attackTaker:getDefenseType())
 end
 
-local function getAttackDamage(attacker, attackerGridIndex, attackerHP, target, targetGridIndex, modelSceneWar, isWithLuck)
+local function getAttackDamage(attacker, attackerGridIndex, attackerHP, target, targetGridIndex, modelWar, isWithLuck)
     local baseAttackDamage = ComponentManager.getComponent(attacker, "AttackDoer"):getBaseDamage(target:getDefenseType())
     if (not baseAttackDamage) then
         return nil
@@ -118,19 +111,19 @@ local function getAttackDamage(attacker, attackerGridIndex, attackerHP, target, 
         return 0
     else
         local luckValue = ((isWithLuck) and (target:isAffectedByLuck())) and
-            (getLuckValue(attacker:getPlayerIndex(), modelSceneWar))     or
+            (getLuckValue(attacker:getPlayerIndex(), modelWar))     or
             (0)
 
         return math.floor(
-            (baseAttackDamage * getAttackBonusMultiplier(attacker, attackerGridIndex, target, targetGridIndex, modelSceneWar) + luckValue)
+            (baseAttackDamage * getAttackBonusMultiplier(attacker, attackerGridIndex, target, targetGridIndex, modelWar) + luckValue)
             * (getNormalizedHP(attackerHP) / 10)
-            * getDefenseBonusMultiplier(attacker, attackerGridIndex, target, targetGridIndex, modelSceneWar)
+            * getDefenseBonusMultiplier(attacker, attackerGridIndex, target, targetGridIndex, modelWar)
         )
     end
 end
 
-local function getBattleDamage(attackerMovePath, launchUnitID, targetGridIndex, modelSceneWar, isWithLuck)
-    local modelWarField = modelSceneWar:getModelWarField()
+local function getBattleDamage(attackerMovePath, launchUnitID, targetGridIndex, modelWar, isWithLuck)
+    local modelWarField = modelWar:getModelWarField()
     local modelUnitMap  = modelWarField:getModelUnitMap()
     local attacker      = modelUnitMap:getFocusModelUnit(attackerMovePath[1], launchUnitID)
     local target        = (modelUnitMap:getModelUnit(targetGridIndex)) or (modelWarField:getModelTileMap():getModelTile(targetGridIndex))
@@ -140,26 +133,26 @@ local function getBattleDamage(attackerMovePath, launchUnitID, targetGridIndex, 
     end
 
     local attackerGridIndex = getEndingGridIndex(attackerMovePath)
-    local attackDamage      = getAttackDamage(attacker, attackerGridIndex, attacker:getCurrentHP(), target, targetGridIndex, modelSceneWar, isWithLuck)
+    local attackDamage      = getAttackDamage(attacker, attackerGridIndex, attacker:getCurrentHP(), target, targetGridIndex, modelWar, isWithLuck)
     assert(attackDamage >= 0)
 
     if ((GridIndexFunctions.getDistance(attackerGridIndex, targetGridIndex) > 1) or
         (not canAttack(target, nil, attacker, attackerMovePath)))                then
         return attackDamage, nil
     else
-        return attackDamage, getAttackDamage(target, targetGridIndex, target:getCurrentHP() - attackDamage, attacker, attackerGridIndex, modelSceneWar, isWithLuck)
+        return attackDamage, getAttackDamage(target, targetGridIndex, target:getCurrentHP() - attackDamage, attacker, attackerGridIndex, modelWar, isWithLuck)
     end
 end
 
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
-function DamageCalculator.getEstimatedBattleDamage(attackerMovePath, launchUnitID, targetGridIndex, modelSceneWar)
-    return getBattleDamage(attackerMovePath, launchUnitID, targetGridIndex, modelSceneWar, false)
+function DamageCalculator.getEstimatedBattleDamage(attackerMovePath, launchUnitID, targetGridIndex, modelWar)
+    return getBattleDamage(attackerMovePath, launchUnitID, targetGridIndex, modelWar, false)
 end
 
-function DamageCalculator.getUltimateBattleDamage(attackerMovePath, launchUnitID, targetGridIndex, modelSceneWar)
-    return getBattleDamage(attackerMovePath, launchUnitID, targetGridIndex, modelSceneWar, true)
+function DamageCalculator.getUltimateBattleDamage(attackerMovePath, launchUnitID, targetGridIndex, modelWar)
+    return getBattleDamage(attackerMovePath, launchUnitID, targetGridIndex, modelWar, true)
 end
 
 return DamageCalculator
