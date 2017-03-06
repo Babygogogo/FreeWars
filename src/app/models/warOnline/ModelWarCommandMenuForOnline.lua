@@ -40,10 +40,9 @@ local getModelPlayerManager    = SingletonGetters.getModelPlayerManager
 local getModelTileMap          = SingletonGetters.getModelTileMap
 local getModelTurnManager      = SingletonGetters.getModelTurnManager
 local getModelUnitMap          = SingletonGetters.getModelUnitMap
-local getPlayerIndexLoggedIn   = SingletonGetters.getPlayerIndexLoggedIn
 local getScriptEventDispatcher = SingletonGetters.getScriptEventDispatcher
-local round                    = requireFW("src.global.functions.round")
-local string, ipairs, pairs    = string, ipairs, pairs
+
+local table, string, ipairs, pairs = table, string, ipairs, pairs
 
 local ACTION_CODE_DESTROY_OWNED_UNIT   = ActionCodeFunctions.getActionCode("ActionDestroyOwnedModelUnit")
 local ACTION_CODE_END_TURN             = ActionCodeFunctions.getActionCode("ActionEndTurn")
@@ -54,212 +53,6 @@ local ACTION_CODE_VOTE_FOR_DRAW        = ActionCodeFunctions.getActionCode("Acti
 --------------------------------------------------------------------------------
 -- The util functions.
 --------------------------------------------------------------------------------
-local function generateEmptyDataForEachPlayer(self)
-    local modelWar      = self.m_ModelWar
-    local modelPlayerManager = getModelPlayerManager(modelWar)
-    local dataForEachPlayer  = {}
-    local modelFogMap        = getModelFogMap(modelWar)
-
-    modelPlayerManager:forEachModelPlayer(function(modelPlayer, playerIndex)
-        if (modelPlayer:isAlive()) then
-            dataForEachPlayer[playerIndex] = {
-                nickname            = modelPlayer:getNickname(),
-                fund                = ((modelFogMap:isFogOfWarCurrently()) and ((playerIndex ~= getPlayerIndexLoggedIn(modelWar)))) and ("--") or (modelPlayer:getFund()),
-                energy              = modelPlayer:getEnergy(),
-                idleUnitsCount      = 0,
-                isSkillDeclared     = modelPlayer:isSkillDeclared(),
-                unitsCount          = 0,
-                unitsValue          = 0,
-                tilesCount          = 0,
-                income              = 0,
-
-                Headquarters        = 0,
-                City                = 0,
-                Factory             = 0,
-                idleFactoriesCount  = 0,
-                Airport             = 0,
-                idleAirportsCount   = 0,
-                Seaport             = 0,
-                idleSeaportsCount   = 0,
-                TempAirport         = 0,
-                TempSeaport         = 0,
-                CommandTower        = 0,
-                Radar               = 0,
-            }
-        end
-    end)
-
-    return dataForEachPlayer
-end
-
-local function updateUnitsData(self, dataForEachPlayer)
-    local updateUnitCountAndValue = function(modelUnit)
-        local data          = dataForEachPlayer[modelUnit:getPlayerIndex()]
-        data.unitsCount     = data.unitsCount + 1
-        data.idleUnitsCount = data.idleUnitsCount + (modelUnit:isStateIdle() and 1 or 0)
-        data.unitsValue     = data.unitsValue + round(modelUnit:getNormalizedCurrentHP() * modelUnit:getBaseProductionCost() / 10)
-    end
-
-    getModelUnitMap(self.m_ModelWar):forEachModelUnitOnMap(updateUnitCountAndValue)
-        :forEachModelUnitLoaded(updateUnitCountAndValue)
-end
-
-local function updateTilesData(self, dataForEachPlayer)
-    local modelUnitMap = getModelUnitMap(self.m_ModelWar)
-    getModelTileMap(self.m_ModelWar):forEachModelTile(function(modelTile)
-        local playerIndex = modelTile:getPlayerIndex()
-        if (playerIndex ~= 0) then
-            local data = dataForEachPlayer[playerIndex]
-            data.tilesCount = data.tilesCount + 1
-
-            local tileType = modelTile:getTileType()
-            if (data[tileType]) then
-                data[tileType] = data[tileType] + 1
-                if (not modelUnitMap:getModelUnit(modelTile:getGridIndex())) then
-                    if     (tileType == "Factory") then data.idleFactoriesCount = data.idleFactoriesCount + 1
-                    elseif (tileType == "Airport") then data.idleAirportsCount  = data.idleAirportsCount  + 1
-                    elseif (tileType == "Seaport") then data.idleSeaportsCount  = data.idleSeaportsCount  + 1
-                    end
-                end
-            end
-
-            if (modelTile.getIncomeAmount) then
-                data.income = data.income + (modelTile:getIncomeAmount() or 0)
-            end
-        end
-    end)
-end
-
-local function getTilesInfo(tileTypeCounters, showIdleTilesCount)
-    return string.format("%s: %d        %s: %d        %s: %d%s        %s: %d%s        %s: %d%s\n%s: %d        %s: %d        %s: %d        %s: %d",
-        getLocalizedText(116, "Headquarters"), tileTypeCounters.Headquarters,
-        getLocalizedText(116, "City"),         tileTypeCounters.City,
-        getLocalizedText(116, "Factory"),      tileTypeCounters.Factory,
-        ((showIdleTilesCount) and (string.format(" (%d)", tileTypeCounters.idleFactoriesCount)) or ("")),
-        getLocalizedText(116, "Airport"),      tileTypeCounters.Airport,
-        ((showIdleTilesCount) and (string.format(" (%d)", tileTypeCounters.idleAirportsCount)) or ("")),
-        getLocalizedText(116, "Seaport"),      tileTypeCounters.Seaport,
-        ((showIdleTilesCount) and (string.format(" (%d)", tileTypeCounters.idleSeaportsCount)) or ("")),
-        getLocalizedText(116, "CommandTower"), tileTypeCounters.CommandTower,
-        getLocalizedText(116, "Radar"),        tileTypeCounters.Radar,
-        getLocalizedText(116, "TempAirport"),  tileTypeCounters.TempAirport,
-        getLocalizedText(116, "TempSeaport"),  tileTypeCounters.TempSeaport
-    )
-end
-
-local function getMapInfo(self)
-    local modelWar = self.m_ModelWar
-    local modelWarField = SingletonGetters.getModelWarField(modelWar)
-    local modelTileMap  = getModelTileMap(modelWar)
-    local tileTypeCounters = {
-        Headquarters = 0,
-        City         = 0,
-        Factory      = 0,
-        Airport      = 0,
-        Seaport      = 0,
-        TempAirport  = 0,
-        TempSeaport  = 0,
-        CommandTower = 0,
-        Radar        = 0,
-    }
-    modelTileMap:forEachModelTile(function(modelTile)
-        local tileType = modelTile:getTileType()
-        if (tileTypeCounters[tileType]) then
-            tileTypeCounters[tileType] = tileTypeCounters[tileType] + 1
-        end
-    end)
-
-    local warFieldFileName = modelWarField:getWarFieldFileName()
-    return string.format("%s: %s      %s: %s\n%s: %s      %s: %d      %s: %d\n%s\n%s: %d%%",
-        getLocalizedText(65, "MapName"),            WarFieldManager.getWarFieldName(warFieldFileName),
-        getLocalizedText(65, "Author"),             WarFieldManager.getWarFieldAuthorName(warFieldFileName),
-        getLocalizedText(65, "WarID"),              AuxiliaryFunctions.getWarNameWithWarId(SingletonGetters.getWarId(modelWar)),
-        getLocalizedText(65, "TurnIndex"),          getModelTurnManager(modelWar):getTurnIndex(),
-        getLocalizedText(65, "ActionID"),           getActionId(modelWar),
-        getTilesInfo(tileTypeCounters),
-        getLocalizedText(14, "IncomeModifier"),     modelWar:getIncomeModifier()
-    )
-end
-
-local function getInTurnDescription(modelWar)
-    local formattedCountdown = AuxiliaryFunctions.formatTimeInterval(modelWar:getIntervalUntilBoot() - os.time() + modelWar:getEnterTurnTime())
-    return string.format("(%s, %s: %s)", getLocalizedText(49), getLocalizedText(34, "BootCountdown"), formattedCountdown)
-end
-
-local function updateStringWarInfo(self)
-    local dataForEachPlayer = generateEmptyDataForEachPlayer(self)
-    updateUnitsData(self, dataForEachPlayer)
-    updateTilesData(self, dataForEachPlayer)
-
-    local modelWar     = self.m_ModelWar
-    local stringList        = {getMapInfo(self)}
-    local playerIndexInTurn = getModelTurnManager(modelWar):getPlayerIndex()
-    for i = 1, getModelPlayerManager(modelWar):getPlayersCount() do
-        if (not dataForEachPlayer[i]) then
-            stringList[#stringList + 1] = string.format("%s %d: %s", getLocalizedText(65, "Player"), i, getLocalizedText(65, "Lost"))
-        else
-            local d                  = dataForEachPlayer[i]
-            local isPlayerInTurn     = i == playerIndexInTurn
-            stringList[#stringList + 1] = string.format("%s %d:    %s%s\n%s: %d      %s: %s\n%s: %s      %s: %d\n%s: %d%s      %s: %d\n%s: %d\n%s",
-                getLocalizedText(65, "Player"),              i,           d.nickname,
-                ((isPlayerInTurn) and (getInTurnDescription(modelWar)) or ("")),
-                getLocalizedText(65, "Energy"),               d.energy,
-                getLocalizedText(22, "DeclareSkill"),         (d.isSkillDeclared) and (getLocalizedText(22, "Yes")) or (getLocalizedText(22, "No")),
-                getLocalizedText(65, "Fund"),                 "" .. d.fund,
-                getLocalizedText(65, "Income"),               d.income,
-                getLocalizedText(65, "UnitsCount"),           d.unitsCount,
-                ((isPlayerInTurn) and (string.format(" (%d)", d.idleUnitsCount)) or ("")),
-                getLocalizedText(65, "UnitsValue"),           d.unitsValue,
-                getLocalizedText(65, "TilesCount"),           d.tilesCount,
-                getTilesInfo(d, isPlayerInTurn)
-            )
-        end
-    end
-
-    self.m_StringWarInfo = table.concat(stringList, "\n--------------------\n")
-end
-
-local function updateStringSkillInfo(self)
-    local stringList = {}
-    local modelWar   = self.m_ModelWar
-    getModelPlayerManager(modelWar):forEachModelPlayer(function(modelPlayer, playerIndex)
-        stringList[#stringList + 1] = string.format("%s %d: %s\n%s",
-            getLocalizedText(65, "Player"), playerIndex, modelPlayer:getNickname(),
-            SkillDescriptionFunctions.getBriefDescription(modelWar, modelPlayer:getModelSkillConfiguration())
-        )
-    end)
-
-    self.m_StringSkillInfo = table.concat(stringList, "\n--------------------\n")
-end
-
-local function getAvailableMainItems(self)
-    local modelWar     = self.m_ModelWar
-    local playerIndexInTurn = getModelTurnManager(modelWar):getPlayerIndex()
-    if ((playerIndexInTurn ~= getPlayerIndexLoggedIn(modelWar)) or
-        (self.m_IsWaitingForServerResponse))                         then
-        return {
-            self.m_ItemQuit,
-            self.m_ItemWarInfo,
-            self.m_ItemSkillInfo,
-            self.m_ItemAuxiliaryCommands,
-            self.m_ItemHelp,
-        }
-    else
-        local modelPlayer = getModelPlayerManager(modelWar):getModelPlayer(playerIndexInTurn)
-        local items = {
-            self.m_ItemQuit,
-            self.m_ItemDrawOrSurrender,
-            self.m_ItemWarInfo,
-            self.m_ItemSkillInfo,
-        }
-        items[#items + 1] = self.m_ItemAuxiliaryCommands
-        items[#items + 1] = self.m_ItemHelp
-        items[#items + 1] = self.m_ItemEndTurn
-
-        return items
-    end
-end
-
 local function dispatchEvtMapCursorMoved(self, gridIndex)
     getScriptEventDispatcher(self.m_ModelWar):dispatchEvent({
         name      = "EvtMapCursorMoved",
@@ -274,6 +67,182 @@ local function dispatchEvtWarCommandMenuUpdated(self)
     })
 end
 
+--------------------------------------------------------------------------------
+-- The dynamic text generator for war info.
+--------------------------------------------------------------------------------
+local function generateMapTitle(warFieldFileName)
+    return string.format("%s: %s      %s: %s",
+        getLocalizedText(65, "MapName"), WarFieldManager.getWarFieldName(warFieldFileName),
+        getLocalizedText(65, "Author"),  WarFieldManager.getWarFieldAuthorName(warFieldFileName)
+    )
+end
+
+local function generateEmptyDataForEachPlayer(self)
+    local modelWar           = self.m_ModelWar
+    local modelPlayerManager = getModelPlayerManager(modelWar)
+    local dataForEachPlayer  = {}
+    local modelFogMap        = getModelFogMap(modelWar)
+
+    modelPlayerManager:forEachModelPlayer(function(modelPlayer, playerIndex)
+        if (modelPlayer:isAlive()) then
+            dataForEachPlayer[playerIndex] = {
+                nickname        = modelPlayer:getNickname(),
+                fund            = ((modelFogMap:isFogOfWarCurrently()) and ((playerIndex ~= self.m_PlayerIndexLoggedIn))) and ("--") or (modelPlayer:getFund()),
+                energy          = modelPlayer:getEnergy(),
+                idleUnitsCount  = 0,
+                isSkillDeclared = modelPlayer:isSkillDeclared(),
+                unitsCount      = 0,
+                unitsValue      = 0,
+                tilesCount      = 0,
+                income          = 0,
+            }
+        end
+    end)
+
+    return dataForEachPlayer
+end
+
+local function updateUnitsData(self, dataForEachPlayer)
+    local updateUnitCountAndValue = function(modelUnit)
+        local data          = dataForEachPlayer[modelUnit:getPlayerIndex()]
+        data.unitsCount     = data.unitsCount + 1
+        data.idleUnitsCount = data.idleUnitsCount + (modelUnit:isStateIdle() and 1 or 0)
+        data.unitsValue     = data.unitsValue + AuxiliaryFunctions.round(modelUnit:getNormalizedCurrentHP() * modelUnit:getBaseProductionCost() / 10)
+    end
+
+    getModelUnitMap(self.m_ModelWar):forEachModelUnitOnMap(updateUnitCountAndValue)
+        :forEachModelUnitLoaded(updateUnitCountAndValue)
+end
+
+local function updateTilesData(self, dataForEachPlayer)
+    getModelTileMap(self.m_ModelWar):forEachModelTile(function(modelTile)
+        local playerIndex = modelTile:getPlayerIndex()
+        if (playerIndex ~= 0) then
+            local data = dataForEachPlayer[playerIndex]
+            data.tilesCount = data.tilesCount + 1
+
+            if (modelTile.getIncomeAmount) then
+                data.income = data.income + (modelTile:getIncomeAmount() or 0)
+            end
+        end
+    end)
+end
+
+local function getMapInfo(self)
+    local modelWar = self.m_ModelWar
+    return string.format("%s\n%s: %s      %s: %d      %s: %d\n%s: %d%%",
+        generateMapTitle(SingletonGetters.getModelWarField(modelWar):getWarFieldFileName()),
+        getLocalizedText(65, "WarID"),              AuxiliaryFunctions.getWarNameWithWarId(SingletonGetters.getWarId(modelWar)),
+        getLocalizedText(65, "TurnIndex"),          getModelTurnManager(modelWar):getTurnIndex(),
+        getLocalizedText(65, "ActionID"),           getActionId(modelWar),
+        getLocalizedText(14, "IncomeModifier"),     modelWar:getIncomeModifier()
+    )
+end
+
+local function getInTurnDescription(modelWar)
+    local formattedCountdown = AuxiliaryFunctions.formatTimeInterval(modelWar:getIntervalUntilBoot() - os.time() + modelWar:getEnterTurnTime())
+    return string.format("(%s, %s: %s)", getLocalizedText(49), getLocalizedText(34, "BootCountdown"), formattedCountdown)
+end
+
+local function generateTextWarInfo(self)
+    local dataForEachPlayer = generateEmptyDataForEachPlayer(self)
+    updateUnitsData(self, dataForEachPlayer)
+    updateTilesData(self, dataForEachPlayer)
+
+    local modelWar          = self.m_ModelWar
+    local stringList        = {getMapInfo(self)}
+    local playerIndexInTurn = getModelTurnManager(modelWar):getPlayerIndex()
+    for i = 1, getModelPlayerManager(modelWar):getPlayersCount() do
+        if (not dataForEachPlayer[i]) then
+            stringList[#stringList + 1] = string.format("%s %d: %s", getLocalizedText(65, "Player"), i, getLocalizedText(65, "Lost"))
+        else
+            local d                  = dataForEachPlayer[i]
+            local isPlayerInTurn     = i == playerIndexInTurn
+            stringList[#stringList + 1] = string.format("%s %d: %s %s\n%s: %d        %s: %s\n%s: %d        %s: %s        %s: %d\n%s: %d%s        %s: %d",
+                getLocalizedText(65, "Player"),       i,           d.nickname, ((isPlayerInTurn) and (getInTurnDescription(modelWar)) or ("")),
+                getLocalizedText(65, "Energy"),       d.energy,
+                getLocalizedText(22, "DeclareSkill"), (d.isSkillDeclared) and (getLocalizedText(22, "Yes")) or (getLocalizedText(22, "No")),
+                getLocalizedText(65, "TilesCount"),   d.tilesCount,
+                getLocalizedText(65, "Fund"),         "" .. d.fund,
+                getLocalizedText(65, "Income"),       d.income,
+                getLocalizedText(65, "UnitsCount"),   d.unitsCount, ((isPlayerInTurn) and (string.format(" (%d)", d.idleUnitsCount)) or ("")),
+                getLocalizedText(65, "UnitsValue"),   d.unitsValue
+            )
+        end
+    end
+
+    return table.concat(stringList, "\n--------------------\n")
+end
+
+--------------------------------------------------------------------------------
+-- The dynamic text generator for tile info.
+--------------------------------------------------------------------------------
+local function generateTileInfoWithCounters(tileCounters, showIdleTilesCount)
+    return string.format("%s: %d\n%s: %d%s%s: %d%s%s: %d%s%s: %d%s%s: %d\n%s: %d%s%s: %d%s%s: %d%s%s: %d",
+        getLocalizedText(65,  "TilesCount"),   tileCounters.total,
+        getLocalizedText(116, "Headquarters"), tileCounters.Headquarters, "        ",
+        getLocalizedText(116, "City"),         tileCounters.City,         "        ",
+        getLocalizedText(116, "Factory"),      tileCounters.Factory,      "        ",
+        getLocalizedText(116, "Airport"),      tileCounters.Airport,      "        ",
+        getLocalizedText(116, "Seaport"),      tileCounters.Seaport,
+        getLocalizedText(116, "CommandTower"), tileCounters.CommandTower, "        ",
+        getLocalizedText(116, "Radar"),        tileCounters.Radar,        "        ",
+        getLocalizedText(116, "TempAirport"),  tileCounters.TempAirport,  "        ",
+        getLocalizedText(116, "TempSeaport"),  tileCounters.TempSeaport
+    )
+end
+
+local function generateTextTileInfo(self)
+    local modelWar           = self.m_ModelWar
+    local modelPlayerManager = SingletonGetters.getModelPlayerManager(modelWar)
+    local tileCounters       = {}
+    for playerIndex = 0, modelPlayerManager:getPlayersCount() do
+        tileCounters[playerIndex] = {
+            total        = 0,
+            Headquarters = 0,
+            City         = 0,
+            Factory      = 0,
+            Airport      = 0,
+            Seaport      = 0,
+            TempAirport  = 0,
+            TempSeaport  = 0,
+            CommandTower = 0,
+            Radar        = 0,
+        }
+    end
+
+    SingletonGetters.getModelTileMap(modelWar):forEachModelTile(function(modelTile)
+        local tileType = modelTile:getTileType()
+        if (tileCounters[0][tileType]) then
+            tileCounters[0][tileType] = tileCounters[0][tileType] + 1
+            tileCounters[0].total     = tileCounters[0].total     + 1
+
+            local playerIndex = modelTile:getPlayerIndex()
+            if (playerIndex ~= 0) then
+                tileCounters[playerIndex][tileType] = tileCounters[playerIndex][tileType] + 1
+                tileCounters[playerIndex].total     = tileCounters[playerIndex].total     + 1
+            end
+        end
+    end)
+
+    local textList = {string.format("%s\n%s",
+        generateMapTitle(SingletonGetters.getModelWarField(modelWar):getWarFieldFileName()),
+        generateTileInfoWithCounters(tileCounters[0])
+    )}
+    modelPlayerManager:forEachModelPlayer(function(modelPlayer, playerIndex)
+        if (not modelPlayer:isAlive()) then
+            textList[#textList + 1] = string.format("%s %d: %s (%s)", getLocalizedText(65, "Player"), playerIndex, modelPlayer:getNickname(), getLocalizedText(65, "Lost"))
+        else
+            textList[#textList + 1] = string.format("%s %d: %s\n%s", getLocalizedText(65, "Player"), playerIndex, modelPlayer:getNickname(), generateTileInfoWithCounters(tileCounters[playerIndex]))
+        end
+    end)
+
+    return table.concat(textList, "\n--------------------\n")
+end
+
+--------------------------------------------------------------------------------
+-- The dynamic text generator for unit properties.
+--------------------------------------------------------------------------------
 local function createWeaponPropertyText(unitType)
     local template   = GameConstantFunctions.getTemplateModelUnitWithName(unitType)
     local attackDoer = template.AttackDoer
@@ -346,6 +315,9 @@ local function createUnitPropertyText(unitType)
     )
 end
 
+--------------------------------------------------------------------------------
+-- The dynamic text generator for end turn confirmation.
+--------------------------------------------------------------------------------
 local function getIdleTilesCount(self)
     local modelWar = self.m_ModelWar
     local modelUnitMap  = getModelUnitMap(modelWar)
@@ -391,8 +363,8 @@ local function createEndTurnText(self)
         textList[#textList + 1] = string.format("%s:  %d    %d    %d", getLocalizedText(65, "IdleTiles"), idleFactoriesCount, idleAirportsCount, idleSeaportsCount)
     end
 
-    local modelWar  = self.m_ModelWar
-    local _, modelPlayer = getPlayerIndexLoggedIn(modelWar)
+    local modelWar    = self.m_ModelWar
+    local modelPlayer = self.m_ModelPlayerLoggedIn
     if ((modelWar:isActiveSkillEnabled())                         and
         (modelWar:isSkillDeclarationEnabled())                    and
         (not modelPlayer:isSkillDeclared())                       and
@@ -406,6 +378,70 @@ local function createEndTurnText(self)
         textList[#textList + 1] = "\n" .. getLocalizedText(66, "EndTurnConfirmation")
         return table.concat(textList, "\n")
     end
+end
+
+--------------------------------------------------------------------------------
+-- The dynamic items generators.
+--------------------------------------------------------------------------------
+local function generateItemsForStateAuxiliaryCommands(self)
+    local items    = {
+        self.m_ItemChat,
+        self.m_ItemReload,
+    }
+
+    local modelWar            = self.m_ModelWar
+    local playerIndexLoggedIn = self.m_PlayerIndexLoggedIn
+    if ((playerIndexLoggedIn == getModelTurnManager(modelWar):getPlayerIndex()) and
+        (not self.m_IsWaitingForServerResponse))                                then
+        local modelUnit = getModelUnitMap(modelWar):getModelUnit(self.m_MapCursorGridIndex)
+        self.m_ItemDestroyOwnedUnit.isAvailable = ((modelUnit ~= nil) and (modelUnit:isStateIdle()) and (modelUnit:getPlayerIndex() == playerIndexLoggedIn))
+
+        items[#items + 1] = self.m_ItemDrawOrSurrender
+        items[#items + 1] = self.m_ItemFindIdleUnit
+        items[#items + 1] = self.m_ItemFindIdleTile
+        items[#items + 1] = self.m_ItemDestroyOwnedUnit
+    end
+
+    items[#items + 1] = self.m_ItemTileInfo
+    items[#items + 1] = self.m_ItemHideUI
+    items[#items + 1] = self.m_ItemSetMessageIndicator
+    items[#items + 1] = self.m_ItemSetMusic
+
+    return items
+end
+
+local function generateItemsForStateDrawOrSurrender(self)
+    local modelWar          = self.m_ModelWar
+    local playerIndexInTurn = getModelTurnManager(modelWar):getPlayerIndex()
+    assert((self.m_PlayerIndexLoggedIn == playerIndexInTurn) and (not self.m_IsWaitingForServerResponse))
+
+    local modelPlayer = getModelPlayerManager(modelWar):getModelPlayer(playerIndexInTurn)
+    local items       = {self.m_ItemSurrender}
+    if (modelPlayer:hasVotedForDraw()) then
+        -- do nothing.
+    elseif (not modelWar:getRemainingVotesForDraw()) then
+        items[#items + 1] = self.m_ItemProposeDraw
+    else
+        items[#items + 1] = self.m_ItemAgreeDraw
+        items[#items + 1] = self.m_ItemDisagreeDraw
+    end
+
+    return items
+end
+
+local function generateItemsForStateMain(self)
+    local items = {
+        self.m_ItemBackToMainScene,
+        self.m_ItemSkillInfo,
+        self.m_ItemAuxiliaryCommands,
+        self.m_ItemHelp,
+    }
+    if ((not self.m_IsWaitingForServerResponse)                                                and
+        (getModelTurnManager(self.m_ModelWar):getPlayerIndex() == self.m_PlayerIndexLoggedIn)) then
+        items[#items + 1] = self.m_ItemEndTurn
+    end
+
+    return items
 end
 
 --------------------------------------------------------------------------------
@@ -467,32 +503,7 @@ end
 --------------------------------------------------------------------------------
 local function setStateAuxiliaryCommands(self)
     self.m_State = "stateAuxiliaryCommands"
-
-    if (self.m_View) then
-        local modelWar = self.m_ModelWar
-        local items         = {}
-        items[#items + 1] = self.m_ItemChat
-        items[#items + 1] = self.m_ItemReload
-
-        local playerIndexLoggedIn = getPlayerIndexLoggedIn(modelWar)
-        if ((playerIndexLoggedIn == getModelTurnManager(modelWar):getPlayerIndex()) and
-            (not self.m_IsWaitingForServerResponse))                                      then
-
-            local gridIndex = self.m_MapCursorGridIndex
-            local modelUnit = getModelUnitMap(modelWar):getModelUnit(self.m_MapCursorGridIndex)
-            if ((modelUnit) and (modelUnit:isStateIdle()) and (modelUnit:getPlayerIndex() == playerIndexLoggedIn)) then
-                items[#items + 1] = self.m_ItemDestroyOwnedUnit
-            end
-
-            items[#items + 1] = self.m_ItemFindIdleUnit
-            items[#items + 1] = self.m_ItemFindIdleTile
-        end
-        items[#items + 1] = self.m_ItemHideUI
-        items[#items + 1] = self.m_ItemSetMessageIndicator
-        items[#items + 1] = self.m_ItemSetMusic
-
-        self.m_View:setItems(items)
-    end
+    self.m_View:setItems(generateItemsForStateAuxiliaryCommands(self))
 end
 
 local function setStateDisabled(self)
@@ -504,39 +515,19 @@ end
 
 local function setStateDrawOrSurrender(self)
     self.m_State = "stateDrawOrSurrender"
-
-    if (self.m_View) then
-        local modelWar     = self.m_ModelWar
-        local playerIndexInTurn = getModelTurnManager(modelWar):getPlayerIndex()
-        assert((getPlayerIndexLoggedIn(modelWar) == playerIndexInTurn) and (not self.m_IsWaitingForServerResponse))
-
-        local modelPlayer = getModelPlayerManager(modelWar):getModelPlayer(playerIndexInTurn)
-        local items       = {self.m_ItemSurrender}
-        if (modelPlayer:hasVotedForDraw()) then
-            -- do nothing.
-        elseif (not modelWar:getRemainingVotesForDraw()) then
-            items[#items + 1] = self.m_ItemProposeDraw
-        else
-            items[#items + 1] = self.m_ItemAgreeDraw
-            items[#items + 1] = self.m_ItemDisagreeDraw
-        end
-        self.m_View:setItems(items)
-    end
+    self.m_View:setItems(generateItemsForStateDrawOrSurrender(self))
 end
 
 local function setStateHelp(self)
     self.m_State = "stateHelp"
-
-    if (self.m_View) then
-        self.m_View:setItems({
-            self.m_ItemUnitPropertyList,
-            self.m_ItemGameFlow,
-            self.m_ItemWarControl,
-            self.m_ItemEssentialConcept,
-            self.m_ItemSkillSystem,
-            self.m_ItemAbout,
-        })
-    end
+    self.m_View:setItems({
+        self.m_ItemUnitPropertyList,
+        self.m_ItemGameFlow,
+        self.m_ItemWarControl,
+        self.m_ItemEssentialConcept,
+        self.m_ItemSkillSystem,
+        self.m_ItemAbout,
+    })
 end
 
 local function setStateHiddenWithHideUI(self)
@@ -549,13 +540,11 @@ end
 local getActorSkillConfigurator
 local function setStateMain(self)
     self.m_State = "stateMain"
-    updateStringWarInfo(  self)
-    updateStringSkillInfo(self)
     getActorSkillConfigurator(self):getModel():setEnabled(false)
 
-    self.m_View:setItems(getAvailableMainItems(self))
+    self.m_View:setItems(generateItemsForStateMain(self))
         :setMenuVisible(true)
-        :setOverviewString(self.m_StringWarInfo)
+        :setOverviewString(generateTextWarInfo(self))
         :setOverviewVisible(true)
         :setVisible(true)
 
@@ -565,9 +554,7 @@ end
 local function setStateUnitPropertyList(self)
     self.m_State = "stateUnitPropertyList"
 
-    if (self.m_View) then
-        self.m_View:setItems(self.m_ItemsUnitProperties)
-    end
+    self.m_View:setItems(self.m_ItemsUnitProperties)
 end
 
 --------------------------------------------------------------------------------
@@ -736,7 +723,7 @@ local function initItemFindIdleUnit(self)
             local modelUnitMap        = getModelUnitMap(self.m_ModelWar)
             local mapSize             = modelUnitMap:getMapSize()
             local cursorX, cursorY    = self.m_MapCursorGridIndex.x, self.m_MapCursorGridIndex.y
-            local playerIndexLoggedIn = getPlayerIndexLoggedIn(self.m_ModelWar)
+            local playerIndexLoggedIn = self.m_PlayerIndexLoggedIn
             local firstGridIndex
 
             for y = 1, mapSize.height do
@@ -774,8 +761,8 @@ local function initItemFindIdleTile(self)
     local item = {
         name     = getLocalizedText(65, "FindIdleTile"),
         callback = function()
-            local modelWar       = self.m_ModelWar
-            local playerIndexLoggedIn = getPlayerIndexLoggedIn(modelWar)
+            local modelWar            = self.m_ModelWar
+            local playerIndexLoggedIn = self.m_PlayerIndexLoggedIn
             local modelUnitMap        = getModelUnitMap(modelWar)
             local modelTileMap        = getModelTileMap(modelWar)
             local mapSize             = modelUnitMap:getMapSize()
@@ -886,6 +873,15 @@ local function initItemSkillSystem(self)
     self.m_ItemSkillSystem = item
 end
 
+local function initItemTileInfo(self)
+    self.m_ItemTileInfo = {
+        name     = getLocalizedText(65, "TileInfo"),
+        callback = function()
+            self.m_View:setOverviewString(generateTextTileInfo(self))
+        end,
+    }
+end
+
 local function initItemUnitPropertyList(self)
     local item = {
         name     = getLocalizedText(65, "UnitPropertyList"),
@@ -914,9 +910,9 @@ local function initItemsUnitProperties(self)
     self.m_ItemsUnitProperties = items
 end
 
-local function initItemQuit(self)
-    local item = {
-        name     = getLocalizedText(65, "QuitWar"),
+local function initItemBackToMainScene(self)
+    self.m_ItemBackToMainScene = {
+        name     = getLocalizedText(65, "BackToMainScene"),
         callback = function()
             getModelConfirmBox(self.m_ModelWar):setConfirmText(getLocalizedText(66, "QuitWar"))
                 :setOnConfirmYes(function()
@@ -927,8 +923,6 @@ local function initItemQuit(self)
                 :setEnabled(true)
         end,
     }
-
-    self.m_ItemQuit = item
 end
 
 local function initItemReload(self)
@@ -1003,19 +997,6 @@ local function initItemWarControl(self)
     self.m_ItemWarControl = item
 end
 
-local function initItemWarInfo(self)
-    local item = {
-        name     = getLocalizedText(65, "WarInfo"),
-        callback = function()
-            if (self.m_View) then
-                self.m_View:setOverviewString(self.m_StringWarInfo)
-            end
-        end,
-    }
-
-    self.m_ItemWarInfo = item
-end
-
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
@@ -1026,6 +1007,7 @@ function ModelWarCommandMenuForOnline:ctor(param)
     initItemAbout(              self)
     initItemAgreeDraw(          self)
     initItemAuxiliaryCommands(  self)
+    initItemBackToMainScene(    self)
     initItemChat(               self)
     initItemDestroyOwnedUnit(   self)
     initItemDisagreeDraw(       self)
@@ -1038,7 +1020,6 @@ function ModelWarCommandMenuForOnline:ctor(param)
     initItemHelp(               self)
     initItemHideUI(             self)
     initItemProposeDraw(        self)
-    initItemQuit(               self)
     initItemReload(             self)
     initItemSkillInfo(          self)
     initItemSkillSystem(        self)
@@ -1046,9 +1027,9 @@ function ModelWarCommandMenuForOnline:ctor(param)
     initItemSetMusic(           self)
     initItemSurrender(          self)
     initItemsUnitProperties(    self)
+    initItemTileInfo(           self)
     initItemUnitPropertyList(   self)
     initItemWarControl(         self)
-    initItemWarInfo(            self)
 
     return self
 end
@@ -1059,6 +1040,7 @@ end
 function ModelWarCommandMenuForOnline:onStartRunning(modelWar)
     self.m_ModelWar             = modelWar
     self.m_SkillDeclarationCost = modelWar:getModelSkillDataManager():getSkillDeclarationCost()
+    self.m_PlayerIndexLoggedIn, self.m_ModelPlayerLoggedIn = SingletonGetters.getPlayerIndexLoggedIn(modelWar)
 
     getScriptEventDispatcher(modelWar)
         :addEventListener("EvtIsWaitingForServerResponse", self)
@@ -1102,7 +1084,7 @@ end
 function ModelWarCommandMenuForOnline:onButtonBackTouched()
     local state = self.m_State
     if     (state == "stateAuxiliaryCommands") then setStateMain(self)
-    elseif (state == "stateDrawOrSurrender")   then setStateMain(self)
+    elseif (state == "stateDrawOrSurrender")   then setStateAuxiliaryCommands(self)
     elseif (state == "stateHelp")              then setStateMain(self)
     elseif (state == "stateMain")              then self:setEnabled(false)
     elseif (state == "stateUnitPropertyList")  then setStateHelp(self)

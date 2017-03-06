@@ -29,12 +29,16 @@ local function generateSkillInfoText(self)
     )}
 
     SingletonGetters.getModelPlayerManager(modelWar):forEachModelPlayer(function(modelPlayer, playerIndex)
-        stringList[#stringList + 1] = string.format("%s %d: %s    %s: %d    %s: %s\n%s",
-            getLocalizedText(65, "Player"), playerIndex, modelPlayer:getNickname(),
-            getLocalizedText(22, "CurrentEnergy"), modelPlayer:getEnergy(),
-            getLocalizedText(22, "DeclareSkill"),  getLocalizedText(22, modelPlayer:isSkillDeclared() and "Yes" or "No"),
-            SkillDescriptionFunctions.getBriefDescription(modelWar, modelPlayer:getModelSkillConfiguration())
-        )
+        if (not modelPlayer:isAlive()) then
+            stringList[#stringList + 1] = string.format("%s %d: %s (%s)", getLocalizedText(65, "Player"), playerIndex, modelPlayer:getNickname(), getLocalizedText(65, "Lost"))
+        else
+            stringList[#stringList + 1] = string.format("%s %d: %s    %s: %d    %s: %s\n%s",
+                getLocalizedText(65, "Player"), playerIndex, modelPlayer:getNickname(),
+                getLocalizedText(22, "CurrentEnergy"), modelPlayer:getEnergy(),
+                getLocalizedText(22, "DeclareSkill"),  getLocalizedText(22, modelPlayer:isSkillDeclared() and "Yes" or "No"),
+                SkillDescriptionFunctions.getBriefDescription(modelWar, modelPlayer:getModelSkillConfiguration())
+            )
+        end
     end)
 
     return table.concat(stringList, "\n--------------------\n")
