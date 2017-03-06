@@ -68,8 +68,15 @@ local function dispatchEvtWarCommandMenuUpdated(self)
 end
 
 --------------------------------------------------------------------------------
--- The dynamic texts generators.
+-- The dynamic text generator for war info.
 --------------------------------------------------------------------------------
+local function generateMapTitle(warFieldFileName)
+    return string.format("%s: %s      %s: %s",
+        getLocalizedText(65, "MapName"), WarFieldManager.getWarFieldName(warFieldFileName),
+        getLocalizedText(65, "Author"),  WarFieldManager.getWarFieldAuthorName(warFieldFileName)
+    )
+end
+
 local function generateEmptyDataForEachPlayer(self)
     local modelWar           = self.m_ModelWar
     local modelPlayerManager = getModelPlayerManager(modelWar)
@@ -79,28 +86,15 @@ local function generateEmptyDataForEachPlayer(self)
     modelPlayerManager:forEachModelPlayer(function(modelPlayer, playerIndex)
         if (modelPlayer:isAlive()) then
             dataForEachPlayer[playerIndex] = {
-                nickname            = modelPlayer:getNickname(),
-                fund                = ((modelFogMap:isFogOfWarCurrently()) and ((playerIndex ~= self.m_PlayerIndexLoggedIn))) and ("--") or (modelPlayer:getFund()),
-                energy              = modelPlayer:getEnergy(),
-                idleUnitsCount      = 0,
-                isSkillDeclared     = modelPlayer:isSkillDeclared(),
-                unitsCount          = 0,
-                unitsValue          = 0,
-                tilesCount          = 0,
-                income              = 0,
-
-                Headquarters        = 0,
-                City                = 0,
-                Factory             = 0,
-                idleFactoriesCount  = 0,
-                Airport             = 0,
-                idleAirportsCount   = 0,
-                Seaport             = 0,
-                idleSeaportsCount   = 0,
-                TempAirport         = 0,
-                TempSeaport         = 0,
-                CommandTower        = 0,
-                Radar               = 0,
+                nickname        = modelPlayer:getNickname(),
+                fund            = ((modelFogMap:isFogOfWarCurrently()) and ((playerIndex ~= self.m_PlayerIndexLoggedIn))) and ("--") or (modelPlayer:getFund()),
+                energy          = modelPlayer:getEnergy(),
+                idleUnitsCount  = 0,
+                isSkillDeclared = modelPlayer:isSkillDeclared(),
+                unitsCount      = 0,
+                unitsValue      = 0,
+                tilesCount      = 0,
+                income          = 0,
             }
         end
     end)
@@ -121,23 +115,11 @@ local function updateUnitsData(self, dataForEachPlayer)
 end
 
 local function updateTilesData(self, dataForEachPlayer)
-    local modelUnitMap = getModelUnitMap(self.m_ModelWar)
     getModelTileMap(self.m_ModelWar):forEachModelTile(function(modelTile)
         local playerIndex = modelTile:getPlayerIndex()
         if (playerIndex ~= 0) then
             local data = dataForEachPlayer[playerIndex]
             data.tilesCount = data.tilesCount + 1
-
-            local tileType = modelTile:getTileType()
-            if (data[tileType]) then
-                data[tileType] = data[tileType] + 1
-                if (not modelUnitMap:getModelUnit(modelTile:getGridIndex())) then
-                    if     (tileType == "Factory") then data.idleFactoriesCount = data.idleFactoriesCount + 1
-                    elseif (tileType == "Airport") then data.idleAirportsCount  = data.idleAirportsCount  + 1
-                    elseif (tileType == "Seaport") then data.idleSeaportsCount  = data.idleSeaportsCount  + 1
-                    end
-                end
-            end
 
             if (modelTile.getIncomeAmount) then
                 data.income = data.income + (modelTile:getIncomeAmount() or 0)
@@ -146,53 +128,13 @@ local function updateTilesData(self, dataForEachPlayer)
     end)
 end
 
-local function getTilesInfo(tileTypeCounters, showIdleTilesCount)
-    return string.format("%s: %d        %s: %d        %s: %d%s        %s: %d%s        %s: %d%s\n%s: %d        %s: %d        %s: %d        %s: %d",
-        getLocalizedText(116, "Headquarters"), tileTypeCounters.Headquarters,
-        getLocalizedText(116, "City"),         tileTypeCounters.City,
-        getLocalizedText(116, "Factory"),      tileTypeCounters.Factory,
-        ((showIdleTilesCount) and (string.format(" (%d)", tileTypeCounters.idleFactoriesCount)) or ("")),
-        getLocalizedText(116, "Airport"),      tileTypeCounters.Airport,
-        ((showIdleTilesCount) and (string.format(" (%d)", tileTypeCounters.idleAirportsCount)) or ("")),
-        getLocalizedText(116, "Seaport"),      tileTypeCounters.Seaport,
-        ((showIdleTilesCount) and (string.format(" (%d)", tileTypeCounters.idleSeaportsCount)) or ("")),
-        getLocalizedText(116, "CommandTower"), tileTypeCounters.CommandTower,
-        getLocalizedText(116, "Radar"),        tileTypeCounters.Radar,
-        getLocalizedText(116, "TempAirport"),  tileTypeCounters.TempAirport,
-        getLocalizedText(116, "TempSeaport"),  tileTypeCounters.TempSeaport
-    )
-end
-
 local function getMapInfo(self)
     local modelWar = self.m_ModelWar
-    local modelWarField = SingletonGetters.getModelWarField(modelWar)
-    local modelTileMap  = getModelTileMap(modelWar)
-    local tileTypeCounters = {
-        Headquarters = 0,
-        City         = 0,
-        Factory      = 0,
-        Airport      = 0,
-        Seaport      = 0,
-        TempAirport  = 0,
-        TempSeaport  = 0,
-        CommandTower = 0,
-        Radar        = 0,
-    }
-    modelTileMap:forEachModelTile(function(modelTile)
-        local tileType = modelTile:getTileType()
-        if (tileTypeCounters[tileType]) then
-            tileTypeCounters[tileType] = tileTypeCounters[tileType] + 1
-        end
-    end)
-
-    local warFieldFileName = modelWarField:getWarFieldFileName()
-    return string.format("%s: %s      %s: %s\n%s: %s      %s: %d      %s: %d\n%s\n%s: %d%%",
-        getLocalizedText(65, "MapName"),            WarFieldManager.getWarFieldName(warFieldFileName),
-        getLocalizedText(65, "Author"),             WarFieldManager.getWarFieldAuthorName(warFieldFileName),
+    return string.format("%s\n%s: %s      %s: %d      %s: %d\n%s: %d%%",
+        generateMapTitle(SingletonGetters.getModelWarField(modelWar):getWarFieldFileName()),
         getLocalizedText(65, "WarID"),              AuxiliaryFunctions.getWarNameWithWarId(SingletonGetters.getWarId(modelWar)),
         getLocalizedText(65, "TurnIndex"),          getModelTurnManager(modelWar):getTurnIndex(),
         getLocalizedText(65, "ActionID"),           getActionId(modelWar),
-        getTilesInfo(tileTypeCounters),
         getLocalizedText(14, "IncomeModifier"),     modelWar:getIncomeModifier()
     )
 end
@@ -216,23 +158,86 @@ local function generateTextWarInfo(self)
         else
             local d                  = dataForEachPlayer[i]
             local isPlayerInTurn     = i == playerIndexInTurn
-            stringList[#stringList + 1] = string.format("%s %d:    %s%s\n%s: %d      %s: %s\n%s: %s      %s: %d\n%s: %d%s      %s: %d\n%s: %d\n%s",
-                getLocalizedText(65, "Player"),              i,           d.nickname,
-                ((isPlayerInTurn) and (getInTurnDescription(modelWar)) or ("")),
-                getLocalizedText(65, "Energy"),               d.energy,
-                getLocalizedText(22, "DeclareSkill"),         (d.isSkillDeclared) and (getLocalizedText(22, "Yes")) or (getLocalizedText(22, "No")),
-                getLocalizedText(65, "Fund"),                 "" .. d.fund,
-                getLocalizedText(65, "Income"),               d.income,
-                getLocalizedText(65, "UnitsCount"),           d.unitsCount,
-                ((isPlayerInTurn) and (string.format(" (%d)", d.idleUnitsCount)) or ("")),
-                getLocalizedText(65, "UnitsValue"),           d.unitsValue,
-                getLocalizedText(65, "TilesCount"),           d.tilesCount,
-                getTilesInfo(d, isPlayerInTurn)
+            stringList[#stringList + 1] = string.format("%s %d:    %s%s\n%s: %d        %s: %s\n%s: %d        %s: %s        %s: %d\n%s: %d%s        %s: %d",
+                getLocalizedText(65, "Player"),       i,           d.nickname, ((isPlayerInTurn) and (getInTurnDescription(modelWar)) or ("")),
+                getLocalizedText(65, "Energy"),       d.energy,
+                getLocalizedText(22, "DeclareSkill"), (d.isSkillDeclared) and (getLocalizedText(22, "Yes")) or (getLocalizedText(22, "No")),
+                getLocalizedText(65, "TilesCount"),   d.tilesCount,
+                getLocalizedText(65, "Fund"),         "" .. d.fund,
+                getLocalizedText(65, "Income"),       d.income,
+                getLocalizedText(65, "UnitsCount"),   d.unitsCount, ((isPlayerInTurn) and (string.format(" (%d)", d.idleUnitsCount)) or ("")),
+                getLocalizedText(65, "UnitsValue"),   d.unitsValue
             )
         end
     end
 
     return table.concat(stringList, "\n--------------------\n")
+end
+
+--------------------------------------------------------------------------------
+-- The dynamic text generator for tile info.
+--------------------------------------------------------------------------------
+local function generateTileInfoWithCounters(tileCounters, showIdleTilesCount)
+    return string.format("%s: %d\n%s: %d%s%s: %d%s%s: %d%s%s: %d%s%s: %d\n%s: %d%s%s: %d%s%s: %d%s%s: %d",
+        getLocalizedText(65,  "TilesCount"),   tileCounters.total,
+        getLocalizedText(116, "Headquarters"), tileCounters.Headquarters, "        ",
+        getLocalizedText(116, "City"),         tileCounters.City,         "        ",
+        getLocalizedText(116, "Factory"),      tileCounters.Factory,      "        ",
+        getLocalizedText(116, "Airport"),      tileCounters.Airport,      "        ",
+        getLocalizedText(116, "Seaport"),      tileCounters.Seaport,
+        getLocalizedText(116, "CommandTower"), tileCounters.CommandTower, "        ",
+        getLocalizedText(116, "Radar"),        tileCounters.Radar,        "        ",
+        getLocalizedText(116, "TempAirport"),  tileCounters.TempAirport,  "        ",
+        getLocalizedText(116, "TempSeaport"),  tileCounters.TempSeaport
+    )
+end
+
+local function generateTextTileInfo(self)
+    local modelWar           = self.m_ModelWar
+    local modelPlayerManager = SingletonGetters.getModelPlayerManager(modelWar)
+    local tileCounters       = {}
+    for playerIndex = 0, modelPlayerManager:getPlayersCount() do
+        tileCounters[playerIndex] = {
+            total        = 0,
+            Headquarters = 0,
+            City         = 0,
+            Factory      = 0,
+            Airport      = 0,
+            Seaport      = 0,
+            TempAirport  = 0,
+            TempSeaport  = 0,
+            CommandTower = 0,
+            Radar        = 0,
+        }
+    end
+
+    SingletonGetters.getModelTileMap(modelWar):forEachModelTile(function(modelTile)
+        local tileType = modelTile:getTileType()
+        if (tileCounters[0][tileType]) then
+            tileCounters[0][tileType] = tileCounters[0][tileType] + 1
+            tileCounters[0].total     = tileCounters[0].total     + 1
+
+            local playerIndex = modelTile:getPlayerIndex()
+            if (playerIndex ~= 0) then
+                tileCounters[playerIndex][tileType] = tileCounters[playerIndex][tileType] + 1
+                tileCounters[playerIndex].total     = tileCounters[playerIndex].total     + 1
+            end
+        end
+    end)
+
+    local textList = {string.format("%s\n%s",
+        generateMapTitle(SingletonGetters.getModelWarField(modelWar):getWarFieldFileName()),
+        generateTileInfoWithCounters(tileCounters[0])
+    )}
+    modelPlayerManager:forEachModelPlayer(function(modelPlayer, playerIndex)
+        if (not modelPlayer:isAlive()) then
+            textList[#textList + 1] = string.format("%s %d: %s (%s)", getLocalizedText(65, "Player"), playerIndex, modelPlayer:getNickname(), getLocalizedText(65, "Lost"))
+        else
+            textList[#textList + 1] = string.format("%s %d: %s\n%s", getLocalizedText(65, "Player"), playerIndex, modelPlayer:getNickname(), generateTileInfoWithCounters(tileCounters[playerIndex]))
+        end
+    end)
+
+    return table.concat(textList, "\n--------------------\n")
 end
 
 --------------------------------------------------------------------------------
@@ -396,6 +401,8 @@ local function generateItemsForStateAuxiliaryCommands(self)
         items[#items + 1] = self.m_ItemFindIdleTile
         items[#items + 1] = self.m_ItemDestroyOwnedUnit
     end
+
+    items[#items + 1] = self.m_ItemTileInfo
     items[#items + 1] = self.m_ItemHideUI
     items[#items + 1] = self.m_ItemSetMessageIndicator
     items[#items + 1] = self.m_ItemSetMusic
@@ -866,6 +873,15 @@ local function initItemSkillSystem(self)
     self.m_ItemSkillSystem = item
 end
 
+local function initItemTileInfo(self)
+    self.m_ItemTileInfo = {
+        name     = getLocalizedText(65, "TileInfo"),
+        callback = function()
+            self.m_View:setOverviewString(generateTextTileInfo(self))
+        end,
+    }
+end
+
 local function initItemUnitPropertyList(self)
     local item = {
         name     = getLocalizedText(65, "UnitPropertyList"),
@@ -1011,6 +1027,7 @@ function ModelWarCommandMenuForOnline:ctor(param)
     initItemSetMusic(           self)
     initItemSurrender(          self)
     initItemsUnitProperties(    self)
+    initItemTileInfo(           self)
     initItemUnitPropertyList(   self)
     initItemWarControl(         self)
 
