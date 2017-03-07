@@ -17,7 +17,7 @@ local SingletonGetters = requireFW("src.app.utilities.SingletonGetters")
 local IS_SERVER        = requireFW("src.app.utilities.GameConstantFunctions").isServer()
 local WebSocketManager = (not IS_SERVER) and (requireFW("src.app.utilities.WebSocketManager")) or (nil)
 
-local ipairs = ipairs
+local assert, ipairs = assert, ipairs
 
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
@@ -65,7 +65,7 @@ function ModelPlayerManager:onStartRunning(modelWar)
         modelPlayer:onStartRunning(modelWar)
     end)
 
-    if (not IS_SERVER) then
+    if ((not IS_SERVER) and (not self.m_IsWarReplay)) then
         self.m_ModelPlayerLoggedIn, self.m_PlayerIndexLoggedIn = self:getModelPlayerWithAccount(WebSocketManager.getLoggedInAccountAndPassword())
     end
 
@@ -96,6 +96,7 @@ end
 
 function ModelPlayerManager:getPlayerIndexLoggedIn()
     assert((not IS_SERVER) and (not self.m_IsWarReplay), "ModelPlayerManager:getPlayerIndexLoggedIn() this shouldn't be called on the server or in replay.")
+    assert(self.m_PlayerIndexLoggedIn, "ModelPlayerManager:getPlayerIndexLoggedIn() the index hasn't been initialized yet.")
 
     return self.m_PlayerIndexLoggedIn, self.m_ModelPlayerLoggedIn
 end
@@ -116,6 +117,14 @@ function ModelPlayerManager:forEachModelPlayer(func)
     end
 
     return self
+end
+
+function ModelPlayerManager:isSameTeamIndex(playerIndex1, playerIndex2)
+    if ((playerIndex1 == 0) or (playerIndex2 == 0)) then
+        return false
+    else
+        return self.m_ModelPlayers[playerIndex1]:getTeamIndex() == self.m_ModelPlayers[playerIndex2]:getTeamIndex()
+    end
 end
 
 return ModelPlayerManager

@@ -300,8 +300,8 @@ end
 --------------------------------------------------------------------------------
 function ModelWarOnline:onStartRunning(ignoreWarMusic)
     local modelTurnManager = self:getModelTurnManager()
-    modelTurnManager            :onStartRunning(self)
     self:getModelPlayerManager():onStartRunning(self)
+    modelTurnManager            :onStartRunning(self)
     self:getModelChatManager()  :onStartRunning(self)
     self:getModelWarField()     :onStartRunning(self)
     if (not IS_SERVER) then

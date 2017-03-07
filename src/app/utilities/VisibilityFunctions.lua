@@ -214,7 +214,7 @@ function VisibilityFunctions.getRevealedTilesAndUnitsData(modelWar, pathNodes, m
     local modelUnitMap    = getModelUnitMap(modelWar)
     local mapSize         = modelUnitMap:getMapSize()
     local playerIndex     = modelUnit:getPlayerIndex()
-    local targetTeamIndex = SingletonGetters.getModelPlayerManager():getModelPlayer(playerIndex):getTeamIndex()
+    local targetTeamIndex = SingletonGetters.getModelPlayerManager(modelWar):getModelPlayer(playerIndex):getTeamIndex()
     local visibilityMap   = createVisibilityMapWithPathNodes(modelWar, pathNodes, modelUnit)
     local revealedTiles, revealedUnits
 

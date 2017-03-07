@@ -193,7 +193,7 @@ local function moveModelUnitWithAction(action, modelWarOnline)
     local launchUnitID       = action.launchUnitID
     local focusModelUnit     = modelUnitMap:getFocusModelUnit(beginningGridIndex, launchUnitID)
     local playerIndex        = focusModelUnit:getPlayerIndex()
-    local shouldUpdateFogMap = (IS_SERVER) or (playerIndex == getPlayerIndexLoggedIn(modelWarOnline))
+    local shouldUpdateFogMap = (IS_SERVER) or (getModelPlayerManager(modelWarOnline):isSameTeamIndex(playerIndex, getPlayerIndexLoggedIn(modelWarOnline)))
     if (shouldUpdateFogMap) then
         modelFogMap:updateMapForPathsWithModelUnitAndPath(focusModelUnit, pathNodes)
     end
@@ -601,7 +601,7 @@ local function executeAttack(action, modelWarOnline)
                 end
             end
 
-            if ((targetVision) and (targetPlayerIndex == playerIndexLoggedIn)) then
+            if ((targetVision) and (getModelPlayerManager(modelWarOnline):isSameTeamIndex(targetPlayerIndex, playerIndexLoggedIn))) then
                 getModelFogMap(modelWarOnline):updateMapForUnitsForPlayerIndexOnUnitLeave(targetPlayerIndex, targetGridIndex, targetVision)
             end
             if (lostPlayerIndex) then
@@ -722,7 +722,7 @@ local function executeBuildModelTile(action, modelWarOnline)
         modelTile:updateWithObjectAndBaseId(focusModelUnit:getBuildTiledIdWithTileType(modelTile:getTileType()))
 
         local playerIndex = focusModelUnit:getPlayerIndex()
-        if ((IS_SERVER) or (playerIndex == getPlayerIndexLoggedIn(modelWarOnline))) then
+        if ((IS_SERVER) or (getModelPlayerManager(modelWarOnline):isSameTeamIndex(playerIndex, getPlayerIndexLoggedIn(modelWarOnline)))) then
             getModelFogMap(modelWarOnline):updateMapForTilesForPlayerIndexOnGettingOwnership(playerIndex, endingGridIndex, modelTile:getVisionForPlayerIndex(playerIndex))
         end
     end
@@ -778,7 +778,7 @@ local function executeCaptureModelTile(action, modelWarOnline)
         modelTile:setCurrentCapturePoint(modelTile:getMaxCapturePoint())
             :updateWithPlayerIndex(playerIndexActing)
 
-        if ((IS_SERVER) or (playerIndexActing == playerIndexLoggedIn)) then
+        if ((IS_SERVER) or (getModelPlayerManager(modelWarOnline):isSameTeamIndex(playerIndexActing, playerIndexLoggedIn))) then
             modelFogMap:updateMapForTilesForPlayerIndexOnGettingOwnership(playerIndexActing, endingGridIndex, modelTile:getVisionForPlayerIndex(playerIndexActing))
         end
     end
@@ -811,7 +811,7 @@ local function executeCaptureModelTile(action, modelWarOnline)
                     :showNormalAnimation()
                 modelTile:updateView()
 
-                if ((capturePoint <= 0) and (previousPlayerIndex == playerIndexLoggedIn)) then
+                if ((capturePoint <= 0) and (getModelPlayerManager(modelWarOnline):isSameTeamIndex(previousPlayerIndex, playerIndexLoggedIn))) then
                     modelFogMap:updateMapForTilesForPlayerIndexOnLosingOwnership(previousPlayerIndex, endingGridIndex, previousVision)
                 end
                 updateTileAndUnitMapOnVisibilityChanged(modelWarOnline)
@@ -881,7 +881,7 @@ local function executeDestroyOwnedModelUnit(action, modelWarOnline)
     local playerIndexLoggedIn = (not IS_SERVER) and (getPlayerIndexLoggedIn(modelWarOnline)) or (nil)
 
     if (gridIndex) then
-        if ((IS_SERVER) or (playerIndexActing == playerIndexLoggedIn)) then
+        if ((IS_SERVER) or (getModelPlayerManager(modelWarOnline):isSameTeamIndex(playerIndexActing, playerIndexLoggedIn))) then
             getModelFogMap(modelWarOnline):updateMapForPathsWithModelUnitAndPath(modelUnitMap:getModelUnit(gridIndex), {gridIndex})
         end
         destroyActorUnitOnMap(modelWarOnline, gridIndex, true)
@@ -969,7 +969,7 @@ local function executeDropModelUnit(action, modelWarOnline)
     focusModelUnit:setStateActioned()
 
     local playerIndex        = focusModelUnit:getPlayerIndex()
-    local shouldUpdateFogMap = (IS_SERVER) or (playerIndex == getPlayerIndexLoggedIn(modelWarOnline))
+    local shouldUpdateFogMap = (IS_SERVER) or (getModelPlayerManager(modelWarOnline):isSameTeamIndex(playerIndex, getPlayerIndexLoggedIn(modelWarOnline)))
     local modelFogMap        = getModelFogMap(modelWarOnline)
     local dropModelUnits     = {}
     for _, dropDestination in ipairs(action.dropDestinations) do
@@ -1150,7 +1150,7 @@ local function executeLaunchFlare(action, modelWarOnline)
         :setCurrentFlareAmmo(focusModelUnit:getCurrentFlareAmmo() - 1)
 
     local playerIndexLoggedIn = (not IS_SERVER) and (getPlayerIndexLoggedIn(modelWarOnline)) or (nil)
-    if ((IS_SERVER) or (playerIndexActing == playerIndexLoggedIn)) then
+    if ((IS_SERVER) or (getModelPlayerManager(modelWarOnline):isSameTeamIndex(playerIndexActing, playerIndexLoggedIn))) then
         getModelFogMap(modelWarOnline):updateMapForPathsForPlayerIndexWithFlare(playerIndexActing, targetGridIndex, flareAreaRadius)
     end
 
@@ -1290,7 +1290,7 @@ local function executeProduceModelUnitOnTile(action, modelWarOnline)
         local producedActorUnit = produceActorUnit(modelWarOnline, action.tiledID, producedUnitID, gridIndex)
         modelUnitMap:addActorUnitOnMap(producedActorUnit)
 
-        if ((IS_SERVER) or (playerIndex == getPlayerIndexLoggedIn(modelWarOnline))) then
+        if ((IS_SERVER) or (getModelPlayerManager(modelWarOnline):isSameTeamIndex(playerIndex, getPlayerIndexLoggedIn(modelWarOnline)))) then
             getModelFogMap(modelWarOnline):updateMapForUnitsForPlayerIndexOnUnitArrive(playerIndex, gridIndex, producedActorUnit:getModel():getVisionForPlayerIndex(playerIndex))
         end
     end
