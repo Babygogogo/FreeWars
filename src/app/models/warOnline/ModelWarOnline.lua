@@ -335,8 +335,6 @@ end
 --------------------------------------------------------------------------------
 -- The public functions/accessors.
 --------------------------------------------------------------------------------
-ModelWarOnline.isModelSceneWar = true
-
 function ModelWarOnline:isWarReplay()
     return false
 end

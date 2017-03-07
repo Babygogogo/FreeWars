@@ -3,7 +3,10 @@ local ModelUnitForReplay = requireFW("src.global.functions.class")("ModelUnitFor
 
 local GameConstantFunctions = requireFW("src.app.utilities.GameConstantFunctions")
 local LocalizationFunctions = requireFW("src.app.utilities.LocalizationFunctions")
+local SingletonGetters      = requireFW("src.app.utilities.SingletonGetters")
 local ComponentManager      = requireFW("src.global.components.ComponentManager")
+
+local assert = assert
 
 local UNIT_STATE_CODE = {
     Idle     = 1,
@@ -92,6 +95,7 @@ end
 --------------------------------------------------------------------------------
 function ModelUnitForReplay:onStartRunning(modelWarReplay)
     self.m_ModelWarReplay = modelWarReplay
+    self.m_TeamIndex      = SingletonGetters.getModelPlayerManager(modelWarReplay):getModelPlayer(self:getPlayerIndex()):getTeamIndex()
 
     ComponentManager.callMethodForAllComponents(self, "onStartRunning", modelWarReplay)
     self:updateView()
@@ -160,6 +164,11 @@ end
 
 function ModelUnitForReplay:getPlayerIndex()
     return GameConstantFunctions.getPlayerIndexWithTiledId(self.m_TiledID)
+end
+
+function ModelUnitForReplay:getTeamIndex()
+    assert(self.m_TeamIndex, "ModelUnitForReplay:getTeamIndex() the index hasn't been initialized yet.")
+    return self.m_TeamIndex
 end
 
 function ModelUnitForReplay:isStateIdle()

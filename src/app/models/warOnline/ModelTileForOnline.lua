@@ -165,7 +165,7 @@ function ModelTileForOnline:toSerializableTable()
 end
 
 function ModelTileForOnline:toSerializableTableForPlayerIndex(playerIndex)
-    if (isTileVisibleToPlayerIndex(self.m_ModelSceneWar, self:getGridIndex(), playerIndex)) then
+    if (isTileVisibleToPlayerIndex(self.m_ModelWar, self:getGridIndex(), playerIndex)) then
         return self:toSerializableTable()
     end
 
@@ -215,9 +215,9 @@ end
 --------------------------------------------------------------------------------
 -- The public callback function on start running.
 --------------------------------------------------------------------------------
-function ModelTileForOnline:onStartRunning(modelSceneWar)
-    self.m_ModelSceneWar = modelSceneWar
-    ComponentManager.callMethodForAllComponents(self, "onStartRunning", modelSceneWar)
+function ModelTileForOnline:onStartRunning(modelWar)
+    self.m_ModelWar = modelWar
+    ComponentManager.callMethodForAllComponents(self, "onStartRunning", modelWar)
 
     return self
 end
@@ -251,6 +251,15 @@ function ModelTileForOnline:getPlayerIndex()
     return GameConstantFunctions.getPlayerIndexWithTiledId(self:getTiledId())
 end
 
+function ModelTileForOnline:getTeamIndex()
+    local playerIndex = self:getPlayerIndex()
+    if (playerIndex == 0) then
+        return nil
+    else
+        return SingletonGetters.getModelPlayerManager(self.m_ModelWar):getModelPlayer(playerIndex):getTeamIndex()
+    end
+end
+
 function ModelTileForOnline:getTileType()
     return GameConstantFunctions.getTileTypeWithObjectAndBaseId(self:getObjectAndBaseId())
 end
@@ -269,7 +278,7 @@ function ModelTileForOnline:updateWithObjectAndBaseId(objectID, baseID)
 
     initWithTiledID(self, objectID, baseID)
     loadInstantialData(self, {GridIndexable = {x = gridIndex.x, y = gridIndex.y}})
-    self:onStartRunning(self.m_ModelSceneWar)
+    self:onStartRunning(self.m_ModelWar)
 
     return self
 end
@@ -302,7 +311,7 @@ function ModelTileForOnline:updateWithPlayerIndex(playerIndex)
             GridIndexable = {x = gridIndex.x, y = gridIndex.y},
             Capturable    = {currentCapturePoint = currentCapturePoint},
         })
-        self:onStartRunning(self.m_ModelSceneWar)
+        self:onStartRunning(self.m_ModelWar)
     end
 
     return self
@@ -330,7 +339,7 @@ function ModelTileForOnline:updateAsFogDisabled(data)
             else
                 initWithTiledID(self, objectID, baseID)
                 loadInstantialData(self, data)
-                self:onStartRunning(self.m_ModelSceneWar)
+                self:onStartRunning(self.m_ModelWar)
             end
         end
     end

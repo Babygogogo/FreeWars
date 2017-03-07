@@ -50,7 +50,7 @@ local function getMoveCost(gridIndex, modelUnit, modelUnitMap, modelTileMap)
         return nil
     else
         local existingModelUnit = modelUnitMap:getModelUnit(gridIndex)
-        if ((existingModelUnit) and (existingModelUnit:getPlayerIndex() ~= modelUnit:getPlayerIndex())) then
+        if ((existingModelUnit) and (existingModelUnit:getTeamIndex() ~= modelUnit:getTeamIndex())) then
             return nil
         else
             return modelTileMap:getModelTile(gridIndex):getMoveCostWithModelUnit(modelUnit)
@@ -144,8 +144,8 @@ local function canDoAdditionalDropAction(self)
         return false
     end
 
-    local modelUnitMap             = getModelUnitMap(self.m_ModelSceneWar)
-    local modelTileMap             = getModelTileMap(self.m_ModelSceneWar)
+    local modelUnitMap             = getModelUnitMap(self.m_ModelWar)
+    local modelTileMap             = getModelTileMap(self.m_ModelWar)
     local loaderBeginningGridIndex = focusModelUnit:getGridIndex()
     local loaderEndingGridIndex    = getPathNodesDestination(self.m_PathNodes)
     for _, unitID in pairs(focusModelUnit:getLoadUnitIdList()) do
@@ -163,7 +163,7 @@ end
 --------------------------------------------------------------------------------
 local function updateMovePathWithDestinationGrid(self, gridIndex)
     local maxRange     = math.min(self.m_FocusModelUnit:getMoveRange(), self.m_FocusModelUnit:getCurrentFuel())
-    local nextMoveCost = getMoveCost(gridIndex, self.m_FocusModelUnit, getModelUnitMap(self.m_ModelSceneWar), getModelTileMap(self.m_ModelSceneWar))
+    local nextMoveCost = getMoveCost(gridIndex, self.m_FocusModelUnit, getModelUnitMap(self.m_ModelWar), getModelTileMap(self.m_ModelWar))
 
     if ((not MovePathFunctions.truncateToGridIndex(self.m_PathNodes, gridIndex))                        and
         (not MovePathFunctions.extendToGridIndex(self.m_PathNodes, gridIndex, nextMoveCost, maxRange))) then
@@ -191,20 +191,18 @@ local function resetReachableArea(self, focusModelUnit)
         focusModelUnit:getGridIndex(),
         math.min(focusModelUnit:getMoveRange(), focusModelUnit:getCurrentFuel()),
         function(gridIndex)
-            return getMoveCost(gridIndex, focusModelUnit, getModelUnitMap(self.m_ModelSceneWar), getModelTileMap(self.m_ModelSceneWar))
+            return getMoveCost(gridIndex, focusModelUnit, getModelUnitMap(self.m_ModelWar), getModelTileMap(self.m_ModelWar))
         end
     )
 
-    if (self.m_View) then
-        self.m_View:setReachableArea(self.m_ReachableArea)
-    end
+    self.m_View:setReachableArea(self.m_ReachableArea)
 end
 
 --------------------------------------------------------------------------------
 -- The functions for dispatching events.
 --------------------------------------------------------------------------------
 local function dispatchEvtPreviewBattleDamage(self, attackDamage, counterDamage)
-    getScriptEventDispatcher(self.m_ModelSceneWar):dispatchEvent({
+    getScriptEventDispatcher(self.m_ModelWar):dispatchEvent({
         name          = "EvtPreviewBattleDamage",
         attackDamage  = attackDamage,
         counterDamage = counterDamage,
@@ -212,14 +210,14 @@ local function dispatchEvtPreviewBattleDamage(self, attackDamage, counterDamage)
 end
 
 local function dispatchEvtPreviewNoBattleDatame(self)
-    getScriptEventDispatcher(self.m_ModelSceneWar):dispatchEvent({name = "EvtPreviewNoBattleDamage"})
+    getScriptEventDispatcher(self.m_ModelWar):dispatchEvent({name = "EvtPreviewNoBattleDamage"})
 end
 
 --------------------------------------------------------------------------------
 -- The functions for sending actions to the server.
 --------------------------------------------------------------------------------
 local function createAndSendAction(self, rawAction)
-    local modelSceneWar = self.m_ModelSceneWar
+    local modelSceneWar = self.m_ModelWar
     rawAction.warID     = SingletonGetters.getWarId(modelSceneWar)
     rawAction.actionID  = SingletonGetters.getActionId(modelSceneWar) + 1
     WebSocketManager.sendAction(rawAction)
@@ -373,8 +371,8 @@ local function getActionLoadModelUnit(self)
     if (GridIndexFunctions.isEqual(self.m_FocusModelUnit:getGridIndex(), destination)) then
         return nil
     else
-        local loaderModelUnit = getModelUnitMap(self.m_ModelSceneWar):getModelUnit(destination)
-        local tileType        = getModelTileMap(self.m_ModelSceneWar):getModelTile(destination):getTileType()
+        local loaderModelUnit = getModelUnitMap(self.m_ModelWar):getModelUnit(destination)
+        local tileType        = getModelTileMap(self.m_ModelWar):getModelTile(destination):getTileType()
         if ((loaderModelUnit)                                                    and
             (loaderModelUnit.canLoadModelUnit)                                   and
             (loaderModelUnit:canLoadModelUnit(self.m_FocusModelUnit, tileType))) then
@@ -389,7 +387,7 @@ local function getActionLoadModelUnit(self)
 end
 
 local function getActionJoinModelUnit(self)
-    local existingModelUnit = getModelUnitMap(self.m_ModelSceneWar):getModelUnit(getPathNodesDestination(self.m_PathNodes))
+    local existingModelUnit = getModelUnitMap(self.m_ModelWar):getModelUnit(getPathNodesDestination(self.m_PathNodes))
     if ((#self.m_PathNodes > 1)                                      and
         (existingModelUnit)                                          and
         (self.m_FocusModelUnit:canJoinModelUnit(existingModelUnit))) then
@@ -418,7 +416,7 @@ local function getActionAttack(self)
 end
 
 local function getActionCapture(self)
-    local modelTile = getModelTileMap(self.m_ModelSceneWar):getModelTile(getPathNodesDestination(self.m_PathNodes))
+    local modelTile = getModelTileMap(self.m_ModelWar):getModelTile(getPathNodesDestination(self.m_PathNodes))
     if ((self.m_FocusModelUnit.canCaptureModelTile) and (self.m_FocusModelUnit:canCaptureModelTile(modelTile))) then
         return {
             name     = getLocalizedText(78, "CaptureModelTile"),
@@ -444,7 +442,7 @@ local function getActionDive(self)
 end
 
 local function getActionBuildModelTile(self)
-    local tileType       = getModelTileMap(self.m_ModelSceneWar):getModelTile(getPathNodesDestination(self.m_PathNodes)):getTileType()
+    local tileType       = getModelTileMap(self.m_ModelWar):getModelTile(getPathNodesDestination(self.m_PathNodes)):getTileType()
     local focusModelUnit = self.m_FocusModelUnit
 
     if ((focusModelUnit.canBuildOnTileType)           and
@@ -472,7 +470,7 @@ local function getActionSupplyModelUnit(self)
         return nil
     end
 
-    local modelUnitMap = getModelUnitMap(self.m_ModelSceneWar)
+    local modelUnitMap = getModelUnitMap(self.m_ModelWar)
     for _, gridIndex in pairs(GridIndexFunctions.getAdjacentGrids(getPathNodesDestination(self.m_PathNodes), modelUnitMap:getMapSize())) do
         local modelUnit = modelUnitMap:getModelUnit(gridIndex)
         if ((modelUnit)                                     and
@@ -505,7 +503,7 @@ end
 local function getSingleActionLaunchModelUnit(self, unitID)
     local beginningGridIndex = self.m_PathNodes[1]
     local icon               = Actor.createView("common.ViewUnit")
-    icon:updateWithModelUnit(getModelUnitMap(self.m_ModelSceneWar):getFocusModelUnit(beginningGridIndex, unitID))
+    icon:updateWithModelUnit(getModelUnitMap(self.m_ModelWar):getFocusModelUnit(beginningGridIndex, unitID))
         :setScale(0.5)
 
     return {
@@ -526,8 +524,8 @@ local function getActionsLaunchModelUnit(self)
     end
 
     local actions      = {}
-    local modelUnitMap = getModelUnitMap(self.m_ModelSceneWar)
-    local modelTile    = getModelTileMap(self.m_ModelSceneWar):getModelTile(getPathNodesDestination(self.m_PathNodes))
+    local modelUnitMap = getModelUnitMap(self.m_ModelWar)
+    local modelTile    = getModelTileMap(self.m_ModelWar):getModelTile(getPathNodesDestination(self.m_PathNodes))
     for _, unitID in ipairs(focusModelUnit:getLoadUnitIdList()) do
         local launchModelUnit = modelUnitMap:getLoadedModelUnitWithUnitId(unitID)
         if ((launchModelUnit:isStateIdle())                        and
@@ -541,7 +539,7 @@ end
 
 local function getSingleActionDropModelUnit(self, unitID)
     local icon = Actor.createView("common.ViewUnit")
-    icon:updateWithModelUnit(getModelUnitMap(self.m_ModelSceneWar):getLoadedModelUnitWithUnitId(unitID))
+    icon:updateWithModelUnit(getModelUnitMap(self.m_ModelWar):getLoadedModelUnitWithUnitId(unitID))
         :ignoreAnchorPointForPosition(true)
         :setScale(0.5)
 
@@ -557,7 +555,7 @@ end
 local function getActionsDropModelUnit(self)
     local focusModelUnit        = self.m_FocusModelUnit
     local dropDestinations      = self.m_SelectedDropDestinations
-    local modelTileMap          = getModelTileMap(self.m_ModelSceneWar)
+    local modelTileMap          = getModelTileMap(self.m_ModelWar)
     local loaderEndingGridIndex = getPathNodesDestination(self.m_PathNodes)
 
     if ((not focusModelUnit.getCurrentLoadCount)                                                               or
@@ -568,11 +566,11 @@ local function getActionsDropModelUnit(self)
 
     local actions = {}
     local loaderBeginningGridIndex = self.m_FocusModelUnit:getGridIndex()
-    local modelUnitMap             = getModelUnitMap(self.m_ModelSceneWar)
+    local modelUnitMap             = getModelUnitMap(self.m_ModelWar)
 
     for _, unitID in ipairs(focusModelUnit:getLoadUnitIdList()) do
         if (not isModelUnitDropped(unitID, dropDestinations)) then
-            local droppingModelUnit = getModelUnitMap(self.m_ModelSceneWar):getLoadedModelUnitWithUnitId(unitID)
+            local droppingModelUnit = getModelUnitMap(self.m_ModelWar):getLoadedModelUnitWithUnitId(unitID)
             if (#getAvailableDropGrids(droppingModelUnit, loaderBeginningGridIndex, loaderEndingGridIndex, modelUnitMap, modelTileMap, dropDestinations) > 0) then
                 actions[#actions + 1] = getSingleActionDropModelUnit(self, unitID)
             end
@@ -584,7 +582,7 @@ end
 
 local function getActionLaunchFlare(self)
     local focusModelUnit = self.m_FocusModelUnit
-    if ((not getModelFogMap(self.m_ModelSceneWar):isFogOfWarCurrently()) or
+    if ((not getModelFogMap(self.m_ModelWar):isFogOfWarCurrently()) or
         (#self.m_PathNodes ~= 1)                                         or
         (not focusModelUnit.getCurrentFlareAmmo)                         or
         (focusModelUnit:getCurrentFlareAmmo() == 0))                     then
@@ -601,7 +599,7 @@ end
 
 local function getActionLaunchSilo(self)
     local focusModelUnit = self.m_FocusModelUnit
-    local modelTile      = getModelTileMap(self.m_ModelSceneWar):getModelTile(getPathNodesDestination(self.m_PathNodes))
+    local modelTile      = getModelTileMap(self.m_ModelWar):getModelTile(getPathNodesDestination(self.m_PathNodes))
 
     if ((focusModelUnit.canLaunchSiloOnTileType) and
         (focusModelUnit:canLaunchSiloOnTileType(modelTile:getTileType()))) then
@@ -626,8 +624,8 @@ local function getActionProduceModelUnitOnUnit(self)
         return nil
     else
         local produceTiledId     = focusModelUnit:getMovableProductionTiledId()
-        local modelPlayerManager = getModelPlayerManager(self.m_ModelSceneWar)
-        local fund               = modelPlayerManager:getModelPlayer(getPlayerIndexLoggedIn(self.m_ModelSceneWar)):getFund()
+        local modelPlayerManager = getModelPlayerManager(self.m_ModelWar)
+        local fund               = modelPlayerManager:getModelPlayer(getPlayerIndexLoggedIn(self.m_ModelWar)):getFund()
         local icon               = cc.Sprite:create()
         icon:setAnchorPoint(0, 0)
             :setScale(0.5)
@@ -650,7 +648,7 @@ local function getActionProduceModelUnitOnUnit(self)
 end
 
 local function getActionWait(self)
-    local existingUnitModel = getModelUnitMap(self.m_ModelSceneWar):getModelUnit(getPathNodesDestination(self.m_PathNodes))
+    local existingUnitModel = getModelUnitMap(self.m_ModelWar):getModelUnit(getPathNodesDestination(self.m_PathNodes))
     if (not existingUnitModel) or (self.m_FocusModelUnit == existingUnitModel) then
         return {
             name     = getLocalizedText(78, "Wait"),
@@ -713,7 +711,7 @@ end
 -- The set state functions.
 --------------------------------------------------------------------------------
 local function canSetStatePreviewingAttackableArea(self, gridIndex)
-    local modelSceneWar = self.m_ModelSceneWar
+    local modelSceneWar = self.m_ModelWar
     local modelUnit     = getModelUnitMap(modelSceneWar):getModelUnit(gridIndex)
     if ((not modelUnit) or (not modelUnit.getAttackRangeMinMax)) then
         return false
@@ -727,7 +725,7 @@ end
 
 setStatePreviewingAttackableArea = function(self, gridIndex)
     self.m_State = "previewingAttackableArea"
-    local modelUnit = getModelUnitMap(self.m_ModelSceneWar):getModelUnit(gridIndex)
+    local modelUnit = getModelUnitMap(self.m_ModelWar):getModelUnit(gridIndex)
     for _, existingModelUnit in pairs(self.m_PreviewAttackModelUnits) do
         if (modelUnit == existingModelUnit) then
             return
@@ -735,7 +733,7 @@ setStatePreviewingAttackableArea = function(self, gridIndex)
     end
 
     self.m_PreviewAttackModelUnits[#self.m_PreviewAttackModelUnits + 1] = modelUnit
-    self.m_PreviewAttackableArea = AttackableGridListFunctions.createAttackableArea(gridIndex, getModelTileMap(self.m_ModelSceneWar), getModelUnitMap(self.m_ModelSceneWar), self.m_PreviewAttackableArea)
+    self.m_PreviewAttackableArea = AttackableGridListFunctions.createAttackableArea(gridIndex, getModelTileMap(self.m_ModelWar), getModelUnitMap(self.m_ModelWar), self.m_PreviewAttackableArea)
 
     if (self.m_View) then
         self.m_View:setPreviewAttackableArea(self.m_PreviewAttackableArea)
@@ -745,7 +743,7 @@ setStatePreviewingAttackableArea = function(self, gridIndex)
 end
 
 local function canSetStatePreviewingReachableArea(self, gridIndex)
-    local modelSceneWar = self.m_ModelSceneWar
+    local modelSceneWar = self.m_ModelWar
     local modelUnit     = getModelUnitMap(modelSceneWar):getModelUnit(gridIndex)
     if ((not modelUnit) or (modelUnit.getAttackRangeMinMax)) then
         return false
@@ -760,13 +758,13 @@ end
 setStatePreviewingReachableArea = function(self, gridIndex)
     self.m_State = "previewingReachableArea"
 
-    local modelUnit              = getModelUnitMap(self.m_ModelSceneWar):getModelUnit(gridIndex)
+    local modelUnit              = getModelUnitMap(self.m_ModelWar):getModelUnit(gridIndex)
     self.m_PreviewReachModelUnit = modelUnit
     self.m_PreviewReachableArea  = ReachableAreaFunctions.createArea(
         gridIndex,
         math.min(modelUnit:getMoveRange(), modelUnit:getCurrentFuel()),
         function(gridIndex)
-            return getMoveCost(gridIndex, modelUnit, getModelUnitMap(self.m_ModelSceneWar), getModelTileMap(self.m_ModelSceneWar))
+            return getMoveCost(gridIndex, modelUnit, getModelUnitMap(self.m_ModelWar), getModelTileMap(self.m_ModelWar))
         end
     )
 
@@ -778,14 +776,14 @@ setStatePreviewingReachableArea = function(self, gridIndex)
 end
 
 local function canSetStateChoosingProductionTarget(self, gridIndex)
-    local playerIndexLoggedIn = getPlayerIndexLoggedIn(self.m_ModelSceneWar)
-    local modelTurnManager    = getModelTurnManager(self.m_ModelSceneWar)
+    local playerIndexLoggedIn = getPlayerIndexLoggedIn(self.m_ModelWar)
+    local modelTurnManager    = getModelTurnManager(self.m_ModelWar)
     if ((modelTurnManager:getPlayerIndex() ~= playerIndexLoggedIn) or
         (not modelTurnManager:isTurnPhaseMain()))                  then
         return false
     else
-        local modelTile = getModelTileMap(self.m_ModelSceneWar):getModelTile(gridIndex)
-        return (not getModelUnitMap(self.m_ModelSceneWar):getModelUnit(gridIndex))  and
+        local modelTile = getModelTileMap(self.m_ModelWar):getModelTile(gridIndex)
+        return (not getModelUnitMap(self.m_ModelWar):getModelUnit(gridIndex))  and
             (modelTile:getPlayerIndex() == playerIndexLoggedIn) and
             (modelTile.getProductionList)
     end
@@ -793,7 +791,7 @@ end
 
 setStateChoosingProductionTarget = function(self, gridIndex)
     self.m_State = "choosingProductionTarget"
-    local modelTile      = getModelTileMap(self.m_ModelSceneWar):getModelTile(gridIndex)
+    local modelTile      = getModelTileMap(self.m_ModelWar):getModelTile(gridIndex)
     local productionList = modelTile:getProductionList()
 
     for _, listItem in ipairs(productionList) do
@@ -802,26 +800,26 @@ setStateChoosingProductionTarget = function(self, gridIndex)
         end
     end
 
-    getScriptEventDispatcher(self.m_ModelSceneWar):dispatchEvent({
+    getScriptEventDispatcher(self.m_ModelWar):dispatchEvent({
         name           = "EvtActionPlannerChoosingProductionTarget",
         productionList = productionList,
     })
 end
 
 local function canSetStateMakingMovePath(self, beginningGridIndex, launchUnitID)
-    local playerIndexLoggedIn = getPlayerIndexLoggedIn(self.m_ModelSceneWar)
-    local modelTurnManager    = getModelTurnManager(self.m_ModelSceneWar)
+    local playerIndexLoggedIn = getPlayerIndexLoggedIn(self.m_ModelWar)
+    local modelTurnManager    = getModelTurnManager(self.m_ModelWar)
     if ((modelTurnManager:getPlayerIndex() ~= playerIndexLoggedIn) or
         (not modelTurnManager:isTurnPhaseMain()))                  then
         return false
     else
-        local modelUnit = getModelUnitMap(self.m_ModelSceneWar):getFocusModelUnit(beginningGridIndex, launchUnitID)
+        local modelUnit = getModelUnitMap(self.m_ModelWar):getFocusModelUnit(beginningGridIndex, launchUnitID)
         return (modelUnit) and (modelUnit:isStateIdle()) and (modelUnit:getPlayerIndex() == playerIndexLoggedIn)
     end
 end
 
 setStateMakingMovePath = function(self, beginningGridIndex, launchUnitID)
-    local focusModelUnit = getModelUnitMap(self.m_ModelSceneWar):getFocusModelUnit(beginningGridIndex, launchUnitID)
+    local focusModelUnit = getModelUnitMap(self.m_ModelWar):getFocusModelUnit(beginningGridIndex, launchUnitID)
     if (self.m_FocusModelUnit ~= focusModelUnit) then
         self.m_FocusModelUnit = focusModelUnit
         resetReachableArea(self, focusModelUnit)
@@ -832,26 +830,24 @@ setStateMakingMovePath = function(self, beginningGridIndex, launchUnitID)
     self.m_LaunchUnitID   = launchUnitID
 
     focusModelUnit:showMovingAnimation()
-    if (self.m_View) then
-        self.m_View:setReachableAreaVisible(true)
-            :setAttackableGridsVisible(false)
-            :setMovePathVisible(true)
-            :setMovePathDestinationVisible(false)
+    self.m_View:setReachableAreaVisible(true)
+        :setAttackableGridsVisible(false)
+        :setMovePathVisible(true)
+        :setMovePathDestinationVisible(false)
 
-        if (launchUnitID) then
-            getModelUnitMap(self.m_ModelSceneWar):setPreviewLaunchUnit(focusModelUnit, beginningGridIndex)
-                :setPreviewLaunchUnitVisible(true)
-        else
-            getModelUnitMap(self.m_ModelSceneWar):setPreviewLaunchUnitVisible(false)
-        end
+    if (launchUnitID) then
+        getModelUnitMap(self.m_ModelWar):setPreviewLaunchUnit(focusModelUnit, beginningGridIndex)
+            :setPreviewLaunchUnitVisible(true)
+    else
+        getModelUnitMap(self.m_ModelWar):setPreviewLaunchUnitVisible(false)
     end
 
-    getScriptEventDispatcher(self.m_ModelSceneWar):dispatchEvent({name = "EvtActionPlannerMakingMovePath"})
+    getScriptEventDispatcher(self.m_ModelWar):dispatchEvent({name = "EvtActionPlannerMakingMovePath"})
 end
 
 setStateChoosingAction = function(self, destination, launchUnitID)
     local beginningGridIndex = self.m_PathNodes[1]
-    local focusModelUnit     = getModelUnitMap(self.m_ModelSceneWar):getFocusModelUnit(beginningGridIndex, launchUnitID)
+    local focusModelUnit     = getModelUnitMap(self.m_ModelWar):getFocusModelUnit(beginningGridIndex, launchUnitID)
     if (self.m_FocusModelUnit ~= focusModelUnit) then
         self.m_FocusModelUnit  = focusModelUnit
         destination            = beginningGridIndex
@@ -875,12 +871,12 @@ setStateChoosingAction = function(self, destination, launchUnitID)
             :setFlareGridsVisible(false)
 
         if (not launchUnitID) then
-            getModelUnitMap(self.m_ModelSceneWar):setPreviewLaunchUnitVisible(false)
+            getModelUnitMap(self.m_ModelWar):setPreviewLaunchUnitVisible(false)
         end
     end
 
     local list, itemWait = getAvailableActionList(self)
-    getScriptEventDispatcher(self.m_ModelSceneWar):dispatchEvent({
+    getScriptEventDispatcher(self.m_ModelWar):dispatchEvent({
         name     = "EvtActionPlannerChoosingAction",
         list     = list,
         itemWait = itemWait,
@@ -895,7 +891,7 @@ setStateChoosingAttackTarget = function(self, destination)
             :setAttackableGridsVisible(true)
     end
 
-    getScriptEventDispatcher(self.m_ModelSceneWar):dispatchEvent({name = "EvtActionPlannerChoosingAttackTarget"})
+    getScriptEventDispatcher(self.m_ModelWar):dispatchEvent({name = "EvtActionPlannerChoosingAttackTarget"})
 end
 
 setStateChoosingFlareTarget = function(self)
@@ -906,20 +902,20 @@ setStateChoosingFlareTarget = function(self)
             :setFlareGridsVisible(true)
     end
 
-    getScriptEventDispatcher(self.m_ModelSceneWar):dispatchEvent({name = "EvtActionPlannerChoosingFlareTarget"})
+    getScriptEventDispatcher(self.m_ModelWar):dispatchEvent({name = "EvtActionPlannerChoosingFlareTarget"})
 end
 
 setStateChoosingSiloTarget = function(self)
     self.m_State = "choosingSiloTarget"
 
-    getScriptEventDispatcher(self.m_ModelSceneWar):dispatchEvent({name = "EvtActionPlannerChoosingSiloTarget"})
+    getScriptEventDispatcher(self.m_ModelWar):dispatchEvent({name = "EvtActionPlannerChoosingSiloTarget"})
 end
 
 setStateChoosingDropDestination = function(self, unitID)
     self.m_State = "choosingDropDestination"
 
-    local droppingModelUnit   = getModelUnitMap(self.m_ModelSceneWar):getLoadedModelUnitWithUnitId(unitID)
-    self.m_AvailableDropGrids = getAvailableDropGrids(droppingModelUnit, self.m_FocusModelUnit:getGridIndex(), getPathNodesDestination(self.m_PathNodes), getModelUnitMap(self.m_ModelSceneWar), getModelTileMap(self.m_ModelSceneWar), self.m_SelectedDropDestinations)
+    local droppingModelUnit   = getModelUnitMap(self.m_ModelWar):getLoadedModelUnitWithUnitId(unitID)
+    self.m_AvailableDropGrids = getAvailableDropGrids(droppingModelUnit, self.m_FocusModelUnit:getGridIndex(), getPathNodesDestination(self.m_PathNodes), getModelUnitMap(self.m_ModelWar), getModelTileMap(self.m_ModelWar), self.m_SelectedDropDestinations)
     self.m_DroppingUnitID     = unitID
 
     if (self.m_View) then
@@ -930,7 +926,7 @@ setStateChoosingDropDestination = function(self, unitID)
             :setPreviewDropDestinationVisible(false)
     end
 
-    getScriptEventDispatcher(self.m_ModelSceneWar):dispatchEvent({name = "EvtActionPlannerChoosingDropDestination"})
+    getScriptEventDispatcher(self.m_ModelWar):dispatchEvent({name = "EvtActionPlannerChoosingDropDestination"})
 end
 
 setStateChoosingAdditionalDropAction = function(self)
@@ -944,7 +940,7 @@ setStateChoosingAdditionalDropAction = function(self)
     end
 
     local list, itemWait = getAdditionalDropActionList(self)
-    getScriptEventDispatcher(self.m_ModelSceneWar):dispatchEvent({
+    getScriptEventDispatcher(self.m_ModelWar):dispatchEvent({
         name     = "EvtActionPlannerChoosingAction",
         list     = list,
         itemWait = itemWait,
@@ -971,7 +967,7 @@ end
 
 local function onEvtMapCursorMoved(self, event)
     if ((self.m_IsWaitingForServerResponse)                                                       or
-        (getModelTurnManager(self.m_ModelSceneWar):getPlayerIndex() ~= getPlayerIndexLoggedIn(self.m_ModelSceneWar))) then
+        (getModelTurnManager(self.m_ModelWar):getPlayerIndex() ~= getPlayerIndexLoggedIn(self.m_ModelWar))) then
         return
     end
 
@@ -994,7 +990,7 @@ local function onEvtMapCursorMoved(self, event)
     elseif (state == "choosingDropDestination") then
         if (self.m_View) then
             if (isDropGridAvailable(gridIndex, self.m_AvailableDropGrids)) then
-                self.m_View:setPreviewDropDestination(gridIndex, getModelUnitMap(self.m_ModelSceneWar):getLoadedModelUnitWithUnitId(self.m_DroppingUnitID))
+                self.m_View:setPreviewDropDestination(gridIndex, getModelUnitMap(self.m_ModelWar):getLoadedModelUnitWithUnitId(self.m_DroppingUnitID))
                     :setPreviewDropDestinationVisible(true)
             else
                 self.m_View:setPreviewDropDestinationVisible(false)
@@ -1028,7 +1024,7 @@ local function onEvtGridSelected(self, event)
             else
                 self:setStateIdle(true)
             end
-        elseif (canUnitStayInGrid(self.m_FocusModelUnit, gridIndex, getModelUnitMap(self.m_ModelSceneWar), getModelTileMap(self.m_ModelSceneWar))) then
+        elseif (canUnitStayInGrid(self.m_FocusModelUnit, gridIndex, getModelUnitMap(self.m_ModelWar), getModelTileMap(self.m_ModelWar))) then
             if ((self.m_LaunchUnitID) and (GridIndexFunctions.isEqual(self.m_FocusModelUnit:getGridIndex(), gridIndex))) then
                 setStateChoosingAction(self, self.m_PathNodes[1])
             else
@@ -1063,7 +1059,7 @@ local function onEvtGridSelected(self, event)
         end
     elseif (state == "choosingDropDestination") then
         if (isDropGridAvailable(gridIndex, self.m_AvailableDropGrids)) then
-            pushBackDropDestination(self.m_SelectedDropDestinations, self.m_DroppingUnitID, gridIndex, getModelUnitMap(self.m_ModelSceneWar):getLoadedModelUnitWithUnitId(self.m_DroppingUnitID))
+            pushBackDropDestination(self.m_SelectedDropDestinations, self.m_DroppingUnitID, gridIndex, getModelUnitMap(self.m_ModelWar):getLoadedModelUnitWithUnitId(self.m_DroppingUnitID))
             if (not canDoAdditionalDropAction(self)) then
                 sendActionDropModelUnit(self)
             else
@@ -1109,7 +1105,7 @@ end
 -- The callback functions on start running/script events.
 --------------------------------------------------------------------------------
 function ModelActionPlannerForOnline:onStartRunning(modelSceneWar)
-    self.m_ModelSceneWar    = modelSceneWar
+    self.m_ModelWar    = modelSceneWar
     getScriptEventDispatcher(modelSceneWar)
         :addEventListener("EvtGridSelected",               self)
         :addEventListener("EvtMapCursorMoved",             self)
@@ -1153,7 +1149,7 @@ function ModelActionPlannerForOnline:setStateIdle(resetUnitAnimation)
             :setPreviewReachableAreaVisible(  false)
             :setFlareGridsVisible(            false)
 
-        getModelUnitMap(self.m_ModelSceneWar):setPreviewLaunchUnitVisible(false)
+        getModelUnitMap(self.m_ModelWar):setPreviewLaunchUnitVisible(false)
         if ((resetUnitAnimation) and (self.m_FocusModelUnit)) then
             self.m_FocusModelUnit:showNormalAnimation()
         end
@@ -1173,7 +1169,7 @@ function ModelActionPlannerForOnline:setStateIdle(resetUnitAnimation)
     self.m_LaunchUnitID             = nil
     self.m_SelectedDropDestinations = {}
 
-    getScriptEventDispatcher(self.m_ModelSceneWar):dispatchEvent({name = "EvtActionPlannerIdle"})
+    getScriptEventDispatcher(self.m_ModelWar):dispatchEvent({name = "EvtActionPlannerIdle"})
 
     return self
 end
