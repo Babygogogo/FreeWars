@@ -377,6 +377,19 @@ local s_LongText21_2 = [[
 Untranslated...
 ]]
 
+local s_LongText22_1 = [[
+本选项规定本战局所有玩家所有部队/建筑的视野加成。
+
+如果选正数，则部队/建筑的视野相应增加，反之亦然。
+部队/建筑的最终视野最低为1。
+
+默认为“0”。
+]]
+
+local s_LongText22_2 = [[
+Untranslated...
+]]
+
 --------------------------------------------------------------------------------
 -- The private functions.
 --------------------------------------------------------------------------------
@@ -912,6 +925,7 @@ local s_Texts = {
             elseif (textType == "Starting Fund")                then return "初 始 资 金"
             elseif (textType == "StartingEnergy")               then return "初始能量"
             elseif (textType == "StartingFund")                 then return "初始资金"
+            elseif (textType == "VisionModifier")               then return "视野加成"
             elseif (textType == "WarFieldName")                 then return "地图名称"
             elseif (textType == "Yes")                          then return "是"
             else                                                     return "未知14:" .. (textType or "")
@@ -963,6 +977,7 @@ local s_Texts = {
             elseif (textType == "Starting Fund")                then return "Starting Fund"
             elseif (textType == "StartingEnergy")               then return "Starting Energy"
             elseif (textType == "StartingFund")                 then return "Starting Fund"
+            elseif (textType == "VisionModifier")               then return "VisionModifier"
             elseif (textType == "WarFieldName")                 then return "Map"
             elseif (textType == "Yes")                          then return "Yes"
             else                                                     return "Unknown14:" .. (textType or "")
@@ -1199,6 +1214,7 @@ local s_Texts = {
             elseif (textType == "HelpForRankMatch")              then return s_LongText16_1
             elseif (textType == "HelpForStartingEnergy")         then return s_LongText17_1
             elseif (textType == "HelpForStartingFund")           then return s_LongText18_1
+            elseif (textType == "HelpForVisionModifier")         then return s_LongText22_1
             else                                                      return "未知35:" .. (textType or "")
             end
         end,
@@ -1217,6 +1233,7 @@ local s_Texts = {
             elseif (textType == "HelpForRankMatch")              then return s_LongText16_2
             elseif (textType == "HelpForStartingEnergy")         then return s_LongText17_2
             elseif (textType == "HelpForStartingFund")           then return s_LongText18_2
+            elseif (textType == "HelpForVisionModifier")         then return s_LongText22_2
             else                                                      return "Unknown35:" .. (textType or "")
             end
         end,

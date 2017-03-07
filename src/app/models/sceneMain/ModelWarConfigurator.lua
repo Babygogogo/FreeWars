@@ -22,14 +22,6 @@ local INTERVALS_UNTIL_BOOT      = {60 * 15, 3600 * 24, 3600 * 24 * 3, 3600 * 24 
 local STARTING_ENERGIES         = {0, 10000, 20000, 30000, 40000, 50000, 60000, 70000, 80000, 90000, 100000}
 local STARTING_FUNDS            = {0, 5000, 10000, 20000, 30000, 40000, 50000, 100000, 150000, 200000, 300000, 400000, 500000}
 
-local function initSelectorWeather(modelWarConfigurator)
-    -- TODO: enable the selector.
-    modelWarConfigurator:getModelOptionSelectorWithName("Weather"):setButtonsEnabled(false)
-        :setOptions({
-            {data = 1, text = getLocalizedText(40, "Clear"),},
-        })
-end
-
 --------------------------------------------------------------------------------
 -- The util functions.
 --------------------------------------------------------------------------------
@@ -128,6 +120,14 @@ local function generateTextForAttackModifier(attackModifier)
     end
 end
 
+local function generateTextForVisionModifier(visionModifier)
+    if (visionModifier == 0) then
+        return nil
+    else
+        return string.format("%s:         %d", getLocalizedText(14, "VisionModifier"), visionModifier)
+    end
+end
+
 local function generateTextForAdvancedSettings(self)
     local textList = {getLocalizedText(14, "Advanced Settings") .. ":"}
     textList[#textList + 1] = generateTextForStartingFund(          self.m_StartingFund)
@@ -139,6 +139,7 @@ local function generateTextForAdvancedSettings(self)
     textList[#textList + 1] = generateTextForEnableSkillDeclaration(self.m_IsSkillDeclarationEnabled)
     textList[#textList + 1] = generateTextForMoveRangeModifier(     self.m_MoveRangeModifier)
     textList[#textList + 1] = generateTextForAttackModifier(        self.m_AttackModifier)
+    textList[#textList + 1] = generateTextForVisionModifier(        self.m_VisionModifier)
 
     if (#textList == 1) then
         textList[#textList + 1] = getLocalizedText(14, "None")
@@ -258,6 +259,7 @@ local function sendActionNewWar(self)
         playerIndex               = self.m_PlayerIndex,
         startingEnergy            = self.m_StartingEnergy,
         startingFund              = self.m_StartingFund,
+        visionModifier            = self.m_VisionModifier,
         warPassword               = "", -- TODO: self.m_WarPassword,
         warFieldFileName          = self.m_WarConfiguration.warFieldFileName,
     })
@@ -383,6 +385,13 @@ local function setStateStartingFund(self)
     self.m_View:setMenuTitleText(getLocalizedText(14, "Starting Fund"))
         :setItems(self.m_ItemsForStateStartingFund)
         :setOverviewText(getLocalizedText(35, "HelpForStartingFund"))
+end
+
+local function setStateVisionModifier(self)
+    self.m_State = "stateVisionModifier"
+    self.m_View:setMenuTitleText(getLocalizedText(14, "VisionModifier"))
+        :setItems(self.m_ItemsForStateVisionModifier)
+        :setOverviewText(getLocalizedText(35, "HelpForVisionModifier"))
 end
 
 --------------------------------------------------------------------------------
@@ -531,6 +540,15 @@ local function initItemStartingFund(self)
     }
 end
 
+local function initItemVisionModifier(self)
+    self.m_ItemVisionModifier = {
+        name     = getLocalizedText(14, "VisionModifier"),
+        callback = function()
+            setStateVisionModifier(self)
+        end,
+    }
+end
+
 local function initItemsForStateAdvancedSettings(self)
     self.m_ItemsForStateAdvancedSettings = {
         self.m_ItemStartingFund,
@@ -542,6 +560,7 @@ local function initItemsForStateAdvancedSettings(self)
         self.m_ItemEnableSkillDeclaration,
         self.m_ItemMoveRangeModifier,
         self.m_ItemAttackModifier,
+        self.m_ItemVisionModifier,
     }
 end
 
@@ -774,6 +793,21 @@ local function initItemsForStateStartingFund(self)
     self.m_ItemsForStateStartingFund = items
 end
 
+local function initItemsForStateVisionModifier(self)
+    local items = {}
+    for modifier = 1, -1, -1 do
+        items[#items + 1] = {
+            name     = "" .. modifier,
+            callback = function()
+                self.m_VisionModifier = modifier
+                setStateMain(self)
+            end
+        }
+    end
+
+    self.m_ItemsForStateVisionModifier = items
+end
+
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
@@ -794,6 +828,7 @@ function ModelWarConfigurator:ctor()
     initItemRankMatch(             self)
     initItemStartingEnergy(        self)
     initItemStartingFund(          self)
+    initItemVisionModifier(        self)
 
     initItemsForStateAdvancedSettings(      self)
     initItemsForStateAttackModifier(        self)
@@ -809,6 +844,7 @@ function ModelWarConfigurator:ctor()
     initItemsForStateRankMatch(             self)
     initItemsForStateStartingEnergy(        self)
     initItemsForStateStartingFund(          self)
+    initItemsForStateVisionModifier(        self)
 
     return self
 end
@@ -923,6 +959,7 @@ function ModelWarConfigurator:resetWithWarConfiguration(warConfiguration)
         self.m_PlayerIndex               = 1
         self.m_StartingEnergy            = 0
         self.m_StartingFund              = 0
+        self.m_VisionModifier            = 0
 
         self.m_View:setButtonConfirmText(getLocalizedText(14, "ConfirmCreateWar"))
 
@@ -942,6 +979,7 @@ function ModelWarConfigurator:resetWithWarConfiguration(warConfiguration)
         self.m_PlayerIndex               = self.m_ItemsForStatePlayerIndex[1].playerIndex
         self.m_StartingEnergy            = warConfiguration.startingEnergy
         self.m_StartingFund              = warConfiguration.startingFund
+        self.m_VisionModifier            = warConfiguration.visionModifier
 
         self.m_View:setButtonConfirmText(getLocalizedText(14, "ConfirmJoinWar"))
 
@@ -961,6 +999,7 @@ function ModelWarConfigurator:resetWithWarConfiguration(warConfiguration)
         self.m_PlayerIndex               = getPlayerIndexForWarConfiguration(warConfiguration)
         self.m_StartingEnergy            = warConfiguration.startingEnergy
         self.m_StartingFund              = warConfiguration.startingFund
+        self.m_VisionModifier            = warConfiguration.visionModifier
 
         self.m_View:setButtonConfirmText(getLocalizedText(14, "ConfirmContinueWar"))
 
@@ -980,6 +1019,7 @@ function ModelWarConfigurator:resetWithWarConfiguration(warConfiguration)
         self.m_PlayerIndex               = getPlayerIndexForWarConfiguration(warConfiguration)
         self.m_StartingEnergy            = warConfiguration.startingEnergy
         self.m_StartingFund              = warConfiguration.startingFund
+        self.m_VisionModifier            = warConfiguration.visionModifier
 
         self.m_View:setButtonConfirmText(getLocalizedText(14, "ConfirmExitWar"))
 
@@ -1047,6 +1087,7 @@ function ModelWarConfigurator:onButtonBackTouched()
     elseif (state == "stateRankMatch")              then setStateMain(self)
     elseif (state == "stateStartingEnergy")         then setStateAdvancedSettings(self)
     elseif (state == "stateStartingFund")           then setStateAdvancedSettings(self)
+    elseif (state == "stateVisionModifier")         then setStateAdvancedSettings(self)
     elseif (self.m_OnButtonBackTouched)             then self.m_OnButtonBackTouched()
     end
 

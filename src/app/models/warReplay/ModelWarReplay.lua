@@ -169,6 +169,7 @@ function ModelWarReplay:ctor(sceneData)
     self.m_RemainingVotesForDraw     = sceneData.remainingVotesForDraw
     self.m_StartingEnergy            = sceneData.startingEnergy
     self.m_StartingFund              = sceneData.startingFund
+    self.m_VisionModifier            = sceneData.visionModifier             or 0
     self.m_WarID                     = sceneData.warID
     self.m_WarPassword               = sceneData.warPassword
     setActionId(self, sceneData.actionID)
@@ -257,6 +258,7 @@ function ModelWarReplay:toSerializableTable()
         remainingVotesForDraw     = self.m_RemainingVotesForDraw,
         startingEnergy            = self.m_StartingEnergy,
         startingFund              = self.m_StartingFund,
+        visionModifier            = self.m_VisionModifier,
         warID                     = self.m_WarID,
         warPassword               = self.m_WarPassword,
         players                   = self:getModelPlayerManager()   :toSerializableTable(),
@@ -441,6 +443,10 @@ end
 
 function ModelWarReplay:getStartingFund()
     return self.m_StartingFund
+end
+
+function ModelWarReplay:getVisionModifier()
+    return self.m_VisionModifier
 end
 
 function ModelWarReplay:getEnterTurnTime()

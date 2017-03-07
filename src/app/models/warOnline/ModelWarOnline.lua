@@ -157,6 +157,7 @@ function ModelWarOnline:ctor(sceneData)
     self.m_RemainingVotesForDraw     = sceneData.remainingVotesForDraw
     self.m_StartingEnergy            = sceneData.startingEnergy
     self.m_StartingFund              = sceneData.startingFund
+    self.m_VisionModifier            = sceneData.visionModifier
     self.m_WarID                     = sceneData.warID
     self.m_WarPassword               = sceneData.warPassword
 
@@ -214,6 +215,7 @@ function ModelWarOnline:toSerializableTable()
         remainingVotesForDraw     = self.m_RemainingVotesForDraw,
         startingEnergy            = self.m_StartingEnergy,
         startingFund              = self.m_StartingFund,
+        visionModifier            = self.m_VisionModifier,
         warID                     = self.m_WarID,
         warPassword               = self.m_WarPassword,
         chatData                  = self:getModelChatManager()     :toSerializableTable(),
@@ -247,6 +249,7 @@ function ModelWarOnline:toSerializableTableForPlayerIndex(playerIndex)
         remainingVotesForDraw     = self.m_RemainingVotesForDraw,
         startingEnergy            = self.m_StartingEnergy,
         startingFund              = self.m_StartingFund,
+        visionModifier            = self.m_VisionModifier,
         warID                     = self.m_WarID,
         warPassword               = self.m_WarPassword,
         chatData                  = self:getModelChatManager()     :toSerializableTableForPlayerIndex(playerIndex),
@@ -280,6 +283,7 @@ function ModelWarOnline:toSerializableReplayData()
         remainingVotesForDraw     = nil,
         startingEnergy            = self.m_StartingEnergy,
         startingFund              = self.m_StartingFund,
+        visionModifier            = self.m_VisionModifier,
         warID                     = self.m_WarID,
         warPassword               = self.m_WarPassword,
         chatData                  = nil,
@@ -445,6 +449,10 @@ end
 
 function ModelWarOnline:getStartingFund()
     return self.m_StartingFund
+end
+
+function ModelWarOnline:getVisionModifier()
+    return self.m_VisionModifier
 end
 
 function ModelWarOnline:getEnterTurnTime()

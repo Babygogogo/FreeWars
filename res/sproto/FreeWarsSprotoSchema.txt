@@ -173,6 +173,7 @@
     isSkillDeclarationEnabled 18 : boolean
     moveRangeModifier         19 : integer
     attackModifier            20 : integer
+    visionModifier            21 : integer
 }
 
 .ActionRegister {
@@ -788,6 +789,7 @@
     skillData                 27 :  SkillData
     moveRangeModifier         28 :  integer
     attackModifier            29 :  integer
+    visionModifier            30 :  integer
 }
 
 .WarIdForIndexing {
@@ -896,4 +898,5 @@
     isSkillDeclarationEnabled 20 :  boolean
     moveRangeModifier         21 :  integer
     attackModifier            22 :  integer
+    visionModifier            23 :  integer
 }
