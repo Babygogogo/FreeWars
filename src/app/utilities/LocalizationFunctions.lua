@@ -390,6 +390,19 @@ local s_LongText22_2 = [[
 Untranslated...
 ]]
 
+local s_LongText23_1 = [[
+本选项规定您所属的队伍。
+
+战局中，属于同一队伍的玩家共享视野，部队能够相互穿越，不能相互攻击/装载/用后勤车补给。
+此外，可以使用队友的建筑来维修/补给自己的部队（消耗自己的金钱），但不能占领队友的建筑。
+
+默认为当前可用选项中最靠前的一项。
+]]
+
+local s_LongText23_2 = [[
+Untranslated...
+]]
+
 --------------------------------------------------------------------------------
 -- The private functions.
 --------------------------------------------------------------------------------
@@ -925,6 +938,7 @@ local s_Texts = {
             elseif (textType == "Starting Fund")                then return "初 始 资 金"
             elseif (textType == "StartingEnergy")               then return "初始能量"
             elseif (textType == "StartingFund")                 then return "初始资金"
+            elseif (textType == "TeamIndex")                    then return "所属队伍"
             elseif (textType == "VisionModifier")               then return "视野加成"
             elseif (textType == "WarFieldName")                 then return "地图名称"
             elseif (textType == "Yes")                          then return "是"
@@ -978,6 +992,7 @@ local s_Texts = {
             elseif (textType == "StartingEnergy")               then return "Starting Energy"
             elseif (textType == "StartingFund")                 then return "Starting Fund"
             elseif (textType == "VisionModifier")               then return "VisionModifier"
+            elseif (textType == "TeamIndex")                    then return "TeamIndex"
             elseif (textType == "WarFieldName")                 then return "Map"
             elseif (textType == "Yes")                          then return "Yes"
             else                                                     return "Unknown14:" .. (textType or "")
@@ -1214,6 +1229,7 @@ local s_Texts = {
             elseif (textType == "HelpForRankMatch")              then return s_LongText16_1
             elseif (textType == "HelpForStartingEnergy")         then return s_LongText17_1
             elseif (textType == "HelpForStartingFund")           then return s_LongText18_1
+            elseif (textType == "HelpForTeamIndex")              then return s_LongText23_1
             elseif (textType == "HelpForVisionModifier")         then return s_LongText22_1
             else                                                      return "未知35:" .. (textType or "")
             end
@@ -1233,6 +1249,7 @@ local s_Texts = {
             elseif (textType == "HelpForRankMatch")              then return s_LongText16_2
             elseif (textType == "HelpForStartingEnergy")         then return s_LongText17_2
             elseif (textType == "HelpForStartingFund")           then return s_LongText18_2
+            elseif (textType == "HelpForTeamIndex")              then return s_LongText23_2
             elseif (textType == "HelpForVisionModifier")         then return s_LongText22_2
             else                                                      return "Unknown35:" .. (textType or "")
             end
