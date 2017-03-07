@@ -40,6 +40,7 @@ function ModelPlayer:ctor(param)
     self.m_Nickname                = param.nickname
     self.m_ModelSkillConfiguration = ModelSkillConfiguration:create(param.skillConfiguration)
     self.m_PlayerIndex             = param.playerIndex
+    self.m_TeamIndex               = param.teamIndex
 
     return self
 end
@@ -60,6 +61,7 @@ function ModelPlayer:toSerializableTable()
         nickname            = self:getNickname(),
         skillConfiguration  = self:getModelSkillConfiguration():toSerializableTable(),
         playerIndex         = self.m_PlayerIndex,
+        teamIndex           = self.m_TeamIndex,
     }
 end
 
@@ -76,6 +78,7 @@ function ModelPlayer:toSerializableReplayData()
         nickname            = self:getNickname(),
         skillConfiguration  = self:getModelSkillConfiguration():toSerializableReplayData(),
         playerIndex         = self.m_PlayerIndex,
+        teamIndex           = self.m_TeamIndex,
     }
 end
 
@@ -179,6 +182,10 @@ function ModelPlayer:setCanActivateSkill(canActivate)
     self.m_CanActivateSkill = canActivate
 
     return self
+end
+
+function ModelPlayer:getTeamIndex()
+    return self.m_TeamIndex
 end
 
 return ModelPlayer

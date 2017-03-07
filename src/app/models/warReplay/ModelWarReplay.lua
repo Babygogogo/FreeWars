@@ -177,6 +177,9 @@ function ModelWarReplay:ctor(sceneData)
     if (self.m_IsSkillDeclarationEnabled == nil) then
         self.m_IsSkillDeclarationEnabled = true
     end
+    for playerIndex, playerData in pairs(sceneData.players) do
+        playerData.teamIndex = playerData.teamIndex or playerIndex
+    end
 
     initScriptEventDispatcher(self)
     initActorPlayerManager(   self, sceneData.players)

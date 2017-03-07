@@ -33,12 +33,10 @@ local function getPlayerNicknames(warConfiguration, currentTime)
     local names        = {}
 
     for i = 1, playersCount do
-        if (players[i]) then
-            names[i] = players[i].account
-            if (i == warConfiguration.playerIndexInTurn) then
-                names[i] = names[i] .. string.format("(%s: %s)", getLocalizedText(34, "BootCountdown"),
-                    AuxiliaryFunctions.formatTimeInterval(warConfiguration.intervalUntilBoot - currentTime + warConfiguration.enterTurnTime))
-            end
+        names[i] = string.format("%s (%s: %s)", players[i].account, getLocalizedText(14, "TeamIndex"), AuxiliaryFunctions.getTeamNameWithTeamIndex(players[i].teamIndex))
+        if (i == warConfiguration.playerIndexInTurn) then
+            names[i] = names[i] .. string.format("(%s: %s)", getLocalizedText(34, "BootCountdown"),
+                AuxiliaryFunctions.formatTimeInterval(warConfiguration.intervalUntilBoot - currentTime + warConfiguration.enterTurnTime))
         end
     end
 
