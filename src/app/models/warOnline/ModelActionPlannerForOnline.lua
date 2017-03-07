@@ -856,7 +856,7 @@ setStateChoosingAction = function(self, destination, launchUnitID)
 
     updateMovePathWithDestinationGrid(self, destination)
     self.m_State              = "choosingAction"
-    self.m_AttackableGridList = AttackableGridListFunctions.createList(self.m_PathNodes, launchUnitID)
+    self.m_AttackableGridList = AttackableGridListFunctions.createList(self.m_ModelWar, self.m_PathNodes, launchUnitID)
     self.m_LaunchUnitID       = launchUnitID
 
     if (self.m_View) then

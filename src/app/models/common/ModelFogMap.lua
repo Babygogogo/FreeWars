@@ -13,6 +13,9 @@ local getModelTileMap                = SingletonGetters.getModelTileMap
 local getModelUnitMap                = SingletonGetters.getModelUnitMap
 local getPlayerIndexLoggedIn         = SingletonGetters.getPlayerIndexLoggedIn
 
+local math          = math
+local pairs, ipairs = pairs, ipairs
+
 local IS_SERVER               = requireFW("src.app.utilities.GameConstantFunctions").isServer()
 local FORCING_FOG_CODE        = {
     None  = 0,
@@ -77,16 +80,26 @@ local function createSerializableDataForSingleMapForPaths(map, mapSize, playerIn
     }
 end
 
-local function createSerializableDataForMapsForPaths(maps, mapSize, playerIndex)
-    if (playerIndex) then
-        return {[playerIndex] = createSerializableDataForSingleMapForPaths(maps[playerIndex], mapSize, playerIndex)}
-    else
-        local data = {}
+local function createSerializableDataForMapsForPaths(self, targetPlayerIndex)
+    local maps    = self.m_MapsForPaths
+    local mapSize = self:getMapSize()
+    local data    = {}
+
+    if (not targetPlayerIndex) then
         for index, map in ipairs(maps) do
             data[index] = createSerializableDataForSingleMapForPaths(map, mapSize, index)
         end
-        return data
+    else
+        local modelPlayerManager = SingletonGetters.getModelPlayerManager(self.m_ModelWar)
+        local teamIndex          = modelPlayerManager:getModelPlayer(targetPlayerIndex):getTeamIndex()
+        modelPlayerManager:forEachModelPlayer(function(modelPlayer, playerIndex)
+            if ((modelPlayer:isAlive()) and (modelPlayer:getTeamIndex() == teamIndex)) then
+                data[playerIndex] = createSerializableDataForSingleMapForPaths(maps[playerIndex], mapSize, playerIndex)
+            end
+        end)
     end
+
+    return data
 end
 
 local function fillMapForPathsWithData(map, mapSize, data)
@@ -172,7 +185,7 @@ function ModelFogMap:toSerializableTable()
         forcingFogCode                   = self.m_ForcingFogCode,
         expiringTurnIndexForForcingFog   = self.m_ExpiringTurnIndexForForcingFog,
         expiringPlayerIndexForForcingFog = self.m_ExpiringPlayerIndexForForcingFog,
-        mapsForPaths                     = createSerializableDataForMapsForPaths(self.m_MapsForPaths, self:getMapSize()),
+        mapsForPaths                     = createSerializableDataForMapsForPaths(self),
     }
 end
 
@@ -181,7 +194,7 @@ function ModelFogMap:toSerializableTableForPlayerIndex(playerIndex)
         forcingFogCode                   = self.m_ForcingFogCode,
         expiringTurnIndexForForcingFog   = self.m_ExpiringTurnIndexForForcingFog,
         expiringPlayerIndexForForcingFog = self.m_ExpiringPlayerIndexForForcingFog,
-        mapsForPaths                     = createSerializableDataForMapsForPaths(self.m_MapsForPaths, self:getMapSize(), playerIndex),
+        mapsForPaths                     = createSerializableDataForMapsForPaths(self, playerIndex),
     }
 end
 
@@ -198,9 +211,14 @@ function ModelFogMap:onStartRunning(modelWar)
                 :resetMapForUnitsForPlayerIndex(playerIndex)
         end
     else
-        local playerIndex = SingletonGetters.getPlayerIndexLoggedIn(modelWar)
-        self:resetMapForTilesForPlayerIndex(playerIndex)
-            :resetMapForUnitsForPlayerIndex(playerIndex)
+        local modelPlayerManager = SingletonGetters.getModelPlayerManager(modelWar)
+        local teamIndex          = modelPlayerManager:getModelPlayer(SingletonGetters.getPlayerIndexLoggedIn(modelWar)):getTeamIndex()
+        modelPlayerManager:forEachModelPlayer(function(modelPlayer, playerIndex)
+            if ((modelPlayer:isAlive()) and (modelPlayer:getTeamIndex() == teamIndex)) then
+                self:resetMapForTilesForPlayerIndex(playerIndex)
+                    :resetMapForUnitsForPlayerIndex(playerIndex)
+            end
+        end)
     end
 
     self:updateView()
@@ -341,6 +359,20 @@ function ModelFogMap:getVisibilityOnGridForPlayerIndex(gridIndex, playerIndex)
             (self.m_MapsForTiles[playerIndex][x][y] > 0) and (1) or (0),
             (self.m_MapsForUnits[playerIndex][x][y] > 0) and (1) or (0)
     end
+end
+
+function ModelFogMap:getVisibilityOnGridForTeamIndex(gridIndex, teamIndex)
+    local visibilityForPath, visibilityForTile, visibilityForUnit = 0, 0, 0
+    SingletonGetters.getModelPlayerManager(self.m_ModelWar):forEachModelPlayer(function(modelPlayer, playerIndex)
+        if ((modelPlayer:isAlive()) and (modelPlayer:getTeamIndex() == teamIndex)) then
+            local v1, v2, v3 = self:getVisibilityOnGridForPlayerIndex(gridIndex, playerIndex)
+            visibilityForPath = math.max(visibilityForPath, v1)
+            visibilityForTile = math.max(visibilityForTile, v2)
+            visibilityForUnit = math.max(visibilityForUnit, v3)
+        end
+    end)
+
+    return visibilityForPath, visibilityForTile, visibilityForUnit
 end
 
 return ModelFogMap

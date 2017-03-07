@@ -57,14 +57,27 @@ local function getTeamIndexForWarConfiguration(warConfiguration)
     error("ModelWarConfigurator-getTeamIndexForWarConfiguration() failed to find the teamIndex.")
 end
 
-local function getFirstUnusedTeamIndex(teamList, playersCount)
-    for index = 1, playersCount do
-        if (not teamList[index]) then
-            return index
-        end
-    end
+local function getFirstUnusedTeamIndex(warConfiguration)
+    local playersData = warConfiguration.players
+    if (not playersData) then
+        return 1
+    else
+        for teamIndex = 1, WarFieldManager.getPlayersCount(warConfiguration.warFieldFileName) do
+            local isUsed = false
+            for _, playerData in pairs(playersData) do
+                if (playerData.teamIndex == teamIndex) then
+                    isUsed = true
+                    break
+                end
+            end
 
-    error("ModelWarConfigurator-getFirstUnusedTeamIndex() failed to find the team index.")
+            if (not isUsed) then
+                return teamIndex
+            end
+        end
+
+        error("ModelWarConfigurator-getFirstUnusedTeamIndex() failed to find the team index.")
+    end
 end
 
 --------------------------------------------------------------------------------
@@ -267,7 +280,7 @@ local function createItemsForStateTeamIndex(self)
 
     local playersCountTotal = WarFieldManager.getPlayersCount(warConfiguration.warFieldFileName)
     if ((playersCountJoined == playersCountTotal - 1) and (teamsCount == 1)) then
-        local teamIndex = getFirstUnusedTeamIndex(teamList, playersCountTotal)
+        local teamIndex = getFirstUnusedTeamIndex(warConfiguration)
         return {{
             teamIndex = teamIndex,
             name      = AuxiliaryFunctions.getTeamNameWithTeamIndex(teamIndex),
@@ -1073,7 +1086,7 @@ function ModelWarConfigurator:resetWithWarConfiguration(warConfiguration)
         self.m_PlayerIndex               = self.m_ItemsForStatePlayerIndex[1].playerIndex
         self.m_StartingEnergy            = warConfiguration.startingEnergy
         self.m_StartingFund              = warConfiguration.startingFund
-        self.m_TeamIndex                 = self.m_ItemsForStateTeamIndex[1].teamIndex
+        self.m_TeamIndex                 = getFirstUnusedTeamIndex(warConfiguration)
         self.m_VisionModifier            = warConfiguration.visionModifier
 
         self.m_View:setButtonConfirmText(getLocalizedText(14, "ConfirmJoinWar"))

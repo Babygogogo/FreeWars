@@ -16,9 +16,9 @@ local AttackableGridListFunctions = {}
 local DamageCalculator       = requireFW("src.app.utilities.DamageCalculator")
 local GridIndexFunctions     = requireFW("src.app.utilities.GridIndexFunctions")
 local ReachableAreaFunctions = requireFW("src.app.utilities.ReachableAreaFunctions")
-local ActorManager           = requireFW("src.global.actors.ActorManager")
 
-local isWithinMap            = GridIndexFunctions.isWithinMap
+local pairs       = pairs
+local isWithinMap = GridIndexFunctions.isWithinMap
 
 --------------------------------------------------------------------------------
 -- The util functions.
@@ -54,12 +54,11 @@ function AttackableGridListFunctions.getListNode(list, gridIndex)
     return nil
 end
 
-function AttackableGridListFunctions.createList(pathNodes, launchUnitID)
-    local modelSceneWar = ActorManager.getRootActor():getModel()
-    local modelWarField = modelSceneWar:getModelWarField()
+function AttackableGridListFunctions.createList(modelWar, pathNodes, launchUnitID)
+    local modelWarField = modelWar:getModelWarField()
     local modelUnitMap  = modelWarField:getModelUnitMap()
     local attacker      = modelUnitMap:getFocusModelUnit(pathNodes[1], launchUnitID)
-    if ((not attacker.canAttackAfterMove)                          or
+    if ((not attacker.canAttackAfterMove)                           or
         ((not attacker:canAttackAfterMove()) and (#pathNodes > 1))) then
         return {}
     end
@@ -74,7 +73,7 @@ function AttackableGridListFunctions.createList(pathNodes, launchUnitID)
         mapSize,
         function(targetGridIndex)
             targetGridIndex.estimatedAttackDamage, targetGridIndex.estimatedCounterDamage =
-                DamageCalculator.getEstimatedBattleDamage(pathNodes, launchUnitID, targetGridIndex, modelSceneWar)
+                DamageCalculator.getEstimatedBattleDamage(pathNodes, launchUnitID, targetGridIndex, modelWar)
 
             return targetGridIndex.estimatedAttackDamage ~= nil
         end
