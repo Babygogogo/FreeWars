@@ -151,24 +151,27 @@ end
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
 function ModelWarReplay:ctor(sceneData)
-    self.m_EnergyGainModifier         = sceneData.energyGainModifier
-    self.m_EnterTurnTime              = sceneData.enterTurnTime
-    self.m_ExecutedActions            = sceneData.executedActions
-    self.m_IncomeModifier             = sceneData.incomeModifier
-    self.m_IntervalUntilBoot          = sceneData.intervalUntilBoot
-    self.m_IsActiveSkillEnabled       = sceneData.isActiveSkillEnabled
-    self.m_IsFogOfWarByDefault        = sceneData.isFogOfWarByDefault
-    self.m_IsPassiveSkillEnabled      = sceneData.isPassiveSkillEnabled
-    self.m_IsRandomWarField           = sceneData.isRandomWarField
-    self.m_IsRankMatch                = sceneData.isRankMatch
-    self.m_IsSkillDeclarationEnabled  = sceneData.isSkillDeclarationEnabled
-    self.m_IsWarEnded                 = sceneData.isWarEnded
-    self.m_MaxDiffScore               = sceneData.maxDiffScore
-    self.m_RemainingVotesForDraw      = sceneData.remainingVotesForDraw
-    self.m_StartingEnergy             = sceneData.startingEnergy
-    self.m_StartingFund               = sceneData.startingFund
-    self.m_WarID                      = sceneData.warID
-    self.m_WarPassword                = sceneData.warPassword
+    self.m_AttackModifier            = sceneData.attackModifier             or 0
+    self.m_EnergyGainModifier        = sceneData.energyGainModifier
+    self.m_EnterTurnTime             = sceneData.enterTurnTime
+    self.m_ExecutedActions           = sceneData.executedActions
+    self.m_IncomeModifier            = sceneData.incomeModifier
+    self.m_IntervalUntilBoot         = sceneData.intervalUntilBoot
+    self.m_IsActiveSkillEnabled      = sceneData.isActiveSkillEnabled
+    self.m_IsFogOfWarByDefault       = sceneData.isFogOfWarByDefault
+    self.m_IsPassiveSkillEnabled     = sceneData.isPassiveSkillEnabled
+    self.m_IsRandomWarField          = sceneData.isRandomWarField
+    self.m_IsRankMatch               = sceneData.isRankMatch
+    self.m_IsSkillDeclarationEnabled = sceneData.isSkillDeclarationEnabled
+    self.m_IsWarEnded                = sceneData.isWarEnded
+    self.m_MaxDiffScore              = sceneData.maxDiffScore
+    self.m_MoveRangeModifier         = sceneData.moveRangeModifier          or 0
+    self.m_RemainingVotesForDraw     = sceneData.remainingVotesForDraw
+    self.m_StartingEnergy            = sceneData.startingEnergy
+    self.m_StartingFund              = sceneData.startingFund
+    self.m_VisionModifier            = sceneData.visionModifier             or 0
+    self.m_WarID                     = sceneData.warID
+    self.m_WarPassword               = sceneData.warPassword
     setActionId(self, sceneData.actionID)
 
     if (self.m_IsSkillDeclarationEnabled == nil) then
@@ -237,6 +240,7 @@ end
 function ModelWarReplay:toSerializableTable()
     return {
         actionID                  = self:getActionId(),
+        attackModifier            = self.m_AttackModifier,
         energyGainModifier        = self.m_EnergyGainModifier,
         enterTurnTime             = self.m_EnterTurnTime,
         executedActions           = self.m_ExecutedActions,
@@ -250,9 +254,11 @@ function ModelWarReplay:toSerializableTable()
         isSkillDeclarationEnabled = self.m_IsSkillDeclarationEnabled,
         isWarEnded                = self.m_IsWarEnded,
         maxDiffScore              = self.m_MaxDiffScore,
+        moveRangeModifier         = self.m_MoveRangeModifier,
         remainingVotesForDraw     = self.m_RemainingVotesForDraw,
         startingEnergy            = self.m_StartingEnergy,
         startingFund              = self.m_StartingFund,
+        visionModifier            = self.m_VisionModifier,
         warID                     = self.m_WarID,
         warPassword               = self.m_WarPassword,
         players                   = self:getModelPlayerManager()   :toSerializableTable(),
@@ -391,6 +397,10 @@ function ModelWarReplay:getWarId()
     return self.m_WarID
 end
 
+function ModelWarReplay:getAttackModifier()
+    return self.m_AttackModifier
+end
+
 function ModelWarReplay:getEnergyGainModifier()
     return self.m_EnergyGainModifier
 end
@@ -423,12 +433,20 @@ function ModelWarReplay:isRankMatch()
     return self.m_IsRankMatch
 end
 
+function ModelWarReplay:getMoveRangeModifier()
+    return self.m_MoveRangeModifier
+end
+
 function ModelWarReplay:getStartingEnergy()
     return self.m_StartingEnergy
 end
 
 function ModelWarReplay:getStartingFund()
     return self.m_StartingFund
+end
+
+function ModelWarReplay:getVisionModifier()
+    return self.m_VisionModifier
 end
 
 function ModelWarReplay:getEnterTurnTime()

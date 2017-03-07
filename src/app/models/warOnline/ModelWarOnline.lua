@@ -138,6 +138,7 @@ end
 function ModelWarOnline:ctor(sceneData)
     self.m_CachedActions             = {}
     self.m_ActionID                  = sceneData.actionID
+    self.m_AttackModifier            = sceneData.attackModifier
     self.m_EnergyGainModifier        = sceneData.energyGainModifier
     self.m_EnterTurnTime             = sceneData.enterTurnTime
     self.m_ExecutedActions           = sceneData.executedActions
@@ -152,9 +153,11 @@ function ModelWarOnline:ctor(sceneData)
     self.m_IsWarEnded                = sceneData.isWarEnded
     self.m_MaxBaseSkillPoints        = sceneData.maxBaseSkillPoints
     self.m_MaxDiffScore              = sceneData.maxDiffScore
+    self.m_MoveRangeModifier         = sceneData.moveRangeModifier
     self.m_RemainingVotesForDraw     = sceneData.remainingVotesForDraw
     self.m_StartingEnergy            = sceneData.startingEnergy
     self.m_StartingFund              = sceneData.startingFund
+    self.m_VisionModifier            = sceneData.visionModifier
     self.m_WarID                     = sceneData.warID
     self.m_WarPassword               = sceneData.warPassword
 
@@ -193,6 +196,7 @@ end
 function ModelWarOnline:toSerializableTable()
     return {
         actionID                  = self:getActionId(),
+        attackModifier            = self.m_AttackModifier,
         energyGainModifier        = self.m_EnergyGainModifier,
         enterTurnTime             = self.m_EnterTurnTime,
         executedActions           = self.m_ExecutedActions,
@@ -207,9 +211,11 @@ function ModelWarOnline:toSerializableTable()
         isWarEnded                = self.m_IsWarEnded,
         maxBaseSkillPoints        = self.m_MaxBaseSkillPoints,
         maxDiffScore              = self.m_MaxDiffScore,
+        moveRangeModifier         = self.m_MoveRangeModifier,
         remainingVotesForDraw     = self.m_RemainingVotesForDraw,
         startingEnergy            = self.m_StartingEnergy,
         startingFund              = self.m_StartingFund,
+        visionModifier            = self.m_VisionModifier,
         warID                     = self.m_WarID,
         warPassword               = self.m_WarPassword,
         chatData                  = self:getModelChatManager()     :toSerializableTable(),
@@ -224,6 +230,7 @@ end
 function ModelWarOnline:toSerializableTableForPlayerIndex(playerIndex)
     return {
         actionID                  = self:getActionId(),
+        attackModifier            = self.m_AttackModifier,
         energyGainModifier        = self.m_EnergyGainModifier,
         enterTurnTime             = self.m_EnterTurnTime,
         executedActions           = nil,
@@ -238,9 +245,11 @@ function ModelWarOnline:toSerializableTableForPlayerIndex(playerIndex)
         isWarEnded                = self.m_IsWarEnded,
         maxBaseSkillPoints        = self.m_MaxBaseSkillPoints,
         maxDiffScore              = self.m_MaxDiffScore,
+        moveRangeModifier         = self.m_MoveRangeModifier,
         remainingVotesForDraw     = self.m_RemainingVotesForDraw,
         startingEnergy            = self.m_StartingEnergy,
         startingFund              = self.m_StartingFund,
+        visionModifier            = self.m_VisionModifier,
         warID                     = self.m_WarID,
         warPassword               = self.m_WarPassword,
         chatData                  = self:getModelChatManager()     :toSerializableTableForPlayerIndex(playerIndex),
@@ -255,6 +264,7 @@ end
 function ModelWarOnline:toSerializableReplayData()
     return {
         actionID                  = 0,
+        attackModifier            = self.m_AttackModifier,
         energyGainModifier        = self.m_EnergyGainModifier,
         enterTurnTime             = nil,
         executedActions           = self.m_ExecutedActions,
@@ -269,9 +279,11 @@ function ModelWarOnline:toSerializableReplayData()
         isWarEnded                = false,
         maxBaseSkillPoints        = self.m_MaxBaseSkillPoints,
         maxDiffScore              = self.m_MaxDiffScore,
+        moveRangeModifier         = self.m_MoveRangeModifier,
         remainingVotesForDraw     = nil,
         startingEnergy            = self.m_StartingEnergy,
         startingFund              = self.m_StartingFund,
+        visionModifier            = self.m_VisionModifier,
         warID                     = self.m_WarID,
         warPassword               = self.m_WarPassword,
         chatData                  = nil,
@@ -391,6 +403,10 @@ function ModelWarOnline:getWarId()
     return self.m_WarID
 end
 
+function ModelWarOnline:getAttackModifier()
+    return self.m_AttackModifier
+end
+
 function ModelWarOnline:getEnergyGainModifier()
     return self.m_EnergyGainModifier
 end
@@ -419,6 +435,10 @@ function ModelWarOnline:isFogOfWarByDefault()
     return self.m_IsFogOfWarByDefault
 end
 
+function ModelWarOnline:getMoveRangeModifier()
+    return self.m_MoveRangeModifier
+end
+
 function ModelWarOnline:isRankMatch()
     return self.m_IsRankMatch
 end
@@ -429,6 +449,10 @@ end
 
 function ModelWarOnline:getStartingFund()
     return self.m_StartingFund
+end
+
+function ModelWarOnline:getVisionModifier()
+    return self.m_VisionModifier
 end
 
 function ModelWarOnline:getEnterTurnTime()

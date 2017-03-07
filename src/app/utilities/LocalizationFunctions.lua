@@ -351,6 +351,45 @@ local s_LongText19_2 = [[
 Untranslated...
 ]]
 
+local s_LongText20_1 = [[
+本选项规定本战局所有玩家所有部队的移动力加成。
+
+如果选正数，则部队的移动力相应增加，反之亦然。
+部队的最终移动力最低为1。
+
+默认为“0”。
+]]
+
+local s_LongText20_2 = [[
+Untranslated...
+]]
+
+local s_LongText21_1 = [[
+本选项规定本战局所有玩家所有部队的攻击力加成。
+
+如果选正数，则部队的攻击力相应增加，反之亦然。
+本加成与其他加成（如技能、部队等级、指挥塔等）是线性叠加的。也就是说，如果其他加成合计为+20%，而本加成为-30%攻，则合计为-10%攻。
+
+默认为“0%”。
+]]
+
+local s_LongText21_2 = [[
+Untranslated...
+]]
+
+local s_LongText22_1 = [[
+本选项规定本战局所有玩家所有部队/建筑的视野加成。
+
+如果选正数，则部队/建筑的视野相应增加，反之亦然。
+部队/建筑的最终视野最低为1。
+
+默认为“0”。
+]]
+
+local s_LongText22_2 = [[
+Untranslated...
+]]
+
 --------------------------------------------------------------------------------
 -- The private functions.
 --------------------------------------------------------------------------------
@@ -841,7 +880,9 @@ local s_Texts = {
     },
     [14] = {
         [1] = function(textType)
-            if     (textType == "ConfirmContinueWar")           then return "进 入 战 局"
+            if     (textType == "Advanced Settings")            then return "高 级 设 置"
+            elseif (textType == "AttackModifier")               then return "攻击力加成"
+            elseif (textType == "ConfirmContinueWar")           then return "进 入 战 局"
             elseif (textType == "ConfirmCreateWar")             then return "确 认 新 建 战 局"
             elseif (textType == "ConfirmExitWar")               then return "确 认 退 出 战 局"
             elseif (textType == "ConfirmJoinWar")               then return "确 认 参 战"
@@ -864,6 +905,7 @@ local s_Texts = {
             elseif (textType == "JoinWar")                      then return "参 战"
             elseif (textType == "MaxBaseSkillPoints")           then return "全员技能基准点上限"
             elseif (textType == "MaxDiffScore")                 then return "最大分差"
+            elseif (textType == "MoveRangeModifier")            then return "移动力加成"
             elseif (textType == "No")                           then return "否"
             elseif (textType == "NoAvailableOption")            then return "无可用选项"
             elseif (textType == "NoLimit")                      then return "不限"
@@ -883,13 +925,16 @@ local s_Texts = {
             elseif (textType == "Starting Fund")                then return "初 始 资 金"
             elseif (textType == "StartingEnergy")               then return "初始能量"
             elseif (textType == "StartingFund")                 then return "初始资金"
+            elseif (textType == "VisionModifier")               then return "视野加成"
             elseif (textType == "WarFieldName")                 then return "地图名称"
             elseif (textType == "Yes")                          then return "是"
             else                                                     return "未知14:" .. (textType or "")
             end
         end,
         [2] = function(textType)
-            if     (textType == "ConfirmContinueWar")           then return "Confirm"
+            if     (textType == "Advanced Settings")            then return "Advanced"
+            elseif (textType == "AttackModifier")               then return "AttackModifier"
+            elseif (textType == "ConfirmContinueWar")           then return "Confirm"
             elseif (textType == "ConfirmCreateWar")             then return "Confirm"
             elseif (textType == "ConfirmExitWar")               then return "Confirm"
             elseif (textType == "ConfirmJoinWar")               then return "Confirm"
@@ -912,6 +957,7 @@ local s_Texts = {
             elseif (textType == "JoinWar")                      then return "Join War"
             elseif (textType == "MaxBaseSkillPoints")           then return "Max Skill Points"
             elseif (textType == "MaxDiffScore")                 then return "Max Diff Score"
+            elseif (textType == "MoveRangeModifier")            then return "MobilityModifier"
             elseif (textType == "No")                           then return "No"
             elseif (textType == "NoAvailableOption")            then return "No Options"
             elseif (textType == "NoLimit")                      then return "No Limit"
@@ -931,6 +977,7 @@ local s_Texts = {
             elseif (textType == "Starting Fund")                then return "Starting Fund"
             elseif (textType == "StartingEnergy")               then return "Starting Energy"
             elseif (textType == "StartingFund")                 then return "Starting Fund"
+            elseif (textType == "VisionModifier")               then return "VisionModifier"
             elseif (textType == "WarFieldName")                 then return "Map"
             elseif (textType == "Yes")                          then return "Yes"
             else                                                     return "Unknown14:" .. (textType or "")
@@ -1153,7 +1200,8 @@ local s_Texts = {
     },
     [35] = {
         [1] = function(textType)
-            if     (textType == "HelpForEnableActiveSkill")      then return s_LongText8_1
+            if     (textType == "HelpForAttackModifier")         then return s_LongText21_1
+            elseif (textType == "HelpForEnableActiveSkill")      then return s_LongText8_1
             elseif (textType == "HelpForEnablePassiveSkill")     then return s_LongText9_1
             elseif (textType == "HelpForEnableSkillDeclaration") then return s_LongText19_1
             elseif (textType == "HelpForEnergyGainModifier")     then return s_LongText10_1
@@ -1161,26 +1209,31 @@ local s_Texts = {
             elseif (textType == "HelpForIncomeModifier")         then return s_LongText12_1
             elseif (textType == "HelpForIntervalUntilBoot")      then return s_LongText13_1
             elseif (textType == "HelpForMaxDiffScore")           then return s_LongText14_1
+            elseif (textType == "HelpForMoveRangeModifier")      then return s_LongText20_1
             elseif (textType == "HelpForPlayerIndex")            then return s_LongText15_1
             elseif (textType == "HelpForRankMatch")              then return s_LongText16_1
             elseif (textType == "HelpForStartingEnergy")         then return s_LongText17_1
             elseif (textType == "HelpForStartingFund")           then return s_LongText18_1
+            elseif (textType == "HelpForVisionModifier")         then return s_LongText22_1
             else                                                      return "未知35:" .. (textType or "")
             end
         end,
         [2] = function(textType)
-            if     (textType == "HelpForEnableActiveSkill")      then return s_LongText8_2
+            if     (textType == "HelpForAttackModifier")         then return s_LongText21_2
+            elseif (textType == "HelpForEnableActiveSkill")      then return s_LongText8_2
             elseif (textType == "HelpForEnablePassiveSkill")     then return s_LongText9_2
-            elseif (textType == "HelpForEnableSkillDeclaration") then return s_LongText19_1
+            elseif (textType == "HelpForEnableSkillDeclaration") then return s_LongText19_2
             elseif (textType == "HelpForEnergyGainModifier")     then return s_LongText10_2
             elseif (textType == "HelpForFogOfWar")               then return s_LongText11_2
             elseif (textType == "HelpForIncomeModifier")         then return s_LongText12_2
             elseif (textType == "HelpForIntervalUntilBoot")      then return s_LongText13_2
             elseif (textType == "HelpForMaxDiffScore")           then return s_LongText14_2
+            elseif (textType == "HelpForMoveRangeModifier")      then return s_LongText20_2
             elseif (textType == "HelpForPlayerIndex")            then return s_LongText15_2
             elseif (textType == "HelpForRankMatch")              then return s_LongText16_2
             elseif (textType == "HelpForStartingEnergy")         then return s_LongText17_2
             elseif (textType == "HelpForStartingFund")           then return s_LongText18_2
+            elseif (textType == "HelpForVisionModifier")         then return s_LongText22_2
             else                                                      return "Unknown35:" .. (textType or "")
             end
         end,

@@ -22,14 +22,6 @@ local INTERVALS_UNTIL_BOOT      = {60 * 15, 3600 * 24, 3600 * 24 * 3, 3600 * 24 
 local STARTING_ENERGIES         = {0, 10000, 20000, 30000, 40000, 50000, 60000, 70000, 80000, 90000, 100000}
 local STARTING_FUNDS            = {0, 5000, 10000, 20000, 30000, 40000, 50000, 100000, 150000, 200000, 300000, 400000, 500000}
 
-local function initSelectorWeather(modelWarConfigurator)
-    -- TODO: enable the selector.
-    modelWarConfigurator:getModelOptionSelectorWithName("Weather"):setButtonsEnabled(false)
-        :setOptions({
-            {data = 1, text = getLocalizedText(40, "Clear"),},
-        })
-end
-
 --------------------------------------------------------------------------------
 -- The util functions.
 --------------------------------------------------------------------------------
@@ -40,25 +32,6 @@ local function generatePlayerColorText(playerIndex)
     elseif (playerIndex == 4) then return string.format("4 (%s)", getLocalizedText(34, "Black"))
     else                           error("ModelWarConfigurator-generatePlayerColorText() invalid playerIndex: " .. (playerIndex or ""))
     end
-end
-
-local function generateOverviewText(self)
-    return string.format("%s:\n\n%s:%s%s\n%s:%s%s\n%s:%s%s\n\n%s:%s%s\n%s:%s%s\n\n%s:%s%s\n%s:%s%s\n\n%s:%s%s\n\n%s:%s%s\n%s:%s%s\n%s:%s%s\n%s:%s%s\n%s:%s%s",
-        getLocalizedText(14, "Overview"),
-        getLocalizedText(14, "WarFieldName"),           "         ",     WarFieldManager.getWarFieldName(self.m_WarConfiguration.warFieldFileName),
-        getLocalizedText(14, "PlayerIndex"),            "         ",     generatePlayerColorText(self.m_PlayerIndex),
-        getLocalizedText(14, "FogOfWar"),               "         ",     getLocalizedText(14, (self.m_IsFogOfWarByDefault) and ("Yes") or ("No")),
-        getLocalizedText(14, "StartingFund"),           "         ",     "" .. self.m_StartingFund,
-        getLocalizedText(14, "IncomeModifier"),         "         ",     "" .. self.m_IncomeModifier .. "%",
-        getLocalizedText(14, "RankMatch"),              "             ", getLocalizedText(14, (self.m_IsRankMatch)         and ("Yes") or ("No")),
-        getLocalizedText(14, "MaxDiffScore"),           "         ",     (self.m_MaxDiffScore) and ("" .. self.m_MaxDiffScore) or getLocalizedText(14, "NoLimit"),
-        getLocalizedText(14, "IntervalUntilBoot"),      "         ",     AuxiliaryFunctions.formatTimeInterval(self.m_IntervalUntilBoot),
-        getLocalizedText(14, "StartingEnergy"),         "         ",     "" .. self.m_StartingEnergy,
-        getLocalizedText(14, "EnergyGainModifier"),     "         ",     "" .. self.m_EnergyGainModifier .. "%",
-        getLocalizedText(14, "EnablePassiveSkill"),     "     ",         getLocalizedText(14, (self.m_IsPassiveSkillEnabled) and ("Yes") or ("No")),
-        getLocalizedText(14, "EnableActiveSkill"),      "     ",         getLocalizedText(14, (self.m_IsActiveSkillEnabled)  and ("Yes") or ("No")),
-        getLocalizedText(14, "EnableSkillDeclaration"), "         ",     getLocalizedText(14, (self.m_IsSkillDeclarationEnabled)  and ("Yes") or ("No"))
-    )
 end
 
 local function getPlayerIndexForWarConfiguration(warConfiguration)
@@ -72,22 +45,134 @@ local function getPlayerIndexForWarConfiguration(warConfiguration)
     error("ModelWarConfigurator-getPlayerIndexForWarConfiguration() failed to find the playerIndex.")
 end
 
+--------------------------------------------------------------------------------
+-- The overview text generators.
+--------------------------------------------------------------------------------
+local function generateTextForStartingFund(startingFund)
+    if (startingFund == 0) then
+        return nil
+    else
+        return string.format("%s:         %d", getLocalizedText(14, "StartingFund"), startingFund)
+    end
+end
+
+local function generateTextForIncomeModifier(incomeModifier)
+    if (incomeModifier == 100) then
+        return nil
+    else
+        return string.format("%s:         %d%%", getLocalizedText(14, "IncomeModifier"), incomeModifier)
+    end
+end
+
+local function generateTextForStartingEnergy(startingEnergy)
+    if (startingEnergy == 0) then
+        return nil
+    else
+        return string.format("%s:         %d", getLocalizedText(14, "StartingEnergy"), startingEnergy)
+    end
+end
+
+local function generateTextForEnergyModifier(energyGainModifier)
+    if (energyGainModifier == 100) then
+        return nil
+    else
+        return string.format("%s:         %d%%", getLocalizedText(14, "EnergyGainModifier"), energyGainModifier)
+    end
+end
+
+local function generateTextForEnablePassiveSkill(isPassiveSkillEnabled)
+    if (isPassiveSkillEnabled) then
+        return nil
+    else
+        return string.format("%s:     %s", getLocalizedText(14, "EnablePassiveSkill"), getLocalizedText(14, (isPassiveSkillEnabled) and ("Yes") or ("No")))
+    end
+end
+
+local function generateTextForEnableActiveSkill(isActiveSkillEnabled)
+    if (isActiveSkillEnabled) then
+        return nil
+    else
+        return string.format("%s:     %s", getLocalizedText(14, "EnableActiveSkill"), getLocalizedText(14, (isActiveSkillEnabled) and ("Yes") or ("No")))
+    end
+end
+
+local function generateTextForEnableSkillDeclaration(isSkillDeclarationEnabled)
+    if (isSkillDeclarationEnabled) then
+        return nil
+    else
+        return string.format("%s:         %s", getLocalizedText(14, "EnableSkillDeclaration"), getLocalizedText(14, (isSkillDeclarationEnabled) and ("Yes") or ("No")))
+    end
+end
+
+local function generateTextForMoveRangeModifier(moveRangeModifier)
+    if (moveRangeModifier == 0) then
+        return nil
+    else
+        return string.format("%s:     %d", getLocalizedText(14, "MoveRangeModifier"), moveRangeModifier)
+    end
+end
+
+local function generateTextForAttackModifier(attackModifier)
+    if (attackModifier == 0) then
+        return nil
+    else
+        return string.format("%s:     %d%%", getLocalizedText(14, "AttackModifier"), attackModifier)
+    end
+end
+
+local function generateTextForVisionModifier(visionModifier)
+    if (visionModifier == 0) then
+        return nil
+    else
+        return string.format("%s:         %d", getLocalizedText(14, "VisionModifier"), visionModifier)
+    end
+end
+
+local function generateTextForAdvancedSettings(self)
+    local textList = {getLocalizedText(14, "Advanced Settings") .. ":"}
+    textList[#textList + 1] = generateTextForStartingFund(          self.m_StartingFund)
+    textList[#textList + 1] = generateTextForIncomeModifier(        self.m_IncomeModifier)
+    textList[#textList + 1] = generateTextForStartingEnergy(        self.m_StartingEnergy)
+    textList[#textList + 1] = generateTextForEnergyModifier(        self.m_EnergyGainModifier)
+    textList[#textList + 1] = generateTextForEnablePassiveSkill(    self.m_IsPassiveSkillEnabled)
+    textList[#textList + 1] = generateTextForEnableActiveSkill(     self.m_IsActiveSkillEnabled)
+    textList[#textList + 1] = generateTextForEnableSkillDeclaration(self.m_IsSkillDeclarationEnabled)
+    textList[#textList + 1] = generateTextForMoveRangeModifier(     self.m_MoveRangeModifier)
+    textList[#textList + 1] = generateTextForAttackModifier(        self.m_AttackModifier)
+    textList[#textList + 1] = generateTextForVisionModifier(        self.m_VisionModifier)
+
+    if (#textList == 1) then
+        textList[#textList + 1] = getLocalizedText(14, "None")
+    end
+    return table.concat(textList, "\n")
+end
+
+local function generateOverviewText(self)
+    return string.format("%s:\n\n%s:%s%s\n%s:%s%s\n%s:%s%s\n\n%s:%s%s\n%s:%s%s\n\n%s:%s%s\n\n%s",
+        getLocalizedText(14, "Overview"),
+        getLocalizedText(14, "WarFieldName"),           "         ",     WarFieldManager.getWarFieldName(self.m_WarConfiguration.warFieldFileName),
+        getLocalizedText(14, "PlayerIndex"),            "         ",     generatePlayerColorText(self.m_PlayerIndex),
+        getLocalizedText(14, "FogOfWar"),               "         ",     getLocalizedText(14, (self.m_IsFogOfWarByDefault) and ("Yes") or ("No")),
+        getLocalizedText(14, "RankMatch"),              "             ", getLocalizedText(14, (self.m_IsRankMatch)         and ("Yes") or ("No")),
+        getLocalizedText(14, "MaxDiffScore"),           "         ",     (self.m_MaxDiffScore) and ("" .. self.m_MaxDiffScore) or getLocalizedText(14, "NoLimit"),
+        getLocalizedText(14, "IntervalUntilBoot"),      "         ",     AuxiliaryFunctions.formatTimeInterval(self.m_IntervalUntilBoot),
+        generateTextForAdvancedSettings(self)
+    )
+end
+
+--------------------------------------------------------------------------------
+-- The dynamic item generators.
+--------------------------------------------------------------------------------
 local function createItemsForStateMain(self)
     local mode = self.m_Mode
     if (mode == "modeCreate") then
         return {
             self.m_ItemPlayerIndex,
             self.m_ItemFogOfWar,
-            self.m_ItemStartingFund,
-            self.m_ItemIncomeModifier,
             self.m_ItemRankMatch,
             self.m_ItemMaxDiffScore,
             self.m_ItemIntervalUntilBoot,
-            self.m_ItemStartingEnergy,
-            self.m_ItemEnergyModifier,
-            self.m_ItemEnablePassiveSkill,
-            self.m_ItemEnableActiveSkill,
-            self.m_ItemEnableSkillDeclaration,
+            self.m_ItemAdvancedSettings,
         }
 
     elseif (mode == "modeJoin") then
@@ -160,6 +245,7 @@ local function sendActionNewWar(self)
     WebSocketManager.sendAction({
         actionCode                = ACTION_CODE_NEW_WAR,
         defaultWeatherCode        = 1, --TODO: add an option for the weather.
+        attackModifier            = self.m_AttackModifier,
         energyGainModifier        = self.m_EnergyGainModifier,
         incomeModifier            = self.m_IncomeModifier,
         intervalUntilBoot         = self.m_IntervalUntilBoot,
@@ -169,9 +255,11 @@ local function sendActionNewWar(self)
         isFogOfWarByDefault       = self.m_IsFogOfWarByDefault,
         isRankMatch               = self.m_IsRankMatch,
         maxDiffScore              = self.m_MaxDiffScore,
+        moveRangeModifier         = self.m_MoveRangeModifier,
         playerIndex               = self.m_PlayerIndex,
         startingEnergy            = self.m_StartingEnergy,
         startingFund              = self.m_StartingFund,
+        visionModifier            = self.m_VisionModifier,
         warPassword               = "", -- TODO: self.m_WarPassword,
         warFieldFileName          = self.m_WarConfiguration.warFieldFileName,
     })
@@ -187,6 +275,20 @@ end
 --------------------------------------------------------------------------------
 -- The state setters.
 --------------------------------------------------------------------------------
+local function setStateAdvancedSettings(self)
+    self.m_State = "stateAdvancedSettings"
+    self.m_View:setMenuTitleText(getLocalizedText(14, "Advanced Settings"))
+        :setItems(self.m_ItemsForStateAdvancedSettings)
+        :setOverviewText(generateOverviewText(self))
+end
+
+local function setStateAttackModifier(self)
+    self.m_State = "stateAttackModifier"
+    self.m_View:setMenuTitleText(getLocalizedText(14, "AttackModifier"))
+        :setItems(self.m_ItemsForStateAttackModifier)
+        :setOverviewText(getLocalizedText(35, "HelpForAttackModifier"))
+end
+
 local function setStateEnableActiveSkill(self)
     self.m_State = "stateEnableActiveSkill"
     self.m_View:setMenuTitleText(getLocalizedText(14, "EnableActiveSkill"))
@@ -250,6 +352,13 @@ local function setStateMaxDiffScore(self)
         :setOverviewText(getLocalizedText(35, "HelpForMaxDiffScore"))
 end
 
+local function setStateMoveRangeModifier(self)
+    self.m_State = "stateMoveRangeModifier"
+    self.m_View:setMenuTitleText(getLocalizedText(14, "MoveRangeModifier"))
+        :setItems(self.m_ItemsForStateMoveRangeModifier)
+        :setOverviewText(getLocalizedText(35, "HelpForMoveRangeModifier"))
+end
+
 local function setStatePlayerIndex(self)
     self.m_State = "statePlayerIndex"
     self.m_View:setMenuTitleText(getLocalizedText(34, "PlayerIndex"))
@@ -278,9 +387,34 @@ local function setStateStartingFund(self)
         :setOverviewText(getLocalizedText(35, "HelpForStartingFund"))
 end
 
+local function setStateVisionModifier(self)
+    self.m_State = "stateVisionModifier"
+    self.m_View:setMenuTitleText(getLocalizedText(14, "VisionModifier"))
+        :setItems(self.m_ItemsForStateVisionModifier)
+        :setOverviewText(getLocalizedText(35, "HelpForVisionModifier"))
+end
+
 --------------------------------------------------------------------------------
 -- The composition elements.
 --------------------------------------------------------------------------------
+local function initItemAdvancedSettings(self)
+    self.m_ItemAdvancedSettings = {
+        name     = getLocalizedText(14, "Advanced Settings"),
+        callback = function()
+            setStateAdvancedSettings(self)
+        end,
+    }
+end
+
+local function initItemAttackModifier(self)
+    self.m_ItemAttackModifier = {
+        name     = getLocalizedText(14, "AttackModifier"),
+        callback = function()
+            setStateAttackModifier(self)
+        end,
+    }
+end
+
 local function initItemEnableActiveSkill(self)
     self.m_ItemEnableActiveSkill = {
         name     = getLocalizedText(14, "EnableActiveSkill"),
@@ -353,6 +487,15 @@ local function initItemMaxDiffScore(self)
     }
 end
 
+local function initItemMoveRangeModifier(self)
+    self.m_ItemMoveRangeModifier = {
+        name     = getLocalizedText(14, "MoveRangeModifier"),
+        callback = function()
+            setStateMoveRangeModifier(self)
+        end,
+    }
+end
+
 local function initItemPlayerIndex(self)
     self.m_ItemPlayerIndex = {
         name     = getLocalizedText(34, "PlayerIndex"),
@@ -395,6 +538,45 @@ local function initItemStartingFund(self)
             setStateStartingFund(self)
         end,
     }
+end
+
+local function initItemVisionModifier(self)
+    self.m_ItemVisionModifier = {
+        name     = getLocalizedText(14, "VisionModifier"),
+        callback = function()
+            setStateVisionModifier(self)
+        end,
+    }
+end
+
+local function initItemsForStateAdvancedSettings(self)
+    self.m_ItemsForStateAdvancedSettings = {
+        self.m_ItemStartingFund,
+        self.m_ItemIncomeModifier,
+        self.m_ItemStartingEnergy,
+        self.m_ItemEnergyModifier,
+        self.m_ItemEnablePassiveSkill,
+        self.m_ItemEnableActiveSkill,
+        self.m_ItemEnableSkillDeclaration,
+        self.m_ItemMoveRangeModifier,
+        self.m_ItemAttackModifier,
+        self.m_ItemVisionModifier,
+    }
+end
+
+local function initItemsForStateAttackModifier(self)
+    local items = {}
+    for modifier = 30, -30, -30 do
+        items[#items + 1] = {
+            name     = "" .. modifier .. "%",
+            callback = function()
+                self.m_AttackModifier = modifier
+                setStateMain(self)
+            end,
+        }
+    end
+
+    self.m_ItemsForStateAttackModifier = items
 end
 
 local function initItemsForStateEnableActiveSkill(self)
@@ -545,6 +727,21 @@ local function initItemsForStateMaxDiffScore(self)
     self.m_ItemsForStateMaxDiffScore = items
 end
 
+local function initItemsForStateMoveRangeModifier(self)
+    local items = {}
+    for modifier = 1, -1, -1 do
+        items[#items + 1] = {
+            name     = "" .. modifier,
+            callback = function()
+                self.m_MoveRangeModifier = modifier
+                setStateMain(self)
+            end,
+        }
+    end
+
+    self.m_ItemsForStateMoveRangeModifier = items
+end
+
 local function initItemsForStateRankMatch(self)
     self.m_ItemsForStateRankMatch = {
         {
@@ -596,10 +793,27 @@ local function initItemsForStateStartingFund(self)
     self.m_ItemsForStateStartingFund = items
 end
 
+local function initItemsForStateVisionModifier(self)
+    local items = {}
+    for modifier = 1, -1, -1 do
+        items[#items + 1] = {
+            name     = "" .. modifier,
+            callback = function()
+                self.m_VisionModifier = modifier
+                setStateMain(self)
+            end
+        }
+    end
+
+    self.m_ItemsForStateVisionModifier = items
+end
+
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
 function ModelWarConfigurator:ctor()
+    initItemAdvancedSettings(      self)
+    initItemAttackModifier(        self)
     initItemEnableActiveSkill(     self)
     initItemEnablePassiveSkill(    self)
     initItemEnableSkillDeclaration(self)
@@ -608,12 +822,16 @@ function ModelWarConfigurator:ctor()
     initItemIncomeModifier(        self)
     initItemIntervalUntilBoot(     self)
     initItemMaxDiffScore(          self)
+    initItemMoveRangeModifier(     self)
     initItemPlayerIndex(           self)
     initItemPlaceHolder(           self)
     initItemRankMatch(             self)
     initItemStartingEnergy(        self)
     initItemStartingFund(          self)
+    initItemVisionModifier(        self)
 
+    initItemsForStateAdvancedSettings(      self)
+    initItemsForStateAttackModifier(        self)
     initItemsForStateEnableActiveSkill(     self)
     initItemsForStateEnablePassiveSkill(    self)
     initItemsForStateEnableSkillDeclaration(self)
@@ -622,9 +840,11 @@ function ModelWarConfigurator:ctor()
     initItemsForStateIncomeModifier(        self)
     initItemsForStateIntervalUntilBoot(     self)
     initItemsForStateMaxDiffScore(          self)
+    initItemsForStateMoveRangeModifier(     self)
     initItemsForStateRankMatch(             self)
     initItemsForStateStartingEnergy(        self)
     initItemsForStateStartingFund(          self)
+    initItemsForStateVisionModifier(        self)
 
     return self
 end
@@ -724,6 +944,7 @@ function ModelWarConfigurator:resetWithWarConfiguration(warConfiguration)
     self.m_WarConfiguration = warConfiguration
     local mode = self.m_Mode
     if (mode == "modeCreate") then
+        self.m_AttackModifier            = 0
         self.m_EnergyGainModifier        = 100
         self.m_IncomeModifier            = 100
         self.m_IntervalUntilBoot         = 3600 * 24 * 3
@@ -734,15 +955,18 @@ function ModelWarConfigurator:resetWithWarConfiguration(warConfiguration)
         self.m_IsSkillDeclarationEnabled = true
         self.m_ItemsForStatePlayerIndex  = createItemsForStatePlayerIndex(self)
         self.m_MaxDiffScore              = 100
+        self.m_MoveRangeModifier         = 0
         self.m_PlayerIndex               = 1
         self.m_StartingEnergy            = 0
         self.m_StartingFund              = 0
+        self.m_VisionModifier            = 0
 
         self.m_View:setButtonConfirmText(getLocalizedText(14, "ConfirmCreateWar"))
 
     elseif (mode == "modeJoin") then
+        self.m_AttackModifier            = warConfiguration.attackModifier
         self.m_EnergyGainModifier        = warConfiguration.energyGainModifier
-        self.m_IncomeModifier            = warConfiguration.incomeModifier        or 100
+        self.m_IncomeModifier            = warConfiguration.incomeModifier
         self.m_IntervalUntilBoot         = warConfiguration.intervalUntilBoot
         self.m_IsActiveSkillEnabled      = warConfiguration.isActiveSkillEnabled
         self.m_IsFogOfWarByDefault       = warConfiguration.isFogOfWarByDefault
@@ -751,15 +975,18 @@ function ModelWarConfigurator:resetWithWarConfiguration(warConfiguration)
         self.m_IsSkillDeclarationEnabled = warConfiguration.isSkillDeclarationEnabled
         self.m_ItemsForStatePlayerIndex  = createItemsForStatePlayerIndex(self)
         self.m_MaxDiffScore              = warConfiguration.maxDiffScore
+        self.m_MoveRangeModifier         = warConfiguration.moveRangeModifier
         self.m_PlayerIndex               = self.m_ItemsForStatePlayerIndex[1].playerIndex
         self.m_StartingEnergy            = warConfiguration.startingEnergy
         self.m_StartingFund              = warConfiguration.startingFund
+        self.m_VisionModifier            = warConfiguration.visionModifier
 
         self.m_View:setButtonConfirmText(getLocalizedText(14, "ConfirmJoinWar"))
 
     elseif (mode == "modeContinue") then
+        self.m_AttackModifier            = warConfiguration.attackModifier
         self.m_EnergyGainModifier        = warConfiguration.energyGainModifier
-        self.m_IncomeModifier            = warConfiguration.incomeModifier        or 100
+        self.m_IncomeModifier            = warConfiguration.incomeModifier
         self.m_IntervalUntilBoot         = warConfiguration.intervalUntilBoot
         self.m_IsActiveSkillEnabled      = warConfiguration.isActiveSkillEnabled
         self.m_IsFogOfWarByDefault       = warConfiguration.isFogOfWarByDefault
@@ -768,15 +995,18 @@ function ModelWarConfigurator:resetWithWarConfiguration(warConfiguration)
         self.m_IsSkillDeclarationEnabled = warConfiguration.isSkillDeclarationEnabled
         self.m_ItemsForStatePlayerIndex  = nil
         self.m_MaxDiffScore              = warConfiguration.maxDiffScore
+        self.m_MoveRangeModifier         = warConfiguration.moveRangeModifier
         self.m_PlayerIndex               = getPlayerIndexForWarConfiguration(warConfiguration)
         self.m_StartingEnergy            = warConfiguration.startingEnergy
         self.m_StartingFund              = warConfiguration.startingFund
+        self.m_VisionModifier            = warConfiguration.visionModifier
 
         self.m_View:setButtonConfirmText(getLocalizedText(14, "ConfirmContinueWar"))
 
     elseif (mode == "modeExit") then
+        self.m_AttackModifier            = warConfiguration.attackModifier
         self.m_EnergyGainModifier        = warConfiguration.energyGainModifier
-        self.m_IncomeModifier            = warConfiguration.incomeModifier        or 100
+        self.m_IncomeModifier            = warConfiguration.incomeModifier
         self.m_IntervalUntilBoot         = warConfiguration.intervalUntilBoot
         self.m_IsActiveSkillEnabled      = warConfiguration.isActiveSkillEnabled
         self.m_IsFogOfWarByDefault       = warConfiguration.isFogOfWarByDefault
@@ -785,9 +1015,11 @@ function ModelWarConfigurator:resetWithWarConfiguration(warConfiguration)
         self.m_IsSkillDeclarationEnabled = warConfiguration.isSkillDeclarationEnabled
         self.m_ItemsForStatePlayerIndex  = nil
         self.m_MaxDiffScore              = warConfiguration.maxDiffScore
+        self.m_MoveRangeModifier         = warConfiguration.moveRangeModifier
         self.m_PlayerIndex               = getPlayerIndexForWarConfiguration(warConfiguration)
         self.m_StartingEnergy            = warConfiguration.startingEnergy
         self.m_StartingFund              = warConfiguration.startingFund
+        self.m_VisionModifier            = warConfiguration.visionModifier
 
         self.m_View:setButtonConfirmText(getLocalizedText(14, "ConfirmExitWar"))
 
@@ -839,10 +1071,24 @@ function ModelWarConfigurator:getWarId()
 end
 
 function ModelWarConfigurator:onButtonBackTouched()
-    if (self.m_State ~= "stateMain") then
-        setStateMain(self)
-    elseif (self.m_OnButtonBackTouched) then
-        self.m_OnButtonBackTouched()
+    local state = self.m_State
+    if     (state == "stateAdvancedSettings")       then setStateMain(self)
+    elseif (state == "stateAttackModifier")         then setStateAdvancedSettings(self)
+    elseif (state == "stateEnableActiveSkill")      then setStateAdvancedSettings(self)
+    elseif (state == "stateEnablePassiveSkill")     then setStateAdvancedSettings(self)
+    elseif (state == "stateEnableSkillDeclaration") then setStateAdvancedSettings(self)
+    elseif (state == "stateEnergyModifier")         then setStateAdvancedSettings(self)
+    elseif (state == "stateFogOfWar")               then setStateMain(self)
+    elseif (state == "stateIncomeModifier")         then setStateAdvancedSettings(self)
+    elseif (state == "stateIntervalUntilBoot")      then setStateMain(self)
+    elseif (state == "stateMaxDiffScore")           then setStateMain(self)
+    elseif (state == "stateMoveRangeModifier")      then setStateAdvancedSettings(self)
+    elseif (state == "statePlayerIndex")            then setStateMain(self)
+    elseif (state == "stateRankMatch")              then setStateMain(self)
+    elseif (state == "stateStartingEnergy")         then setStateAdvancedSettings(self)
+    elseif (state == "stateStartingFund")           then setStateAdvancedSettings(self)
+    elseif (state == "stateVisionModifier")         then setStateAdvancedSettings(self)
+    elseif (self.m_OnButtonBackTouched)             then self.m_OnButtonBackTouched()
     end
 
     return self

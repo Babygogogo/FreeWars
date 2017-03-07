@@ -3,9 +3,9 @@ local ViewWarHud = class("ViewWarHud", cc.Node)
 
 local CONFIRM_BOX_Z_ORDER       = 99
 local WAR_COMMAND_MENU_Z_ORDER  = 3
-local REPLAY_CONTROLLER_Z_ORDER = 2
 local TILE_DETAIL_Z_ORDER       = 1
 local UNIT_DETAIL_Z_ORDER       = 1
+local REPLAY_CONTROLLER_Z_ORDER = 0
 local BATTLE_INFO_Z_ORDER       = 0
 local ACTION_MENU_Z_ORDER       = 0
 
