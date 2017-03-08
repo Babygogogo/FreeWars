@@ -85,9 +85,10 @@ local function generateEmptyDataForEachPlayer(self)
 
     modelPlayerManager:forEachModelPlayer(function(modelPlayer, playerIndex)
         if (modelPlayer:isAlive()) then
+            local shouldShowFund = (not modelFogMap:isFogOfWarCurrently()) or (modelPlayerManager:isSameTeamIndex(playerIndex, self.m_PlayerIndexLoggedIn))
             dataForEachPlayer[playerIndex] = {
                 energy          = modelPlayer:getEnergy(),
-                fund            = ((modelFogMap:isFogOfWarCurrently()) and ((playerIndex ~= self.m_PlayerIndexLoggedIn))) and ("--") or (modelPlayer:getFund()),
+                fund            = (shouldShowFund) and (modelPlayer:getFund()) or ("--"),
                 income          = 0,
                 idleUnitsCount  = 0,
                 isSkillDeclared = modelPlayer:isSkillDeclared(),

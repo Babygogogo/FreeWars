@@ -182,10 +182,10 @@ local function getLoadIndicatorFrame(self, unit)
     if (not unit.getCurrentLoadCount) then
         return nil
     else
-        local modelWar = unit:getModelWar()
+        local modelWar  = unit:getModelWar()
         local loadCount = unit:getCurrentLoadCount()
         if ((not SingletonGetters.isWarReplay(modelWar)) and (getModelFogMap(modelWar):isFogOfWarCurrently())) then
-            if ((unit:getPlayerIndex() ~= getPlayerIndexLoggedIn(modelWar)) or (loadCount > 0)) then
+            if ((not SingletonGetters.getModelPlayerManager(modelWar):isSameTeamIndex(unit:getPlayerIndex(), getPlayerIndexLoggedIn(modelWar))) or (loadCount > 0)) then
                 return cc.SpriteFrameCache:getInstance():getSpriteFrame("c02_t99_s06_f0" .. unit:getPlayerIndex() .. ".png")
             else
                 return nil

@@ -49,7 +49,7 @@ local function updateWithModelUnitMap(self)
         (not isModelUnitVisible(self, modelUnit)))                            then
         self.m_View:setVisible(false)
     else
-        local shouldShowLoadedUnits = (self.m_IsWarReplay) or (not self.m_ModelFogMap:isFogOfWarCurrently()) or (modelUnit:getPlayerIndex() == self.m_PlayerIndexLoggedIn)
+        local shouldShowLoadedUnits = (self.m_IsWarReplay) or (not self.m_ModelFogMap:isFogOfWarCurrently()) or (self.m_ModelPlayerManager:isSameTeamIndex(modelUnit:getPlayerIndex(), self.m_PlayerIndexLoggedIn))
         local loadedModelUnits      = (shouldShowLoadedUnits) and (modelUnitMap:getLoadedModelUnitsWithLoader(modelUnit)) or (nil)
         self.m_ModelUnitList        = {modelUnit, unpack(loadedModelUnits or {})}
 
@@ -110,6 +110,7 @@ function ModelUnitInfo:onStartRunning(modelWar)
     self.m_ModelWar            = modelWar
     self.m_IsWarReplay         = SingletonGetters.isWarReplay(           modelWar)
     self.m_ModelFogMap         = SingletonGetters.getModelFogMap(        modelWar)
+    self.m_ModelPlayerManager  = SingletonGetters.getModelPlayerManager( modelWar)
     self.m_ModelUnitMap        = SingletonGetters.getModelUnitMap(       modelWar)
     self.m_ModelWarCommandMenu = SingletonGetters.getModelWarCommandMenu(modelWar)
     if (not self.m_IsWarReplay) then

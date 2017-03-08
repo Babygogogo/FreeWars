@@ -22,6 +22,8 @@ local LocalizationFunctions  = requireFW("src.app.utilities.LocalizationFunction
 local SingletonGetters       = requireFW("src.app.utilities.SingletonGetters")
 local ComponentManager       = requireFW("src.global.components.ComponentManager")
 
+local ipairs = ipairs
+
 RepairDoer.EXPORTED_METHODS = {
     "getRepairTargetCategoryFullName",
     "getRepairTargetCategory",
@@ -50,8 +52,8 @@ end
 --------------------------------------------------------------------------------
 -- The public callback function on start running.
 --------------------------------------------------------------------------------
-function RepairDoer:onStartRunning(modelSceneWar)
-    self.m_ModelSceneWar = modelSceneWar
+function RepairDoer:onStartRunning(modelWar)
+    self.m_ModelWar = modelWar
 
     return self
 end
@@ -69,7 +71,7 @@ end
 
 function RepairDoer:canRepairTarget(target)
     local targetTiledID = target:getTiledId()
-    if (GameConstantFunctions.getPlayerIndexWithTiledId(targetTiledID) ~= self.m_Owner:getPlayerIndex()) then
+    if (not SingletonGetters.getModelPlayerManager(self.m_ModelWar):isSameTeamIndex(GameConstantFunctions.getPlayerIndexWithTiledId(targetTiledID), self.m_Owner:getPlayerIndex())) then
         return false
     end
 
