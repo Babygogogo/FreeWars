@@ -116,13 +116,14 @@
 }
 
 .ActionJoinWar {
-    actionCode           0 : integer
-    playerAccount        1 : string
-    playerPassword       2 : string
-    warID                3 : integer
-    playerIndex          4 : integer
-    warPassword          5 : string
-    isWarStarted         6 : boolean
+    actionCode     0 : integer
+    playerAccount  1 : string
+    playerPassword 2 : string
+    warID          3 : integer
+    playerIndex    4 : integer
+    warPassword    5 : string
+    isWarStarted   6 : boolean
+    teamIndex      7 : integer
 }
 
 .ActionLogin {
@@ -174,6 +175,7 @@
     moveRangeModifier         19 : integer
     attackModifier            20 : integer
     visionModifier            21 : integer
+    teamIndex                 22 : integer
 }
 
 .ActionRegister {
@@ -631,6 +633,7 @@
     playerIndex 0 : integer
     account     1 : string
     nickname    2 : string
+    teamIndex   3 : integer
 }
 
 .PlayerProfile {
@@ -716,6 +719,7 @@
         isActivatingSkill    8 : boolean
         isSkillDeclared      9 : boolean
         canActivateSkill    10 : boolean
+        teamIndex           11 : integer
     }
 
     .TurnData {

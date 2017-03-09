@@ -55,15 +55,16 @@ local function generateEmptyDataForEachPlayer(self)
     modelPlayerManager:forEachModelPlayer(function(modelPlayer, playerIndex)
         if (modelPlayer:isAlive()) then
             dataForEachPlayer[playerIndex] = {
-                nickname            = modelPlayer:getNickname(),
-                fund                = modelPlayer:getFund(),
-                energy              = modelPlayer:getEnergy(),
-                idleUnitsCount      = 0,
-                isSkillDeclared     = modelPlayer:isSkillDeclared(),
-                unitsCount          = 0,
-                unitsValue          = 0,
-                tilesCount          = 0,
-                income              = 0,
+                energy          = modelPlayer:getEnergy(),
+                fund            = modelPlayer:getFund(),
+                idleUnitsCount  = 0,
+                income          = 0,
+                isSkillDeclared = modelPlayer:isSkillDeclared(),
+                nickname        = modelPlayer:getNickname(),
+                teamIndex       = modelPlayer:getTeamIndex(),
+                tilesCount      = 0,
+                unitsCount      = 0,
+                unitsValue      = 0,
             }
         end
     end)
@@ -135,10 +136,11 @@ local function generateTextWarInfo(self)
         if (not dataForEachPlayer[i]) then
             stringList[#stringList + 1] = string.format("%s %d: %s", getLocalizedText(65, "Player"), i, getLocalizedText(65, "Lost"))
         else
-            local d                  = dataForEachPlayer[i]
-            local isPlayerInTurn     = i == playerIndexInTurn
-            stringList[#stringList + 1] = string.format("%s %d: %s %s\n%s: %d        %s: %s\n%s: %d        %s: %s        %s: %d\n%s: %d%s        %s: %d",
+            local d              = dataForEachPlayer[i]
+            local isPlayerInTurn = i == playerIndexInTurn
+            stringList[#stringList + 1] = string.format("%s %d: %s %s\n%s: %s        %s: %d        %s: %s\n%s: %d        %s: %s        %s: %d\n%s: %d%s        %s: %d",
                 getLocalizedText(65, "Player"),       i,           d.nickname, ((isPlayerInTurn) and (getInTurnDescription(modelWarReplay)) or ("")),
+                getLocalizedText(14, "TeamIndex"),    AuxiliaryFunctions.getTeamNameWithTeamIndex(d.teamIndex),
                 getLocalizedText(65, "Energy"),       d.energy,
                 getLocalizedText(22, "DeclareSkill"), (d.isSkillDeclared) and (getLocalizedText(22, "Yes")) or (getLocalizedText(22, "No")),
                 getLocalizedText(65, "TilesCount"),   d.tilesCount,

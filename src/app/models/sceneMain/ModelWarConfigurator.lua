@@ -10,6 +10,7 @@ local WarFieldManager           = requireFW("src.app.utilities.WarFieldManager")
 local WebSocketManager          = requireFW("src.app.utilities.WebSocketManager")
 
 local string           = string
+local pairs            = pairs
 local getLocalizedText = LocalizationFunctions.getLocalizedText
 
 local ACTION_CODE_EXIT_WAR      = ActionCodeFunctions.getActionCode("ActionExitWar")
@@ -43,6 +44,40 @@ local function getPlayerIndexForWarConfiguration(warConfiguration)
     end
 
     error("ModelWarConfigurator-getPlayerIndexForWarConfiguration() failed to find the playerIndex.")
+end
+
+local function getTeamIndexForWarConfiguration(warConfiguration)
+    local account = WebSocketManager.getLoggedInAccountAndPassword()
+    for _, playerData in pairs(warConfiguration.players) do
+        if (playerData.account == account) then
+            return playerData.teamIndex
+        end
+    end
+
+    error("ModelWarConfigurator-getTeamIndexForWarConfiguration() failed to find the teamIndex.")
+end
+
+local function getFirstUnusedTeamIndex(warConfiguration)
+    local playersData = warConfiguration.players
+    if (not playersData) then
+        return 1
+    else
+        for teamIndex = 1, WarFieldManager.getPlayersCount(warConfiguration.warFieldFileName) do
+            local isUsed = false
+            for _, playerData in pairs(playersData) do
+                if (playerData.teamIndex == teamIndex) then
+                    isUsed = true
+                    break
+                end
+            end
+
+            if (not isUsed) then
+                return teamIndex
+            end
+        end
+
+        error("ModelWarConfigurator-getFirstUnusedTeamIndex() failed to find the team index.")
+    end
 end
 
 --------------------------------------------------------------------------------
@@ -148,14 +183,15 @@ local function generateTextForAdvancedSettings(self)
 end
 
 local function generateOverviewText(self)
-    return string.format("%s:\n\n%s:%s%s\n%s:%s%s\n%s:%s%s\n\n%s:%s%s\n%s:%s%s\n\n%s:%s%s\n\n%s",
+    return string.format("%s:\n\n%s:%s%s\n%s:%s%s (%s: %s)\n%s:%s%s\n\n%s:%s%s\n%s:%s%s\n\n%s:%s%s\n\n%s",
         getLocalizedText(14, "Overview"),
-        getLocalizedText(14, "WarFieldName"),           "         ",     WarFieldManager.getWarFieldName(self.m_WarConfiguration.warFieldFileName),
-        getLocalizedText(14, "PlayerIndex"),            "         ",     generatePlayerColorText(self.m_PlayerIndex),
-        getLocalizedText(14, "FogOfWar"),               "         ",     getLocalizedText(14, (self.m_IsFogOfWarByDefault) and ("Yes") or ("No")),
-        getLocalizedText(14, "RankMatch"),              "             ", getLocalizedText(14, (self.m_IsRankMatch)         and ("Yes") or ("No")),
-        getLocalizedText(14, "MaxDiffScore"),           "         ",     (self.m_MaxDiffScore) and ("" .. self.m_MaxDiffScore) or getLocalizedText(14, "NoLimit"),
-        getLocalizedText(14, "IntervalUntilBoot"),      "         ",     AuxiliaryFunctions.formatTimeInterval(self.m_IntervalUntilBoot),
+        getLocalizedText(14, "WarFieldName"),      "         ",     WarFieldManager.getWarFieldName(self.m_WarConfiguration.warFieldFileName),
+        getLocalizedText(14, "PlayerIndex"),       "         ",     generatePlayerColorText(self.m_PlayerIndex),
+        getLocalizedText(14, "TeamIndex"),                          AuxiliaryFunctions.getTeamNameWithTeamIndex(self.m_TeamIndex),
+        getLocalizedText(14, "FogOfWar"),          "         ",     getLocalizedText(14, (self.m_IsFogOfWarByDefault) and ("Yes") or ("No")),
+        getLocalizedText(14, "RankMatch"),         "             ", getLocalizedText(14, (self.m_IsRankMatch)         and ("Yes") or ("No")),
+        getLocalizedText(14, "MaxDiffScore"),      "         ",     (self.m_MaxDiffScore) and ("" .. self.m_MaxDiffScore) or getLocalizedText(14, "NoLimit"),
+        getLocalizedText(14, "IntervalUntilBoot"), "         ",     AuxiliaryFunctions.formatTimeInterval(self.m_IntervalUntilBoot),
         generateTextForAdvancedSettings(self)
     )
 end
@@ -168,9 +204,9 @@ local function createItemsForStateMain(self)
     if (mode == "modeCreate") then
         return {
             self.m_ItemPlayerIndex,
+            self.m_ItemTeamIndex,
             self.m_ItemFogOfWar,
             self.m_ItemRankMatch,
-            self.m_ItemMaxDiffScore,
             self.m_ItemIntervalUntilBoot,
             self.m_ItemAdvancedSettings,
         }
@@ -179,6 +215,9 @@ local function createItemsForStateMain(self)
         local items = {}
         if (#self.m_ItemsForStatePlayerIndex > 1) then
             items[#items + 1] = self.m_ItemPlayerIndex
+        end
+        if (#self.m_ItemsForStateTeamIndex > 1) then
+            items[#items + 1] = self.m_ItemTeamIndex
         end
         if (#items == 0) then
             items[#items + 1] = self.m_ItemPlaceHolder
@@ -211,7 +250,6 @@ local function createItemsForStatePlayerIndex(self)
                 name        = generatePlayerColorText(playerIndex),
                 callback    = function()
                     self.m_PlayerIndex = playerIndex
-
                     setStateMain(self)
                 end,
             }
@@ -220,6 +258,52 @@ local function createItemsForStatePlayerIndex(self)
 
     assert(#items > 0)
     return items
+end
+
+local function createItemsForStateTeamIndex(self)
+    local warConfiguration   = self.m_WarConfiguration
+    local playersCountJoined = 0
+    local teamList           = {}
+    local teamsCount         = 0
+
+    for playerIndex, playerData in pairs(warConfiguration.players or {}) do
+        playersCountJoined  = playersCountJoined + 1
+
+        local teamIndex = playerData.teamIndex
+        if (teamList[teamIndex]) then
+            teamList[teamIndex] = teamList[teamIndex] + 1
+        else
+            teamList[teamIndex] = 1
+            teamsCount          = teamsCount + 1
+        end
+    end
+
+    local playersCountTotal = WarFieldManager.getPlayersCount(warConfiguration.warFieldFileName)
+    if ((playersCountJoined == playersCountTotal - 1) and (teamsCount == 1)) then
+        local teamIndex = getFirstUnusedTeamIndex(warConfiguration)
+        return {{
+            teamIndex = teamIndex,
+            name      = AuxiliaryFunctions.getTeamNameWithTeamIndex(teamIndex),
+            callback  = function()
+                self.m_TeamIndex = teamIndex
+                setStateMain(self)
+            end,
+        }}
+    else
+        local items = {}
+        for teamIndex = 1, playersCountTotal do
+            items[#items + 1] = {
+                teamIndex = teamIndex,
+                name      = AuxiliaryFunctions.getTeamNameWithTeamIndex(teamIndex),
+                callback  = function()
+                    self.m_TeamIndex = teamIndex
+                    setStateMain(self)
+                end,
+            }
+        end
+
+        return items
+    end
 end
 
 --------------------------------------------------------------------------------
@@ -236,6 +320,7 @@ local function sendActionJoinWar(self)
     WebSocketManager.sendAction({
         actionCode  = ACTION_CODE_JOIN_WAR,
         playerIndex = self.m_PlayerIndex,
+        teamIndex   = self.m_TeamIndex,
         warID       = self.m_WarConfiguration.warID,
         warPassword = "", -- TODO: self.m_WarPassword,
     })
@@ -259,6 +344,7 @@ local function sendActionNewWar(self)
         playerIndex               = self.m_PlayerIndex,
         startingEnergy            = self.m_StartingEnergy,
         startingFund              = self.m_StartingFund,
+        teamIndex                 = self.m_TeamIndex,
         visionModifier            = self.m_VisionModifier,
         warPassword               = "", -- TODO: self.m_WarPassword,
         warFieldFileName          = self.m_WarConfiguration.warFieldFileName,
@@ -385,6 +471,13 @@ local function setStateStartingFund(self)
     self.m_View:setMenuTitleText(getLocalizedText(14, "Starting Fund"))
         :setItems(self.m_ItemsForStateStartingFund)
         :setOverviewText(getLocalizedText(35, "HelpForStartingFund"))
+end
+
+local function setStateTeamIndex(self)
+    self.m_State = "stateTeamIndex"
+    self.m_View:setMenuTitleText(getLocalizedText(14, "TeamIndex"))
+        :setItems(self.m_ItemsForStateTeamIndex)
+        :setOverviewText(getLocalizedText(35, "HelpForTeamIndex"))
 end
 
 local function setStateVisionModifier(self)
@@ -540,6 +633,15 @@ local function initItemStartingFund(self)
     }
 end
 
+local function initItemTeamIndex(self)
+    self.m_ItemTeamIndex = {
+        name     = getLocalizedText(14, "TeamIndex"),
+        callback = function()
+            setStateTeamIndex(self)
+        end,
+    }
+end
+
 local function initItemVisionModifier(self)
     self.m_ItemVisionModifier = {
         name     = getLocalizedText(14, "VisionModifier"),
@@ -551,6 +653,7 @@ end
 
 local function initItemsForStateAdvancedSettings(self)
     self.m_ItemsForStateAdvancedSettings = {
+        self.m_ItemMaxDiffScore,
         self.m_ItemStartingFund,
         self.m_ItemIncomeModifier,
         self.m_ItemStartingEnergy,
@@ -828,6 +931,7 @@ function ModelWarConfigurator:ctor()
     initItemRankMatch(             self)
     initItemStartingEnergy(        self)
     initItemStartingFund(          self)
+    initItemTeamIndex(             self)
     initItemVisionModifier(        self)
 
     initItemsForStateAdvancedSettings(      self)
@@ -954,11 +1058,13 @@ function ModelWarConfigurator:resetWithWarConfiguration(warConfiguration)
         self.m_IsRankMatch               = false
         self.m_IsSkillDeclarationEnabled = true
         self.m_ItemsForStatePlayerIndex  = createItemsForStatePlayerIndex(self)
+        self.m_ItemsForStateTeamIndex    = createItemsForStateTeamIndex(self)
         self.m_MaxDiffScore              = 100
         self.m_MoveRangeModifier         = 0
         self.m_PlayerIndex               = 1
         self.m_StartingEnergy            = 0
         self.m_StartingFund              = 0
+        self.m_TeamIndex                 = 1
         self.m_VisionModifier            = 0
 
         self.m_View:setButtonConfirmText(getLocalizedText(14, "ConfirmCreateWar"))
@@ -974,11 +1080,13 @@ function ModelWarConfigurator:resetWithWarConfiguration(warConfiguration)
         self.m_IsRankMatch               = warConfiguration.isRankMatch
         self.m_IsSkillDeclarationEnabled = warConfiguration.isSkillDeclarationEnabled
         self.m_ItemsForStatePlayerIndex  = createItemsForStatePlayerIndex(self)
+        self.m_ItemsForStateTeamIndex    = createItemsForStateTeamIndex(self)
         self.m_MaxDiffScore              = warConfiguration.maxDiffScore
         self.m_MoveRangeModifier         = warConfiguration.moveRangeModifier
         self.m_PlayerIndex               = self.m_ItemsForStatePlayerIndex[1].playerIndex
         self.m_StartingEnergy            = warConfiguration.startingEnergy
         self.m_StartingFund              = warConfiguration.startingFund
+        self.m_TeamIndex                 = getFirstUnusedTeamIndex(warConfiguration)
         self.m_VisionModifier            = warConfiguration.visionModifier
 
         self.m_View:setButtonConfirmText(getLocalizedText(14, "ConfirmJoinWar"))
@@ -994,11 +1102,13 @@ function ModelWarConfigurator:resetWithWarConfiguration(warConfiguration)
         self.m_IsRankMatch               = warConfiguration.isRankMatch
         self.m_IsSkillDeclarationEnabled = warConfiguration.isSkillDeclarationEnabled
         self.m_ItemsForStatePlayerIndex  = nil
+        self.m_ItemsForStateTeamIndex    = nil
         self.m_MaxDiffScore              = warConfiguration.maxDiffScore
         self.m_MoveRangeModifier         = warConfiguration.moveRangeModifier
         self.m_PlayerIndex               = getPlayerIndexForWarConfiguration(warConfiguration)
         self.m_StartingEnergy            = warConfiguration.startingEnergy
         self.m_StartingFund              = warConfiguration.startingFund
+        self.m_TeamIndex                 = getTeamIndexForWarConfiguration(warConfiguration)
         self.m_VisionModifier            = warConfiguration.visionModifier
 
         self.m_View:setButtonConfirmText(getLocalizedText(14, "ConfirmContinueWar"))
@@ -1014,11 +1124,13 @@ function ModelWarConfigurator:resetWithWarConfiguration(warConfiguration)
         self.m_IsRankMatch               = warConfiguration.isRankMatch
         self.m_IsSkillDeclarationEnabled = warConfiguration.isSkillDeclarationEnabled
         self.m_ItemsForStatePlayerIndex  = nil
+        self.m_ItemsForStateTeamIndex    = nil
         self.m_MaxDiffScore              = warConfiguration.maxDiffScore
         self.m_MoveRangeModifier         = warConfiguration.moveRangeModifier
         self.m_PlayerIndex               = getPlayerIndexForWarConfiguration(warConfiguration)
         self.m_StartingEnergy            = warConfiguration.startingEnergy
         self.m_StartingFund              = warConfiguration.startingFund
+        self.m_TeamIndex                 = getTeamIndexForWarConfiguration(warConfiguration)
         self.m_VisionModifier            = warConfiguration.visionModifier
 
         self.m_View:setButtonConfirmText(getLocalizedText(14, "ConfirmExitWar"))
@@ -1081,12 +1193,13 @@ function ModelWarConfigurator:onButtonBackTouched()
     elseif (state == "stateFogOfWar")               then setStateMain(self)
     elseif (state == "stateIncomeModifier")         then setStateAdvancedSettings(self)
     elseif (state == "stateIntervalUntilBoot")      then setStateMain(self)
-    elseif (state == "stateMaxDiffScore")           then setStateMain(self)
+    elseif (state == "stateMaxDiffScore")           then setStateAdvancedSettings(self)
     elseif (state == "stateMoveRangeModifier")      then setStateAdvancedSettings(self)
     elseif (state == "statePlayerIndex")            then setStateMain(self)
     elseif (state == "stateRankMatch")              then setStateMain(self)
     elseif (state == "stateStartingEnergy")         then setStateAdvancedSettings(self)
     elseif (state == "stateStartingFund")           then setStateAdvancedSettings(self)
+    elseif (state == "stateTeamIndex")              then setStateMain(self)
     elseif (state == "stateVisionModifier")         then setStateAdvancedSettings(self)
     elseif (self.m_OnButtonBackTouched)             then self.m_OnButtonBackTouched()
     end

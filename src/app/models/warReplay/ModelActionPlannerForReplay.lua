@@ -18,7 +18,7 @@ local function getMoveCost(gridIndex, modelUnit, modelUnitMap, modelTileMap)
         return nil
     else
         local existingModelUnit = modelUnitMap:getModelUnit(gridIndex)
-        if ((existingModelUnit) and (existingModelUnit:getPlayerIndex() ~= modelUnit:getPlayerIndex())) then
+        if ((existingModelUnit) and (existingModelUnit:getTeamIndex() ~= modelUnit:getTeamIndex())) then
             return nil
         else
             return modelTileMap:getModelTile(gridIndex):getMoveCostWithModelUnit(modelUnit)
@@ -30,13 +30,13 @@ end
 -- The set state functions.
 --------------------------------------------------------------------------------
 local function canSetStatePreviewingAttackableArea(self, gridIndex)
-    local modelUnit = getModelUnitMap(self.m_ModelWarReplay):getModelUnit(gridIndex)
+    local modelUnit = getModelUnitMap(self.m_ModelWar):getModelUnit(gridIndex)
     return (modelUnit) and (modelUnit.getAttackRangeMinMax)
 end
 
 local function setStatePreviewingAttackableArea(self, gridIndex)
     self.m_State = "previewingAttackableArea"
-    local modelUnit = getModelUnitMap(self.m_ModelWarReplay):getModelUnit(gridIndex)
+    local modelUnit = getModelUnitMap(self.m_ModelWar):getModelUnit(gridIndex)
     for _, existingModelUnit in pairs(self.m_PreviewAttackModelUnits) do
         if (modelUnit == existingModelUnit) then
             return
@@ -44,7 +44,7 @@ local function setStatePreviewingAttackableArea(self, gridIndex)
     end
 
     self.m_PreviewAttackModelUnits[#self.m_PreviewAttackModelUnits + 1] = modelUnit
-    self.m_PreviewAttackableArea = AttackableGridListFunctions.createAttackableArea(gridIndex, getModelTileMap(self.m_ModelWarReplay), getModelUnitMap(self.m_ModelWarReplay), self.m_PreviewAttackableArea)
+    self.m_PreviewAttackableArea = AttackableGridListFunctions.createAttackableArea(gridIndex, getModelTileMap(self.m_ModelWar), getModelUnitMap(self.m_ModelWar), self.m_PreviewAttackableArea)
 
     if (self.m_View) then
         self.m_View:setPreviewAttackableArea(self.m_PreviewAttackableArea)
@@ -54,20 +54,20 @@ local function setStatePreviewingAttackableArea(self, gridIndex)
 end
 
 local function canSetStatePreviewingReachableArea(self, gridIndex)
-    local modelUnit = getModelUnitMap(self.m_ModelWarReplay):getModelUnit(gridIndex)
+    local modelUnit = getModelUnitMap(self.m_ModelWar):getModelUnit(gridIndex)
     return (modelUnit) and (not modelUnit.getAttackRangeMinMax)
 end
 
 local function setStatePreviewingReachableArea(self, gridIndex)
     self.m_State = "previewingReachableArea"
 
-    local modelUnit              = getModelUnitMap(self.m_ModelWarReplay):getModelUnit(gridIndex)
+    local modelUnit              = getModelUnitMap(self.m_ModelWar):getModelUnit(gridIndex)
     self.m_PreviewReachModelUnit = modelUnit
     self.m_PreviewReachableArea  = ReachableAreaFunctions.createArea(
         gridIndex,
         math.min(modelUnit:getMoveRange(), modelUnit:getCurrentFuel()),
         function(gridIndex)
-            return getMoveCost(gridIndex, modelUnit, getModelUnitMap(self.m_ModelWarReplay), getModelTileMap(self.m_ModelWarReplay))
+            return getMoveCost(gridIndex, modelUnit, getModelUnitMap(self.m_ModelWar), getModelTileMap(self.m_ModelWar))
         end
     )
 
@@ -128,7 +128,7 @@ end
 -- The callback functions on start running/script events.
 --------------------------------------------------------------------------------
 function ModelActionPlannerForReplay:onStartRunning(modelWarReplay)
-    self.m_ModelWarReplay = modelWarReplay
+    self.m_ModelWar = modelWarReplay
     getScriptEventDispatcher(modelWarReplay)
         :addEventListener("EvtGridSelected",          self)
         :addEventListener("EvtMapCursorMoved",        self)
@@ -171,7 +171,7 @@ function ModelActionPlannerForReplay:setStateIdle(resetUnitAnimation)
     self.m_View:setPreviewAttackableAreaVisible( false)
         :setPreviewReachableAreaVisible(  false)
 
-    getScriptEventDispatcher(self.m_ModelWarReplay):dispatchEvent({name = "EvtActionPlannerIdle"})
+    getScriptEventDispatcher(self.m_ModelWar):dispatchEvent({name = "EvtActionPlannerIdle"})
 
     return self
 end

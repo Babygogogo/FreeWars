@@ -18,6 +18,8 @@ local SingletonGetters       = requireFW("src.app.utilities.SingletonGetters")
 local SkillModifierFunctions = requireFW("src.app.utilities.SkillModifierFunctions")
 local ComponentManager       = requireFW("src.global.components.ComponentManager")
 
+local assert, type = assert, type
+
 MoveCostOwner.EXPORTED_METHODS = {
     "getMoveCostWithMoveType",
     "getMoveCostWithModelUnit",
@@ -61,7 +63,7 @@ function MoveCostOwner:getMoveCostWithModelUnit(modelUnit)
     local owner    = self.m_Owner
     local tileType = owner:getTileType()
     if (((tileType == "Seaport") or (tileType == "TempSeaport"))                              and
-        (owner:getPlayerIndex() ~= modelUnit:getPlayerIndex())                                and
+        (owner:getTeamIndex() ~= modelUnit:getTeamIndex())                                    and
         (GameConstantFunctions.isTypeInCategory(modelUnit:getUnitType(), "LargeNavalUnits"))) then
         return nil
     else

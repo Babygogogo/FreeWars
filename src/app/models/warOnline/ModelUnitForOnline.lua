@@ -16,7 +16,10 @@ local Destroyers            = requireFW("src.app.utilities.Destroyers")
 local GameConstantFunctions = requireFW("src.app.utilities.GameConstantFunctions")
 local GridIndexFunctions    = requireFW("src.app.utilities.GridIndexFunctions")
 local LocalizationFunctions = requireFW("src.app.utilities.LocalizationFunctions")
+local SingletonGetters      = requireFW("src.app.utilities.SingletonGetters")
 local ComponentManager      = requireFW("src.global.components.ComponentManager")
+
+local assert = assert
 
 local UNIT_STATE_CODE = {
     Idle     = 1,
@@ -103,11 +106,11 @@ end
 --------------------------------------------------------------------------------
 -- The callback functions on start running/script events.
 --------------------------------------------------------------------------------
-function ModelUnitForOnline:onStartRunning(modelSceneWar)
-    assert(modelSceneWar.isModelSceneWar, "ModelUnitForOnline:onStartRunning() invalid modelSceneWar.")
-    self.m_ModelSceneWar = modelSceneWar
+function ModelUnitForOnline:onStartRunning(modelWar)
+    self.m_ModelWar  = modelWar
+    self.m_TeamIndex = SingletonGetters.getModelPlayerManager(modelWar):getModelPlayer(self:getPlayerIndex()):getTeamIndex()
 
-    ComponentManager.callMethodForAllComponents(self, "onStartRunning", modelSceneWar)
+    ComponentManager.callMethodForAllComponents(self, "onStartRunning", modelWar)
     self:updateView()
 
     return self
@@ -178,8 +181,8 @@ function ModelUnitForOnline:showMovingAnimation()
 end
 
 function ModelUnitForOnline:getModelWar()
-    assert(self.m_ModelSceneWar, "ModelUnitForOnline:getModelWar() onStartRunning() hasn't been called yet.")
-    return self.m_ModelSceneWar
+    assert(self.m_ModelWar, "ModelUnitForOnline:getModelWar() onStartRunning() hasn't been called yet.")
+    return self.m_ModelWar
 end
 
 function ModelUnitForOnline:getTiledId()
@@ -192,6 +195,11 @@ end
 
 function ModelUnitForOnline:getPlayerIndex()
     return GameConstantFunctions.getPlayerIndexWithTiledId(self.m_TiledID)
+end
+
+function ModelUnitForOnline:getTeamIndex()
+    assert(self.m_TeamIndex, "ModelUnitForOnline:getTeamIndex() the index hasn't been initialized yet.")
+    return self.m_TeamIndex
 end
 
 function ModelUnitForOnline:isStateIdle()

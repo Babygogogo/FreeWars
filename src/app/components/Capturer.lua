@@ -47,8 +47,8 @@ end
 --------------------------------------------------------------------------------
 -- The public callback function on start running.
 --------------------------------------------------------------------------------
-function Capturer:onStartRunning(modelSceneWar)
-    self.m_ModelSceneWar = modelSceneWar
+function Capturer:onStartRunning(modelWar)
+    self.m_ModelWar = modelWar
 
     return self
 end
@@ -80,17 +80,12 @@ function Capturer:setCapturingModelTile(capturing)
 end
 
 function Capturer:canCaptureModelTile(modelTile)
-    return (self.m_Owner:getPlayerIndex() ~= modelTile:getPlayerIndex() and (modelTile.getCurrentCapturePoint))
+    return (modelTile.getCurrentCapturePoint) and
+        (not SingletonGetters.getModelPlayerManager(self.m_ModelWar):isSameTeamIndex(self.m_Owner:getPlayerIndex(), modelTile:getPlayerIndex()))
 end
 
 function Capturer:getCaptureAmount()
     return self.m_Owner:getNormalizedCurrentHP()
-    --[[
-    local capturer    = self.m_Owner
-    local modelPlayer = SingletonGetters.getModelPlayerManager(self.m_ModelSceneWar):getModelPlayer(capturer:getPlayerIndex())
-    local modifier    = SkillModifierFunctions.getCaptureAmountModifier(modelPlayer:getModelSkillConfiguration())
-    return round(capturer:getNormalizedCurrentHP() * (100 + modifier) / 100)
-    ]]
 end
 
 return Capturer

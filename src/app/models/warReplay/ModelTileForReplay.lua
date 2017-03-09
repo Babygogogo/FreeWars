@@ -104,9 +104,9 @@ end
 --------------------------------------------------------------------------------
 -- The public callback function on start running.
 --------------------------------------------------------------------------------
-function ModelTileForReplay:onStartRunning(modelWarReplay)
-    self.m_ModelWarReplay = modelWarReplay
-    ComponentManager.callMethodForAllComponents(self, "onStartRunning", modelWarReplay)
+function ModelTileForReplay:onStartRunning(modelWar)
+    self.m_ModelWar = modelWar
+    ComponentManager.callMethodForAllComponents(self, "onStartRunning", modelWar)
 
     return self
 end
@@ -141,6 +141,15 @@ function ModelTileForReplay:getTileType()
     return GameConstantFunctions.getTileTypeWithObjectAndBaseId(self:getObjectAndBaseId())
 end
 
+function ModelTileForReplay:getTeamIndex()
+    local playerIndex = self:getPlayerIndex()
+    if (playerIndex == 0) then
+        return nil
+    else
+        return SingletonGetters.getModelPlayerManager(self.m_ModelWar):getModelPlayer(playerIndex):getTeamIndex()
+    end
+end
+
 function ModelTileForReplay:getTileTypeFullName()
     return LocalizationFunctions.getLocalizedText(116, self:getTileType())
 end
@@ -155,7 +164,7 @@ function ModelTileForReplay:updateWithObjectAndBaseId(objectID, baseID)
 
     initWithTiledID(self, objectID, baseID)
     loadInstantialData(self, {GridIndexable = {x = gridIndex.x, y = gridIndex.y}})
-    self:onStartRunning(self.m_ModelWarReplay)
+    self:onStartRunning(self.m_ModelWar)
 
     return self
 end
@@ -188,7 +197,7 @@ function ModelTileForReplay:updateWithPlayerIndex(playerIndex)
             GridIndexable = {x = gridIndex.x, y = gridIndex.y},
             Capturable    = {currentCapturePoint = currentCapturePoint},
         })
-        self:onStartRunning(self.m_ModelWarReplay)
+        self:onStartRunning(self.m_ModelWar)
     end
 
     return self

@@ -193,7 +193,7 @@ local function moveModelUnitWithAction(action, modelWarOnline)
     local launchUnitID       = action.launchUnitID
     local focusModelUnit     = modelUnitMap:getFocusModelUnit(beginningGridIndex, launchUnitID)
     local playerIndex        = focusModelUnit:getPlayerIndex()
-    local shouldUpdateFogMap = (IS_SERVER) or (playerIndex == getPlayerIndexLoggedIn(modelWarOnline))
+    local shouldUpdateFogMap = (IS_SERVER) or (getModelPlayerManager(modelWarOnline):isSameTeamIndex(playerIndex, getPlayerIndexLoggedIn(modelWarOnline)))
     if (shouldUpdateFogMap) then
         modelFogMap:updateMapForPathsWithModelUnitAndPath(focusModelUnit, pathNodes)
     end
@@ -551,7 +551,7 @@ local function executeAttack(action, modelWarOnline)
         end
         if (lostPlayerIndex) then
             Destroyers.destroyPlayerForce(modelWarOnline, lostPlayerIndex)
-            if (modelPlayerManager:getAlivePlayersCount() <= 1) then
+            if (modelPlayerManager:getAliveTeamsCount() <= 1) then
                 modelWarOnline:setEnded(true)
             elseif (isInTurnPlayerLost) then
                 modelTurnManager:endTurnPhaseMain()
@@ -567,9 +567,8 @@ local function executeAttack(action, modelWarOnline)
         cleanupOnReceivingResponseFromServer(modelWarOnline)
 
         local playerIndexLoggedIn  = getPlayerIndexLoggedIn(modelWarOnline)
-        local isLoggedInPlayerLost = (lostPlayerIndex) and (lostPlayerIndex == playerIndexLoggedIn)
-        if ((isLoggedInPlayerLost)                                                    or
-            ((lostPlayerIndex) and (modelPlayerManager:getAlivePlayersCount() <= 2))) then
+        local isLoggedInPlayerLost = lostPlayerIndex == playerIndexLoggedIn
+        if ((isLoggedInPlayerLost) or (modelPlayerManager:getAliveTeamsCount(lostPlayerIndex) <= 1)) then
             modelWarOnline:setEnded(true)
         end
 
@@ -601,7 +600,7 @@ local function executeAttack(action, modelWarOnline)
                 end
             end
 
-            if ((targetVision) and (targetPlayerIndex == playerIndexLoggedIn)) then
+            if ((targetVision) and (getModelPlayerManager(modelWarOnline):isSameTeamIndex(targetPlayerIndex, playerIndexLoggedIn))) then
                 getModelFogMap(modelWarOnline):updateMapForUnitsForPlayerIndexOnUnitLeave(targetPlayerIndex, targetGridIndex, targetVision)
             end
             if (lostPlayerIndex) then
@@ -641,7 +640,7 @@ local function executeBeginTurn(action, modelWarOnline)
 
         if (lostPlayerIndex) then
             Destroyers.destroyPlayerForce(modelWarOnline, lostPlayerIndex)
-            if (modelPlayerManager:getAlivePlayersCount() <= 1) then
+            if (modelPlayerManager:getAliveTeamsCount() <= 1) then
                 modelWarOnline:setEnded(true)
             else
                 modelTurnManager:endTurnPhaseMain()
@@ -673,7 +672,7 @@ local function executeBeginTurn(action, modelWarOnline)
         else
             local lostModelPlayer      = modelPlayerManager:getModelPlayer(lostPlayerIndex)
             local isLoggedInPlayerLost = lostModelPlayer:getAccount() == getLoggedInAccountAndPassword(modelWarOnline)
-            if ((modelPlayerManager:getAlivePlayersCount() <= 2) or (isLoggedInPlayerLost)) then
+            if ((modelPlayerManager:getAliveTeamsCount(lostPlayerIndex) <= 1) or (isLoggedInPlayerLost)) then
                 modelWarOnline:setEnded(true)
             end
 
@@ -722,7 +721,7 @@ local function executeBuildModelTile(action, modelWarOnline)
         modelTile:updateWithObjectAndBaseId(focusModelUnit:getBuildTiledIdWithTileType(modelTile:getTileType()))
 
         local playerIndex = focusModelUnit:getPlayerIndex()
-        if ((IS_SERVER) or (playerIndex == getPlayerIndexLoggedIn(modelWarOnline))) then
+        if ((IS_SERVER) or (getModelPlayerManager(modelWarOnline):isSameTeamIndex(playerIndex, getPlayerIndexLoggedIn(modelWarOnline)))) then
             getModelFogMap(modelWarOnline):updateMapForTilesForPlayerIndexOnGettingOwnership(playerIndex, endingGridIndex, modelTile:getVisionForPlayerIndex(playerIndex))
         end
     end
@@ -778,7 +777,7 @@ local function executeCaptureModelTile(action, modelWarOnline)
         modelTile:setCurrentCapturePoint(modelTile:getMaxCapturePoint())
             :updateWithPlayerIndex(playerIndexActing)
 
-        if ((IS_SERVER) or (playerIndexActing == playerIndexLoggedIn)) then
+        if ((IS_SERVER) or (getModelPlayerManager(modelWarOnline):isSameTeamIndex(playerIndexActing, playerIndexLoggedIn))) then
             modelFogMap:updateMapForTilesForPlayerIndexOnGettingOwnership(playerIndexActing, endingGridIndex, modelTile:getVisionForPlayerIndex(playerIndexActing))
         end
     end
@@ -795,7 +794,7 @@ local function executeCaptureModelTile(action, modelWarOnline)
         end
         if (lostPlayerIndex) then
             Destroyers.destroyPlayerForce(modelWarOnline, lostPlayerIndex)
-            modelWarOnline:setEnded(modelPlayerManager:getAlivePlayersCount() <= 1)
+            modelWarOnline:setEnded(modelPlayerManager:getAliveTeamsCount() <= 1)
             PlayerProfileManager.updateProfilesWithModelWarOnline(modelWarOnline)
         end
 
@@ -811,7 +810,7 @@ local function executeCaptureModelTile(action, modelWarOnline)
                     :showNormalAnimation()
                 modelTile:updateView()
 
-                if ((capturePoint <= 0) and (previousPlayerIndex == playerIndexLoggedIn)) then
+                if ((capturePoint <= 0) and (getModelPlayerManager(modelWarOnline):isSameTeamIndex(previousPlayerIndex, playerIndexLoggedIn))) then
                     modelFogMap:updateMapForTilesForPlayerIndexOnLosingOwnership(previousPlayerIndex, endingGridIndex, previousVision)
                 end
                 updateTileAndUnitMapOnVisibilityChanged(modelWarOnline)
@@ -821,7 +820,7 @@ local function executeCaptureModelTile(action, modelWarOnline)
         else
             local lostModelPlayer      = modelPlayerManager:getModelPlayer(lostPlayerIndex)
             local isLoggedInPlayerLost = lostModelPlayer:getAccount() == getLoggedInAccountAndPassword()
-            if ((isLoggedInPlayerLost) or (modelPlayerManager:getAlivePlayersCount() <= 2)) then
+            if ((isLoggedInPlayerLost) or (modelPlayerManager:getAliveTeamsCount(lostPlayerIndex) <= 1)) then
                 modelWarOnline:setEnded(true)
             end
 
@@ -881,7 +880,7 @@ local function executeDestroyOwnedModelUnit(action, modelWarOnline)
     local playerIndexLoggedIn = (not IS_SERVER) and (getPlayerIndexLoggedIn(modelWarOnline)) or (nil)
 
     if (gridIndex) then
-        if ((IS_SERVER) or (playerIndexActing == playerIndexLoggedIn)) then
+        if ((IS_SERVER) or (getModelPlayerManager(modelWarOnline):isSameTeamIndex(playerIndexActing, playerIndexLoggedIn))) then
             getModelFogMap(modelWarOnline):updateMapForPathsWithModelUnitAndPath(modelUnitMap:getModelUnit(gridIndex), {gridIndex})
         end
         destroyActorUnitOnMap(modelWarOnline, gridIndex, true)
@@ -969,7 +968,7 @@ local function executeDropModelUnit(action, modelWarOnline)
     focusModelUnit:setStateActioned()
 
     local playerIndex        = focusModelUnit:getPlayerIndex()
-    local shouldUpdateFogMap = (IS_SERVER) or (playerIndex == getPlayerIndexLoggedIn(modelWarOnline))
+    local shouldUpdateFogMap = (IS_SERVER) or (getModelPlayerManager(modelWarOnline):isSameTeamIndex(playerIndex, getPlayerIndexLoggedIn(modelWarOnline)))
     local modelFogMap        = getModelFogMap(modelWarOnline)
     local dropModelUnits     = {}
     for _, dropDestination in ipairs(action.dropDestinations) do
@@ -1150,7 +1149,7 @@ local function executeLaunchFlare(action, modelWarOnline)
         :setCurrentFlareAmmo(focusModelUnit:getCurrentFlareAmmo() - 1)
 
     local playerIndexLoggedIn = (not IS_SERVER) and (getPlayerIndexLoggedIn(modelWarOnline)) or (nil)
-    if ((IS_SERVER) or (playerIndexActing == playerIndexLoggedIn)) then
+    if ((IS_SERVER) or (getModelPlayerManager(modelWarOnline):isSameTeamIndex(playerIndexActing, playerIndexLoggedIn))) then
         getModelFogMap(modelWarOnline):updateMapForPathsForPlayerIndexWithFlare(playerIndexActing, targetGridIndex, flareAreaRadius)
     end
 
@@ -1290,7 +1289,7 @@ local function executeProduceModelUnitOnTile(action, modelWarOnline)
         local producedActorUnit = produceActorUnit(modelWarOnline, action.tiledID, producedUnitID, gridIndex)
         modelUnitMap:addActorUnitOnMap(producedActorUnit)
 
-        if ((IS_SERVER) or (playerIndex == getPlayerIndexLoggedIn(modelWarOnline))) then
+        if ((IS_SERVER) or (getModelPlayerManager(modelWarOnline):isSameTeamIndex(playerIndex, getPlayerIndexLoggedIn(modelWarOnline)))) then
             getModelFogMap(modelWarOnline):updateMapForUnitsForPlayerIndexOnUnitArrive(playerIndex, gridIndex, producedActorUnit:getModel():getVisionForPlayerIndex(playerIndex))
         end
     end
@@ -1439,7 +1438,7 @@ local function executeSurrender(action, modelWarOnline)
     Destroyers.destroyPlayerForce(modelWarOnline, playerIndex)
 
     if (IS_SERVER) then
-        if (modelPlayerManager:getAlivePlayersCount() <= 1) then
+        if (modelPlayerManager:getAliveTeamsCount() <= 1) then
             modelWarOnline:setEnded(true)
         else
             modelTurnManager:endTurnPhaseMain()
@@ -1453,7 +1452,7 @@ local function executeSurrender(action, modelWarOnline)
         cleanupOnReceivingResponseFromServer(modelWarOnline)
 
         local isLoggedInPlayerLost = modelPlayer:getAccount() == getLoggedInAccountAndPassword(modelWarOnline)
-        if ((modelPlayerManager:getAlivePlayersCount() <= 1) or (isLoggedInPlayerLost)) then
+        if ((modelPlayerManager:getAliveTeamsCount(playerIndex) <= 1) or (isLoggedInPlayerLost)) then
             modelWarOnline:setEnded(true)
         end
 

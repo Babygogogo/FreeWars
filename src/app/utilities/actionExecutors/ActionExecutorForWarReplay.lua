@@ -380,7 +380,7 @@ local function executeAttack(action, modelWarReplay)
         end
         if (lostPlayerIndex) then
             Destroyers.destroyPlayerForce(modelWarReplay, lostPlayerIndex)
-            if (modelPlayerManager:getAlivePlayersCount() <= 1) then
+            if (modelPlayerManager:getAliveTeamsCount() <= 1) then
                 modelWarReplay:setEnded(true)
             elseif (isInTurnPlayerLost) then
                 modelTurnManager:endTurnPhaseMain()
@@ -389,7 +389,7 @@ local function executeAttack(action, modelWarReplay)
         modelWarReplay:setExecutingAction(false)
 
     else
-        if ((lostPlayerIndex) and (modelPlayerManager:getAlivePlayersCount() <= 2)) then
+        if ((lostPlayerIndex) and (modelPlayerManager:getAliveTeamsCount(lostPlayerIndex) <= 1)) then
             modelWarReplay:setEnded(true)
         end
 
@@ -458,7 +458,7 @@ local function executeBeginTurn(action, modelWarReplay)
                 modelWarReplay:setExecutingAction(false)
             end)
         else
-            modelWarReplay:setEnded(modelPlayerManager:getAlivePlayersCount() <= 2)
+            modelWarReplay:setEnded(modelPlayerManager:getAliveTeamsCount(lostPlayerIndex) <= 1)
             modelTurnManager:beginTurnPhaseBeginning(action.income, action.repairData, action.supplyData, function()
                 Destroyers.destroyPlayerForce(modelWarReplay, lostPlayerIndex)
                 if (not modelWarReplay:isEnded()) then
@@ -474,9 +474,7 @@ local function executeBeginTurn(action, modelWarReplay)
                 modelWarReplay:setExecutingAction(false)
             end)
         else
-            if (modelPlayerManager:getAlivePlayersCount() <= 2) then
-                modelWarReplay:setEnded(true)
-            end
+            modelWarReplay:setEnded(modelPlayerManager:getAliveTeamsCount(lostPlayerIndex) <= 1)
 
             modelTurnManager:beginTurnPhaseBeginning(action.income, action.repairData, action.supplyData, function()
                 local lostModelPlayer = modelPlayerManager:getModelPlayer(lostPlayerIndex)
@@ -574,7 +572,7 @@ local function executeCaptureModelTile(action, modelWarReplay)
         end
         if (lostPlayerIndex) then
             Destroyers.destroyPlayerForce(modelWarReplay, lostPlayerIndex)
-            modelWarReplay:setEnded(modelPlayerManager:getAlivePlayersCount() <= 1)
+            modelWarReplay:setEnded(modelPlayerManager:getAliveTeamsCount() <= 1)
         end
         modelWarReplay:setExecutingAction(false)
 
@@ -593,17 +591,14 @@ local function executeCaptureModelTile(action, modelWarReplay)
                 modelWarReplay:setExecutingAction(false)
             end)
         else
-            local lostModelPlayer = modelPlayerManager:getModelPlayer(lostPlayerIndex)
-            if (modelPlayerManager:getAlivePlayersCount() <= 2) then
-                modelWarReplay:setEnded(true)
-            end
+            modelWarReplay:setEnded(modelPlayerManager:getAliveTeamsCount(lostPlayerIndex) <= 1)
 
             focusModelUnit:moveViewAlongPath(pathNodes, isModelUnitDiving(focusModelUnit), function()
                 focusModelUnit:updateView()
                     :showNormalAnimation()
                 modelTile:updateView()
 
-                getModelMessageIndicator(modelWarReplay):showMessage(getLocalizedText(74, "Lose", lostModelPlayer:getNickname()))
+                getModelMessageIndicator(modelWarReplay):showMessage(getLocalizedText(74, "Lose", modelPlayerManager:getModelPlayer(lostPlayerIndex):getNickname()))
                 Destroyers.destroyPlayerForce(modelWarReplay, lostPlayerIndex)
                 getModelFogMap(modelWarReplay):updateView()
 
@@ -1035,15 +1030,13 @@ local function executeSurrender(action, modelWarReplay)
     Destroyers.destroyPlayerForce(modelWarReplay, playerIndex)
 
     if (modelWarReplay:isFastExecutingActions()) then
-        if (modelPlayerManager:getAlivePlayersCount() <= 1) then
+        if (modelPlayerManager:getAliveTeamsCount() <= 1) then
             modelWarReplay:setEnded(true)
         else
             modelTurnManager:endTurnPhaseMain()
         end
     else
-        if (modelPlayerManager:getAlivePlayersCount() <= 1) then
-            modelWarReplay:setEnded(true)
-        end
+        modelWarReplay:setEnded(modelPlayerManager:getAliveTeamsCount() <= 1)
 
         getModelFogMap(modelWarReplay):updateView()
         getModelMessageIndicator(modelWarReplay):showMessage(getLocalizedText(74, "Surrender", modelPlayer:getNickname()))

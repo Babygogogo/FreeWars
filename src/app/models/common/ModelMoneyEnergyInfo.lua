@@ -21,10 +21,13 @@ local string           = string
 -- The util functions.
 --------------------------------------------------------------------------------
 local function generateInfoText(self)
-    local playerIndex    = self.m_PlayerIndexInTurn
-    local modelPlayer    = SingletonGetters.getModelPlayerManager(self.m_ModelWar):getModelPlayer(playerIndex)
-    local shouldShowFund = (self.m_IsWarReplay) or (not self.m_ModelFogManager:isFogOfWarCurrently()) or (playerIndex == self.m_PlayerIndexLoggedIn)
+    local playerIndex        = self.m_PlayerIndexInTurn
+    local modelPlayerManager = self.m_ModelPlayerManager
+    local shouldShowFund     = (self.m_IsWarReplay)                                   or
+        (not self.m_ModelFogManager:isFogOfWarCurrently())                            or
+        (modelPlayerManager:isSameTeamIndex(playerIndex, self.m_PlayerIndexLoggedIn))
 
+    local modelPlayer = modelPlayerManager:getModelPlayer(playerIndex)
     return string.format("%s: %s\n%s: %s\n%s: %d",
         getLocalizedText(25, "Player"),  modelPlayer:getNickname(),
         getLocalizedText(25, "Fund"),    (shouldShowFund) and (modelPlayer:getFund()) or ("--"),
@@ -81,6 +84,7 @@ function ModelMoneyEnergyInfo:onStartRunning(modelWar)
     self.m_ModelFogManager     = SingletonGetters.getModelFogMap(        modelWar)
     self.m_ModelWarCommandMenu = SingletonGetters.getModelWarCommandMenu(modelWar)
     self.m_PlayerIndexInTurn   = SingletonGetters.getModelTurnManager(   modelWar):getPlayerIndex()
+    self.m_ModelPlayerManager  = SingletonGetters.getModelPlayerManager( modelWar)
     if (self.m_IsWarReplay) then
         self.m_ModelReplayController = SingletonGetters.getModelReplayController(modelWar)
     else

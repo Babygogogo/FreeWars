@@ -10,6 +10,7 @@ local WebSocketManager          = requireFW("src.app.utilities.WebSocketManager"
 local Actor                     = requireFW("src.global.actors.Actor")
 
 local getLocalizedText = LocalizationFunctions.getLocalizedText
+local string           = string
 
 local ACTION_CODE_GET_JOINABLE_WAR_CONFIGURATIONS = ActionCodeFunctions.getActionCode("ActionGetJoinableWarConfigurations")
 
@@ -17,17 +18,15 @@ local ACTION_CODE_GET_JOINABLE_WAR_CONFIGURATIONS = ActionCodeFunctions.getActio
 -- The util functions.
 --------------------------------------------------------------------------------
 local function getPlayerNicknames(warConfiguration)
-    local playersCount = WarFieldManager.getPlayersCount(warConfiguration.warFieldFileName)
-    local names = {}
     local players = warConfiguration.players
-
-    for i = 1, playersCount do
+    local names   = {}
+    for i = 1, WarFieldManager.getPlayersCount(warConfiguration.warFieldFileName) do
         if (players[i]) then
-            names[i] = players[i].account
+            names[i] = string.format("%s (%s: %s)", players[i].account, getLocalizedText(14, "TeamIndex"), AuxiliaryFunctions.getTeamNameWithTeamIndex(players[i].teamIndex))
         end
     end
 
-    return names, playersCount
+    return names
 end
 
 --------------------------------------------------------------------------------
