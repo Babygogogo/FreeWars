@@ -13,6 +13,7 @@ local ModelPlayerManager = requireFW("src.global.functions.class")("ModelPlayerM
 
 local ModelPlayer      = requireFW("src.app.models.common.ModelPlayer")
 local SingletonGetters = requireFW("src.app.utilities.SingletonGetters")
+local TableFunctions   = requireFW("src.app.utilities.TableFunctions")
 
 local IS_SERVER        = requireFW("src.app.utilities.GameConstantFunctions").isServer()
 local WebSocketManager = (not IS_SERVER) and (requireFW("src.app.utilities.WebSocketManager")) or (nil)
@@ -92,6 +93,17 @@ function ModelPlayerManager:getAlivePlayersCount()
     end
 
     return count
+end
+
+function ModelPlayerManager:getAliveTeamsCount(ignoredPlayerIndex)
+    local aliveTeamIndices = {}
+    self:forEachModelPlayer(function(modelPlayer, playerIndex)
+        if ((modelPlayer:isAlive()) and (playerIndex ~= ignoredPlayerIndex)) then
+            aliveTeamIndices[modelPlayer:getTeamIndex()] = true
+        end
+    end)
+
+    return TableFunctions.getPairsCount(aliveTeamIndices)
 end
 
 function ModelPlayerManager:getPlayerIndexLoggedIn()

@@ -551,7 +551,7 @@ local function executeAttack(action, modelWarOnline)
         end
         if (lostPlayerIndex) then
             Destroyers.destroyPlayerForce(modelWarOnline, lostPlayerIndex)
-            if (modelPlayerManager:getAlivePlayersCount() <= 1) then
+            if (modelPlayerManager:getAliveTeamsCount() <= 1) then
                 modelWarOnline:setEnded(true)
             elseif (isInTurnPlayerLost) then
                 modelTurnManager:endTurnPhaseMain()
@@ -567,9 +567,8 @@ local function executeAttack(action, modelWarOnline)
         cleanupOnReceivingResponseFromServer(modelWarOnline)
 
         local playerIndexLoggedIn  = getPlayerIndexLoggedIn(modelWarOnline)
-        local isLoggedInPlayerLost = (lostPlayerIndex) and (lostPlayerIndex == playerIndexLoggedIn)
-        if ((isLoggedInPlayerLost)                                                    or
-            ((lostPlayerIndex) and (modelPlayerManager:getAlivePlayersCount() <= 2))) then
+        local isLoggedInPlayerLost = lostPlayerIndex == playerIndexLoggedIn
+        if ((isLoggedInPlayerLost) or (modelPlayerManager:getAliveTeamsCount(lostPlayerIndex) <= 1)) then
             modelWarOnline:setEnded(true)
         end
 
@@ -641,7 +640,7 @@ local function executeBeginTurn(action, modelWarOnline)
 
         if (lostPlayerIndex) then
             Destroyers.destroyPlayerForce(modelWarOnline, lostPlayerIndex)
-            if (modelPlayerManager:getAlivePlayersCount() <= 1) then
+            if (modelPlayerManager:getAliveTeamsCount() <= 1) then
                 modelWarOnline:setEnded(true)
             else
                 modelTurnManager:endTurnPhaseMain()
@@ -673,7 +672,7 @@ local function executeBeginTurn(action, modelWarOnline)
         else
             local lostModelPlayer      = modelPlayerManager:getModelPlayer(lostPlayerIndex)
             local isLoggedInPlayerLost = lostModelPlayer:getAccount() == getLoggedInAccountAndPassword(modelWarOnline)
-            if ((modelPlayerManager:getAlivePlayersCount() <= 2) or (isLoggedInPlayerLost)) then
+            if ((modelPlayerManager:getAliveTeamsCount(lostPlayerIndex) <= 1) or (isLoggedInPlayerLost)) then
                 modelWarOnline:setEnded(true)
             end
 
@@ -795,7 +794,7 @@ local function executeCaptureModelTile(action, modelWarOnline)
         end
         if (lostPlayerIndex) then
             Destroyers.destroyPlayerForce(modelWarOnline, lostPlayerIndex)
-            modelWarOnline:setEnded(modelPlayerManager:getAlivePlayersCount() <= 1)
+            modelWarOnline:setEnded(modelPlayerManager:getAliveTeamsCount() <= 1)
             PlayerProfileManager.updateProfilesWithModelWarOnline(modelWarOnline)
         end
 
@@ -821,7 +820,7 @@ local function executeCaptureModelTile(action, modelWarOnline)
         else
             local lostModelPlayer      = modelPlayerManager:getModelPlayer(lostPlayerIndex)
             local isLoggedInPlayerLost = lostModelPlayer:getAccount() == getLoggedInAccountAndPassword()
-            if ((isLoggedInPlayerLost) or (modelPlayerManager:getAlivePlayersCount() <= 2)) then
+            if ((isLoggedInPlayerLost) or (modelPlayerManager:getAliveTeamsCount(lostPlayerIndex) <= 1)) then
                 modelWarOnline:setEnded(true)
             end
 
@@ -1439,7 +1438,7 @@ local function executeSurrender(action, modelWarOnline)
     Destroyers.destroyPlayerForce(modelWarOnline, playerIndex)
 
     if (IS_SERVER) then
-        if (modelPlayerManager:getAlivePlayersCount() <= 1) then
+        if (modelPlayerManager:getAliveTeamsCount() <= 1) then
             modelWarOnline:setEnded(true)
         else
             modelTurnManager:endTurnPhaseMain()
@@ -1453,7 +1452,7 @@ local function executeSurrender(action, modelWarOnline)
         cleanupOnReceivingResponseFromServer(modelWarOnline)
 
         local isLoggedInPlayerLost = modelPlayer:getAccount() == getLoggedInAccountAndPassword(modelWarOnline)
-        if ((modelPlayerManager:getAlivePlayersCount() <= 1) or (isLoggedInPlayerLost)) then
+        if ((modelPlayerManager:getAliveTeamsCount(playerIndex) <= 1) or (isLoggedInPlayerLost)) then
             modelWarOnline:setEnded(true)
         end
 

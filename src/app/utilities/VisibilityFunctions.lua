@@ -13,7 +13,6 @@ local canRevealHidingPlacesWithUnitsForSkillGroup = SkillModifierFunctions.canRe
 local canRevealHidingPlacesWithUnits              = SkillModifierFunctions.canRevealHidingPlacesWithUnits
 local getAdjacentGrids                            = GridIndexFunctions.getAdjacentGrids
 local getGridsWithinDistance                      = GridIndexFunctions.getGridsWithinDistance
-local getModelFogMap                              = SingletonGetters.getModelFogMap
 local getModelPlayerManager                       = SingletonGetters.getModelPlayerManager
 local getModelTileMap                             = SingletonGetters.getModelTileMap
 local getModelTurnManager                         = SingletonGetters.getModelTurnManager
@@ -155,21 +154,23 @@ end
 --------------------------------------------------------------------------------
 function VisibilityFunctions.isUnitOnMapVisibleToPlayerIndex(modelWar, gridIndex, unitType, isDiving, unitPlayerIndex, targetPlayerIndex, canRevealWithTiles, canRevealWithUnits)
     assert(type(unitType) == "string", "VisibilityFunctions.isUnitOnMapVisibleToPlayerIndex() invalid unitType: " .. (unitType or ""))
-    local modelPlayerManager = SingletonGetters.getModelPlayerManager(modelWar)
-    local unitTeamIndex      = modelPlayerManager:getModelPlayer(unitPlayerIndex)  :getTeamIndex()
-    local targetTeamIndex    = modelPlayerManager:getModelPlayer(targetPlayerIndex):getTeamIndex()
 
-    if ((isWarReplay(modelWar)) or (unitTeamIndex == targetTeamIndex)) then
+    local modelPlayerManager = SingletonGetters.getModelPlayerManager(modelWar)
+    local modelFogMap        = SingletonGetters.getModelFogMap(modelWar)
+    local targetTeamIndex    = modelPlayerManager:getModelPlayer(targetPlayerIndex):getTeamIndex()
+    if ((isWarReplay(modelWar)) or (modelPlayerManager:isSameTeamIndex(unitPlayerIndex, targetPlayerIndex))) then
         return true
     elseif (isDiving) then
         return hasUnitWithTeamIndexOnAdjacentGrid(modelWar, gridIndex, targetTeamIndex)
+    elseif (not modelFogMap:isFogOfWarCurrently()) then
+        return true
     end
 
     local modelTile = getModelTileMap(modelWar):getModelTile(gridIndex)
     if (modelTile:getTeamIndex() == targetTeamIndex) then
         return true
     else
-        local visibilityForPaths, visibilityForTiles, visibilityForUnits = getModelFogMap(modelWar):getVisibilityOnGridForTeamIndex(gridIndex, targetTeamIndex)
+        local visibilityForPaths, visibilityForTiles, visibilityForUnits = modelFogMap:getVisibilityOnGridForTeamIndex(gridIndex, targetTeamIndex)
         if (visibilityForPaths == 2) then
             return true
         elseif ((visibilityForPaths == 0) and (visibilityForTiles == 0) and (visibilityForUnits == 0)) then
@@ -185,12 +186,17 @@ function VisibilityFunctions.isUnitOnMapVisibleToPlayerIndex(modelWar, gridIndex
 end
 
 function VisibilityFunctions.isTileVisibleToPlayerIndex(modelWar, gridIndex, targetPlayerIndex, canRevealWithTiles, canRevealWithUnits)
+    local modelFogMap = SingletonGetters.getModelFogMap(modelWar)
+    if (not modelFogMap:isFogOfWarCurrently()) then
+        return true
+    end
+
     local modelTile       = getModelTileMap(modelWar):getModelTile(gridIndex)
     local targetTeamIndex = SingletonGetters.getModelPlayerManager(modelWar):getModelPlayer(targetPlayerIndex):getTeamIndex()
     if (modelTile:getTeamIndex() == targetTeamIndex) then
         return true
     else
-        local visibilityForPaths, visibilityForTiles, visibilityForUnits = getModelFogMap(modelWar):getVisibilityOnGridForTeamIndex(gridIndex, targetTeamIndex)
+        local visibilityForPaths, visibilityForTiles, visibilityForUnits = modelFogMap:getVisibilityOnGridForTeamIndex(gridIndex, targetTeamIndex)
         if (visibilityForPaths == 2) then
             return true
         elseif ((visibilityForPaths == 0) and (visibilityForTiles == 0) and (visibilityForUnits == 0)) then
