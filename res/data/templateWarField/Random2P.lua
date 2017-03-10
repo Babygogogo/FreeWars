@@ -5,7 +5,7 @@ return {
 
     list = {
         "BaZhenTuEr",
-        "BaoChiWeiXiao",
+        "BaoChiWeiXiao_2",
         "BaoFengYan",
         "BeiZhong",
         "BiFengGang",
