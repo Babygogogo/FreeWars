@@ -399,6 +399,7 @@ end
 local function generateItemsForStateAuxiliaryCommands(self)
     local items    = {
         self.m_ItemChat,
+        self.m_ItemUnitPropertyList,
         self.m_ItemReload,
     }
 
@@ -416,6 +417,7 @@ local function generateItemsForStateAuxiliaryCommands(self)
     end
 
     items[#items + 1] = self.m_ItemTileInfo
+    items[#items + 1] = self.m_ItemHelp
     items[#items + 1] = self.m_ItemHideUI
     items[#items + 1] = self.m_ItemSetMessageIndicator
     items[#items + 1] = self.m_ItemSetMusic
@@ -447,7 +449,6 @@ local function generateItemsForStateMain(self)
         self.m_ItemBackToMainScene,
         self.m_ItemSkillInfo,
         self.m_ItemAuxiliaryCommands,
-        self.m_ItemHelp,
     }
     if ((not self.m_IsWaitingForServerResponse)                                                and
         (getModelTurnManager(self.m_ModelWar):getPlayerIndex() == self.m_PlayerIndexLoggedIn)) then
@@ -534,7 +535,6 @@ end
 local function setStateHelp(self)
     self.m_State = "stateHelp"
     self.m_View:setItems({
-        self.m_ItemUnitPropertyList,
         self.m_ItemGameFlow,
         self.m_ItemWarControl,
         self.m_ItemEssentialConcept,
@@ -1096,11 +1096,11 @@ end
 
 function ModelWarCommandMenuForOnline:onButtonBackTouched()
     local state = self.m_State
-    if     (state == "stateAuxiliaryCommands") then setStateMain(self)
+    if     (state == "stateAuxiliaryCommands") then setStateMain(             self)
     elseif (state == "stateDrawOrSurrender")   then setStateAuxiliaryCommands(self)
-    elseif (state == "stateHelp")              then setStateMain(self)
-    elseif (state == "stateMain")              then self:setEnabled(false)
-    elseif (state == "stateUnitPropertyList")  then setStateHelp(self)
+    elseif (state == "stateHelp")              then setStateAuxiliaryCommands(self)
+    elseif (state == "stateMain")              then setStateDisabled(         self)
+    elseif (state == "stateUnitPropertyList")  then setStateAuxiliaryCommands(self)
     else                                       error("ModelWarCommandMenuForOnline:onButtonBackTouched() the state is invalid: " .. (state or ""))
     end
 
