@@ -130,12 +130,14 @@ local function createTouchListener(self)
     end
 
     local function onTouchesCancelled(touch, event)
+        isTouchBegan = false
     end
 
     local function onTouchesEnded(touches, event)
         if (not isTouchBegan) then --Sometimes this function is invoked without the onTouchesBegan() being invoked first, so we must do the manual check here.
             return
         end
+        isTouchBegan = false
 
         local gridIndex = GridIndexFunctions.worldPosToGridIndexInNode(touches[1]:getLocation(), self.m_View)
         if ((self:isMovableByPlayer()) and (GridIndexFunctions.isWithinMap(gridIndex, self.m_MapSize))) then
