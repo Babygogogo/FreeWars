@@ -29,7 +29,7 @@ local function generateSinglePlayerData(account, playerIndex, teamIndex, startin
 end
 
 local function generatePlayersData(warFieldFileName, playerIndex, startingEnergy, startingFund)
-    local data = {playerIndex = generateSinglePlayerData("Player", playerIndex, 1, startingEnergy, startingFund)}
+    local data = {[playerIndex] = generateSinglePlayerData("Player", playerIndex, 1, startingEnergy, startingFund)}
     for i = 1, WarFieldManager.getPlayersCount(warFieldFileName) do
         data[i] = data[i] or generateSinglePlayerData("A.I.", i, 2, startingEnergy, startingFund)
     end
@@ -40,26 +40,25 @@ end
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
-function WarCampaignManager.generateInitialCampaignData(campaignConfiguration)
-    local playerIndex      = param.playerIndex
-    local warFieldFileName = param.warFieldFileName
+function WarCampaignManager.createInitialCampaignData(campaignConfiguration)
+    local warFieldFileName = campaignConfiguration.warFieldFileName
     return {
         actionID                  = 0,
-        attackModifier            = param.attackModifier,
-        energyGainModifier        = param.energyGainModifier,
-        incomeModifier            = param.incomeModifier,
-        isActiveSkillEnabled      = param.isActiveSkillEnabled,
-        isFogOfWarByDefault       = param.isFogOfWarByDefault,
-        isPassiveSkillEnabled     = param.isPassiveSkillEnabled,
-        isSkillDeclarationEnabled = param.isSkillDeclarationEnabled,
+        attackModifier            = campaignConfiguration.attackModifier,
+        energyGainModifier        = campaignConfiguration.energyGainModifier,
+        incomeModifier            = campaignConfiguration.incomeModifier,
+        isActiveSkillEnabled      = campaignConfiguration.isActiveSkillEnabled,
+        isFogOfWarByDefault       = campaignConfiguration.isFogOfWarByDefault,
+        isPassiveSkillEnabled     = campaignConfiguration.isPassiveSkillEnabled,
+        isSkillDeclarationEnabled = campaignConfiguration.isSkillDeclarationEnabled,
         isWarEnded                = false,
-        moveRangeModifier         = param.moveRangeModifier,
-        saveIndex                 = param.saveIndex,
-        startingEnergy            = param.startingEnergy,
-        startingFund              = param.startingFund,
-        visionModifier            = param.visionModifier,
+        moveRangeModifier         = campaignConfiguration.moveRangeModifier,
+        saveIndex                 = campaignConfiguration.saveIndex,
+        startingEnergy            = campaignConfiguration.startingEnergy,
+        startingFund              = campaignConfiguration.startingFund,
+        visionModifier            = campaignConfiguration.visionModifier,
 
-        players  = generatePlayersData(warFieldFileName, playerIndex, param.startingEnergy, param.startingFund),
+        players  = generatePlayersData(warFieldFileName, campaignConfiguration.playerIndex, campaignConfiguration.startingEnergy, campaignConfiguration.startingFund),
         turn     = TableFunctions.clone(DEFAULT_TURN_DATA),
         warField = {warFieldFileName = warFieldFileName},
     }

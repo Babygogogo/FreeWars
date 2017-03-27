@@ -1,13 +1,15 @@
 
 local ModelCampaignConfigurator = class("ModelCampaignConfigurator")
 
-local Actor                     = requireFW("src.global.actors.Actor")
-local ActionCodeFunctions       = requireFW("src.app.utilities.ActionCodeFunctions")
-local AuxiliaryFunctions        = requireFW("src.app.utilities.AuxiliaryFunctions")
-local LocalizationFunctions     = requireFW("src.app.utilities.LocalizationFunctions")
-local SingletonGetters          = requireFW("src.app.utilities.SingletonGetters")
-local WarFieldManager           = requireFW("src.app.utilities.WarFieldManager")
-local WebSocketManager          = requireFW("src.app.utilities.WebSocketManager")
+local Actor                 = requireFW("src.global.actors.Actor")
+local ActorManager          = requireFW("src.global.actors.ActorManager")
+local ActionCodeFunctions   = requireFW("src.app.utilities.ActionCodeFunctions")
+local AuxiliaryFunctions    = requireFW("src.app.utilities.AuxiliaryFunctions")
+local LocalizationFunctions = requireFW("src.app.utilities.LocalizationFunctions")
+local SingletonGetters      = requireFW("src.app.utilities.SingletonGetters")
+local WarCampaignManager    = requireFW("src.app.utilities.WarCampaignManager")
+local WarFieldManager       = requireFW("src.app.utilities.WarFieldManager")
+local WebSocketManager      = requireFW("src.app.utilities.WebSocketManager")
 
 local string           = string
 local pairs            = pairs
@@ -204,10 +206,8 @@ end
 --------------------------------------------------------------------------------
 -- The functions for sending actions.
 --------------------------------------------------------------------------------
-local function sendActionNewWar(self)
-    WebSocketManager.sendAction({
-        actionCode                = ACTION_CODE_NEW_WAR,
-        defaultWeatherCode        = 1, --TODO: add an option for the weather.
+local function createAndEnterCampaign(self)
+    local campaignData = WarCampaignManager.createInitialCampaignData({
         attackModifier            = self.m_AttackModifier,
         energyGainModifier        = self.m_EnergyGainModifier,
         incomeModifier            = self.m_IncomeModifier,
@@ -221,9 +221,11 @@ local function sendActionNewWar(self)
         startingFund              = self.m_StartingFund,
         teamIndex                 = self.m_TeamIndex,
         visionModifier            = self.m_VisionModifier,
-        warPassword               = "", -- TODO: self.m_WarPassword,
         warFieldFileName          = self.m_CampaignConfiguration.warFieldFileName,
     })
+
+    local actorWarCampaign = Actor.createWithModelAndViewName("warCampaign.ModelWarCampaign", campaignData, "common.ViewSceneWar")
+    ActorManager.setAndRunRootActor(actorWarCampaign, "FADE", 1)
 end
 
 local function sendActionRunSceneWar(warID)
@@ -741,9 +743,8 @@ function ModelCampaignConfigurator:setModeCreate()
         local modelConfirmBox = SingletonGetters.getModelConfirmBox(self.m_ModelSceneMain)
         modelConfirmBox:setConfirmText(getLocalizedText(8, "NewWarConfirmation"))
             :setOnConfirmYes(function()
-                SingletonGetters.getModelMessageIndicator(self.m_ModelSceneMain):showMessage(getLocalizedText(14, "RetrievingCreateWarResult"))
-                sendActionNewWar(self)
                 modelConfirmBox:setEnabled(false)
+                createAndEnterCampaign(self)
             end)
             :setEnabled(true)
     end
@@ -851,6 +852,7 @@ function ModelCampaignConfigurator:onButtonBackTouched()
     elseif (state == "stateIncomeModifier")         then setStateAdvancedSettings(self)
     elseif (state == "stateMoveRangeModifier")      then setStateAdvancedSettings(self)
     elseif (state == "statePlayerIndex")            then setStateMain(self)
+    elseif (state == "stateSaveIndex")              then setStateMain(self)
     elseif (state == "stateStartingEnergy")         then setStateAdvancedSettings(self)
     elseif (state == "stateStartingFund")           then setStateAdvancedSettings(self)
     elseif (state == "stateVisionModifier")         then setStateAdvancedSettings(self)

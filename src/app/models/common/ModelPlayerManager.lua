@@ -61,13 +61,16 @@ end
 -- The public callback function on start running.
 --------------------------------------------------------------------------------
 function ModelPlayerManager:onStartRunning(modelWar)
-    self.m_IsWarReplay = SingletonGetters.isWarReplay(modelWar)
     self:forEachModelPlayer(function(modelPlayer)
         modelPlayer:onStartRunning(modelWar)
     end)
 
-    if ((not IS_SERVER) and (not self.m_IsWarReplay)) then
-        self.m_ModelPlayerLoggedIn, self.m_PlayerIndexLoggedIn = self:getModelPlayerWithAccount(WebSocketManager.getLoggedInAccountAndPassword())
+    if (not IS_SERVER) then
+        if (SingletonGetters.isWarCampaign(modelWar)) then
+            self.m_ModelPlayerForHuman, self.m_PlayerIndexForHuman = self:getModelPlayerWithAccount("Player")
+        elseif (SingletonGetters.isWarOnline(modelWar)) then
+            self.m_ModelPlayerLoggedIn, self.m_PlayerIndexLoggedIn = self:getModelPlayerWithAccount(WebSocketManager.getLoggedInAccountAndPassword())
+        end
     end
 
     return self
@@ -107,10 +110,13 @@ function ModelPlayerManager:getAliveTeamsCount(ignoredPlayerIndex)
 end
 
 function ModelPlayerManager:getPlayerIndexLoggedIn()
-    assert((not IS_SERVER) and (not self.m_IsWarReplay), "ModelPlayerManager:getPlayerIndexLoggedIn() this shouldn't be called on the server or in replay.")
     assert(self.m_PlayerIndexLoggedIn, "ModelPlayerManager:getPlayerIndexLoggedIn() the index hasn't been initialized yet.")
-
     return self.m_PlayerIndexLoggedIn, self.m_ModelPlayerLoggedIn
+end
+
+function ModelPlayerManager:getPlayerIndexForHuman()
+    assert(self.m_PlayerIndexForHuman, "ModelPlayerManager:getPlayerIndexForHuman() the index has not been initialized yet.")
+    return self.m_PlayerIndexForHuman, self.m_ModelPlayerForHuman
 end
 
 function ModelPlayerManager:getModelPlayerWithAccount(account)
