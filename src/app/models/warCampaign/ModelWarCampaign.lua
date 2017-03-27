@@ -75,7 +75,7 @@ local function initActorSkillDataManager(self, skillData)
 end
 
 local function initActorWarField(self, warFieldData)
-    self.m_ActorWarField = Actor.createWithModelAndViewName("warOnline.ModelWarFieldForOnline", warFieldData, "common.ViewWarField")
+    self.m_ActorWarField = Actor.createWithModelAndViewName("warCampaign.ModelWarFieldForCampaign", warFieldData, "common.ViewWarField")
 end
 
 local function initActorWarHud(self)
@@ -315,14 +315,20 @@ function ModelWarCampaign:getScriptEventDispatcher()
     return self.m_ScriptEventDispatcher
 end
 
-function ModelWarCampaign:showEffectWin(callback)
-    self.m_View:showEffectWin(callback)
+function ModelWarCampaign:showEffectLose(callback)
+    self.m_View:showEffectLose(callback)
 
     return self
 end
 
-function ModelWarCampaign:showEffectLose(callback)
-    self.m_View:showEffectLose(callback)
+function ModelWarCampaign:showEffectSurrender(callback)
+    self.m_View:showEffectSurrender(callback)
+
+    return self
+end
+
+function ModelWarCampaign:showEffectWin(callback)
+    self.m_View:showEffectWin(callback)
 
     return self
 end

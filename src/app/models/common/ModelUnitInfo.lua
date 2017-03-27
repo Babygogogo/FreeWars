@@ -33,7 +33,7 @@ local function isModelUnitVisible(self, modelUnit)
             modelUnit:getUnitType(),
             (modelUnit.isDiving) and (modelUnit:isDiving()),
             modelUnit:getPlayerIndex(),
-            self.m_PlayerIndexLoggedIn
+            self.m_PlayerIndexForPlayer
         )
     end
 end
@@ -49,7 +49,7 @@ local function updateWithModelUnitMap(self)
         (not isModelUnitVisible(self, modelUnit)))                            then
         self.m_View:setVisible(false)
     else
-        local shouldShowLoadedUnits = (self.m_IsWarReplay) or (not self.m_ModelFogMap:isFogOfWarCurrently()) or (self.m_ModelPlayerManager:isSameTeamIndex(modelUnit:getPlayerIndex(), self.m_PlayerIndexLoggedIn))
+        local shouldShowLoadedUnits = (self.m_IsWarReplay) or (not self.m_ModelFogMap:isFogOfWarCurrently()) or (self.m_ModelPlayerManager:isSameTeamIndex(modelUnit:getPlayerIndex(), self.m_PlayerIndexForPlayer))
         local loadedModelUnits      = (shouldShowLoadedUnits) and (modelUnitMap:getLoadedModelUnitsWithLoader(modelUnit)) or (nil)
         self.m_ModelUnitList        = {modelUnit, unpack(loadedModelUnits or {})}
 
@@ -113,9 +113,12 @@ function ModelUnitInfo:onStartRunning(modelWar)
     self.m_ModelPlayerManager  = SingletonGetters.getModelPlayerManager( modelWar)
     self.m_ModelUnitMap        = SingletonGetters.getModelUnitMap(       modelWar)
     self.m_ModelWarCommandMenu = SingletonGetters.getModelWarCommandMenu(modelWar)
-    if (not self.m_IsWarReplay) then
-        self.m_PlayerIndexLoggedIn = SingletonGetters.getPlayerIndexLoggedIn(modelWar)
-        self.m_ModelChatManager    = SingletonGetters.getModelChatManager(modelWar)
+
+    if (SingletonGetters.isWarCampaign(modelWar)) then
+        self.m_PlayerIndexForPlayer = self.m_ModelPlayerManager:getPlayerIndexForHuman()
+    elseif (SingletonGetters.isWarOnline(modelWar)) then
+        self.m_PlayerIndexForPlayer = SingletonGetters.getPlayerIndexLoggedIn(modelWar)
+        self.m_ModelChatManager     = SingletonGetters.getModelChatManager(modelWar)
     end
 
     SingletonGetters.getScriptEventDispatcher(modelWar)

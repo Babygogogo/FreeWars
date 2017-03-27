@@ -25,7 +25,7 @@ local function generateInfoText(self)
     local modelPlayerManager = self.m_ModelPlayerManager
     local shouldShowFund     = (self.m_IsWarReplay)                                   or
         (not self.m_ModelFogManager:isFogOfWarCurrently())                            or
-        (modelPlayerManager:isSameTeamIndex(playerIndex, self.m_PlayerIndexLoggedIn))
+        (modelPlayerManager:isSameTeamIndex(playerIndex, self.m_PlayerIndexForPlayer))
 
     local modelPlayer = modelPlayerManager:getModelPlayer(playerIndex)
     return string.format("%s: %s\n%s: %s\n%s: %d",
@@ -83,13 +83,16 @@ function ModelMoneyEnergyInfo:onStartRunning(modelWar)
     self.m_IsWarReplay         = SingletonGetters.isWarReplay(           modelWar)
     self.m_ModelFogManager     = SingletonGetters.getModelFogMap(        modelWar)
     self.m_ModelWarCommandMenu = SingletonGetters.getModelWarCommandMenu(modelWar)
-    self.m_PlayerIndexInTurn   = SingletonGetters.getModelTurnManager(   modelWar):getPlayerIndex()
     self.m_ModelPlayerManager  = SingletonGetters.getModelPlayerManager( modelWar)
+    self.m_PlayerIndexInTurn   = SingletonGetters.getModelTurnManager(   modelWar):getPlayerIndex()
+
     if (self.m_IsWarReplay) then
         self.m_ModelReplayController = SingletonGetters.getModelReplayController(modelWar)
+    elseif (SingletonGetters.isWarCampaign(modelWar)) then
+        self.m_PlayerIndexForPlayer = self.m_ModelPlayerManager:getPlayerIndexForHuman()
     else
-        self.m_ModelChatManager      = SingletonGetters.getModelChatManager(     modelWar)
-        self.m_PlayerIndexLoggedIn   = SingletonGetters.getPlayerIndexLoggedIn(  modelWar)
+        self.m_ModelChatManager     = SingletonGetters.getModelChatManager(   modelWar)
+        self.m_PlayerIndexForPlayer = SingletonGetters.getPlayerIndexLoggedIn(modelWar)
     end
 
     SingletonGetters.getScriptEventDispatcher(modelWar)

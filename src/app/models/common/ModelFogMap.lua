@@ -205,20 +205,9 @@ function ModelFogMap:onStartRunning(modelWar)
     self.m_ModelWar            = modelWar
     self.m_IsFogOfWarByDefault = modelWar:isFogOfWarByDefault()
 
-    if ((IS_SERVER) or (SingletonGetters.isWarReplay(modelWar))) then
-        for playerIndex = 1, getModelPlayerManager(modelWar):getPlayersCount() do
-            self:resetMapForTilesForPlayerIndex(playerIndex)
-                :resetMapForUnitsForPlayerIndex(playerIndex)
-        end
-    else
-        local modelPlayerManager = SingletonGetters.getModelPlayerManager(modelWar)
-        local teamIndex          = modelPlayerManager:getModelPlayer(SingletonGetters.getPlayerIndexLoggedIn(modelWar)):getTeamIndex()
-        modelPlayerManager:forEachModelPlayer(function(modelPlayer, playerIndex)
-            if ((modelPlayer:isAlive()) and (modelPlayer:getTeamIndex() == teamIndex)) then
-                self:resetMapForTilesForPlayerIndex(playerIndex)
-                    :resetMapForUnitsForPlayerIndex(playerIndex)
-            end
-        end)
+    for playerIndex = 1, getModelPlayerManager(modelWar):getPlayersCount() do
+        self:resetMapForTilesForPlayerIndex(playerIndex)
+            :resetMapForUnitsForPlayerIndex(playerIndex)
     end
 
     self:updateView()
