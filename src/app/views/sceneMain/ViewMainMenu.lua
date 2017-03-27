@@ -163,10 +163,10 @@ function ViewMainMenu:ctor(param)
     return self
 end
 
-function ViewMainMenu:setViewNewWarCreator(view)
-    assert(self.m_ViewNewWarCreator == nil, "ViewMainMenu:setViewNewWarCreator() the view has been set.")
-    self.m_ViewNewWarCreator = view
-    self:addChild(view, NEW_GAME_CREATOR_Z_ORDER)
+function ViewMainMenu:setViewContinueCampaignSelector(view)
+    assert(self.m_ViewContinueCampaignSelector == nil, "ViewMainMenu:setViewContinueCampaignSelector() the view has been set already.")
+    self.m_ViewContinueCampaignSelector = view
+    self:addChild(view, CONTINUE_GAME_SELECTOR_Z_ORDER)
 
     return self
 end
@@ -191,6 +191,22 @@ function ViewMainMenu:setViewJoinWarSelector(view)
     assert(self.m_ViewJoinWarSelector == nil, "ViewMainMenu:setViewJoinWarSelector() the view has been set.")
     self.m_ViewJoinWarSelector = view
     self:addChild(view, JOIN_WAR_SELECTOR_Z_ORDER)
+
+    return self
+end
+
+function ViewMainMenu:setViewNewCampaignSelector(view)
+    assert(self.m_ViewNewCampaignSelector == nil, "ViewMainMenu:setViewNewCampaignSelector() the view has been set already.")
+    self.m_ViewNewCampaignSelector = view
+    self:addChild(view, NEW_GAME_CREATOR_Z_ORDER)
+
+    return self
+end
+
+function ViewMainMenu:setViewNewWarCreator(view)
+    assert(self.m_ViewNewWarCreator == nil, "ViewMainMenu:setViewNewWarCreator() the view has been set.")
+    self.m_ViewNewWarCreator = view
+    self:addChild(view, NEW_GAME_CREATOR_Z_ORDER)
 
     return self
 end
