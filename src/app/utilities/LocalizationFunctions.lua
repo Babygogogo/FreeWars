@@ -403,6 +403,19 @@ local s_LongText23_2 = [[
 Untranslated...
 ]]
 
+local s_LongText24_1 = [[
+本选项规定战局存档的位置。
+
+本游戏有多个相互独立的存档位置，您可以任选一个用于保存战局的进度。
+进入战局后，您可以随时存档/读档，但不能再更改存档的位置。
+
+默认为"1"。
+]]
+
+local s_LongText24_2 = [[
+Untranslated...
+]]
+
 --------------------------------------------------------------------------------
 -- The private functions.
 --------------------------------------------------------------------------------
@@ -934,6 +947,8 @@ local s_Texts = {
             elseif (textType == "RetrievingJoinWarResult")      then return "正在参战，请稍候。若长时间没有反应，请返回重试。"
             elseif (textType == "RetrievingSkillConfiguration") then return "正在获取技能数据，请稍候。"
             elseif (textType == "RetrievingWarData")            then return "正在进入战局，请稍候。若长时间没有反应，请返回重试。"
+            elseif (textType == "Save Index")                   then return "存 档 位 置"
+            elseif (textType == "SaveIndex")                    then return "存档位置"
             elseif (textType == "Selected")                     then return "已选定"
             elseif (textType == "SkillConfiguration")           then return "我方技能配置"
             elseif (textType == "Starting Energy")              then return "初 始 能 量"
@@ -987,6 +1002,8 @@ local s_Texts = {
             elseif (textType == "RetrievingJoinWarResult")      then return "Joining the war, please wait."
             elseif (textType == "RetrievingSkillConfiguration") then return "Retrieving data..."
             elseif (textType == "RetrievingWarData")            then return "Retrieving war data, please wait."
+            elseif (textType == "Save Index")                   then return "SaveIndex"
+            elseif (textType == "SaveIndex")                    then return "SaveIndex"
             elseif (textType == "Selected")                     then return "Selected"
             elseif (textType == "SkillConfiguration")           then return "Skill Configuration"
             elseif (textType == "Starting Energy")              then return "Starting Energy"
@@ -1229,6 +1246,7 @@ local s_Texts = {
             elseif (textType == "HelpForMoveRangeModifier")      then return s_LongText20_1
             elseif (textType == "HelpForPlayerIndex")            then return s_LongText15_1
             elseif (textType == "HelpForRankMatch")              then return s_LongText16_1
+            elseif (textType == "HelpForSaveIndex")              then return s_LongText24_1
             elseif (textType == "HelpForStartingEnergy")         then return s_LongText17_1
             elseif (textType == "HelpForStartingFund")           then return s_LongText18_1
             elseif (textType == "HelpForTeamIndex")              then return s_LongText23_1
@@ -1249,6 +1267,7 @@ local s_Texts = {
             elseif (textType == "HelpForMoveRangeModifier")      then return s_LongText20_2
             elseif (textType == "HelpForPlayerIndex")            then return s_LongText15_2
             elseif (textType == "HelpForRankMatch")              then return s_LongText16_2
+            elseif (textType == "HelpForSaveIndex")              then return s_LongText24_2
             elseif (textType == "HelpForStartingEnergy")         then return s_LongText17_2
             elseif (textType == "HelpForStartingFund")           then return s_LongText18_2
             elseif (textType == "HelpForTeamIndex")              then return s_LongText23_2

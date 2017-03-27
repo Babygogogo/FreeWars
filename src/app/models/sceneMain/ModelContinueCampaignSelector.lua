@@ -99,7 +99,7 @@ local function createOngoingWarList(self, warConfigurations)
 
                 self.m_OnButtonNextTouched = function()
                     getActorWarFieldPreviewer(self):getModel():setEnabled(false)
-                    getActorCampaignConfigurator(self):getModel():resetWithWarConfiguration(warConfiguration)
+                    getActorCampaignConfigurator(self):getModel():resetWithCampaignConfiguration(warConfiguration)
                         :setEnabled(true)
 
                     self.m_View:setMenuVisible(false)

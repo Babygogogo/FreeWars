@@ -32,10 +32,9 @@ local function generatePlayerColorText(playerIndex)
     end
 end
 
-local function getPlayerIndexForWarConfiguration(warConfiguration)
-    local account = WebSocketManager.getLoggedInAccountAndPassword()
-    for playerIndex, player in pairs(warConfiguration.players) do
-        if (player.account == account) then
+local function getPlayerIndexForWarConfiguration(campaignConfiguration)
+    for playerIndex, player in pairs(campaignConfiguration.players) do
+        if (player.account == "Player") then
             return playerIndex
         end
     end
@@ -146,12 +145,13 @@ local function generateTextForAdvancedSettings(self)
 end
 
 local function generateOverviewText(self)
-    return string.format("%s:\n\n%s:%s%s\n%s:%s%s (%s: %s)\n%s:%s%s\n\n%s",
+    return string.format("%s:\n\n%s:%s%s\n%s:%s%s (%s: %s)\n%s:%s%s\n\n%s:%s%d\n\n%s",
         getLocalizedText(14, "Overview"),
-        getLocalizedText(14, "WarFieldName"),      "         ",     WarFieldManager.getWarFieldName(self.m_WarConfiguration.warFieldFileName),
+        getLocalizedText(14, "WarFieldName"),      "         ",     WarFieldManager.getWarFieldName(self.m_CampaignConfiguration.warFieldFileName),
         getLocalizedText(14, "PlayerIndex"),       "         ",     generatePlayerColorText(self.m_PlayerIndex),
         getLocalizedText(14, "TeamIndex"),                          AuxiliaryFunctions.getTeamNameWithTeamIndex(self.m_TeamIndex),
         getLocalizedText(14, "FogOfWar"),          "         ",     getLocalizedText(14, (self.m_IsFogOfWarByDefault) and ("Yes") or ("No")),
+        getLocalizedText(14, "SaveIndex"),         "         ",     self.m_SaveIndex,
         generateTextForAdvancedSettings(self)
     )
 end
@@ -165,6 +165,7 @@ local function createItemsForStateMain(self)
         return {
             self.m_ItemPlayerIndex,
             self.m_ItemFogOfWar,
+            self.m_ItemSaveIndex,
             self.m_ItemAdvancedSettings,
         }
 
@@ -179,11 +180,11 @@ end
 local setStateMain
 
 local function createItemsForStatePlayerIndex(self)
-    local warConfiguration = self.m_WarConfiguration
-    local players          = warConfiguration.players
-    local items            = {}
+    local campaignConfiguration = self.m_CampaignConfiguration
+    local players              = campaignConfiguration.players
+    local items                = {}
 
-    for playerIndex = 1, WarFieldManager.getPlayersCount(warConfiguration.warFieldFileName) do
+    for playerIndex = 1, WarFieldManager.getPlayersCount(campaignConfiguration.warFieldFileName) do
         if ((not players) or (not players[playerIndex])) then
             items[#items + 1] = {
                 playerIndex = playerIndex,
@@ -221,7 +222,7 @@ local function sendActionNewWar(self)
         teamIndex                 = self.m_TeamIndex,
         visionModifier            = self.m_VisionModifier,
         warPassword               = "", -- TODO: self.m_WarPassword,
-        warFieldFileName          = self.m_WarConfiguration.warFieldFileName,
+        warFieldFileName          = self.m_CampaignConfiguration.warFieldFileName,
     })
 end
 
@@ -247,6 +248,13 @@ local function setStateAttackModifier(self)
     self.m_View:setMenuTitleText(getLocalizedText(14, "AttackModifier"))
         :setItems(self.m_ItemsForStateAttackModifier)
         :setOverviewText(getLocalizedText(35, "HelpForAttackModifier"))
+end
+
+local function setStateSaveIndex(self)
+    self.m_State = "stateSaveIndex"
+    self.m_View:setMenuTitleText(getLocalizedText(14, "Save Index"))
+        :setItems(self.m_ItemsForStateSaveIndex)
+        :setOverviewText(getLocalizedText(35, "HelpForSaveIndex"))
 end
 
 local function setStateEnableActiveSkill(self)
@@ -350,6 +358,15 @@ local function initItemAttackModifier(self)
         name     = getLocalizedText(14, "AttackModifier"),
         callback = function()
             setStateAttackModifier(self)
+        end,
+    }
+end
+
+local function initItemSaveIndex(self)
+    self.m_ItemSaveIndex = {
+        name     = getLocalizedText(14, "Save Index"),
+        callback = function()
+            setStateSaveIndex(self)
         end,
     }
 end
@@ -489,6 +506,21 @@ local function initItemsForStateAttackModifier(self)
     end
 
     self.m_ItemsForStateAttackModifier = items
+end
+
+local function initItemsForStateSaveIndex(self)
+    local items = {}
+    for index = 1, 10 do
+        items[#items + 1] = {
+            name    = "" .. index,
+            callback = function()
+                self.m_SaveIndex = index
+                setStateMain(self)
+            end,
+        }
+    end
+
+    self.m_ItemsForStateSaveIndex = items
 end
 
 local function initItemsForStateEnableActiveSkill(self)
@@ -674,6 +706,7 @@ function ModelCampaignConfigurator:ctor()
     initItemMoveRangeModifier(     self)
     initItemPlayerIndex(           self)
     initItemPlaceHolder(           self)
+    initItemSaveIndex(             self)
     initItemStartingEnergy(        self)
     initItemStartingFund(          self)
     initItemVisionModifier(        self)
@@ -687,6 +720,7 @@ function ModelCampaignConfigurator:ctor()
     initItemsForStateFogOfWar(              self)
     initItemsForStateIncomeModifier(        self)
     initItemsForStateMoveRangeModifier(     self)
+    initItemsForStateSaveIndex(             self)
     initItemsForStateStartingEnergy(        self)
     initItemsForStateStartingFund(          self)
     initItemsForStateVisionModifier(        self)
@@ -722,7 +756,7 @@ function ModelCampaignConfigurator:setModeContinue()
     self.m_MenuTitleTextForMode           = getLocalizedText(14, "ContinueWar")
     self.m_CallbackOnButtonConfirmTouched = function()
         SingletonGetters.getModelMessageIndicator(self.m_ModelSceneMain):showMessage(getLocalizedText(14, "RetrievingWarData"))
-        sendActionRunSceneWar(self.m_WarConfiguration.warID)
+        sendActionRunSceneWar(self.m_CampaignConfiguration.warID)
     end
 
     return self
@@ -737,8 +771,8 @@ end
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
-function ModelCampaignConfigurator:resetWithWarConfiguration(warConfiguration)
-    self.m_WarConfiguration = warConfiguration
+function ModelCampaignConfigurator:resetWithCampaignConfiguration(campaignConfiguration)
+    self.m_CampaignConfiguration = campaignConfiguration
     local mode = self.m_Mode
     if (mode == "modeCreate") then
         self.m_AttackModifier            = 0
@@ -751,6 +785,7 @@ function ModelCampaignConfigurator:resetWithWarConfiguration(warConfiguration)
         self.m_ItemsForStatePlayerIndex  = createItemsForStatePlayerIndex(self)
         self.m_MoveRangeModifier         = 0
         self.m_PlayerIndex               = 1
+        self.m_SaveIndex                 = 1
         self.m_StartingEnergy            = 0
         self.m_StartingFund              = 0
         self.m_TeamIndex                 = 1
@@ -759,25 +794,26 @@ function ModelCampaignConfigurator:resetWithWarConfiguration(warConfiguration)
         self.m_View:setButtonConfirmText(getLocalizedText(14, "ConfirmCreateWar"))
 
     elseif (mode == "modeContinue") then
-        self.m_AttackModifier            = warConfiguration.attackModifier
-        self.m_EnergyGainModifier        = warConfiguration.energyGainModifier
-        self.m_IncomeModifier            = warConfiguration.incomeModifier
-        self.m_IsActiveSkillEnabled      = warConfiguration.isActiveSkillEnabled
-        self.m_IsFogOfWarByDefault       = warConfiguration.isFogOfWarByDefault
-        self.m_IsPassiveSkillEnabled     = warConfiguration.isPassiveSkillEnabled
-        self.m_IsSkillDeclarationEnabled = warConfiguration.isSkillDeclarationEnabled
+        self.m_AttackModifier            = campaignConfiguration.attackModifier
+        self.m_EnergyGainModifier        = campaignConfiguration.energyGainModifier
+        self.m_IncomeModifier            = campaignConfiguration.incomeModifier
+        self.m_IsActiveSkillEnabled      = campaignConfiguration.isActiveSkillEnabled
+        self.m_IsFogOfWarByDefault       = campaignConfiguration.isFogOfWarByDefault
+        self.m_IsPassiveSkillEnabled     = campaignConfiguration.isPassiveSkillEnabled
+        self.m_IsSkillDeclarationEnabled = campaignConfiguration.isSkillDeclarationEnabled
         self.m_ItemsForStatePlayerIndex  = nil
-        self.m_MoveRangeModifier         = warConfiguration.moveRangeModifier
-        self.m_PlayerIndex               = getPlayerIndexForWarConfiguration(warConfiguration)
-        self.m_StartingEnergy            = warConfiguration.startingEnergy
-        self.m_StartingFund              = warConfiguration.startingFund
+        self.m_MoveRangeModifier         = campaignConfiguration.moveRangeModifier
+        self.m_PlayerIndex               = getPlayerIndexForWarConfiguration(campaignConfiguration)
+        self.m_SaveIndex                 = campaignConfiguration.saveIndex
+        self.m_StartingEnergy            = campaignConfiguration.startingEnergy
+        self.m_StartingFund              = campaignConfiguration.startingFund
         self.m_TeamIndex                 = 1
-        self.m_VisionModifier            = warConfiguration.visionModifier
+        self.m_VisionModifier            = campaignConfiguration.visionModifier
 
         self.m_View:setButtonConfirmText(getLocalizedText(14, "ConfirmContinueWar"))
 
     else
-        error("ModelCampaignConfigurator:resetWithWarConfiguration() the mode of the configurator is invalid: " .. (mode or ""))
+        error("ModelCampaignConfigurator:resetWithCampaignConfiguration() the mode of the configurator is invalid: " .. (mode or ""))
     end
 
     setStateMain(self)
@@ -800,7 +836,7 @@ function ModelCampaignConfigurator:setEnabled(enabled)
 end
 
 function ModelCampaignConfigurator:getWarId()
-    return self.m_WarConfiguration.warID
+    return self.m_CampaignConfiguration.warID
 end
 
 function ModelCampaignConfigurator:onButtonBackTouched()

@@ -120,7 +120,7 @@ end
 
 function ModelNewCampaignSelector:onButtonNextTouched()
     getActorWarFieldPreviewer(self):getModel():setEnabled(false)
-    getActorCampaignConfigurator(self):getModel():resetWithWarConfiguration({warFieldFileName = self.m_WarFieldFileName})
+    getActorCampaignConfigurator(self):getModel():resetWithCampaignConfiguration({warFieldFileName = self.m_WarFieldFileName})
         :setEnabled(true)
 
     self.m_View:setMenuVisible(false)
