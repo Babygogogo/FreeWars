@@ -21,12 +21,12 @@ local function getActorWarFieldPreviewer(self)
     return self.m_ActorWarFieldPreviewer
 end
 
-local function getActorWarConfigurator(self)
-    if (not self.m_ActorWarConfigurator) then
-        local model = Actor.createModel("sceneMain.ModelWarConfigurator")
-        local view  = Actor.createView( "sceneMain.ViewWarConfigurator")
+local function getActorCampaignConfigurator(self)
+    if (not self.m_ActorCampaignConfigurator) then
+        local model = Actor.createModel("sceneMain.ModelCampaignConfigurator")
+        local view  = Actor.createView( "sceneMain.ViewCampaignConfigurator")
 
-        model:setModeCreateWar()
+        model:setModeCreate()
             :setEnabled(false)
             :setCallbackOnButtonBackTouched(function()
                 model:setEnabled(false)
@@ -36,11 +36,11 @@ local function getActorWarConfigurator(self)
                     :setButtonNextVisible(false)
             end)
 
-        self.m_ActorWarConfigurator = Actor.createWithModelAndViewInstance(model, view)
-        self.m_View:setViewWarConfigurator(view)
+        self.m_ActorCampaignConfigurator = Actor.createWithModelAndViewInstance(model, view)
+        self.m_View:setViewCampaignConfigurator(view)
     end
 
-    return self.m_ActorWarConfigurator
+    return self.m_ActorCampaignConfigurator
 end
 
 local function initWarFieldList(self, list)
@@ -85,7 +85,7 @@ end
 --------------------------------------------------------------------------------
 function ModelNewCampaignSelector:onStartRunning(modelSceneMain)
     self.m_ModelSceneMain = modelSceneMain
-    getActorWarConfigurator(self):getModel():onStartRunning(modelSceneMain)
+    getActorCampaignConfigurator(self):getModel():onStartRunning(modelSceneMain)
 
     return self
 end
@@ -100,7 +100,7 @@ end
 function ModelNewCampaignSelector:setEnabled(enabled)
     self.m_IsEnabled = enabled
     getActorWarFieldPreviewer(self):getModel():setEnabled(false)
-    getActorWarConfigurator(self):getModel():setEnabled(false)
+    getActorCampaignConfigurator(self):getModel():setEnabled(false)
 
     if (self.m_View) then
         self.m_View:setVisible(enabled)
@@ -120,7 +120,7 @@ end
 
 function ModelNewCampaignSelector:onButtonNextTouched()
     getActorWarFieldPreviewer(self):getModel():setEnabled(false)
-    getActorWarConfigurator(self):getModel():resetWithWarConfiguration({warFieldFileName = self.m_WarFieldFileName})
+    getActorCampaignConfigurator(self):getModel():resetWithWarConfiguration({warFieldFileName = self.m_WarFieldFileName})
         :setEnabled(true)
 
     self.m_View:setMenuVisible(false)

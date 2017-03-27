@@ -253,9 +253,9 @@ function ViewContinueCampaignSelector:setViewWarFieldPreviewer(view)
     return self
 end
 
-function ViewContinueCampaignSelector:setViewWarConfigurator(view)
-    assert(self.m_ViewWarConfigurator == nil, "ViewContinueCampaignSelector:setViewWarConfigurator() the view has been set.")
-    self.m_ViewWarConfigurator = view
+function ViewContinueCampaignSelector:setViewCampaignConfigurator(view)
+    assert(self.m_VeiwCampaignConfigurator == nil, "ViewContinueCampaignSelector:setViewCampaignConfigurator() the view has been set.")
+    self.m_VeiwCampaignConfigurator = view
     self:addChild(view, WAR_CONFIGURATOR_Z_ORDER)
 
     return self

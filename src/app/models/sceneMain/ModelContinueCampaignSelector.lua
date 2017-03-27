@@ -57,12 +57,12 @@ local function getActorWarFieldPreviewer(self)
     return self.m_ActorWarFieldPreviewer
 end
 
-local function getActorWarConfigurator(self)
-    if (not self.m_ActorWarConfigurator) then
-        local model = Actor.createModel("sceneMain.ModelWarConfigurator")
-        local view  = Actor.createView( "sceneMain.ViewWarConfigurator")
+local function getActorCampaignConfigurator(self)
+    if (not self.m_ActorCampaignConfigurator) then
+        local model = Actor.createModel("sceneMain.ModelCampaignConfigurator")
+        local view  = Actor.createView( "sceneMain.ViewCampaignConfigurator")
 
-        model:setModeContinueWar()
+        model:setModeContinue()
             :setEnabled(false)
             :setCallbackOnButtonBackTouched(function()
                 model:setEnabled(false)
@@ -72,11 +72,11 @@ local function getActorWarConfigurator(self)
                     :setButtonNextVisible(false)
             end)
 
-        self.m_ActorWarConfigurator = Actor.createWithModelAndViewInstance(model, view)
-        self.m_View:setViewWarConfigurator(view)
+        self.m_ActorCampaignConfigurator = Actor.createWithModelAndViewInstance(model, view)
+        self.m_View:setViewCampaignConfigurator(view)
     end
 
-    return self.m_ActorWarConfigurator
+    return self.m_ActorCampaignConfigurator
 end
 
 local function createOngoingWarList(self, warConfigurations)
@@ -99,7 +99,7 @@ local function createOngoingWarList(self, warConfigurations)
 
                 self.m_OnButtonNextTouched = function()
                     getActorWarFieldPreviewer(self):getModel():setEnabled(false)
-                    getActorWarConfigurator(self):getModel():resetWithWarConfiguration(warConfiguration)
+                    getActorCampaignConfigurator(self):getModel():resetWithWarConfiguration(warConfiguration)
                         :setEnabled(true)
 
                     self.m_View:setMenuVisible(false)
@@ -128,7 +128,7 @@ end
 --------------------------------------------------------------------------------
 function ModelContinueCampaignSelector:onStartRunning(modelSceneMain)
     self.m_ModelSceneMain = modelSceneMain
-    getActorWarConfigurator(self):getModel():onStartRunning(modelSceneMain)
+    getActorCampaignConfigurator(self):getModel():onStartRunning(modelSceneMain)
 
     return self
 end
@@ -152,7 +152,7 @@ function ModelContinueCampaignSelector:setEnabled(enabled)
     end
 
     getActorWarFieldPreviewer(self):getModel():setEnabled(false)
-    getActorWarConfigurator(self):getModel():setEnabled(false)
+    getActorCampaignConfigurator(self):getModel():setEnabled(false)
 
     return self
 end

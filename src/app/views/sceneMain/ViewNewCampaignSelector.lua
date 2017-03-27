@@ -3,7 +3,7 @@ local ViewNewCampaignSelector = class("ViewNewCampaignSelector", cc.Node)
 
 local LocalizationFunctions = requireFW("src.app.utilities.LocalizationFunctions")
 
-local WAR_CONFIGURATOR_Z_ORDER    = 1
+local CAMPAIGN_CONFIGURATOR_Z_ORDER    = 1
 local MENU_TITLE_Z_ORDER          = 1
 local MENU_LIST_VIEW_Z_ORDER      = 1
 local BUTTON_BACK_Z_ORDER         = 1
@@ -203,10 +203,10 @@ function ViewNewCampaignSelector:setViewWarFieldPreviewer(view)
     return self
 end
 
-function ViewNewCampaignSelector:setViewWarConfigurator(view)
-    assert(self.m_ViewWarConfigurator == nil, "ViewNewCampaignSelector:setViewWarConfigurator() the view has been set.")
-    self.m_ViewWarConfigurator = view
-    self:addChild(view, WAR_CONFIGURATOR_Z_ORDER)
+function ViewNewCampaignSelector:setViewCampaignConfigurator(view)
+    assert(self.m_ViewCampaignConfigurator == nil, "ViewNewCampaignSelector:setViewCampaignConfigurator() the view has been set.")
+    self.m_ViewCampaignConfigurator = view
+    self:addChild(view, CAMPAIGN_CONFIGURATOR_Z_ORDER)
 
     return self
 end

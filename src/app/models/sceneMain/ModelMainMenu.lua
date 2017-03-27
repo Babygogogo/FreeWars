@@ -83,7 +83,7 @@ local function getActorNewCampaignSelector(self)
             :setEnabled(false)
 
         self.m_ActorNewCampaignSelector = actor
-        self.m_View:setViewNewCampaignCreator(actor:getView())
+        self.m_View:setViewNewCampaignSelector(actor:getView())
     end
 
     return self.m_ActorNewCampaignSelector
