@@ -21,7 +21,7 @@ local isUnitVisible            = VisibilityFunctions.isUnitOnMapVisibleToPlayerI
 local isTileVisible            = VisibilityFunctions.isTileVisibleToPlayerIndex
 local supplyWithAmmoAndFuel    = SupplyFunctions.supplyWithAmmoAndFuel
 
-local cc, ngx          = cc, ngx
+local cc               = cc
 local math, os, string = math, os, string
 
 local ACTION_CODE_BEGIN_TURN = ActionCodeFunctions.getActionCode("ActionBeginTurn")
@@ -105,16 +105,6 @@ local function resetVisionOnClient(self)
                 :updateView()
         end
     end)
-end
-
-local function createStepForBootReminder(self, delayTime)
-    return cc.Sequence:create(
-        cc.DelayTime:create(delayTime),
-        cc.CallFunc:create(function()
-            local countdown = self.m_ModelWar:getIntervalUntilBoot() - os.time() + self.m_ModelWar:getEnterTurnTime()
-            self.m_ModelMessageIndiator:showMessage(string.format("%s: %s", getLocalizedText(34, "BootCountdown"), AuxiliaryFunctions.formatTimeInterval(countdown)))
-        end)
-    )
 end
 
 --------------------------------------------------------------------------------
@@ -337,7 +327,7 @@ local function runTurnPhaseResetVotedForDraw(self)
 end
 
 local function runTurnPhaseRequestToBegin(self)
-    -- TODO: begin the turn.
+    self.m_ModelWar:translateAndExecuteAction({actionCode = ACTION_CODE_BEGIN_TURN})
 end
 
 --------------------------------------------------------------------------------

@@ -1,14 +1,15 @@
 
 local ModelWarCampaign = requireFW("src.global.functions.class")("ModelWarCampaign")
 
-local ActionCodeFunctions        = requireFW("src.app.utilities.ActionCodeFunctions")
-local ActionExecutorForWarOnline = requireFW("src.app.utilities.actionExecutors.ActionExecutorForWarOnline")
-local AudioManager               = requireFW("src.app.utilities.AudioManager")
-local LocalizationFunctions      = requireFW("src.app.utilities.LocalizationFunctions")
-local SerializationFunctions     = requireFW("src.app.utilities.SerializationFunctions")
-local TableFunctions             = requireFW("src.app.utilities.TableFunctions")
-local Actor                      = requireFW("src.global.actors.Actor")
-local EventDispatcher            = requireFW("src.global.events.EventDispatcher")
+local ActionCodeFunctions          = requireFW("src.app.utilities.ActionCodeFunctions")
+local ActionExecutorForWarCampaign = requireFW("src.app.utilities.actionExecutors.ActionExecutorForWarCampaign")
+local ActionTranslatorForCampaign  = requireFW("src.app.utilities.actionTranslators.ActionTranslatorForCampaign")
+local AudioManager                 = requireFW("src.app.utilities.AudioManager")
+local LocalizationFunctions        = requireFW("src.app.utilities.LocalizationFunctions")
+local SerializationFunctions       = requireFW("src.app.utilities.SerializationFunctions")
+local TableFunctions               = requireFW("src.app.utilities.TableFunctions")
+local Actor                        = requireFW("src.global.actors.Actor")
+local EventDispatcher              = requireFW("src.global.events.EventDispatcher")
 
 local ipairs, next     = ipairs, next
 local getLocalizedText = LocalizationFunctions.getLocalizedText
@@ -35,7 +36,7 @@ local function onWebSocketMessage(self, param)
     print(SerializationFunctions.toString(action))
     --]]
 
-    ActionExecutorForWarOnline.execute(param.action, self)
+    ActionExecutorForWarCampaign.execute(param.action, self)
 end
 
 local function onWebSocketClose(self, param)
@@ -199,6 +200,14 @@ end
 
 function ModelWarCampaign.isWarReplay()
     return false
+end
+
+function ModelWarCampaign:translateAndExecuteAction(rawAction)
+    assert(not self.m_IsExecutingAction, "ModelWarCampaign:translateAndExecuteAction() another action is being executed.")
+    rawAction.actionID = self.m_ActionID + 1
+    rawAction.modelWar = self
+
+    ActionExecutorForWarCampaign.execute(ActionTranslatorForCampaign.translate(rawAction), self)
 end
 
 function ModelWarCampaign:isExecutingAction()

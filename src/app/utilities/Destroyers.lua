@@ -103,13 +103,9 @@ function Destroyers.destroyPlayerForce(modelWar, playerIndex)
         end
     end)
 
-    if ((IS_SERVER)                                                                                       or
-        (isWarReplay(modelWar))                                                                           or
-        (getModelPlayerManager(modelWar):isSameTeamIndex(playerIndex, getPlayerIndexLoggedIn(modelWar)))) then
-        getModelFogMap(modelWar):resetMapForPathsForPlayerIndex(playerIndex)
-            :resetMapForTilesForPlayerIndex(playerIndex)
-            :resetMapForUnitsForPlayerIndex(playerIndex)
-    end
+    getModelFogMap(modelWar):resetMapForPathsForPlayerIndex(playerIndex)
+        :resetMapForTilesForPlayerIndex(playerIndex)
+        :resetMapForUnitsForPlayerIndex(playerIndex)
 
     getModelPlayerManager(modelWar):getModelPlayer(playerIndex):setAlive(false)
 end
