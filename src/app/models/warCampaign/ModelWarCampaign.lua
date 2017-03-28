@@ -14,6 +14,7 @@ local EventDispatcher              = requireFW("src.global.events.EventDispatche
 local ipairs, next     = ipairs, next
 local getLocalizedText = LocalizationFunctions.getLocalizedText
 
+local ACTION_CODE_BEGIN_TURN    = ActionCodeFunctions.getActionCode("ActionBeginTurn")
 local TIME_INTERVAL_FOR_ACTIONS = 1
 
 --------------------------------------------------------------------------------
@@ -79,6 +80,10 @@ local function initActorWarField(self, warFieldData)
     self.m_ActorWarField = Actor.createWithModelAndViewName("warCampaign.ModelWarFieldForCampaign", warFieldData, "common.ViewWarField")
 end
 
+local function initActorRobot(self)
+    self.m_ActorRobot = Actor.createWithModelAndViewName("warCampaign.ModelRobot")
+end
+
 local function initActorWarHud(self)
     self.m_ActorWarHud = Actor.createWithModelAndViewName("warCampaign.ModelWarHudForCampaign", nil, "common.ViewWarHud")
 end
@@ -109,11 +114,12 @@ function ModelWarCampaign:ctor(campaignData)
     initScriptEventDispatcher(self)
     initActorConfirmBox(      self)
     initActorMessageIndicator(self)
+    initActorRobot(           self)
+    initActorWarHud(          self)
     initActorPlayerManager(   self, campaignData.players)
     initActorSkillDataManager(self, campaignData.skillData)
-    initActorWarField(        self, campaignData.warField)
-    initActorWarHud(          self)
     initActorTurnManager(     self, campaignData.turn)
+    initActorWarField(        self, campaignData.warField)
 
     return self
 end
@@ -159,16 +165,33 @@ end
 -- The callback functions on start/stop running and script events.
 --------------------------------------------------------------------------------
 function ModelWarCampaign:onStartRunning()
-    local modelTurnManager = self:getModelTurnManager()
-    self:getModelPlayerManager():onStartRunning(self)
-    modelTurnManager            :onStartRunning(self)
-    self:getModelWarField()     :onStartRunning(self)
-    self:getModelWarHud()       :onStartRunning(self)
+    local modelTurnManager   = self:getModelTurnManager()
+    local modelPlayerManager = self:getModelPlayerManager()
+    modelPlayerManager     :onStartRunning(self)
+    modelTurnManager       :onStartRunning(self)
+    self:getModelWarField():onStartRunning(self)
+    self:getModelWarHud()  :onStartRunning(self)
+    self:getModelRobot()   :onStartRunning(self)
+
+    self.m_PlayerIndexForHuman = modelPlayerManager:getPlayerIndexForHuman()
+    self.m_View:runAction(cc.RepeatForever:create(cc.Sequence:create(
+        cc.DelayTime:create(0.1),
+        cc.CallFunc:create(function()
+            if ((not self:isExecutingAction()) and (not self:isEnded())) then
+                if (modelTurnManager:isTurnPhaseRequestToBegin()) then
+                    self:translateAndExecuteAction({actionCode = ACTION_CODE_BEGIN_TURN})
+                elseif ((self.m_RobotAction) and (modelTurnManager:getPlayerIndex() ~= self.m_PlayerIndexForHuman)) then
+                    self:translateAndExecuteAction(self.m_RobotAction)
+                    self.m_RobotAction = nil
+                end
+            end
+        end)
+    )))
 
     self:getScriptEventDispatcher():dispatchEvent({name = "EvtSceneWarStarted"})
+    AudioManager.playRandomWarMusic()
 
     modelTurnManager:runTurn()
-    AudioManager.playRandomWarMusic()
 
     return self
 end
@@ -218,7 +241,14 @@ function ModelWarCampaign:setExecutingAction(executing)
     assert(self.m_IsExecutingAction ~= executing)
     self.m_IsExecutingAction = executing
 
-    if ((not executing) and (not self:isEnded())) then
+    if ((not executing)                                                             and
+        (not self:isEnded())                                                        and
+        (not self.m_RobotAction)                                                    and
+        (self.m_PlayerIndexForHuman ~= self:getModelTurnManager():getPlayerIndex()) and
+        (self:getModelTurnManager():isTurnPhaseMain()))                             then
+        self.m_RobotAction = coroutine.wrap(function()
+            return self:getModelRobot():getNextAction()
+        end)()
     end
 
     return self
@@ -306,6 +336,10 @@ end
 
 function ModelWarCampaign:getModelPlayerManager()
     return self.m_ActorPlayerManager:getModel()
+end
+
+function ModelWarCampaign:getModelRobot()
+    return self.m_ActorRobot:getModel()
 end
 
 function ModelWarCampaign:getModelSkillDataManager()
