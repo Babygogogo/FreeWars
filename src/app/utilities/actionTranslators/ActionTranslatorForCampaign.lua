@@ -415,7 +415,7 @@ local function translateBuildModelTile(action)
     if (translatedPath.isBlocked) then
         return createActionWait(action.actionID, translatedPath, launchUnitID)
     else
-        return = {
+        return {
             actionCode   = ACTION_CODES.ActionBuildModelTile,
             actionID     = action.actionID,
             path         = translatedPath,

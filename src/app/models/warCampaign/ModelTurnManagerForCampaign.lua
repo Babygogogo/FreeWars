@@ -327,7 +327,9 @@ local function runTurnPhaseResetVotedForDraw(self)
 end
 
 local function runTurnPhaseRequestToBegin(self)
-    self.m_ModelWar:translateAndExecuteAction({actionCode = ACTION_CODE_BEGIN_TURN})
+    if (self.m_PlayerIndexForHuman == self.m_PlayerIndex) then
+        self.m_ModelWar:translateAndExecuteAction({actionCode = ACTION_CODE_BEGIN_TURN})
+    end
 end
 
 --------------------------------------------------------------------------------

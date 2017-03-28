@@ -276,20 +276,18 @@ local function executeActivateSkill(action, modelWar)
         modelSkillConfiguration:getModelSkillGroupActive():pushBackSkill(skillID, skillLevel)
     end
 
-    if (not modelWar:isFastExecutingActions()) then
-        local modelGridEffect = getModelGridEffect(modelWar)
-        local func            = function(modelUnit)
-            if (modelUnit:getPlayerIndex() == playerIndex) then
-                modelGridEffect:showAnimationSkillActivation(modelUnit:getGridIndex())
-                modelUnit:updateView()
-            end
+    local modelGridEffect = getModelGridEffect(modelWar)
+    local func            = function(modelUnit)
+        if (modelUnit:getPlayerIndex() == playerIndex) then
+            modelGridEffect:showAnimationSkillActivation(modelUnit:getGridIndex())
+            modelUnit:updateView()
         end
-        getModelUnitMap(modelWar):forEachModelUnitOnMap(func)
-            :forEachModelUnitLoaded(func)
-
-        getModelFogMap(modelWar):updateView()
-        dispatchEvtModelPlayerUpdated(modelWar, playerIndex)
     end
+    getModelUnitMap(modelWar):forEachModelUnitOnMap(func)
+        :forEachModelUnitLoaded(func)
+
+    getModelFogMap(modelWar):updateView()
+    dispatchEvtModelPlayerUpdated(modelWar, playerIndex)
 
     modelWar:setExecutingAction(false)
 end
@@ -364,76 +362,61 @@ local function executeAttack(action, modelWar)
         end
     end
 
-    local modelTurnManager   = getModelTurnManager(modelWar)
-    local lostPlayerIndex    = action.lostPlayerIndex
-    local isInTurnPlayerLost = (lostPlayerIndex == attackerPlayerIndex)
+    local modelTurnManager = getModelTurnManager(modelWar)
+    local lostPlayerIndex  = action.lostPlayerIndex
+    local isHumanLost      = (lostPlayerIndex == modelPlayerManager:getPlayerIndexForHuman())
+    if ((isHumanLost) or (modelPlayerManager:getAliveTeamsCount(lostPlayerIndex) <= 1)) then
+        modelWar:setEnded(true)
+    end
 
-    if (modelWar:isFastExecutingActions()) then
+    attacker:moveViewAlongPathAndFocusOnTarget(pathNodes, isModelUnitDiving(attacker), targetGridIndex, function()
+        attacker:updateView()
+            :showNormalAnimation()
+        attackTarget:updateView()
+        if (attackerNewHP == 0) then
+            attacker:removeViewFromParent()
+        elseif ((targetNewHP == 0) and (attackTarget.getUnitType)) then
+            attackTarget:removeViewFromParent()
+        end
+
+        local modelGridEffect = getModelGridEffect(modelWar)
+        if (attackerNewHP == 0) then
+            modelGridEffect:showAnimationExplosion(attackerGridIndex)
+        elseif ((counterDamage) and (targetNewHP > 0)) then
+            modelGridEffect:showAnimationDamage(attackerGridIndex)
+        end
+
+        if (targetNewHP > 0) then
+            modelGridEffect:showAnimationDamage(targetGridIndex)
+        else
+            modelGridEffect:showAnimationExplosion(targetGridIndex)
+            if (not attackTarget.getUnitType) then
+                for _, gridIndex in ipairs(plasmaGridIndexes) do
+                    modelTileMap:getModelTile(gridIndex):updateView()
+                end
+            end
+        end
+
         if (targetVision) then
             getModelFogMap(modelWar):updateMapForUnitsForPlayerIndexOnUnitLeave(targetPlayerIndex, targetGridIndex, targetVision)
         end
         if (lostPlayerIndex) then
             Destroyers.destroyPlayerForce(modelWar, lostPlayerIndex)
-            if (modelPlayerManager:getAliveTeamsCount() <= 1) then
-                modelWar:setEnded(true)
-            elseif (isInTurnPlayerLost) then
-                modelTurnManager:endTurnPhaseMain()
-            end
+            getModelMessageIndicator(modelWar):showMessage(getLocalizedText(74, "Lose", modelPlayerManager:getModelPlayer(lostPlayerIndex):getNickname()))
         end
+
+        getModelFogMap(modelWar):updateView()
+
+        if (not modelWar:isEnded()) then
+            modelTurnManager:endTurnPhaseMain()
+        elseif (isHumanLost) then
+            modelWar:showEffectLose(callbackOnWarEndedForClient)
+        else
+            modelWar:showEffectWin(callbackOnWarEndedForClient)
+        end
+
         modelWar:setExecutingAction(false)
-
-    else
-        if ((lostPlayerIndex) and (modelPlayerManager:getAliveTeamsCount(lostPlayerIndex) <= 1)) then
-            modelWar:setEnded(true)
-        end
-
-        attacker:moveViewAlongPathAndFocusOnTarget(pathNodes, isModelUnitDiving(attacker), targetGridIndex, function()
-            attacker:updateView()
-                :showNormalAnimation()
-            attackTarget:updateView()
-            if (attackerNewHP == 0) then
-                attacker:removeViewFromParent()
-            elseif ((targetNewHP == 0) and (attackTarget.getUnitType)) then
-                attackTarget:removeViewFromParent()
-            end
-
-            local modelGridEffect = getModelGridEffect(modelWar)
-            if (attackerNewHP == 0) then
-                modelGridEffect:showAnimationExplosion(attackerGridIndex)
-            elseif ((counterDamage) and (targetNewHP > 0)) then
-                modelGridEffect:showAnimationDamage(attackerGridIndex)
-            end
-
-            if (targetNewHP > 0) then
-                modelGridEffect:showAnimationDamage(targetGridIndex)
-            else
-                modelGridEffect:showAnimationExplosion(targetGridIndex)
-                if (not attackTarget.getUnitType) then
-                    for _, gridIndex in ipairs(plasmaGridIndexes) do
-                        modelTileMap:getModelTile(gridIndex):updateView()
-                    end
-                end
-            end
-
-            if (targetVision) then
-                getModelFogMap(modelWar):updateMapForUnitsForPlayerIndexOnUnitLeave(targetPlayerIndex, targetGridIndex, targetVision)
-            end
-            if (lostPlayerIndex) then
-                Destroyers.destroyPlayerForce(modelWar, lostPlayerIndex)
-                getModelMessageIndicator(modelWar):showMessage(getLocalizedText(74, "Lose", modelPlayerManager:getModelPlayer(lostPlayerIndex):getNickname()))
-            end
-
-            getModelFogMap(modelWar):updateView()
-
-            if (modelWar:isEnded()) then
-                modelWar:showEffectReplayEnd(callbackOnWarEndedForClient)
-            elseif (isInTurnPlayerLost) then
-                modelTurnManager:endTurnPhaseMain()
-            end
-
-            modelWar:setExecutingAction(false)
-        end)
-    end
+    end)
 end
 
 local function executeBeginTurn(action, modelWar)
@@ -442,7 +425,6 @@ local function executeBeginTurn(action, modelWar)
     local modelTurnManager   = getModelTurnManager(modelWar)
     local lostPlayerIndex    = action.lostPlayerIndex
     local modelPlayerManager = getModelPlayerManager(modelWar)
-
     if (not lostPlayerIndex) then
         modelTurnManager:beginTurnPhaseBeginning(action.income, action.repairData, action.supplyData, function()
             modelWar:setExecutingAction(false)
@@ -491,19 +473,15 @@ local function executeBuildModelTile(action, modelWar)
         getModelFogMap(modelWar):updateMapForTilesForPlayerIndexOnGettingOwnership(playerIndex, endingGridIndex, modelTile:getVisionForPlayerIndex(playerIndex))
     end
 
-    if (modelWar:isFastExecutingActions()) then
+    focusModelUnit:moveViewAlongPath(pathNodes, isModelUnitDiving(focusModelUnit), function()
+        focusModelUnit:updateView()
+            :showNormalAnimation()
+        modelTile:updateView()
+
+        getModelFogMap(modelWar):updateView()
+
         modelWar:setExecutingAction(false)
-    else
-        focusModelUnit:moveViewAlongPath(pathNodes, isModelUnitDiving(focusModelUnit), function()
-            focusModelUnit:updateView()
-                :showNormalAnimation()
-            modelTile:updateView()
-
-            getModelFogMap(modelWar):updateView()
-
-            modelWar:setExecutingAction(false)
-        end)
-    end
+    end)
 end
 
 local function executeCaptureModelTile(action, modelWar)
@@ -536,49 +514,42 @@ local function executeCaptureModelTile(action, modelWar)
 
     local modelPlayerManager = getModelPlayerManager(modelWar)
     local lostPlayerIndex    = action.lostPlayerIndex
-    if (modelWar:isFastExecutingActions()) then
-        if (capturePoint <= 0) then
-            modelFogMap:updateMapForTilesForPlayerIndexOnLosingOwnership(previousPlayerIndex, endingGridIndex, previousVision)
-        end
-        if (lostPlayerIndex) then
-            Destroyers.destroyPlayerForce(modelWar, lostPlayerIndex)
-            modelWar:setEnded(modelPlayerManager:getAliveTeamsCount() <= 1)
-        end
-        modelWar:setExecutingAction(false)
+    if (not lostPlayerIndex) then
+        focusModelUnit:moveViewAlongPath(pathNodes, isModelUnitDiving(focusModelUnit), function()
+            focusModelUnit:updateView()
+                :showNormalAnimation()
+            modelTile:updateView()
 
+            if (capturePoint <= 0) then
+                modelFogMap:updateMapForTilesForPlayerIndexOnLosingOwnership(previousPlayerIndex, endingGridIndex, previousVision)
+            end
+            getModelFogMap(modelWar):updateView()
+
+            modelWar:setExecutingAction(false)
+        end)
     else
-        if (not lostPlayerIndex) then
-            focusModelUnit:moveViewAlongPath(pathNodes, isModelUnitDiving(focusModelUnit), function()
-                focusModelUnit:updateView()
-                    :showNormalAnimation()
-                modelTile:updateView()
+        local isHumanLost = (lostPlayerIndex == modelPlayerManager:getPlayerIndexForHuman())
+        modelWar:setEnded((isHumanLost) or (modelPlayerManager:getAliveTeamsCount(lostPlayerIndex) <= 1))
 
-                if (capturePoint <= 0) then
-                    modelFogMap:updateMapForTilesForPlayerIndexOnLosingOwnership(previousPlayerIndex, endingGridIndex, previousVision)
+        focusModelUnit:moveViewAlongPath(pathNodes, isModelUnitDiving(focusModelUnit), function()
+            focusModelUnit:updateView()
+                :showNormalAnimation()
+            modelTile:updateView()
+
+            getModelMessageIndicator(modelWar):showMessage(getLocalizedText(74, "Lose", modelPlayerManager:getModelPlayer(lostPlayerIndex):getNickname()))
+            Destroyers.destroyPlayerForce(modelWar, lostPlayerIndex)
+            getModelFogMap(modelWar):updateView()
+
+            if (modelWar:isEnded()) then
+                if (isHumanLost) then
+                    modelWar:showEffectLose(callbackOnWarEndedForClient)
+                else
+                    modelWar:showEffectWin(callbackOnWarEndedForClient)
                 end
-                getModelFogMap(modelWar):updateView()
+            end
 
-                modelWar:setExecutingAction(false)
-            end)
-        else
-            modelWar:setEnded(modelPlayerManager:getAliveTeamsCount(lostPlayerIndex) <= 1)
-
-            focusModelUnit:moveViewAlongPath(pathNodes, isModelUnitDiving(focusModelUnit), function()
-                focusModelUnit:updateView()
-                    :showNormalAnimation()
-                modelTile:updateView()
-
-                getModelMessageIndicator(modelWar):showMessage(getLocalizedText(74, "Lose", modelPlayerManager:getModelPlayer(lostPlayerIndex):getNickname()))
-                Destroyers.destroyPlayerForce(modelWar, lostPlayerIndex)
-                getModelFogMap(modelWar):updateView()
-
-                if (modelWar:isEnded()) then
-                    modelWar:showEffectReplayEnd(callbackOnWarEndedForClient)
-                end
-
-                modelWar:setExecutingAction(false)
-            end)
-        end
+            modelWar:setExecutingAction(false)
+        end)
     end
 end
 
@@ -590,10 +561,8 @@ local function executeDeclareSkill(action, modelWar)
     modelPlayer:setEnergy(modelPlayer:getEnergy() - modelWar:getModelSkillDataManager():getSkillDeclarationCost())
         :setSkillDeclared(true)
 
-    if (not modelWar:isFastExecutingActions()) then
-        SingletonGetters.getModelMessageIndicator(modelWar):showMessage(string.format("[%s]%s!", modelPlayer:getNickname(), getLocalizedText(22, "HasDeclaredSkill")))
-        dispatchEvtModelPlayerUpdated(modelWar, playerIndex)
-    end
+    SingletonGetters.getModelMessageIndicator(modelWar):showMessage(string.format("[%s]%s!", modelPlayer:getNickname(), getLocalizedText(22, "HasDeclaredSkill")))
+    dispatchEvtModelPlayerUpdated(modelWar, playerIndex)
 
     modelWar:setExecutingAction(false)
 end
@@ -605,9 +574,7 @@ local function executeDestroyOwnedModelUnit(action, modelWar)
     getModelFogMap(modelWar):updateMapForPathsWithModelUnitAndPath(getModelUnitMap(modelWar):getModelUnit(gridIndex), {gridIndex})
     destroyActorUnitOnMap(modelWar, gridIndex, true)
 
-    if (not modelWar:isFastExecutingActions()) then
-        getModelGridEffect(modelWar):showAnimationExplosion(gridIndex)
-    end
+    getModelGridEffect(modelWar):showAnimationExplosion(gridIndex)
 
     modelWar:setExecutingAction(false)
 end
@@ -622,19 +589,15 @@ local function executeDive(action, modelWar)
     focusModelUnit:setStateActioned()
         :setDiving(true)
 
-    if (modelWar:isFastExecutingActions()) then
+    focusModelUnit:moveViewAlongPath(pathNodes, false, function()
+        focusModelUnit:updateView()
+            :showNormalAnimation()
+
+        getModelGridEffect(modelWar):showAnimationDive(pathNodes[#pathNodes])
+        getModelFogMap(modelWar):updateView()
+
         modelWar:setExecutingAction(false)
-    else
-        focusModelUnit:moveViewAlongPath(pathNodes, false, function()
-            focusModelUnit:updateView()
-                :showNormalAnimation()
-
-            getModelGridEffect(modelWar):showAnimationDive(pathNodes[#pathNodes])
-            getModelFogMap(modelWar):updateView()
-
-            modelWar:setExecutingAction(false)
-        end)
-    end
+    end)
 end
 
 local function executeDropModelUnit(action, modelWar)
@@ -670,28 +633,24 @@ local function executeDropModelUnit(action, modelWar)
             :updateMapForUnitsForPlayerIndexOnUnitArrive(playerIndex, gridIndex, dropModelUnit:getVisionForPlayerIndex(playerIndex))
     end
 
-    if (modelWar:isFastExecutingActions()) then
+    focusModelUnit:moveViewAlongPath(pathNodes, isModelUnitDiving(focusModelUnit), function()
+        focusModelUnit:updateView()
+            :showNormalAnimation()
+        if (action.isDropBlocked) then
+            getModelGridEffect(modelWar):showAnimationBlock(endingGridIndex)
+        end
+
+        for _, dropModelUnit in ipairs(dropModelUnits) do
+            dropModelUnit:moveViewAlongPath({endingGridIndex, dropModelUnit:getGridIndex()}, isModelUnitDiving(dropModelUnit), function()
+                dropModelUnit:updateView()
+                    :showNormalAnimation()
+            end)
+        end
+
+        getModelFogMap(modelWar):updateView()
+
         modelWar:setExecutingAction(false)
-    else
-        focusModelUnit:moveViewAlongPath(pathNodes, isModelUnitDiving(focusModelUnit), function()
-            focusModelUnit:updateView()
-                :showNormalAnimation()
-            if (action.isDropBlocked) then
-                getModelGridEffect(modelWar):showAnimationBlock(endingGridIndex)
-            end
-
-            for _, dropModelUnit in ipairs(dropModelUnits) do
-                dropModelUnit:moveViewAlongPath({endingGridIndex, dropModelUnit:getGridIndex()}, isModelUnitDiving(dropModelUnit), function()
-                    dropModelUnit:updateView()
-                        :showNormalAnimation()
-                end)
-            end
-
-            getModelFogMap(modelWar):updateView()
-
-            modelWar:setExecutingAction(false)
-        end)
-    end
+    end)
 end
 
 local function executeEndTurn(action, modelWar)
@@ -761,19 +720,15 @@ local function executeJoinModelUnit(action, modelWar)
         focusModelUnit:setCapturingModelTile(targetModelUnit:isCapturingModelTile())
     end
 
-    if (modelWar:isFastExecutingActions()) then
+    focusModelUnit:moveViewAlongPath(pathNodes, isModelUnitDiving(focusModelUnit), function()
+        focusModelUnit:updateView()
+            :showNormalAnimation()
+        targetModelUnit:removeViewFromParent()
+
+        getModelFogMap(modelWar):updateView()
+
         modelWar:setExecutingAction(false)
-    else
-        focusModelUnit:moveViewAlongPath(pathNodes, isModelUnitDiving(focusModelUnit), function()
-            focusModelUnit:updateView()
-                :showNormalAnimation()
-            targetModelUnit:removeViewFromParent()
-
-            getModelFogMap(modelWar):updateView()
-
-            modelWar:setExecutingAction(false)
-        end)
-    end
+    end)
 end
 
 local function executeLaunchFlare(action, modelWar)
@@ -790,23 +745,19 @@ local function executeLaunchFlare(action, modelWar)
         :setCurrentFlareAmmo(focusModelUnit:getCurrentFlareAmmo() - 1)
     getModelFogMap(modelWar):updateMapForPathsForPlayerIndexWithFlare(playerIndexActing, targetGridIndex, flareAreaRadius)
 
-    if (modelWar:isFastExecutingActions()) then
+    focusModelUnit:moveViewAlongPath(pathNodes, isModelUnitDiving(focusModelUnit), function()
+        focusModelUnit:updateView()
+            :showNormalAnimation()
+
+        local modelGridEffect = getModelGridEffect(modelWar)
+        for _, gridIndex in pairs(getGridsWithinDistance(targetGridIndex, 0, flareAreaRadius, modelUnitMap:getMapSize())) do
+            modelGridEffect:showAnimationFlare(gridIndex)
+        end
+
+        getModelFogMap(modelWar):updateView()
+
         modelWar:setExecutingAction(false)
-    else
-        focusModelUnit:moveViewAlongPath(pathNodes, isModelUnitDiving(focusModelUnit), function()
-            focusModelUnit:updateView()
-                :showNormalAnimation()
-
-            local modelGridEffect = getModelGridEffect(modelWar)
-            for _, gridIndex in pairs(getGridsWithinDistance(targetGridIndex, 0, flareAreaRadius, modelUnitMap:getMapSize())) do
-                modelGridEffect:showAnimationFlare(gridIndex)
-            end
-
-            getModelFogMap(modelWar):updateView()
-
-            modelWar:setExecutingAction(false)
-        end)
-    end
+    end)
 end
 
 local function executeLaunchSilo(action, modelWar)
@@ -831,27 +782,23 @@ local function executeLaunchSilo(action, modelWar)
         end
     end
 
-    if (modelWar:isFastExecutingActions()) then
+    focusModelUnit:moveViewAlongPath(pathNodes, isModelUnitDiving(focusModelUnit), function()
+        focusModelUnit:updateView()
+            :showNormalAnimation()
+        modelTile:updateView()
+        for _, modelUnit in ipairs(targetModelUnits) do
+            modelUnit:updateView()
+        end
+
+        local modelGridEffect = getModelGridEffect(modelWar)
+        for _, gridIndex in ipairs(targetGridIndexes) do
+            modelGridEffect:showAnimationSiloAttack(gridIndex)
+        end
+
+        getModelFogMap(modelWar):updateView()
+
         modelWar:setExecutingAction(false)
-    else
-        focusModelUnit:moveViewAlongPath(pathNodes, isModelUnitDiving(focusModelUnit), function()
-            focusModelUnit:updateView()
-                :showNormalAnimation()
-            modelTile:updateView()
-            for _, modelUnit in ipairs(targetModelUnits) do
-                modelUnit:updateView()
-            end
-
-            local modelGridEffect = getModelGridEffect(modelWar)
-            for _, gridIndex in ipairs(targetGridIndexes) do
-                modelGridEffect:showAnimationSiloAttack(gridIndex)
-            end
-
-            getModelFogMap(modelWar):updateView()
-
-            modelWar:setExecutingAction(false)
-        end)
-    end
+    end)
 end
 
 local function executeLoadModelUnit(action, modelWar)
@@ -866,20 +813,16 @@ local function executeLoadModelUnit(action, modelWar)
     local loaderModelUnit = modelUnitMap:getModelUnit(pathNodes[#pathNodes])
     loaderModelUnit:addLoadUnitId(focusModelUnit:getUnitId())
 
-    if (modelWar:isFastExecutingActions()) then
+    focusModelUnit:moveViewAlongPath(pathNodes, isModelUnitDiving(focusModelUnit), function()
+        focusModelUnit:updateView()
+            :showNormalAnimation()
+            :setViewVisible(false)
+        loaderModelUnit:updateView()
+
+        getModelFogMap(modelWar):updateView()
+
         modelWar:setExecutingAction(false)
-    else
-        focusModelUnit:moveViewAlongPath(pathNodes, isModelUnitDiving(focusModelUnit), function()
-            focusModelUnit:updateView()
-                :showNormalAnimation()
-                :setViewVisible(false)
-            loaderModelUnit:updateView()
-
-            getModelFogMap(modelWar):updateView()
-
-            modelWar:setExecutingAction(false)
-        end)
-    end
+    end)
 end
 
 local function executeProduceModelUnitOnTile(action, modelWar)
@@ -895,9 +838,7 @@ local function executeProduceModelUnitOnTile(action, modelWar)
     getModelFogMap(modelWar):updateMapForUnitsForPlayerIndexOnUnitArrive(playerIndex, gridIndex, producedActorUnit:getModel():getVisionForPlayerIndex(playerIndex))
     updateFundWithCost(modelWar, playerIndex, action.cost)
 
-    if (not modelWar:isFastExecutingActions()) then
-        getModelFogMap(modelWar):updateView()
-    end
+    getModelFogMap(modelWar):updateView()
 
     modelWar:setExecutingAction(false)
 end
@@ -921,18 +862,14 @@ local function executeProduceModelUnitOnUnit(action, modelWar)
     end
     updateFundWithCost(modelWar, producer:getPlayerIndex(), action.cost)
 
-    if (modelWar:isFastExecutingActions()) then
+    producer:moveViewAlongPath(pathNodes, isModelUnitDiving(producer), function()
+        producer:updateView()
+            :showNormalAnimation()
+
+        getModelFogMap(modelWar):updateView()
+
         modelWar:setExecutingAction(false)
-    else
-        producer:moveViewAlongPath(pathNodes, isModelUnitDiving(producer), function()
-            producer:updateView()
-                :showNormalAnimation()
-
-            getModelFogMap(modelWar):updateView()
-
-            modelWar:setExecutingAction(false)
-        end)
-    end
+    end)
 end
 
 local function executeSupplyModelUnit(action, modelWar)
@@ -944,24 +881,20 @@ local function executeSupplyModelUnit(action, modelWar)
     moveModelUnitWithAction(action, modelWar)
     focusModelUnit:setStateActioned()
 
-    if (modelWar:isFastExecutingActions()) then
+    focusModelUnit:moveViewAlongPath(pathNodes, isModelUnitDiving(focusModelUnit), function()
+        focusModelUnit:updateView()
+            :showNormalAnimation()
+
+        local modelGridEffect = getModelGridEffect(modelWar)
+        for _, targetModelUnit in pairs(getAndSupplyAdjacentModelUnits(modelWar, pathNodes[#pathNodes], focusModelUnit:getPlayerIndex())) do
+            targetModelUnit:updateView()
+            modelGridEffect:showAnimationSupply(targetModelUnit:getGridIndex())
+        end
+
+        getModelFogMap(modelWar):updateView()
+
         modelWar:setExecutingAction(false)
-    else
-        focusModelUnit:moveViewAlongPath(pathNodes, isModelUnitDiving(focusModelUnit), function()
-            focusModelUnit:updateView()
-                :showNormalAnimation()
-
-            local modelGridEffect = getModelGridEffect(modelWar)
-            for _, targetModelUnit in pairs(getAndSupplyAdjacentModelUnits(modelWar, pathNodes[#pathNodes], focusModelUnit:getPlayerIndex())) do
-                targetModelUnit:updateView()
-                modelGridEffect:showAnimationSupply(targetModelUnit:getGridIndex())
-            end
-
-            getModelFogMap(modelWar):updateView()
-
-            modelWar:setExecutingAction(false)
-        end)
-    end
+    end)
 end
 
 local function executeSurface(action, modelWar)
@@ -974,19 +907,15 @@ local function executeSurface(action, modelWar)
     focusModelUnit:setStateActioned()
         :setDiving(false)
 
-    if (modelWar:isFastExecutingActions()) then
+    focusModelUnit:moveViewAlongPath(pathNodes, true, function()
+        focusModelUnit:updateView()
+            :showNormalAnimation()
+
+        getModelGridEffect(modelWar):showAnimationSurface(pathNodes[#pathNodes])
+        getModelFogMap(modelWar):updateView()
+
         modelWar:setExecutingAction(false)
-    else
-        focusModelUnit:moveViewAlongPath(pathNodes, true, function()
-            focusModelUnit:updateView()
-                :showNormalAnimation()
-
-            getModelGridEffect(modelWar):showAnimationSurface(pathNodes[#pathNodes])
-            getModelFogMap(modelWar):updateView()
-
-            modelWar:setExecutingAction(false)
-        end)
-    end
+    end)
 end
 
 local function executeSurrender(action, modelWar)
@@ -996,25 +925,19 @@ local function executeSurrender(action, modelWar)
     local modelTurnManager   = getModelTurnManager(modelWar)
     local playerIndex        = modelTurnManager:getPlayerIndex()
     local modelPlayer        = modelPlayerManager:getModelPlayer(playerIndex)
+    local isHumanLost        = (playerIndex == modelPlayerManager:getPlayerIndexForHuman())
     Destroyers.destroyPlayerForce(modelWar, playerIndex)
+    modelWar:setEnded((isHumanLost) or (modelPlayerManager:getAliveTeamsCount() <= 1))
 
-    if (modelWar:isFastExecutingActions()) then
-        if (modelPlayerManager:getAliveTeamsCount() <= 1) then
-            modelWar:setEnded(true)
-        else
-            modelTurnManager:endTurnPhaseMain()
-        end
+    getModelFogMap(modelWar):updateView()
+    getModelMessageIndicator(modelWar):showMessage(getLocalizedText(74, "Surrender", modelPlayer:getNickname()))
+
+    if (not modelWar:isEnded()) then
+        modelTurnManager:endTurnPhaseMain()
+    elseif (isHumanLost) then
+        modelWar:showEffectLose(callbackOnWarEndedForClient)
     else
-        modelWar:setEnded(modelPlayerManager:getAliveTeamsCount() <= 1)
-
-        getModelFogMap(modelWar):updateView()
-        getModelMessageIndicator(modelWar):showMessage(getLocalizedText(74, "Surrender", modelPlayer:getNickname()))
-
-        if (not modelWar:isEnded()) then
-            modelTurnManager:endTurnPhaseMain()
-        else
-            modelWar:showEffectReplayEnd(callbackOnWarEndedForClient)
-        end
+        modelWar:showEffectWin(callbackOnWarEndedForClient)
     end
 
     modelWar:setExecutingAction(false)
@@ -1029,22 +952,18 @@ local function executeWait(action, modelWar)
     moveModelUnitWithAction(action, modelWar)
     focusModelUnit:setStateActioned()
 
-    if (modelWar:isFastExecutingActions()) then
+    focusModelUnit:moveViewAlongPath(pathNodes, isModelUnitDiving(focusModelUnit), function()
+        focusModelUnit:updateView()
+            :showNormalAnimation()
+
+        getModelFogMap(modelWar):updateView()
+
+        if (path.isBlocked) then
+            getModelGridEffect(modelWar):showAnimationBlock(pathNodes[#pathNodes])
+        end
+
         modelWar:setExecutingAction(false)
-    else
-        focusModelUnit:moveViewAlongPath(pathNodes, isModelUnitDiving(focusModelUnit), function()
-            focusModelUnit:updateView()
-                :showNormalAnimation()
-
-            getModelFogMap(modelWar):updateView()
-
-            if (path.isBlocked) then
-                getModelGridEffect(modelWar):showAnimationBlock(pathNodes[#pathNodes])
-            end
-
-            modelWar:setExecutingAction(false)
-        end)
-    end
+    end)
 end
 
 --------------------------------------------------------------------------------

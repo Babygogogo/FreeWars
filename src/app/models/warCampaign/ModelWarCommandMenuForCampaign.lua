@@ -1,22 +1,5 @@
 
---[[--------------------------------------------------------------------------------
--- ModelWarCommandMenuForOnline是战局中的命令菜单（与单位操作菜单不同），在玩家点击MoneyEnergyInfo时呼出。
---
--- 主要职责和使用场景举例：
---   同上
---
--- 其他：
---   - ModelWarCommandMenuForOnline将包括以下菜单项（可能有遗漏）：
---     - 离开战局（回退到主画面，而不是投降）
---     - 发动co技能
---     - 发动super技能
---     - 游戏设定（声音等）
---     - 投降
---     - 求和
---     - 结束回合
---]]--------------------------------------------------------------------------------
-
-local ModelWarCommandMenuForOnline = class("ModelWarCommandMenuForOnline")
+local ModelWarCommandMenuForCampaign = class("ModelWarCommandMenuForCampaign")
 
 local ActionCodeFunctions       = requireFW("src.app.utilities.ActionCodeFunctions")
 local AudioManager              = requireFW("src.app.utilities.AudioManager")
@@ -26,6 +9,7 @@ local GameConstantFunctions     = requireFW("src.app.utilities.GameConstantFunct
 local GridIndexFunctions        = requireFW("src.app.utilities.GridIndexFunctions")
 local SingletonGetters          = requireFW("src.app.utilities.SingletonGetters")
 local SkillDescriptionFunctions = requireFW("src.app.utilities.SkillDescriptionFunctions")
+local VisibilityFunctions       = requireFW("src.app.utilities.VisibilityFunctions")
 local WarFieldManager           = requireFW("src.app.utilities.WarFieldManager")
 local WebSocketManager          = requireFW("src.app.utilities.WebSocketManager")
 local Actor                     = requireFW("src.global.actors.Actor")
@@ -218,6 +202,7 @@ local function generateTextTileInfo(self)
         }
     end
 
+    local playerIndexForHuman = self.m_PlayerIndexForHuman
     SingletonGetters.getModelTileMap(modelWar):forEachModelTile(function(modelTile)
         local tileType = modelTile:getTileType()
         if (tileCounters[0][tileType]) then
@@ -225,7 +210,8 @@ local function generateTextTileInfo(self)
             tileCounters[0].total     = tileCounters[0].total     + 1
 
             local playerIndex = modelTile:getPlayerIndex()
-            if (playerIndex ~= 0) then
+            if ((playerIndex ~= 0)                                                                                                                           and
+                ((tileType == "Headquarters") or (VisibilityFunctions.isTileVisibleToPlayerIndex(modelWar, modelTile:getGridIndex(), playerIndexForHuman)))) then
                 tileCounters[playerIndex][tileType] = tileCounters[playerIndex][tileType] + 1
                 tileCounters[playerIndex].total     = tileCounters[playerIndex].total     + 1
             end
@@ -326,9 +312,9 @@ end
 -- The dynamic text generator for end turn confirmation.
 --------------------------------------------------------------------------------
 local function getIdleTilesCount(self)
-    local modelWar = self.m_ModelWar
-    local modelUnitMap  = getModelUnitMap(modelWar)
-    local playerIndex   = getModelTurnManager(modelWar):getPlayerIndex()
+    local modelWar     = self.m_ModelWar
+    local modelUnitMap = getModelUnitMap(modelWar)
+    local playerIndex  = getModelTurnManager(modelWar):getPlayerIndex()
     local idleFactoriesCount, idleAirportsCount, idleSeaportsCount = 0, 0, 0
 
     getModelTileMap(modelWar):forEachModelTile(function(modelTile)
@@ -391,19 +377,14 @@ end
 -- The dynamic items generators.
 --------------------------------------------------------------------------------
 local function generateItemsForStateAuxiliaryCommands(self)
-    local items    = {
-        self.m_ItemSurrender,
-        self.m_ItemUnitPropertyList,
-        self.m_ItemReload,
-    }
-
+    local items               = {self.m_ItemUnitPropertyList}
     local modelWar            = self.m_ModelWar
-    local playerIndexLoggedIn = self.m_PlayerIndexForHuman
-    if ((playerIndexLoggedIn == getModelTurnManager(modelWar):getPlayerIndex()) and
-        (not self.m_IsWaitingForServerResponse))                                then
+    local playerIndexForHuman = self.m_PlayerIndexForHuman
+    if (playerIndexForHuman == getModelTurnManager(modelWar):getPlayerIndex()) then
         local modelUnit = getModelUnitMap(modelWar):getModelUnit(self.m_MapCursorGridIndex)
-        self.m_ItemDestroyOwnedUnit.isAvailable = ((modelUnit ~= nil) and (modelUnit:isStateIdle()) and (modelUnit:getPlayerIndex() == playerIndexLoggedIn))
+        self.m_ItemDestroyOwnedUnit.isAvailable = ((modelUnit ~= nil) and (modelUnit:isStateIdle()) and (modelUnit:getPlayerIndex() == playerIndexForHuman))
 
+        items[#items + 1] = self.m_ItemSurrender
         items[#items + 1] = self.m_ItemFindIdleUnit
         items[#items + 1] = self.m_ItemFindIdleTile
         items[#items + 1] = self.m_ItemDestroyOwnedUnit
@@ -424,8 +405,7 @@ local function generateItemsForStateMain(self)
         self.m_ItemSkillInfo,
         self.m_ItemAuxiliaryCommands,
     }
-    if ((not self.m_IsWaitingForServerResponse)                                                and
-        (getModelTurnManager(self.m_ModelWar):getPlayerIndex() == self.m_PlayerIndexForHuman)) then
+    if (getModelTurnManager(self.m_ModelWar):getPlayerIndex() == self.m_PlayerIndexForHuman) then
         items[#items + 1] = self.m_ItemEndTurn
     end
 
@@ -435,55 +415,25 @@ end
 --------------------------------------------------------------------------------
 -- The functions for sending actions.
 --------------------------------------------------------------------------------
-local function createAndSendAction(self, rawAction, needActionID)
+local function createAndSendAction(self, rawAction)
     local modelWar = self.m_ModelWar
-    if (needActionID) then
-        rawAction.actionID = getActionId(modelWar) + 1
-        rawAction.warID    = SingletonGetters.getWarId(self.m_ModelWar)
-    end
-
-    WebSocketManager.sendAction(rawAction)
-    getModelMessageIndicator(modelWar):showPersistentMessage(getLocalizedText(80, "TransferingData"))
-    getScriptEventDispatcher(modelWar):dispatchEvent({
-        name    = "EvtIsWaitingForServerResponse",
-        waiting = true,
-    })
-end
-
-local function sendActionActivateSkillGroup(self, skillGroupID)
-    createAndSendAction(self, {
-        actionCode   = ACTION_CODE_ACTIVATE_SKILL_GROUP,
-        skillGroupID = skillGroupID,
-    }, true)
+    rawAction.actionID = getActionId(modelWar) + 1
+    modelWar:translateAndExecuteAction(rawAction)
 end
 
 local function sendActionDestroyOwnedModelUnit(self)
     createAndSendAction(self, {
         actionCode = ACTION_CODE_DESTROY_OWNED_UNIT,
         gridIndex  = self.m_MapCursorGridIndex,
-    }, true)
+    })
 end
 
 local function sendActionEndTurn(self)
-    createAndSendAction(self, {actionCode = ACTION_CODE_END_TURN}, true)
-end
-
-local function sendActionVoteForDraw(self, doesAgree)
-    createAndSendAction(self, {
-        actionCode = ACTION_CODE_VOTE_FOR_DRAW,
-        doesAgree  = doesAgree,
-    }, true)
-end
-
-local function sendActionReloadSceneWar(self)
-    createAndSendAction(self, {
-        actionCode = ACTION_CODE_RELOAD_SCENE_WAR,
-        warID      = SingletonGetters.getWarId(self.m_ModelWar),
-    }, false)
+    createAndSendAction(self, {actionCode = ACTION_CODE_END_TURN})
 end
 
 local function sendActionSurrender(self)
-    createAndSendAction(self, {actionCode = ACTION_CODE_SURRENDER}, true)
+    createAndSendAction(self, {actionCode = ACTION_CODE_SURRENDER})
 end
 
 --------------------------------------------------------------------------------
@@ -556,10 +506,6 @@ local function onEvtMapCursorMoved(self, event)
     end
 end
 
-local function onEvtIsWaitingForServerResponse(self, event)
-    self.m_IsWaitingForServerResponse = event.waiting
-end
-
 --------------------------------------------------------------------------------
 -- The composition elements.
 --------------------------------------------------------------------------------
@@ -620,20 +566,15 @@ local function initItemEndTurn(self)
     self.m_ItemEndTurn = {
         name     = getLocalizedText(65, "EndTurn"),
         callback = function()
-            local modelWar = self.m_ModelWar
-            if ((modelWar:getRemainingVotesForDraw())                                                                                          and
-                (not self.m_ModelPlayerManager:getModelPlayer(getModelTurnManager(modelWar):getPlayerIndex()):hasVotedForDraw())) then
-                getModelMessageIndicator(modelWar):showMessage(getLocalizedText(66, "RequireVoteForDraw"))
-            else
-                local modelConfirmBox = getModelConfirmBox(modelWar)
-                modelConfirmBox:setConfirmText(createEndTurnText(self))
-                    :setOnConfirmYes(function()
-                        modelConfirmBox:setEnabled(false)
-                        self:setEnabled(false)
-                        sendActionEndTurn(self)
-                    end)
-                    :setEnabled(true)
-            end
+            local modelWar        = self.m_ModelWar
+            local modelConfirmBox = getModelConfirmBox(modelWar)
+            modelConfirmBox:setConfirmText(createEndTurnText(self))
+                :setOnConfirmYes(function()
+                    modelConfirmBox:setEnabled(false)
+                    self:setEnabled(false)
+                    sendActionEndTurn(self)
+                end)
+                :setEnabled(true)
         end,
     }
 end
@@ -654,7 +595,7 @@ local function initItemFindIdleUnit(self)
             local modelUnitMap        = getModelUnitMap(self.m_ModelWar)
             local mapSize             = modelUnitMap:getMapSize()
             local cursorX, cursorY    = self.m_MapCursorGridIndex.x, self.m_MapCursorGridIndex.y
-            local playerIndexLoggedIn = self.m_PlayerIndexForHuman
+            local playerIndexForHuman = self.m_PlayerIndexForHuman
             local firstGridIndex
 
             for y = 1, mapSize.height do
@@ -662,7 +603,7 @@ local function initItemFindIdleUnit(self)
                     local gridIndex = {x = x, y = y}
                     local modelUnit = modelUnitMap:getModelUnit(gridIndex)
                     if ((modelUnit)                                         and
-                        (modelUnit:getPlayerIndex() == playerIndexLoggedIn) and
+                        (modelUnit:getPlayerIndex() == playerIndexForHuman) and
                         (modelUnit:isStateIdle()))                          then
                         if ((y > cursorY)                       or
                             ((y == cursorY) and (x > cursorX))) then
@@ -693,7 +634,7 @@ local function initItemFindIdleTile(self)
         name     = getLocalizedText(65, "FindIdleTile"),
         callback = function()
             local modelWar            = self.m_ModelWar
-            local playerIndexLoggedIn = self.m_PlayerIndexForHuman
+            local playerIndexForHuman = self.m_PlayerIndexForHuman
             local modelUnitMap        = getModelUnitMap(modelWar)
             local modelTileMap        = getModelTileMap(modelWar)
             local mapSize             = modelUnitMap:getMapSize()
@@ -705,7 +646,7 @@ local function initItemFindIdleTile(self)
                     local gridIndex = {x = x, y = y}
                     local modelTile = modelTileMap:getModelTile(gridIndex)
                     if ((modelTile.getProductionList)                       and
-                        (modelTile:getPlayerIndex() == playerIndexLoggedIn) and
+                        (modelTile:getPlayerIndex() == playerIndexForHuman) and
                         (not modelUnitMap:getModelUnit(gridIndex)))         then
                         if ((y > cursorY)                       or
                             ((y == cursorY) and (x > cursorX))) then
@@ -840,24 +781,6 @@ local function initItemBackToMainScene(self)
     }
 end
 
-local function initItemReload(self)
-    local item = {
-        name     = getLocalizedText(65, "ReloadWar"),
-        callback = function()
-            local modelConfirmBox = getModelConfirmBox(self.m_ModelWar)
-            modelConfirmBox:setConfirmText(getLocalizedText(66, "ReloadWar"))
-                :setOnConfirmYes(function()
-                    modelConfirmBox:setEnabled(false)
-                    self:setEnabled(false)
-                    sendActionReloadSceneWar(self)
-                end)
-                :setEnabled(true)
-        end,
-    }
-
-    self.m_ItemReload = item
-end
-
 local function initItemSetMessageIndicator(self)
     self.m_ItemSetMessageIndicator = {
         name     = getLocalizedText(1, "SetMessageIndicator"),
@@ -913,9 +836,8 @@ end
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
-function ModelWarCommandMenuForOnline:ctor(param)
-    self.m_IsWaitingForServerResponse = false
-    self.m_State                      = "stateDisabled"
+function ModelWarCommandMenuForCampaign:ctor(param)
+    self.m_State = "stateDisabled"
 
     initItemAbout(              self)
     initItemAuxiliaryCommands(  self)
@@ -928,7 +850,6 @@ function ModelWarCommandMenuForOnline:ctor(param)
     initItemGameFlow(           self)
     initItemHelp(               self)
     initItemHideUI(             self)
-    initItemReload(             self)
     initItemSkillInfo(          self)
     initItemSkillSystem(        self)
     initItemSetMessageIndicator(self)
@@ -945,25 +866,23 @@ end
 --------------------------------------------------------------------------------
 -- The public callback function on start running or script events.
 --------------------------------------------------------------------------------
-function ModelWarCommandMenuForOnline:onStartRunning(modelWar)
+function ModelWarCommandMenuForCampaign:onStartRunning(modelWar)
     self.m_ModelWar             = modelWar
     self.m_SkillDeclarationCost = modelWar:getModelSkillDataManager():getSkillDeclarationCost()
     self.m_ModelPlayerManager   = SingletonGetters.getModelPlayerManager(modelWar)
     self.m_PlayerIndexForHuman, self.m_ModelPlayerForHuman = self.m_ModelPlayerManager:getPlayerIndexForHuman()
 
     getScriptEventDispatcher(modelWar)
-        :addEventListener("EvtIsWaitingForServerResponse", self)
-        :addEventListener("EvtGridSelected",               self)
-        :addEventListener("EvtMapCursorMoved",             self)
+        :addEventListener("EvtGridSelected",   self)
+        :addEventListener("EvtMapCursorMoved", self)
 
     return self
 end
 
-function ModelWarCommandMenuForOnline:onEvent(event)
+function ModelWarCommandMenuForCampaign:onEvent(event)
     local eventName = event.name
-    if     (eventName == "EvtGridSelected")               then onEvtGridSelected(              self, event)
-    elseif (eventName == "EvtMapCursorMoved")             then onEvtMapCursorMoved(            self, event)
-    elseif (eventName == "EvtIsWaitingForServerResponse") then onEvtIsWaitingForServerResponse(self, event)
+    if     (eventName == "EvtGridSelected")   then onEvtGridSelected(  self, event)
+    elseif (eventName == "EvtMapCursorMoved") then onEvtMapCursorMoved(self, event)
     end
 
     return self
@@ -972,15 +891,15 @@ end
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
-function ModelWarCommandMenuForOnline:isEnabled()
+function ModelWarCommandMenuForCampaign:isEnabled()
     return (self.m_State ~= "stateDisabled") and (self.m_State ~= "stateHiddenWithHideUI")
 end
 
-function ModelWarCommandMenuForOnline:isHiddenWithHideUI()
+function ModelWarCommandMenuForCampaign:isHiddenWithHideUI()
     return self.m_State == "stateHiddenWithHideUI"
 end
 
-function ModelWarCommandMenuForOnline:setEnabled(enabled)
+function ModelWarCommandMenuForCampaign:setEnabled(enabled)
     if (enabled) then
         setStateMain(self)
     else
@@ -990,16 +909,16 @@ function ModelWarCommandMenuForOnline:setEnabled(enabled)
     return self
 end
 
-function ModelWarCommandMenuForOnline:onButtonBackTouched()
+function ModelWarCommandMenuForCampaign:onButtonBackTouched()
     local state = self.m_State
     if     (state == "stateAuxiliaryCommands") then setStateMain(             self)
     elseif (state == "stateHelp")              then setStateAuxiliaryCommands(self)
     elseif (state == "stateMain")              then setStateDisabled(         self)
     elseif (state == "stateUnitPropertyList")  then setStateAuxiliaryCommands(self)
-    else                                       error("ModelWarCommandMenuForOnline:onButtonBackTouched() the state is invalid: " .. (state or ""))
+    else                                       error("ModelWarCommandMenuForCampaign:onButtonBackTouched() the state is invalid: " .. (state or ""))
     end
 
     return self
 end
 
-return ModelWarCommandMenuForOnline
+return ModelWarCommandMenuForCampaign

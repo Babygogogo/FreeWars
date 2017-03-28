@@ -200,10 +200,11 @@ end
 -- The functions for sending actions to the server.
 --------------------------------------------------------------------------------
 local function createAndSendAction(self, rawAction)
-    rawAction.actionID = SingletonGetters.getActionId(self.m_ModelWar) + 1
-    -- TODO: send the action to the ActionTranslator.
+    local modelWar     = self.m_ModelWar
+    rawAction.actionID = SingletonGetters.getActionId(modelWar) + 1
 
     self:setStateIdle(true)
+    modelWar:translateAndExecuteAction(rawAction)
 end
 
 local function sendActionAttack(self, targetGridIndex)
