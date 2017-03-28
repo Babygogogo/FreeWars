@@ -217,6 +217,7 @@ local function createAndEnterCampaign(self)
         isFogOfWarByDefault       = self.m_IsFogOfWarByDefault,
         moveRangeModifier         = self.m_MoveRangeModifier,
         playerIndex               = self.m_PlayerIndex,
+        saveIndex                 = self.m_SaveIndex,
         startingEnergy            = self.m_StartingEnergy,
         startingFund              = self.m_StartingFund,
         teamIndex                 = self.m_TeamIndex,

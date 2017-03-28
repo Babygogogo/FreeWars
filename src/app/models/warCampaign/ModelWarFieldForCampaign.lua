@@ -44,7 +44,7 @@ local function initActorUnitMap(self, unitMapData)
 end
 
 local function initActorActionPlanner(self)
-    self.m_ActorActionPlanner = Actor.createWithModelAndViewName("warOnline.ModelActionPlannerForOnline", nil, "common.ViewActionPlanner")
+    self.m_ActorActionPlanner = Actor.createWithModelAndViewName("warCampaign.ModelActionPlannerForCampaign", nil, "common.ViewActionPlanner")
 end
 
 local function initActorMapCursor(self, param)
