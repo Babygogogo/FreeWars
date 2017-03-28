@@ -26,37 +26,11 @@ local isUnitVisible                = VisibilityFunctions.isUnitOnMapVisibleToPla
 local ipairs, pairs, next          = ipairs, pairs, next
 local math                         = math
 
-local ACTION_CODES                   = ActionCodeFunctions.getFullList()
-local MESSAGE_PARAM_OUT_OF_SYNC      = {"OutOfSync"}
-local IGNORED_ACTION_KEYS_FOR_SERVER = {"revealedTiles", "revealedUnits"}
-
-local LOGOUT_INVALID_ACCOUNT_PASSWORD = {
-    actionCode    = ACTION_CODES.ActionLogout,
-    messageCode   = 81,
-    messageParams = {"InvalidAccountOrPassword"},
-}
-local RUN_SCENE_MAIN_DEFEATED_PLAYER = {
-    actionCode    = ACTION_CODES.ActionRunSceneMain,
-    messageCode   = 81,
-    messageParams = {"DefeatedPlayer"},
-}
-local RUN_SCENE_MAIN_ENDED_WAR = {
-    actionCode    = ACTION_CODES.ActionRunSceneMain,
-    messageCode   = 81,
-    messageParams = {"EndedWar"},
-}
+local ACTION_CODES = ActionCodeFunctions.getFullList()
 
 --------------------------------------------------------------------------------
 -- The util functions.
 --------------------------------------------------------------------------------
-local function getPlayersCountWithWarFieldFileName(warFieldFileName)
-    return requireFW("res.data.templateWarField." .. warFieldFileName).playersCount
-end
-
-local function getGameTypeIndexWithWarConfiguration(warConfiguration)
-    return getPlayersCountWithWarFieldFileName(warConfiguration.warFieldFileName) * 2 - 3 + (warConfiguration.isFogOfWarByDefault and 1 or 0)
-end
-
 local function isGridInPathNodes(gridIndex, pathNodes)
     for _, node in ipairs(pathNodes) do
         if (GridIndexFunctions.isEqual(gridIndex, node)) then
@@ -69,21 +43,6 @@ end
 
 local function isModelUnitDiving(modelUnit)
     return (modelUnit.isDiving) and (modelUnit:isDiving())
-end
-
-local function isPathDestinationOccupiedByVisibleUnit(modelWar, rawPath)
-    local pathNodes  = rawPath.pathNodes
-    local pathLength = #pathNodes
-    if (pathLength == 1) then
-        return false
-    end
-
-    local modelUnitMap = getModelUnitMap(modelWar)
-    local destination  = pathNodes[pathLength]
-    local playerIndex  = modelUnitMap:getModelUnit(pathNodes[1]):getPlayerIndex()
-    local modelUnit    = modelUnitMap:getModelUnit(destination)
-    return (modelUnit) and
-        (isUnitVisible(modelWar, destination, modelUnit:getUnitType(), isModelUnitDiving(modelUnit), modelUnit:getPlayerIndex(), playerIndex))
 end
 
 local function countModelUnitOnMapWithPlayerIndex(modelUnitMap, playerIndex)
@@ -285,69 +244,6 @@ local function generateSupplyDataOnBeginTurn(modelWar, repairData)
     end
 end
 
-local function canDoActionSupplyModelUnit(focusModelUnit, destination, modelUnitMap)
-    if (focusModelUnit.canSupplyModelUnit) then
-        for _, gridIndex in pairs(GridIndexFunctions.getAdjacentGrids(destination, modelUnitMap:getMapSize())) do
-            local modelUnit = modelUnitMap:getModelUnit(gridIndex)
-            if ((modelUnit)                                     and
-                (modelUnit ~= focusModelUnit)                   and
-                (focusModelUnit:canSupplyModelUnit(modelUnit))) then
-                return true
-            end
-        end
-    end
-
-    return false
-end
-
-local function validateDropDestinations(action, modelWar)
-    local destinations = action.dropDestinations
-    if (#destinations < 1) then
-        return false
-    end
-
-    local modelUnitMap             = getModelUnitMap(modelWar)
-    local modelTileMap             = getModelTileMap(modelWar)
-    local mapSize                  = modelTileMap:getMapSize()
-    local pathNodes                = action.path.pathNodes
-    local loaderBeginningGridIndex = pathNodes[1]
-    local loaderEndingGridIndex    = pathNodes[#pathNodes]
-    local loaderModelUnit          = modelUnitMap:getFocusModelUnit(loaderBeginningGridIndex, action.launchUnitID)
-    local loaderEndingModelTile    = modelTileMap:getModelTile(loaderEndingGridIndex)
-    local playerIndex              = loaderModelUnit:getPlayerIndex()
-
-    for i = 1, #destinations do
-        local droppingUnitID    = destinations[i].unitID
-        local droppingGridIndex = destinations[i].gridIndex
-        local droppingModelUnit = modelUnitMap:getLoadedModelUnitWithUnitId(droppingUnitID)
-        if ((not droppingModelUnit)                                                                         or
-            (not loaderModelUnit:hasLoadUnitId(droppingUnitID))                                             or
-            (not GridIndexFunctions.isWithinMap(droppingGridIndex, mapSize))                                or
-            (not GridIndexFunctions.isAdjacent(droppingGridIndex, loaderEndingGridIndex))                   or
-            (not loaderEndingModelTile:getMoveCostWithModelUnit(droppingModelUnit))                         or
-            (not modelTileMap:getModelTile(droppingGridIndex):getMoveCostWithModelUnit(droppingModelUnit))) then
-            return false
-        end
-
-        local existingModelUnit = modelUnitMap:getModelUnit(droppingGridIndex)
-        if ((existingModelUnit)                                                                                                                                                           and
-            (existingModelUnit ~= loaderModelUnit)                                                                                                                                        and
-            (isUnitVisible(modelWar, droppingGridIndex, existingModelUnit:getUnitType(), isModelUnitDiving(existingModelUnit), existingModelUnit:getPlayerIndex(), playerIndex))) then
-            return false
-        end
-
-        for j = i + 1, #destinations do
-            local additionalDestination = destinations[j]
-            if ((GridIndexFunctions.isEqual(droppingGridIndex, additionalDestination.gridIndex)) or
-                (droppingUnitID == additionalDestination.unitID))                                then
-                return false
-            end
-        end
-    end
-
-    return true
-end
-
 local function isDropDestinationBlocked(destination, modelUnitMap, loaderModelUnit)
     local existingModelUnit = modelUnitMap:getModelUnit(destination.gridIndex)
     return (existingModelUnit) and (existingModelUnit ~= loaderModelUnit)
@@ -384,39 +280,12 @@ local function getLostPlayerIndexForActionAttack(modelWar, attacker, target, att
     end
 end
 
-local function createActionForServer(action)
-    return TableFunctions.clone(action, IGNORED_ACTION_KEYS_FOR_SERVER)
-end
-
-local function createActionReloadSceneWar(modelWar, playerAccount, messageCode, messageParams)
-    local _, playerIndex = getModelPlayerManager(modelWar):getModelPlayerWithAccount(playerAccount)
-    return {
-        actionCode    = ACTION_CODES.ActionReloadSceneWar,
-        warData       = modelWar:toSerializableTableForPlayerIndex(playerIndex),
-        messageCode   = messageCode,
-        messageParams = messageParams,
-    }
-end
-
-local function isPlayerInTurnInWar(modelWar, playerAccount)
-    local playerIndex = getModelTurnManager(modelWar):getPlayerIndex()
-    return getModelPlayerManager(modelWar):getModelPlayer(playerIndex):getAccount() == playerAccount
-end
-
-local function isPlayerAliveInWar(modelWar, playerAccount)
-    local modelPlayer = getModelPlayerManager(modelWar):getModelPlayerWithAccount(playerAccount)
-    return (modelPlayer) and (modelPlayer:isAlive())
-end
-
-local function createActionWait(warID, actionID, path, launchUnitID, revealedTiles, revealedUnits)
+local function createActionWait(actionID, path, launchUnitID)
     return {
         actionCode    = ACTION_CODES.ActionWait,
         actionID      = actionID,
         launchUnitID  = launchUnitID,
         path          = path,
-        revealedTiles = revealedTiles,
-        revealedUnits = revealedUnits,
-        warID         = warID,
     }
 end
 
@@ -492,75 +361,31 @@ local function translatePath(path, launchUnitID, modelWar)
 end
 
 local function translateActivateSkill(action)
-    local modelWar         = action.modelWar
-    local skillID          = action.skillID
-    local skillLevel       = action.skillLevel
-    local isActiveSkill    = action.isActiveSkill
-    local modelTurnManager = getModelTurnManager(modelWar)
-    local modelPlayer      = getModelPlayerManager(modelWar):getModelPlayer(modelTurnManager:getPlayerIndex())
-    if ((not modelTurnManager:isTurnPhaseMain())                                                                                                           or
-        ((isActiveSkill) and ((not modelWar:isActiveSkillEnabled()) or ((modelWar:isSkillDeclarationEnabled()) and (not modelPlayer:canActivateSkill())))) or
-        ((not isActiveSkill) and (not modelWar:isPassiveSkillEnabled()))                                                                                   or
-        (modelPlayer:getEnergy() < modelWar:getModelSkillDataManager():getSkillPoints(skillID, skillLevel, isActiveSkill)))                                then
-        return createActionReloadSceneWar(modelWar, action.playerAccount, 81, MESSAGE_PARAM_OUT_OF_SYNC)
-    end
-
-    local revealedTiles, revealedUnits = VisibilityFunctions.getRevealedTilesAndUnitsDataForSkillActivation(modelWar, skillID)
-    local actionActivateSkill = {
-        actionCode    = ACTION_CODES.ActionActivateSkill,
-        actionID      = action.actionID,
-        warID         = action.warID,
-        skillID       = skillID,
-        skillLevel    = skillLevel,
-        isActiveSkill = isActiveSkill,
-        revealedTiles = revealedTiles,
-        revealedUnits = revealedUnits,
-    }
-    return actionActivateSkill
+    return action
 end
 
 local function translateAttack(action)
-    local modelWar                     = action.modelWar
-    local rawPath, launchUnitID        = action.path, action.launchUnitID
-    local translatedPath, translateMsg = translatePath(rawPath, launchUnitID, modelWar)
-    if ((not translatedPath) or (isPathDestinationOccupiedByVisibleUnit(modelWar, rawPath))) then
-        return createActionReloadSceneWar(modelWar, action.playerAccount, 81, MESSAGE_PARAM_OUT_OF_SYNC)
-    end
-
-    local modelUnitMap        = getModelUnitMap(modelWar)
-    local attacker            = modelUnitMap:getFocusModelUnit(rawPath.pathNodes[1], launchUnitID)
-    local targetGridIndex     = action.targetGridIndex
-    local attackTarget        = modelUnitMap:getModelUnit(targetGridIndex) or getModelTileMap(modelWar):getModelTile(targetGridIndex)
-    if ((not ComponentManager.getComponent(attacker, "AttackDoer"))                                                                                                                                                     or
-        (not GridIndexFunctions.isWithinMap(targetGridIndex, modelUnitMap:getMapSize()))                                                                                                                                or
-        ((attackTarget.getUnitType) and (not isUnitVisible(modelWar, targetGridIndex, attackTarget:getUnitType(), isModelUnitDiving(attackTarget), attackTarget:getPlayerIndex(), attacker:getPlayerIndex())))) then
-        return createActionReloadSceneWar(modelWar, action.playerAccount, 81, MESSAGE_PARAM_OUT_OF_SYNC)
-    end
-
-    local attackDamage, counterDamage = DamageCalculator.getUltimateBattleDamage(rawPath.pathNodes, launchUnitID, targetGridIndex, modelWar)
-    if (not attackDamage) then
-        return createActionReloadSceneWar(modelWar, action.playerAccount, 81, MESSAGE_PARAM_OUT_OF_SYNC)
-    end
-
-    local revealedTiles, revealedUnits = getRevealedTilesAndUnitsData(modelWar, translatedPath.pathNodes, attacker, (counterDamage) and (counterDamage >= attacker:getCurrentHP()))
+    local modelWar              = action.modelWar
+    local rawPath, launchUnitID = action.path, action.launchUnitID
+    local translatedPath        = translatePath(rawPath, launchUnitID, modelWar)
     if (translatedPath.isBlocked) then
-        local actionWait = createActionWait(action.warID, action.actionID, translatedPath, launchUnitID, revealedTiles, revealedUnits)
-        return actionWait
+        return createActionWait(action.actionID, translatedPath, launchUnitID)
     else
-        local actionAttack = {
+        local modelUnitMap                = getModelUnitMap(modelWar)
+        local attacker                    = modelUnitMap:getFocusModelUnit(rawPath.pathNodes[1], launchUnitID)
+        local targetGridIndex             = action.targetGridIndex
+        local attackTarget                = modelUnitMap:getModelUnit(targetGridIndex) or getModelTileMap(modelWar):getModelTile(targetGridIndex)
+        local attackDamage, counterDamage = DamageCalculator.getUltimateBattleDamage(rawPath.pathNodes, launchUnitID, targetGridIndex, modelWar)
+        return {
             actionCode       = ACTION_CODES.ActionAttack,
             actionID         = action.actionID,
-            warID            = action.warID,
             path             = translatedPath,
             launchUnitID     = launchUnitID,
             targetGridIndex  = targetGridIndex,
             attackDamage     = attackDamage,
             counterDamage    = counterDamage,
-            revealedTiles    = revealedTiles,
-            revealedUnits    = revealedUnits,
             lostPlayerIndex  = getLostPlayerIndexForActionAttack(modelWar, attacker, attackTarget, attackDamage, counterDamage),
         }
-        return actionAttack
     end
 end
 
@@ -570,8 +395,8 @@ local function translateBeginTurn(action)
     assert(modelTurnManager:isTurnPhaseRequestToBegin())
 
     local actionBeginTurn = {
-        actionCode       = ACTION_CODES.ActionBeginTurn,
-        actionID         = action.actionID,
+        actionCode = ACTION_CODES.ActionBeginTurn,
+        actionID   = action.actionID,
     }
     if (modelTurnManager:getTurnIndex() == 1) then
         actionBeginTurn.income = getIncomeOnBeginTurn(modelWar)
@@ -584,570 +409,226 @@ local function translateBeginTurn(action)
 end
 
 local function translateBuildModelTile(action)
-    local modelWar                     = action.modelWar
-    local rawPath, launchUnitID        = action.path, action.launchUnitID
-    local translatedPath, translateMsg = translatePath(rawPath, launchUnitID, modelWar)
-    if ((not translatedPath) or (isPathDestinationOccupiedByVisibleUnit(modelWar, rawPath))) then
-        return createActionReloadSceneWar(modelWar, action.playerAccount, 81, MESSAGE_PARAM_OUT_OF_SYNC)
-    end
-
-    local rawPathNodes     = rawPath.pathNodes
-    local endingGridIndex  = rawPathNodes[#rawPathNodes]
-    local focusModelUnit   = getModelUnitMap(modelWar):getFocusModelUnit(rawPathNodes[1], launchUnitID)
-    local modelTile        = getModelTileMap(modelWar):getModelTile(endingGridIndex)
-    if ((not focusModelUnit.canBuildOnTileType)                          or
-        (not focusModelUnit:canBuildOnTileType(modelTile:getTileType())) or
-        (not focusModelUnit.getCurrentMaterial)                          or
-        (focusModelUnit:getCurrentMaterial() < 1))                       then
-        return createActionReloadSceneWar(modelWar, action.playerAccount, 81, MESSAGE_PARAM_OUT_OF_SYNC)
-    end
-
-    local revealedTiles, revealedUnits = getRevealedTilesAndUnitsData(modelWar, translatedPath.pathNodes, focusModelUnit, false)
+    local modelWar              = action.modelWar
+    local rawPath, launchUnitID = action.path, action.launchUnitID
+    local translatedPath        = translatePath(rawPath, launchUnitID, modelWar)
     if (translatedPath.isBlocked) then
-        local actionWait = createActionWait(action.warID, action.actionID, translatedPath, launchUnitID, revealedTiles, revealedUnits)
-        return actionWait
+        return createActionWait(action.actionID, translatedPath, launchUnitID)
     else
-        if (focusModelUnit:getBuildAmount() >= modelTile:getCurrentBuildPoint()) then
-            local tiles, units = VisibilityFunctions.getRevealedTilesAndUnitsDataForBuild(modelWar, endingGridIndex, focusModelUnit)
-            revealedTiles = TableFunctions.union(revealedTiles, tiles)
-            revealedUnits = TableFunctions.union(revealedUnits, units)
-        end
-        local actionBuildModelTile = {
-            actionCode       = ACTION_CODES.ActionBuildModelTile,
-            actionID         = action.actionID,
-            warID            = action.warID,
-            path             = translatedPath,
-            launchUnitID     = launchUnitID,
-            revealedTiles    = revealedTiles,
-            revealedUnits    = revealedUnits,
+        return = {
+            actionCode   = ACTION_CODES.ActionBuildModelTile,
+            actionID     = action.actionID,
+            path         = translatedPath,
+            launchUnitID = launchUnitID,
         }
-        return actionBuildModelTile
     end
 end
 
 local function translateCaptureModelTile(action)
-    local modelWar                     = action.modelWar
-    local rawPath, launchUnitID        = action.path, action.launchUnitID
-    local translatedPath, translateMsg = translatePath(rawPath, launchUnitID, modelWar)
-    if ((not translatedPath) or (isPathDestinationOccupiedByVisibleUnit(modelWar, rawPath))) then
-        return createActionReloadSceneWar(modelWar, action.playerAccount, 81, MESSAGE_PARAM_OUT_OF_SYNC)
-    end
-
-    local rawPathNodes    = rawPath.pathNodes
-    local endingGridIndex = rawPathNodes[#rawPathNodes]
-    local capturer        = getModelUnitMap(modelWar):getFocusModelUnit(rawPathNodes[1], launchUnitID)
-    local captureTarget   = getModelTileMap(modelWar):getModelTile(endingGridIndex)
-    if ((not capturer.canCaptureModelTile) or (not capturer:canCaptureModelTile(captureTarget))) then
-        return createActionReloadSceneWar(modelWar, action.playerAccount, 81, MESSAGE_PARAM_OUT_OF_SYNC)
-    end
-
-    local revealedTiles, revealedUnits = getRevealedTilesAndUnitsData(modelWar, translatedPath.pathNodes, capturer, false)
+    local modelWar              = action.modelWar
+    local rawPath, launchUnitID = action.path, action.launchUnitID
+    local translatedPath        = translatePath(rawPath, launchUnitID, modelWar)
     if (translatedPath.isBlocked) then
-        local actionWait = createActionWait(action.warID, action.actionID, translatedPath, launchUnitID, revealedTiles, revealedUnits)
-        return actionWait
+        return createActionWait(action.actionID, translatedPath, launchUnitID)
     else
+        local rawPathNodes      = rawPath.pathNodes
+        local endingGridIndex   = rawPathNodes[#rawPathNodes]
+        local capturer          = getModelUnitMap(modelWar):getFocusModelUnit(rawPathNodes[1], launchUnitID)
+        local captureTarget     = getModelTileMap(modelWar):getModelTile(endingGridIndex)
         local isCaptureFinished = capturer:getCaptureAmount() >= captureTarget:getCurrentCapturePoint()
-        if (isCaptureFinished) then
-            local tiles, units = VisibilityFunctions.getRevealedTilesAndUnitsDataForCapture(modelWar, endingGridIndex, capturer:getPlayerIndex())
-            revealedTiles = TableFunctions.union(revealedTiles, tiles)
-            revealedUnits = TableFunctions.union(revealedUnits, units)
-        end
-
-        local actionCapture = {
-            actionCode       = ACTION_CODES.ActionCaptureModelTile,
-            actionID         = action.actionID,
-            warID            = action.warID,
-            path             = translatedPath,
-            launchUnitID     = launchUnitID,
-            revealedTiles    = revealedTiles,
-            revealedUnits    = revealedUnits,
-            lostPlayerIndex  = ((isCaptureFinished) and (captureTarget:isDefeatOnCapture()))
+        return {
+            actionCode      = ACTION_CODES.ActionCaptureModelTile,
+            actionID        = action.actionID,
+            path            = translatedPath,
+            launchUnitID    = launchUnitID,
+            lostPlayerIndex = ((isCaptureFinished) and (captureTarget:isDefeatOnCapture()))
                 and (captureTarget:getPlayerIndex())
                 or  (nil),
         }
-        return actionCapture
     end
 end
 
 local function translateDeclareSkill(action)
-    local modelWar         = action.modelWar
-    local modelTurnManager = getModelTurnManager(modelWar)
-    local modelPlayer      = getModelPlayerManager(modelWar):getModelPlayer(modelTurnManager:getPlayerIndex())
-    if ((not modelTurnManager:isTurnPhaseMain())                                                   or
-        (not modelWar:isActiveSkillEnabled())                                                      or
-        (modelPlayer:isSkillDeclared())                                                            or
-        (modelPlayer:getEnergy() < modelWar:getModelSkillDataManager():getSkillDeclarationCost())) then
-        return createActionReloadSceneWar(modelWar, action.playerAccount, 81, MESSAGE_PARAM_OUT_OF_SYNC)
-    end
-
     return action
 end
 
 local function translateDestroyOwnedModelUnit(action)
-    local modelWar  = action.modelWar
-    local modelUnit = getModelUnitMap(modelWar):getModelUnit(action.gridIndex)
-    if ((not getModelTurnManager(modelWar):isTurnPhaseMain())                          or
-        (not modelUnit)                                                                      or
-        (modelUnit:getPlayerIndex() ~= getModelTurnManager(modelWar):getPlayerIndex()) or
-        (not modelUnit:isStateIdle()))                                                       then
-        return createActionReloadSceneWar(modelWar, action.playerAccount, 81, MESSAGE_PARAM_OUT_OF_SYNC)
-    end
-
-    local actionDestroyOwnedModelUnit = {
-        actionCode       = ACTION_CODES.ActionDestroyOwnedModelUnit,
-        actionID         = action.actionID,
-        warID            = action.warID,
-        gridIndex        = action.gridIndex,
-    }
-    return actionDestroyOwnedModelUnit
+    return action
 end
 
 local function translateDive(action)
-    local modelWar                     = action.modelWar
-    local rawPath, launchUnitID        = action.path, action.launchUnitID
-    local translatedPath, translateMsg = translatePath(rawPath, launchUnitID, modelWar)
-    if ((not translatedPath) or (isPathDestinationOccupiedByVisibleUnit(modelWar, rawPath))) then
-        return createActionReloadSceneWar(modelWar, action.playerAccount, 81, MESSAGE_PARAM_OUT_OF_SYNC)
-    end
-
-    local focusModelUnit = getModelUnitMap(modelWar):getFocusModelUnit(rawPath.pathNodes[1], launchUnitID)
-    if ((not focusModelUnit.canDive) or (not focusModelUnit:canDive())) then
-        return createActionReloadSceneWar(modelWar, action.playerAccount, 81, MESSAGE_PARAM_OUT_OF_SYNC)
-    end
-
-    local revealedTiles, revealedUnits = getRevealedTilesAndUnitsData(modelWar, translatedPath.pathNodes, focusModelUnit, false)
+    local modelWar              = action.modelWar
+    local rawPath, launchUnitID = action.path, action.launchUnitID
+    local translatedPath        = translatePath(rawPath, launchUnitID, modelWar)
     if (translatedPath.isBlocked) then
-        local actionWait = createActionWait(action.warID, action.actionID, translatedPath, launchUnitID, revealedTiles, revealedUnits)
-        return actionWait
+        return createActionWait(action.actionID, translatedPath, launchUnitID)
     else
-        local actionDive = {
-            actionCode       = ACTION_CODES.ActionDive,
-            actionID         = action.actionID,
-            warID            = action.warID,
-            path             = translatedPath,
-            launchUnitID     = launchUnitID,
-            revealedTiles    = revealedTiles,
-            revealedUnits    = revealedUnits,
+        return {
+            actionCode   = ACTION_CODES.ActionDive,
+            actionID     = action.actionID,
+            path         = translatedPath,
+            launchUnitID = launchUnitID,
         }
-        return actionDive
     end
 end
 
 local function translateDropModelUnit(action)
-    local modelWar                     = action.modelWar
-    local rawPath, launchUnitID        = action.path, action.launchUnitID
-    local translatedPath, translateMsg = translatePath(rawPath, launchUnitID, modelWar)
-    if ((not translatedPath) or (isPathDestinationOccupiedByVisibleUnit(modelWar, rawPath))) then
-        return createActionReloadSceneWar(modelWar, action.playerAccount, 81, MESSAGE_PARAM_OUT_OF_SYNC)
-    end
-
-    local modelUnitMap    = getModelUnitMap(modelWar)
-    local rawPathNodes    = rawPath.pathNodes
-    local endingGridIndex = rawPathNodes[#rawPathNodes]
-    local loaderModelUnit = modelUnitMap:getFocusModelUnit(rawPathNodes[1], launchUnitID)
-    local tileType        = getModelTileMap(modelWar):getModelTile(endingGridIndex):getTileType()
-    if ((not loaderModelUnit.canDropModelUnit)                 or
-        (not loaderModelUnit:canDropModelUnit(tileType))       or
-        (not validateDropDestinations(action, modelWar))) then
-        return createActionReloadSceneWar(modelWar, action.playerAccount, 81, MESSAGE_PARAM_OUT_OF_SYNC)
-    end
-
-    local revealedTiles, revealedUnits = getRevealedTilesAndUnitsData(modelWar, translatedPath.pathNodes, loaderModelUnit, false)
+    local modelWar              = action.modelWar
+    local rawPath, launchUnitID = action.path, action.launchUnitID
+    local translatedPath        = translatePath(rawPath, launchUnitID, modelWar)
     if (translatedPath.isBlocked) then
-        local actionWait = createActionWait(action.warID, action.actionID, translatedPath, launchUnitID, revealedTiles, revealedUnits)
-        return actionWait
+        return createActionWait(action.actionID, translatedPath, launchUnitID)
     else
+        local modelUnitMap                    = getModelUnitMap(modelWar)
+        local loaderModelUnit                 = modelUnitMap:getFocusModelUnit(rawPath.pathNodes[1], launchUnitID)
         local dropDestinations, isDropBlocked = translateDropDestinations(action.dropDestinations, modelUnitMap, loaderModelUnit)
-        for _, dropDestination in ipairs(dropDestinations) do
-            local dropModelUnit = modelUnitMap:getLoadedModelUnitWithUnitId(dropDestination.unitID)
-            local tiles, units  = getRevealedTilesAndUnitsData(modelWar, {endingGridIndex, dropDestination.gridIndex}, dropModelUnit, false)
-            revealedTiles = TableFunctions.union(revealedTiles, tiles)
-            revealedUnits = TableFunctions.union(revealedUnits, units)
-        end
-
-        local actionDropModelUnit = {
+        return {
             actionCode       = ACTION_CODES.ActionDropModelUnit,
             actionID         = action.actionID,
-            warID            = action.warID,
             path             = translatedPath,
             dropDestinations = dropDestinations,
             isDropBlocked    = isDropBlocked,
             launchUnitID     = launchUnitID,
-            revealedTiles    = revealedTiles,
-            revealedUnits    = revealedUnits,
         }
-        return actionDropModelUnit
     end
 end
 
 local function translateEndTurn(action)
-    local modelWar         = action.modelWar
-    local modelTurnManager = getModelTurnManager(modelWar)
-    local modelPlayer      = getModelPlayerManager(modelWar):getModelPlayer(modelTurnManager:getPlayerIndex())
-    if ((not modelTurnManager:isTurnPhaseMain())                                              or
-        ((modelWar:getRemainingVotesForDraw()) and (not modelPlayer:hasVotedForDraw()))) then
-        return createActionReloadSceneWar(modelWar, action.playerAccount, 81, MESSAGE_PARAM_OUT_OF_SYNC)
-    end
-
-    local actionEndTurn = {
-        actionCode       = ACTION_CODES.ActionEndTurn,
-        actionID         = action.actionID,
-        warID            = action.warID,
-    }
-    return actionEndTurn
+    return action
 end
 
 local function translateJoinModelUnit(action)
-    local modelWar                     = action.modelWar
-    local rawPath, launchUnitID        = action.path, action.launchUnitID
-    local translatedPath, translateMsg = translatePath(rawPath, launchUnitID, modelWar)
-    if (not translatedPath) then
-        return createActionReloadSceneWar(modelWar, action.playerAccount, 81, MESSAGE_PARAM_OUT_OF_SYNC)
-    end
-
-    local rawPathNodes      = rawPath.pathNodes
-    local modelUnitMap      = getModelUnitMap(modelWar)
-    local existingModelUnit = modelUnitMap:getModelUnit(rawPathNodes[#rawPathNodes])
-    local focusModelUnit    = modelUnitMap:getFocusModelUnit(rawPathNodes[1], launchUnitID)
-    if ((#rawPathNodes == 1)                                      or
-        (not existingModelUnit)                                   or
-        (not focusModelUnit.canJoinModelUnit)                     or
-        (not focusModelUnit:canJoinModelUnit(existingModelUnit))) then
-        return createActionReloadSceneWar(modelWar, action.playerAccount, 81, MESSAGE_PARAM_OUT_OF_SYNC)
-    end
-
-    local revealedTiles, revealedUnits = getRevealedTilesAndUnitsData(modelWar, translatedPath.pathNodes, focusModelUnit, false)
+    local modelWar              = action.modelWar
+    local rawPath, launchUnitID = action.path, action.launchUnitID
+    local translatedPath        = translatePath(rawPath, launchUnitID, modelWar)
     if (translatedPath.isBlocked) then
-        local actionWait = createActionWait(action.warID, action.actionID, translatedPath, launchUnitID, revealedTiles, revealedUnits)
-        return actionWait
+        return createActionWait(action.actionID, translatedPath, launchUnitID)
     else
-        local actionJoinModelUnit = {
+        return {
             actionCode       = ACTION_CODES.ActionJoinModelUnit,
             actionID         = action.actionID,
-            warID            = action.warID,
             path             = translatedPath,
             launchUnitID     = launchUnitID,
-            revealedTiles    = revealedTiles,
-            revealedUnits    = revealedUnits,
         }
-        return actionJoinModelUnit
     end
 end
 
 local function translateLaunchFlare(action)
-    local modelWar                     = action.modelWar
-    local rawPath, launchUnitID        = action.path, action.launchUnitID
-    local translatedPath, translateMsg = translatePath(rawPath, launchUnitID, modelWar)
-    if ((not translatedPath) or (isPathDestinationOccupiedByVisibleUnit(modelWar, rawPath))) then
-        return createActionReloadSceneWar(modelWar, action.playerAccount, 81, MESSAGE_PARAM_OUT_OF_SYNC)
-    end
-
-    local rawPathNodes    = rawPath.pathNodes
-    local modelUnitMap    = getModelUnitMap(modelWar)
-    local targetGridIndex = action.targetGridIndex
-    local focusModelUnit  = modelUnitMap:getFocusModelUnit(rawPathNodes[1], launchUnitID)
-    if ((#rawPathNodes > 1)                                                                                                 or
-        (not focusModelUnit.getCurrentFlareAmmo)                                                                            or
-        (focusModelUnit:getCurrentFlareAmmo() == 0)                                                                         or
-        (not getModelFogMap(modelWar):isFogOfWarCurrently())                                                           or
-        (not GridIndexFunctions.isWithinMap(targetGridIndex, modelUnitMap:getMapSize()))                                    or
-        (GridIndexFunctions.getDistance(targetGridIndex, rawPathNodes[#rawPathNodes]) > focusModelUnit:getMaxFlareRange())) then
-        return createActionReloadSceneWar(modelWar, action.playerAccount, 81, MESSAGE_PARAM_OUT_OF_SYNC)
-    end
-
-    local revealedTiles, revealedUnits = getRevealedTilesAndUnitsData(modelWar, translatedPath.pathNodes, focusModelUnit, false)
+    local modelWar              = action.modelWar
+    local rawPath, launchUnitID = action.path, action.launchUnitID
+    local translatedPath        = translatePath(rawPath, launchUnitID, modelWar)
     if (translatedPath.isBlocked) then
-        local actionWait = createActionWait(action.warID, action.actionID, translatedPath, launchUnitID, revealedTiles, revealedUnits)
-        return actionWait
+        return createActionWait(action.actionID, translatedPath, launchUnitID)
     else
-        local tiles, units = VisibilityFunctions.getRevealedTilesAndUnitsDataForFlare(modelWar, targetGridIndex, focusModelUnit:getFlareAreaRadius(), focusModelUnit:getPlayerIndex())
-        local actionLaunchFlare = {
+        return {
             actionCode       = ACTION_CODES.ActionLaunchFlare,
             actionID         = action.actionID,
-            warID            = action.warID,
             path             = translatedPath,
-            targetGridIndex  = targetGridIndex,
+            targetGridIndex  = action.targetGridIndex,
             launchUnitID     = launchUnitID,
-            revealedTiles    = TableFunctions.union(revealedTiles, tiles),
-            revealedUnits    = TableFunctions.union(revealedUnits, units),
         }
-        return actionLaunchFlare
     end
 end
 
 local function translateLaunchSilo(action)
-    local modelWar                     = action.modelWar
-    local rawPath, launchUnitID        = action.path, action.launchUnitID
-    local translatedPath, translateMsg = translatePath(rawPath, launchUnitID, modelWar)
-    if ((not translatedPath) or (isPathDestinationOccupiedByVisibleUnit(modelWar, rawPath))) then
-        return createActionReloadSceneWar(modelWar, action.playerAccount, 81, MESSAGE_PARAM_OUT_OF_SYNC)
-    end
-
-    local modelUnitMap    = getModelUnitMap(modelWar)
-    local targetGridIndex = action.targetGridIndex
-    local rawPathNodes    = rawPath.pathNodes
-    local focusModelUnit  = modelUnitMap:getFocusModelUnit(rawPathNodes[1], launchUnitID)
-    if ((not focusModelUnit.canLaunchSiloOnTileType)                                                                                         or
-        (not focusModelUnit:canLaunchSiloOnTileType(getModelTileMap(modelWar):getModelTile(rawPathNodes[#rawPathNodes]):getTileType())) or
-        (not GridIndexFunctions.isWithinMap(targetGridIndex, modelUnitMap:getMapSize())))                                                    then
-        return createActionReloadSceneWar(modelWar, action.playerAccount, 81, MESSAGE_PARAM_OUT_OF_SYNC)
-    end
-
-    local revealedTiles, revealedUnits = getRevealedTilesAndUnitsData(modelWar, translatedPath.pathNodes, focusModelUnit, false)
+    local modelWar              = action.modelWar
+    local rawPath, launchUnitID = action.path, action.launchUnitID
+    local translatedPath        = translatePath(rawPath, launchUnitID, modelWar)
     if (translatedPath.isBlocked) then
-        local actionWait = createActionWait(action.warID, action.actionID, translatedPath, launchUnitID, revealedTiles, revealedUnits)
-        return actionWait
+        return createActionWait(action.actionID, translatedPath, launchUnitID)
     else
-        local actionLaunchSilo = {
+        return {
             actionCode       = ACTION_CODES.ActionLaunchSilo,
             actionID         = action.actionID,
-            warID            = action.warID,
             path             = translatedPath,
-            targetGridIndex  = targetGridIndex,
+            targetGridIndex  = action.targetGridIndex,
             launchUnitID     = launchUnitID,
-            revealedTiles    = revealedTiles,
-            revealedUnits    = revealedUnits,
         }
-        return actionLaunchSilo
     end
 end
 
 local function translateLoadModelUnit(action)
-    local modelWar                     = action.modelWar
-    local rawPath, launchUnitID        = action.path, action.launchUnitID
-    local translatedPath, translateMsg = translatePath(rawPath, launchUnitID, modelWar)
-    if (not translatedPath) then
-        return createActionReloadSceneWar(modelWar, action.playerAccount, 81, MESSAGE_PARAM_OUT_OF_SYNC)
-    end
-
-    local modelUnitMap    = getModelUnitMap(modelWar)
-    local rawPathNodes    = rawPath.pathNodes
-    local focusModelUnit  = modelUnitMap:getFocusModelUnit(rawPathNodes[1], launchUnitID)
-    local destination     = rawPathNodes[#rawPathNodes]
-    local loaderModelUnit = modelUnitMap:getModelUnit(destination)
-    local tileType        = getModelTileMap(modelWar):getModelTile(destination):getTileType()
-    if ((#rawPathNodes == 1)                                                                                                            or
-        (not loaderModelUnit)                                                                                                           or
-        (not loaderModelUnit.canLoadModelUnit)                                                                                          or
-        (not loaderModelUnit:canLoadModelUnit(focusModelUnit, getModelTileMap(modelWar):getModelTile(destination):getTileType()))) then
-        return createActionReloadSceneWar(modelWar, action.playerAccount, 81, MESSAGE_PARAM_OUT_OF_SYNC)
-    end
-
-    local revealedTiles, revealedUnits = getRevealedTilesAndUnitsData(modelWar, translatedPath.pathNodes, focusModelUnit, false)
+    local modelWar              = action.modelWar
+    local rawPath, launchUnitID = action.path, action.launchUnitID
+    local translatedPath        = translatePath(rawPath, launchUnitID, modelWar)
     if (translatedPath.isBlocked) then
-        local actionWait = createActionWait(action.warID, action.actionID, translatedPath, launchUnitID, revealedTiles, revealedUnits)
-        return actionWait
+        return createActionWait(action.actionID, translatedPath, launchUnitID)
     else
-        local actionLoadModelUnit = {
+        return {
             actionCode       = ACTION_CODES.ActionLoadModelUnit,
             actionID         = action.actionID,
-            warID            = action.warID,
             path             = translatedPath,
             launchUnitID     = launchUnitID,
-            revealedTiles    = revealedTiles,
-            revealedUnits    = revealedUnits,
         }
-        return actionLoadModelUnit
     end
 end
 
 local function translateProduceModelUnitOnTile(action)
-    local modelWar         = action.modelWar
-    local modelTurnManager = getModelTurnManager(modelWar)
-    local modelWarField    = modelWar:getModelWarField()
-    local modelTileMap     = getModelTileMap(modelWar)
-    local gridIndex        = action.gridIndex
-    if ((not modelTurnManager:isTurnPhaseMain())                                    or
-        (not GridIndexFunctions.isWithinMap(gridIndex, modelTileMap:getMapSize()))) then
-        return createActionReloadSceneWar(modelWar, action.playerAccount, 81, MESSAGE_PARAM_OUT_OF_SYNC)
-    end
-
-    local tiledID            = action.tiledID
-    local playerIndex        = modelTurnManager:getPlayerIndex()
-    local modelPlayerManager = getModelPlayerManager(modelWar)
-    local modelTile          = modelTileMap:getModelTile(gridIndex)
-    local cost               = Producible.getProductionCostWithTiledId(tiledID, modelPlayerManager)
-    if ((not cost)                                                        or
-        (cost > modelPlayerManager:getModelPlayer(playerIndex):getFund()) or
-        (modelTile:getPlayerIndex() ~= playerIndex)                       or
-        (getModelUnitMap(modelWar):getModelUnit(gridIndex))          or
-        (not modelTile.canProduceUnitWithTiledId)                         or
-        (not modelTile:canProduceUnitWithTiledId(tiledID)))               then
-        return createActionReloadSceneWar(modelWar, action.playerAccount, 81, MESSAGE_PARAM_OUT_OF_SYNC)
-    end
-
-    local focusModelUnit   = Actor.createModel("warOnline.ModelUnitForOnline", {
-        tiledID       = tiledID,
-        unitID        = 0,
-        GridIndexable = gridIndex,
-    })
-    focusModelUnit:onStartRunning(modelWar)
-
-    local revealedTiles, revealedUnits = getRevealedTilesAndUnitsData(modelWar, {gridIndex}, focusModelUnit)
-    local actionProduceModelUnitOnTile = {
-        actionCode       = ACTION_CODES.ActionProduceModelUnitOnTile,
-        actionID         = action.actionID,
-        warID            = action.warID,
-        gridIndex        = gridIndex,
-        tiledID          = tiledID,
-        cost             = cost, -- the cost can be calculated by the clients, but that calculations can be eliminated by sending the cost to clients.
-        revealedTiles    = revealedTiles,
-        revealedUnits    = revealedUnits,
+    local tiledID = action.tiledID
+    return {
+        actionCode = ACTION_CODES.ActionProduceModelUnitOnTile,
+        actionID   = action.actionID,
+        gridIndex  = action.gridIndex,
+        tiledID    = tiledID,
+        cost       = Producible.getProductionCostWithTiledId(tiledID, getModelPlayerManager(action.modelWar)), -- the cost can be calculated by the clients, but that calculations can be eliminated by sending the cost to clients.
     }
-    return actionProduceModelUnitOnTile
 end
 
 local function translateProduceModelUnitOnUnit(action)
-    local modelWar                     = action.modelWar
-    local rawPath, launchUnitID        = action.path, action.launchUnitID
-    local translatedPath, translateMsg = translatePath(rawPath, launchUnitID, modelWar)
-    if ((not translatedPath) or (isPathDestinationOccupiedByVisibleUnit(modelWar, rawPath))) then
-        return createActionReloadSceneWar(modelWar, action.playerAccount, 81, MESSAGE_PARAM_OUT_OF_SYNC)
-    end
-
-    local rawPathNodes   = rawPath.pathNodes
-    local focusModelUnit = getModelUnitMap(modelWar):getFocusModelUnit(rawPathNodes[1], launchUnitID)
-    local cost           = (focusModelUnit.getMovableProductionCost) and (focusModelUnit:getMovableProductionCost()) or (nil)
-    if ((launchUnitID)                                                                                                                or
-        (#rawPathNodes ~= 1)                                                                                                          or
-        (not focusModelUnit.getCurrentMaterial)                                                                                       or
-        (focusModelUnit:getCurrentMaterial() < 1)                                                                                     or
-        (not cost)                                                                                                                    or
-        (cost > getModelPlayerManager(modelWar):getModelPlayer(getModelTurnManager(modelWar):getPlayerIndex()):getFund()) or
-        (not focusModelUnit.getCurrentLoadCount)                                                                                      or
-        (focusModelUnit:getCurrentLoadCount() >= focusModelUnit:getMaxLoadCount()))                                                   then
-        return createActionReloadSceneWar(modelWar, action.playerAccount, 81, MESSAGE_PARAM_OUT_OF_SYNC)
-    end
-
-    local revealedTiles, revealedUnits = getRevealedTilesAndUnitsData(modelWar, translatedPath.pathNodes, focusModelUnit, false)
-    local actionProduceModelUnitOnUnit = {
-        actionCode       = ACTION_CODES.ActionProduceModelUnitOnUnit,
-        actionID         = action.actionID,
-        warID            = action.warID,
-        path             = translatedPath,
-        cost             = cost,
-        revealedTiles    = revealedTiles,
-        revealedUnits    = revealedUnits,
+    local modelWar              = action.modelWar
+    local rawPath, launchUnitID = action.path, action.launchUnitID
+    local translatedPath        = translatePath(rawPath, launchUnitID, modelWar)
+    local rawPathNodes          = rawPath.pathNodes
+    local focusModelUnit        = getModelUnitMap(modelWar):getFocusModelUnit(rawPathNodes[1], launchUnitID)
+    return {
+        actionCode = ACTION_CODES.ActionProduceModelUnitOnUnit,
+        actionID   = action.actionID,
+        path       = translatedPath,
+        cost       = (focusModelUnit.getMovableProductionCost) and (focusModelUnit:getMovableProductionCost()) or (nil),
     }
-    return actionProduceModelUnitOnUnit
 end
 
 local function translateSupplyModelUnit(action)
-    local modelWar                     = action.modelWar
-    local rawPath, launchUnitID        = action.path, action.launchUnitID
-    local translatedPath, translateMsg = translatePath(rawPath, launchUnitID, modelWar)
-    if ((not translatedPath) or (isPathDestinationOccupiedByVisibleUnit(modelWar, rawPath))) then
-        return createActionReloadSceneWar(modelWar, action.playerAccount, 81, MESSAGE_PARAM_OUT_OF_SYNC)
-    end
-
-    local rawPathNodes   = rawPath.pathNodes
-    local modelUnitMap   = getModelUnitMap(modelWar)
-    local focusModelUnit = modelUnitMap:getFocusModelUnit(rawPathNodes[1], launchUnitID)
-    if (not canDoActionSupplyModelUnit(focusModelUnit, rawPathNodes[#rawPathNodes], modelUnitMap)) then
-        return createActionReloadSceneWar(modelWar, action.playerAccount, 81, MESSAGE_PARAM_OUT_OF_SYNC)
-    end
-
-    local revealedTiles, revealedUnits = getRevealedTilesAndUnitsData(modelWar, translatedPath.pathNodes, focusModelUnit, false)
+    local modelWar              = action.modelWar
+    local rawPath, launchUnitID = action.path, action.launchUnitID
+    local translatedPath        = translatePath(rawPath, launchUnitID, modelWar)
     if (translatedPath.isBlocked) then
-        local actionWait = createActionWait(action.warID, action.actionID, translatedPath, launchUnitID, revealedTiles, revealedUnits)
-        return actionWait
+        return createActionWait(action.actionID, translatedPath, launchUnitID)
     else
-        local actionSupplyModelUnit = {
+        return {
             actionCode       = ACTION_CODES.ActionSupplyModelUnit,
             actionID         = action.actionID,
-            warID            = action.warID,
             path             = translatedPath,
             launchUnitID     = launchUnitID,
-            revealedTiles    = revealedTiles,
-            revealedUnits    = revealedUnits,
         }
-        return actionSupplyModelUnit
     end
 end
 
 local function translateSurface(action)
-    local modelWar                     = action.modelWar
-    local rawPath, launchUnitID        = action.path, action.launchUnitID
-    local translatedPath, translateMsg = translatePath(rawPath, launchUnitID, modelWar)
-    if ((not translatedPath) or (isPathDestinationOccupiedByVisibleUnit(modelWar, rawPath))) then
-        return createActionReloadSceneWar(modelWar, action.playerAccount, 81, MESSAGE_PARAM_OUT_OF_SYNC)
-    end
-
-    local focusModelUnit = getModelUnitMap(modelWar):getFocusModelUnit(rawPath.pathNodes[1], launchUnitID)
-    if ((not focusModelUnit.canSurface) or (not focusModelUnit:canSurface())) then
-        return createActionReloadSceneWar(modelWar, action.playerAccount, 81, MESSAGE_PARAM_OUT_OF_SYNC)
-    end
-
-    local revealedTiles, revealedUnits = getRevealedTilesAndUnitsData(modelWar, translatedPath.pathNodes, focusModelUnit, false)
+    local modelWar              = action.modelWar
+    local rawPath, launchUnitID = action.path, action.launchUnitID
+    local translatedPath        = translatePath(rawPath, launchUnitID, modelWar)
     if (translatedPath.isBlocked) then
-        local actionWait = createActionWait(action.warID, action.actionID, translatedPath, launchUnitID, revealedTiles, revealedUnits)
-        return actionWait
+        return createActionWait(action.actionID, translatedPath, launchUnitID)
     else
-        local actionSurface = {
+        return {
             actionCode       = ACTION_CODES.ActionSurface,
             actionID         = action.actionID,
-            warID            = action.warID,
             path             = translatedPath,
             launchUnitID     = launchUnitID,
-            revealedTiles    = revealedTiles,
-            revealedUnits    = revealedUnits,
         }
-        return actionSurface
     end
 end
 
 local function translateSurrender(action)
-    local modelWar = action.modelWar
-    if (not getModelTurnManager(modelWar):isTurnPhaseMain()) then
-        return createActionReloadSceneWar(modelWar, action.playerAccount, 81, MESSAGE_PARAM_OUT_OF_SYNC)
-    end
-
-    local actionSurrender = {
-        actionCode       = ACTION_CODES.ActionSurrender,
-        actionID         = action.actionID,
-        warID            = action.warID,
-    }
-    return actionSurrender
-end
-
-local function translateVoteForDraw(action)
-    local modelWar = action.modelWar
-    if ((not getModelTurnManager(modelWar):isTurnPhaseMain())                                               or
-        (getModelPlayerManager(modelWar):getModelPlayerWithAccount(action.playerAccount):hasVotedForDraw()) or
-        ((not modelWar:getRemainingVotesForDraw()) and (not action.doesAgree)))                              then
-        return createActionReloadSceneWar(modelWar, action.playerAccount, 81, MESSAGE_PARAM_OUT_OF_SYNC)
-    end
-
-    local actionVoteForDraw = {
-        actionCode       = ACTION_CODES.ActionVoteForDraw,
-        actionID         = action.actionID,
-        warID            = action.warID,
-        doesAgree        = action.doesAgree,
-    }
-    return actionVoteForDraw
+    return action
 end
 
 local function translateWait(action)
-    local modelWar                     = action.modelWar
-    local rawPath, launchUnitID        = action.path, action.launchUnitID
-    local translatedPath, translateMsg = translatePath(rawPath, launchUnitID, modelWar)
-    if ((not translatedPath)                                              or
-        (isPathDestinationOccupiedByVisibleUnit(modelWar, rawPath))) then
-        return createActionReloadSceneWar(modelWar, action.playerAccount, 81, MESSAGE_PARAM_OUT_OF_SYNC)
-    end
-
-    local focusModelUnit               = getModelUnitMap(modelWar):getFocusModelUnit(translatedPath.pathNodes[1], launchUnitID)
-    local revealedTiles, revealedUnits = getRevealedTilesAndUnitsData(modelWar, translatedPath.pathNodes, focusModelUnit, false)
-    local actionWait = {
-        actionCode       = ACTION_CODES.ActionWait,
-        actionID         = action.actionID,
-        warID            = action.warID,
-        path             = translatedPath,
-        launchUnitID     = launchUnitID,
-        revealedTiles    = revealedTiles,
-        revealedUnits    = revealedUnits,
-    }
-    return actionWait
+    local modelWar              = action.modelWar
+    local rawPath, launchUnitID = action.path, action.launchUnitID
+    local translatedPath        = translatePath(rawPath, launchUnitID, modelWar)
+    return createActionWait(action.actionID, translatedPath, launchUnitID)
 end
 
 --------------------------------------------------------------------------------
