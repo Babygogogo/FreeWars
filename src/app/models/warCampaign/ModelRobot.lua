@@ -121,11 +121,11 @@ local function getPossibleDamageInPlayerTurn(self, robotUnit, gridIndex)
     return damage
 end
 
-local function updateMaxScoreAndAction(oldScore, oldAction, newScore, newAction)
+local function getBetterScoreAndAction(oldScore, oldAction, newScore, newAction)
     if (not newScore) then
         return oldScore, oldAction
-    elseif ((not oldScore) or
-        (newScore > oldScore) or
+    elseif ((not oldScore)                                  or
+        (newScore > oldScore)                               or
         ((newScore == oldScore) and (math.random(2) == 1))) then
         return newScore, newAction
     else
@@ -137,7 +137,7 @@ end
 -- The score calculators.
 --------------------------------------------------------------------------------
 local function getScoreForPosition(self, modelUnit, gridIndex)
-    local score = getPossibleDamageInPlayerTurn(self, modelUnit, gridIndex) * (-1)                                              -- ADJUSTABLE
+    local score = getPossibleDamageInPlayerTurn(self, modelUnit, gridIndex) * (-modelUnit:getProductionCost() / 4000)           -- ADJUSTABLE
 
     local modelTile = self.m_ModelTileMap:getModelTile(gridIndex)
     if ((modelTile.canRepairTarget) and (modelTile:canRepairTarget(modelUnit))) then
@@ -171,6 +171,34 @@ local function getScoreForPosition(self, modelUnit, gridIndex)
     return score
 end
 
+local function getScoreForActionAttack(self, modelUnit, gridIndex, targetGridIndex, attackDamage, counterDamage)
+    if (not attackDamage) then
+        return nil
+    end
+
+    local targetTile = self.m_ModelTileMap:getModelTile(targetGridIndex)
+    if (targetTile:getTileType() == "Meteor") then
+        return attackDamage                                                                                                     -- ADJUSTABLE
+    end
+
+    local targetUnit = self.m_ModelUnitMap:getModelUnit(targetGridIndex)
+    local score      = attackDamage * targetUnit:getProductionCost() * 1.5 / 4000                                               -- ADJUSTABLE
+    if (targetUnit:getCurrentHP() <= attackDamage) then
+        score = score + 20                                                                                                      -- ADJUSTABLE
+    end
+
+    if (counterDamage) then
+        local attackerHP = modelUnit:getCurrentHP()
+        counterDamage    = math.min(counterDamage, attackerHP)
+        score            = score + (-counterDamage * modelUnit:getProductionCost() / 2 / 4000)                                  -- ADJUSTABLE
+        if (attackerHP == counterDamage) then
+            score = score + (-20)                                                                                               -- ADJUSTABLE
+        end
+    end
+
+    return score
+end
+
 local function getScoreForActionCaptureModelTile(self, modelUnit, gridIndex)
     local modelTile           = self.m_ModelTileMap:getModelTile(gridIndex)
     local currentCapturePoint = modelTile:getCurrentCapturePoint()
@@ -198,7 +226,7 @@ local function getScoreForActionCaptureModelTile(self, modelUnit, gridIndex)
 end
 
 local function getScoreForActionJoinModelUnit(self, modelUnit, gridIndex)
-    return -20                                                                                                                  -- ADJUSTABLE
+    return -200                                                                                                                 -- ADJUSTABLE
 end
 
 local function getScoreForActionLoadModelUnit(self, modelUnit, gridIndex)
@@ -219,20 +247,56 @@ end
 --------------------------------------------------------------------------------
 -- The available action generators.
 --------------------------------------------------------------------------------
-local function getScoreAndActionCaptureModelTile(self, modelUnit, gridIndex, reachableArea)
+local function getScoreAndActionAttack(self, modelUnit, gridIndex, pathNodes)
+    if ((not modelUnit.getBaseDamage)                                                                                     or
+        ((not modelUnit:canAttackAfterMove()) and (not GridIndexFunctions.isEqual(gridIndex, modelUnit:getGridIndex())))) then
+        return nil, nil
+    end
+
+    local modelUnitMap      = self.m_ModelUnitMap
+    local existingModelUnit = modelUnitMap:getModelUnit(gridIndex)
+    if ((existingModelUnit) and (existingModelUnit ~= modelUnit)) then
+        return nil, nil
+    end
+
+    local modelWar           = self.m_ModelWar
+    local launchUnitID       = (isModelUnitLoaded(self, modelUnit)) and (modelUnit:getUnitId()) or (nil)
+    local minRange, maxRange = modelUnit:getAttackRangeMinMax()
+    local maxScore, actionForMaxScore
+
+    for _, targetGridIndex in pairs(GridIndexFunctions.getGridsWithinDistance(gridIndex, minRange, maxRange, self.m_MapSize)) do
+        local attackDamage, counterDamage = DamageCalculator.getUltimateBattleDamage(pathNodes, launchUnitID, targetGridIndex, modelWar)
+        local newScore                    = getScoreForActionAttack(self, modelUnit, gridIndex, targetGridIndex, attackDamage, counterDamage)
+        maxScore, actionForMaxScore       = getBetterScoreAndAction(maxScore, actionForMaxScore, newScore, {
+            actionCode      = ACTION_CODES.ActionAttack,
+            path            = {pathNodes = pathNodes},
+            targetGridIndex = targetGridIndex,
+            launchUnitID    = launchUnitID,
+        })
+    end
+
+    return maxScore, actionForMaxScore
+end
+
+local function getScoreAndActionCaptureModelTile(self, modelUnit, gridIndex, pathNodes)
     local modelTile = self.m_ModelTileMap:getModelTile(gridIndex)
     if ((not modelUnit.canCaptureModelTile) or (not modelUnit:canCaptureModelTile(modelTile))) then
         return nil, nil
-    else
-        return getScoreForActionCaptureModelTile(self, modelUnit, gridIndex), {
-            actionCode   = ACTION_CODES.ActionCaptureModelTile,
-            path         = {pathNodes = MovePathFunctions.createShortestPath(gridIndex, reachableArea)},
-            launchUnitID = (isModelUnitLoaded(self, modelUnit)) and (modelUnit:getUnitId()) or (nil),
-        }
     end
+
+    local existingModelUnit = self.m_ModelUnitMap:getModelUnit(gridIndex)
+    if ((existingModelUnit) and (existingModelUnit ~= modelUnit)) then
+        return nil, nil
+    end
+
+    return getScoreForActionCaptureModelTile(self, modelUnit, gridIndex), {
+        actionCode   = ACTION_CODES.ActionCaptureModelTile,
+        path         = {pathNodes = pathNodes},
+        launchUnitID = (isModelUnitLoaded(self, modelUnit)) and (modelUnit:getUnitId()) or (nil),
+    }
 end
 
-local function getScoreAndActionJoinModelUnit(self, modelUnit, gridIndex, reachableArea)
+local function getScoreAndActionJoinModelUnit(self, modelUnit, gridIndex, pathNodes)
     if (GridIndexFunctions.isEqual(gridIndex, modelUnit:getGridIndex())) then
         return nil, nil
     end
@@ -240,16 +304,16 @@ local function getScoreAndActionJoinModelUnit(self, modelUnit, gridIndex, reacha
     local existingModelUnit = self.m_ModelUnitMap:getModelUnit(gridIndex)
     if ((not existingModelUnit) or (not modelUnit:canJoinModelUnit(existingModelUnit))) then
         return nil, nil
-    else
-        return getScoreForActionJoinModelUnit(self, modelUnit, gridIndex), {
-            actionCode   = ACTION_CODES.ActionJoinModelUnit,
-            path         = {pathNodes = MovePathFunctions.createShortestPath(gridIndex, reachableArea)},
-            launchUnitID = (isModelUnitLoaded(self, modelUnit)) and (modelUnit:getUnitId()) or (nil),
-        }
     end
+
+    return getScoreForActionJoinModelUnit(self, modelUnit, gridIndex), {
+        actionCode   = ACTION_CODES.ActionJoinModelUnit,
+        path         = {pathNodes = pathNodes},
+        launchUnitID = (isModelUnitLoaded(self, modelUnit)) and (modelUnit:getUnitId()) or (nil),
+    }
 end
 
-local function getScoreAndActionLoadModelUnit(self, modelUnit, gridIndex, reachableArea)
+local function getScoreAndActionLoadModelUnit(self, modelUnit, gridIndex, pathNodes)
     if (GridIndexFunctions.isEqual(gridIndex, modelUnit:getGridIndex())) then
         return nil, nil
     end
@@ -259,26 +323,13 @@ local function getScoreAndActionLoadModelUnit(self, modelUnit, gridIndex, reacha
         (not loader.canLoadModelUnit)                                                                        or
         (not loader:canLoadModelUnit(modelUnit, self.m_ModelTileMap:getModelTile(gridIndex):getTileType()))) then
         return nil, nil
-    else
-        return getScoreForActionLoadModelUnit(self, modelUnit, gridIndex), {
-            actionCode   = ACTION_CODES.ActionLoadModelUnit,
-            path         = {pathNodes = MovePathFunctions.createShortestPath(gridIndex, reachableArea)},
-            launchUnitID = (isModelUnitLoaded(self, modelUnit)) and (modelUnit:getUnitId()) or (nil),
-        }
     end
-end
 
-local function getActionAttack(self)
-    if (#self.m_AttackableGridList == 0) then
-        return nil
-    else
-        return {
-            name     = getLocalizedText(78, "Attack"),
-            callback = function()
-                setStateChoosingAttackTarget(self, getPathNodesDestination(self.m_PathNodes))
-            end,
-        }
-    end
+    return getScoreForActionLoadModelUnit(self, modelUnit, gridIndex), {
+        actionCode   = ACTION_CODES.ActionLoadModelUnit,
+        path         = {pathNodes = pathNodes},
+        launchUnitID = (isModelUnitLoaded(self, modelUnit)) and (modelUnit:getUnitId()) or (nil),
+    }
 end
 
 local function getActionDive(self)
@@ -350,43 +401,6 @@ local function getActionSurface(self)
             end,
         }
     end
-end
-
-local function getSingleActionLaunchModelUnit(self, unitID)
-    local beginningGridIndex = self.m_PathNodes[1]
-    local icon               = Actor.createView("common.ViewUnit")
-    icon:updateWithModelUnit(getModelUnitMap(self.m_ModelWar):getFocusModelUnit(beginningGridIndex, unitID))
-        :setScale(0.5)
-
-    return {
-        name     = getLocalizedText(78, "LaunchModelUnit"),
-        icon     = icon,
-        callback = function()
-            setStateMakingMovePath(self, beginningGridIndex, unitID)
-        end,
-    }
-end
-
-local function getActionsLaunchModelUnit(self)
-    local focusModelUnit = self.m_FocusModelUnit
-    if ((#self.m_PathNodes ~= 1)                   or
-        (not focusModelUnit.canLaunchModelUnit)    or
-        (not focusModelUnit:canLaunchModelUnit())) then
-        return {}
-    end
-
-    local actions      = {}
-    local modelUnitMap = getModelUnitMap(self.m_ModelWar)
-    local modelTile    = getModelTileMap(self.m_ModelWar):getModelTile(getPathNodesDestination(self.m_PathNodes))
-    for _, unitID in ipairs(focusModelUnit:getLoadUnitIdList()) do
-        local launchModelUnit = modelUnitMap:getLoadedModelUnitWithUnitId(unitID)
-        if ((launchModelUnit:isStateIdle())                        and
-            (modelTile:getMoveCostWithModelUnit(launchModelUnit))) then
-            actions[#actions + 1] = getSingleActionLaunchModelUnit(self, unitID)
-        end
-    end
-
-    return actions
 end
 
 local function getSingleActionDropModelUnit(self, unitID)
@@ -497,15 +511,16 @@ local function getActionProduceModelUnitOnUnit(self)
     end
 end
 
-local function getScoreAndActionWait(self, modelUnit, gridIndex, reachableArea)
-    local isLoaded = isModelUnitLoaded(self, modelUnit)
+local function getScoreAndActionWait(self, modelUnit, gridIndex, pathNodes)
+    local launchUnitID = (isModelUnitLoaded(self, modelUnit)) and (modelUnit:getUnitId()) or (nil)
     if (GridIndexFunctions.isEqual(modelUnit:getGridIndex(), gridIndex)) then
-        if (isLoaded) then
+        if (launchUnitID) then
             return nil, nil
         else
             return getScoreForActionWait(self, modelUnit, gridIndex), {
                 actionCode   = ACTION_CODES.ActionWait,
-                path         = {pathNodes = MovePathFunctions.createShortestPath(gridIndex, reachableArea)},
+                path         = {pathNodes = pathNodes},
+                launchUnitID = launchUnitID,
             }
         end
     else
@@ -514,26 +529,28 @@ local function getScoreAndActionWait(self, modelUnit, gridIndex, reachableArea)
         else
             return getScoreForActionWait(self, modelUnit, gridIndex), {
                 actionCode   = ACTION_CODES.ActionWait,
-                path         = {pathNodes = MovePathFunctions.createShortestPath(gridIndex, reachableArea)},
+                path         = {pathNodes = pathNodes},
+                launchUnitID = launchUnitID,
             }
         end
     end
 end
 
-local function getMaxScoreAndAction(self, modelUnit, gridIndex, reachableArea)
-    local scoreForActionLoadModelUnit, actionLoadModelUnit = getScoreAndActionLoadModelUnit(self, modelUnit, gridIndex, reachableArea)
+local function getMaxScoreAndAction(self, modelUnit, gridIndex, pathNodes)
+    local scoreForActionLoadModelUnit, actionLoadModelUnit = getScoreAndActionLoadModelUnit(self, modelUnit, gridIndex, pathNodes)
     if (scoreForActionLoadModelUnit) then
         return scoreForActionLoadModelUnit, actionLoadModelUnit
     end
 
-    local scoreForActionJoinModelUnit, actionJoinModelUnit = getScoreAndActionJoinModelUnit(self, modelUnit, gridIndex, reachableArea)
+    local scoreForActionJoinModelUnit, actionJoinModelUnit = getScoreAndActionJoinModelUnit(self, modelUnit, gridIndex, pathNodes)
     if (scoreForActionJoinModelUnit) then
         return scoreForActionJoinModelUnit, actionJoinModelUnit
     end
 
     local maxScore, actionForMaxScore
-    maxScore, actionForMaxScore = updateMaxScoreAndAction(maxScore, actionForMaxScore, getScoreAndActionWait(            self, modelUnit, gridIndex, reachableArea))
-    maxScore, actionForMaxScore = updateMaxScoreAndAction(maxScore, actionForMaxScore, getScoreAndActionCaptureModelTile(self, modelUnit, gridIndex, reachableArea))
+    maxScore, actionForMaxScore = getBetterScoreAndAction(maxScore, actionForMaxScore, getScoreAndActionAttack(          self, modelUnit, gridIndex, pathNodes))
+    maxScore, actionForMaxScore = getBetterScoreAndAction(maxScore, actionForMaxScore, getScoreAndActionCaptureModelTile(self, modelUnit, gridIndex, pathNodes))
+    maxScore, actionForMaxScore = getBetterScoreAndAction(maxScore, actionForMaxScore, getScoreAndActionWait(            self, modelUnit, gridIndex, pathNodes))
 
     return maxScore, actionForMaxScore
     --[[
@@ -543,9 +560,6 @@ local function getMaxScoreAndAction(self, modelUnit, gridIndex, reachableArea)
     list[#list + 1] = getActionSurface(               self)
     list[#list + 1] = getActionBuildModelTile(        self)
     list[#list + 1] = getActionSupplyModelUnit(       self)
-    for _, action in ipairs(getActionsLaunchModelUnit(self)) do
-        list[#list + 1] = action
-    end
     for _, action in ipairs(getActionsDropModelUnit(self)) do
         list[#list + 1] = action
     end
@@ -560,31 +574,13 @@ local function getMaxScoreAndAction(self, modelUnit, gridIndex, reachableArea)
 end
 
 --------------------------------------------------------------------------------
--- The action generators.
---------------------------------------------------------------------------------
-local function generateActionCaptureModelTile(pathNodes)
-    return {
-        actionCode = ActionCodeFunctions.getActionCode("ActionCaptureModelTile"),
-        path       = {pathNodes = pathNodes},
-    }
-end
-
-local function generateActionWait(pathNodes)
-    print(SerializationFunctions.toString(pathNodes))
-    return {
-        actionCode = ActionCodeFunctions.getActionCode("ActionWait"),
-        path       = {pathNodes = pathNodes},
-    }
-end
-
---------------------------------------------------------------------------------
 -- The candicate units generators.
 --------------------------------------------------------------------------------
 local function getCandicateUnitsForPhase1(self)
-    local units               = {}
-    local playerIndexForHuman = self.m_PlayerIndexForHuman
+    local units             = {}
+    local playerIndexInTurn = self.m_ModelTurnManager:getPlayerIndex()
     self.m_ModelUnitMap:forEachModelUnitOnMap(function(modelUnit)
-        if ((modelUnit:getPlayerIndex() ~= playerIndexForHuman) and (modelUnit:isStateIdle()) and (modelUnit.isCapturingModelTile)) then
+        if ((modelUnit:getPlayerIndex() == playerIndexInTurn) and (modelUnit:isStateIdle()) and (modelUnit.isCapturingModelTile)) then
             units[#units + 1] = modelUnit
         end
     end)
@@ -612,10 +608,11 @@ local function getActionForPhase1(self)
             for y = 1, self.m_MapHeight do
                 if (reachableArea[x][y]) then
                     local gridIndex              = {x = x, y = y}
-                    local scoreForAction, action = getMaxScoreAndAction(self, candicateUnit, gridIndex, reachableArea)
+                    local pathNodes              = MovePathFunctions.createShortestPath(gridIndex, reachableArea)
+                    local scoreForAction, action = getMaxScoreAndAction(self, candicateUnit, gridIndex, pathNodes)
                     if (scoreForAction) then
                         local totalScore = scoreForAction + getScoreForPosition(self, candicateUnit, gridIndex)
-                        maxScore, actionForMaxScore = updateMaxScoreAndAction(maxScore, actionForMaxScore, totalScore, action)
+                        maxScore, actionForMaxScore = getBetterScoreAndAction(maxScore, actionForMaxScore, totalScore, action)
                     end
                 end
             end
