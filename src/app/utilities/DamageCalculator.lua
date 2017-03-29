@@ -107,7 +107,32 @@ local function canAttack(modelWar, attacker, attackerMovePath, target, targetMov
     return attackDoer:getBaseDamage(attackTaker:getDefenseType())
 end
 
-local function getAttackDamage(attacker, attackerGridIndex, attackerHP, target, targetGridIndex, modelWar, isWithLuck)
+local function getBattleDamage(attackerMovePath, launchUnitID, targetGridIndex, modelWar, isWithLuck)
+    local modelWarField = modelWar:getModelWarField()
+    local modelUnitMap  = modelWarField:getModelUnitMap()
+    local attacker      = modelUnitMap:getFocusModelUnit(attackerMovePath[1], launchUnitID)
+    local target        = (modelUnitMap:getModelUnit(targetGridIndex)) or (modelWarField:getModelTileMap():getModelTile(targetGridIndex))
+
+    if (not canAttack(modelWar, attacker, attackerMovePath, target, nil)) then
+        return nil, nil
+    end
+
+    local attackerGridIndex = getEndingGridIndex(attackerMovePath)
+    local attackDamage      = DamageCalculator.getAttackDamage(attacker, attackerGridIndex, attacker:getCurrentHP(), target, targetGridIndex, modelWar, isWithLuck)
+    assert(attackDamage >= 0)
+
+    if ((GridIndexFunctions.getDistance(attackerGridIndex, targetGridIndex) > 1) or
+        (not canAttack(modelWar, target, nil, attacker, attackerMovePath)))      then
+        return attackDamage, nil
+    else
+        return attackDamage, DamageCalculator.getAttackDamage(target, targetGridIndex, target:getCurrentHP() - attackDamage, attacker, attackerGridIndex, modelWar, isWithLuck)
+    end
+end
+
+--------------------------------------------------------------------------------
+-- The public functions.
+--------------------------------------------------------------------------------
+function DamageCalculator.getAttackDamage(attacker, attackerGridIndex, attackerHP, target, targetGridIndex, modelWar, isWithLuck)
     local baseAttackDamage = ComponentManager.getComponent(attacker, "AttackDoer"):getBaseDamage(target:getDefenseType())
     if (not baseAttackDamage) then
         return nil
@@ -126,31 +151,6 @@ local function getAttackDamage(attacker, attackerGridIndex, attackerHP, target, 
     end
 end
 
-local function getBattleDamage(attackerMovePath, launchUnitID, targetGridIndex, modelWar, isWithLuck)
-    local modelWarField = modelWar:getModelWarField()
-    local modelUnitMap  = modelWarField:getModelUnitMap()
-    local attacker      = modelUnitMap:getFocusModelUnit(attackerMovePath[1], launchUnitID)
-    local target        = (modelUnitMap:getModelUnit(targetGridIndex)) or (modelWarField:getModelTileMap():getModelTile(targetGridIndex))
-
-    if (not canAttack(modelWar, attacker, attackerMovePath, target, nil)) then
-        return nil, nil
-    end
-
-    local attackerGridIndex = getEndingGridIndex(attackerMovePath)
-    local attackDamage      = getAttackDamage(attacker, attackerGridIndex, attacker:getCurrentHP(), target, targetGridIndex, modelWar, isWithLuck)
-    assert(attackDamage >= 0)
-
-    if ((GridIndexFunctions.getDistance(attackerGridIndex, targetGridIndex) > 1) or
-        (not canAttack(modelWar, target, nil, attacker, attackerMovePath)))      then
-        return attackDamage, nil
-    else
-        return attackDamage, getAttackDamage(target, targetGridIndex, target:getCurrentHP() - attackDamage, attacker, attackerGridIndex, modelWar, isWithLuck)
-    end
-end
-
---------------------------------------------------------------------------------
--- The public functions.
---------------------------------------------------------------------------------
 function DamageCalculator.getEstimatedBattleDamage(attackerMovePath, launchUnitID, targetGridIndex, modelWar)
     return getBattleDamage(attackerMovePath, launchUnitID, targetGridIndex, modelWar, false)
 end
