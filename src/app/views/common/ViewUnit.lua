@@ -10,7 +10,6 @@ local VisibilityFunctions   = requireFW("src.app.utilities.VisibilityFunctions")
 local getModelFogMap           = SingletonGetters.getModelFogMap
 local getModelMapCursor        = SingletonGetters.getModelMapCursor
 local getModelPlayerManager    = SingletonGetters.getModelPlayerManager
-local getPlayerIndexLoggedIn   = SingletonGetters.getPlayerIndexLoggedIn
 local getScriptEventDispatcher = SingletonGetters.getScriptEventDispatcher
 local isUnitVisible            = VisibilityFunctions.isUnitOnMapVisibleToPlayerIndex
 
@@ -33,14 +32,24 @@ local UNIT_SPRITE_Z_ORDER     = 0
 --------------------------------------------------------------------------------
 -- The util functions.
 --------------------------------------------------------------------------------
+local function getPlayerIndexForPlayer(modelWar)
+    if (SingletonGetters.isWarReplay(modelWar)) then
+        return nil
+    elseif (SingletonGetters.isWarOnline(modelWar)) then
+        return SingletonGetters.getModelPlayerManager(modelWar):getPlayerIndexLoggedIn()
+    else
+        return SingletonGetters.getModelPlayerManager(modelWar):getPlayerIndexForHuman()
+    end
+end
+
 local function createStepsForActionMoveAlongPath(self, path, isDiving)
-    local modelWar            = self.m_Model:getModelWar()
-    local isReplay            = SingletonGetters.isWarReplay(modelWar)
-    local playerIndex         = self.m_Model:getPlayerIndex()
-    local playerIndexMod      = playerIndex % 2
-    local playerIndexLoggedIn = (not isReplay) and (getPlayerIndexLoggedIn(modelWar)) or (nil)
-    local unitType            = self.m_Model:getUnitType()
-    local isAlwaysVisible     = (isReplay) or (playerIndex == playerIndexLoggedIn)
+    local modelWar             = self.m_Model:getModelWar()
+    local playerIndex          = self.m_Model:getPlayerIndex()
+    local playerIndexMod       = playerIndex % 2
+    local unitType             = self.m_Model:getUnitType()
+    local playerIndexForPlayer = getPlayerIndexForPlayer(modelWar)
+    local isReplay             = SingletonGetters.isWarReplay(modelWar)
+    local isAlwaysVisible      = (isReplay) or (playerIndex == playerIndexForPlayer)
 
     local steps               = {cc.CallFunc:create(function()
         getModelMapCursor(modelWar):setMovableByPlayer(false)
@@ -63,15 +72,15 @@ local function createStepsForActionMoveAlongPath(self, path, isDiving)
 
         if (not isAlwaysVisible) then
             if (isDiving) then
-                if ((i == #path)                                                                                      and
-                    (isUnitVisible(modelWar, path[i], unitType, isDiving, playerIndex, playerIndexLoggedIn))) then
+                if ((i == #path)                                                                               and
+                    (isUnitVisible(modelWar, path[i], unitType, isDiving, playerIndex, playerIndexForPlayer))) then
                     steps[#steps + 1] = cc.Show:create()
                 else
                     steps[#steps + 1] = cc.Hide:create()
                 end
             else
-                if ((isUnitVisible(modelWar, path[i - 1], unitType, isDiving, playerIndex, playerIndexLoggedIn))  or
-                    (isUnitVisible(modelWar, path[i],     unitType, isDiving, playerIndex, playerIndexLoggedIn))) then
+                if ((isUnitVisible(modelWar, path[i - 1], unitType, isDiving, playerIndex, playerIndexForPlayer))  or
+                    (isUnitVisible(modelWar, path[i],     unitType, isDiving, playerIndex, playerIndexForPlayer))) then
                     steps[#steps + 1] = cc.Show:create()
                 else
                     steps[#steps + 1] = cc.Hide:create()
@@ -185,7 +194,7 @@ local function getLoadIndicatorFrame(self, unit)
         local modelWar  = unit:getModelWar()
         local loadCount = unit:getCurrentLoadCount()
         if ((not SingletonGetters.isWarReplay(modelWar)) and (getModelFogMap(modelWar):isFogOfWarCurrently())) then
-            if ((not SingletonGetters.getModelPlayerManager(modelWar):isSameTeamIndex(unit:getPlayerIndex(), getPlayerIndexLoggedIn(modelWar))) or (loadCount > 0)) then
+            if ((not SingletonGetters.getModelPlayerManager(modelWar):isSameTeamIndex(unit:getPlayerIndex(), getPlayerIndexForPlayer(modelWar))) or (loadCount > 0)) then
                 return cc.SpriteFrameCache:getInstance():getSpriteFrame("c02_t99_s06_f0" .. unit:getPlayerIndex() .. ".png")
             else
                 return nil

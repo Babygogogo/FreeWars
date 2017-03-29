@@ -12,11 +12,11 @@ local SerializationFunctions = requireFW("src.app.utilities.SerializationFunctio
 local SingletonGetters       = requireFW("src.app.utilities.SingletonGetters")
 local SkillModifierFunctions = requireFW("src.app.utilities.SkillModifierFunctions")
 local SupplyFunctions        = requireFW("src.app.utilities.SupplyFunctions")
+local VisibilityFunctions    = requireFW("src.app.utilities.VisibilityFunctions")
 local WebSocketManager       = requireFW("src.app.utilities.WebSocketManager")
 local Actor                  = requireFW("src.global.actors.Actor")
 local ActorManager           = requireFW("src.global.actors.ActorManager")
 
-local destroyActorUnitOnMap         = Destroyers.destroyActorUnitOnMap
 local getAdjacentGrids              = GridIndexFunctions.getAdjacentGrids
 local getGridsWithinDistance        = GridIndexFunctions.getGridsWithinDistance
 local getLocalizedText              = LocalizationFunctions.getLocalizedText
@@ -29,6 +29,7 @@ local getModelTileMap               = SingletonGetters.getModelTileMap
 local getModelTurnManager           = SingletonGetters.getModelTurnManager
 local getModelUnitMap               = SingletonGetters.getModelUnitMap
 local getScriptEventDispatcher      = SingletonGetters.getScriptEventDispatcher
+local isUnitVisible                 = VisibilityFunctions.isUnitOnMapVisibleToPlayerIndex
 local supplyWithAmmoAndFuel         = SupplyFunctions.supplyWithAmmoAndFuel
 local math, string                  = math, string
 local next, pairs, ipairs, unpack   = next, pairs, ipairs, unpack
@@ -214,6 +215,20 @@ local function callbackOnWarEndedForClient()
     runSceneMain(getLoggedInAccountAndPassword() ~= nil)
 end
 
+local function updateTileAndUnitMapOnVisibilityChanged(modelWar)
+    local playerIndex = getModelPlayerManager(modelWar):getPlayerIndexForHuman()
+    getModelTileMap(modelWar):forEachModelTile(function(modelTile)
+        modelTile:updateView()
+    end)
+    getModelUnitMap(modelWar):forEachModelUnitOnMap(function(modelUnit)
+        modelUnit:setViewVisible(isUnitVisible(modelWar, modelUnit:getGridIndex(), modelUnit:getUnitType(), isModelUnitDiving(modelUnit), modelUnit:getPlayerIndex(), playerIndex))
+    end)
+
+    getScriptEventDispatcher(modelWar)
+        :dispatchEvent({name = "EvtModelTileMapUpdated"})
+        :dispatchEvent({name = "EvtModelUnitMapUpdated"})
+end
+
 --------------------------------------------------------------------------------
 -- The executors for web actions.
 --------------------------------------------------------------------------------
@@ -286,7 +301,6 @@ local function executeActivateSkill(action, modelWar)
     getModelUnitMap(modelWar):forEachModelUnitOnMap(func)
         :forEachModelUnitLoaded(func)
 
-    getModelFogMap(modelWar):updateView()
     dispatchEvtModelPlayerUpdated(modelWar, playerIndex)
 
     modelWar:setExecutingAction(false)
@@ -340,7 +354,7 @@ local function executeAttack(action, modelWar)
     attacker:setCurrentHP(attackerNewHP)
     if (attackerNewHP == 0) then
         attackTarget:setCurrentPromotion(math.min(attackTarget:getMaxPromotion(), attackTarget:getCurrentPromotion() + 1))
-        destroyActorUnitOnMap(modelWar, attackerGridIndex, false)
+        Destroyers.destroyActorUnitOnMap(modelWar, attackerGridIndex, false)
     end
 
     local targetNewHP = math.max(0, attackTarget:getCurrentHP() - attackDamage)
@@ -351,7 +365,7 @@ local function executeAttack(action, modelWar)
             targetVision = attackTarget:getVisionForPlayerIndex(targetPlayerIndex)
 
             attacker:setCurrentPromotion(math.min(attacker:getMaxPromotion(), attacker:getCurrentPromotion() + 1))
-            destroyActorUnitOnMap(modelWar, targetGridIndex, false, true)
+            Destroyers.destroyActorUnitOnMap(modelWar, targetGridIndex, false, true)
         else
             attackTarget:updateWithObjectAndBaseId(0)
 
@@ -405,7 +419,7 @@ local function executeAttack(action, modelWar)
             getModelMessageIndicator(modelWar):showMessage(getLocalizedText(74, "Lose", modelPlayerManager:getModelPlayer(lostPlayerIndex):getNickname()))
         end
 
-        getModelFogMap(modelWar):updateView()
+        updateTileAndUnitMapOnVisibilityChanged(modelWar)
 
         if (not modelWar:isEnded()) then
             modelTurnManager:endTurnPhaseMain()
@@ -478,7 +492,7 @@ local function executeBuildModelTile(action, modelWar)
             :showNormalAnimation()
         modelTile:updateView()
 
-        getModelFogMap(modelWar):updateView()
+        updateTileAndUnitMapOnVisibilityChanged(modelWar)
 
         modelWar:setExecutingAction(false)
     end)
@@ -523,7 +537,7 @@ local function executeCaptureModelTile(action, modelWar)
             if (capturePoint <= 0) then
                 modelFogMap:updateMapForTilesForPlayerIndexOnLosingOwnership(previousPlayerIndex, endingGridIndex, previousVision)
             end
-            getModelFogMap(modelWar):updateView()
+            updateTileAndUnitMapOnVisibilityChanged(modelWar)
 
             modelWar:setExecutingAction(false)
         end)
@@ -538,7 +552,7 @@ local function executeCaptureModelTile(action, modelWar)
 
             getModelMessageIndicator(modelWar):showMessage(getLocalizedText(74, "Lose", modelPlayerManager:getModelPlayer(lostPlayerIndex):getNickname()))
             Destroyers.destroyPlayerForce(modelWar, lostPlayerIndex)
-            getModelFogMap(modelWar):updateView()
+            updateTileAndUnitMapOnVisibilityChanged(modelWar)
 
             if (modelWar:isEnded()) then
                 if (isHumanLost) then
@@ -572,7 +586,7 @@ local function executeDestroyOwnedModelUnit(action, modelWar)
 
     local gridIndex = action.gridIndex
     getModelFogMap(modelWar):updateMapForPathsWithModelUnitAndPath(getModelUnitMap(modelWar):getModelUnit(gridIndex), {gridIndex})
-    destroyActorUnitOnMap(modelWar, gridIndex, true)
+    Destroyers.destroyActorUnitOnMap(modelWar, gridIndex, true)
 
     getModelGridEffect(modelWar):showAnimationExplosion(gridIndex)
 
@@ -594,7 +608,7 @@ local function executeDive(action, modelWar)
             :showNormalAnimation()
 
         getModelGridEffect(modelWar):showAnimationDive(pathNodes[#pathNodes])
-        getModelFogMap(modelWar):updateView()
+        updateTileAndUnitMapOnVisibilityChanged(modelWar)
 
         modelWar:setExecutingAction(false)
     end)
@@ -647,7 +661,7 @@ local function executeDropModelUnit(action, modelWar)
             end)
         end
 
-        getModelFogMap(modelWar):updateView()
+        updateTileAndUnitMapOnVisibilityChanged(modelWar)
 
         modelWar:setExecutingAction(false)
     end)
@@ -725,7 +739,7 @@ local function executeJoinModelUnit(action, modelWar)
             :showNormalAnimation()
         targetModelUnit:removeViewFromParent()
 
-        getModelFogMap(modelWar):updateView()
+        updateTileAndUnitMapOnVisibilityChanged(modelWar)
 
         modelWar:setExecutingAction(false)
     end)
@@ -754,7 +768,7 @@ local function executeLaunchFlare(action, modelWar)
             modelGridEffect:showAnimationFlare(gridIndex)
         end
 
-        getModelFogMap(modelWar):updateView()
+        updateTileAndUnitMapOnVisibilityChanged(modelWar)
 
         modelWar:setExecutingAction(false)
     end)
@@ -795,7 +809,7 @@ local function executeLaunchSilo(action, modelWar)
             modelGridEffect:showAnimationSiloAttack(gridIndex)
         end
 
-        getModelFogMap(modelWar):updateView()
+        updateTileAndUnitMapOnVisibilityChanged(modelWar)
 
         modelWar:setExecutingAction(false)
     end)
@@ -819,7 +833,7 @@ local function executeLoadModelUnit(action, modelWar)
             :setViewVisible(false)
         loaderModelUnit:updateView()
 
-        getModelFogMap(modelWar):updateView()
+        updateTileAndUnitMapOnVisibilityChanged(modelWar)
 
         modelWar:setExecutingAction(false)
     end)
@@ -838,7 +852,7 @@ local function executeProduceModelUnitOnTile(action, modelWar)
     getModelFogMap(modelWar):updateMapForUnitsForPlayerIndexOnUnitArrive(playerIndex, gridIndex, producedActorUnit:getModel():getVisionForPlayerIndex(playerIndex))
     updateFundWithCost(modelWar, playerIndex, action.cost)
 
-    getModelFogMap(modelWar):updateView()
+    updateTileAndUnitMapOnVisibilityChanged(modelWar)
 
     modelWar:setExecutingAction(false)
 end
@@ -866,7 +880,7 @@ local function executeProduceModelUnitOnUnit(action, modelWar)
         producer:updateView()
             :showNormalAnimation()
 
-        getModelFogMap(modelWar):updateView()
+        updateTileAndUnitMapOnVisibilityChanged(modelWar)
 
         modelWar:setExecutingAction(false)
     end)
@@ -891,7 +905,7 @@ local function executeSupplyModelUnit(action, modelWar)
             modelGridEffect:showAnimationSupply(targetModelUnit:getGridIndex())
         end
 
-        getModelFogMap(modelWar):updateView()
+        updateTileAndUnitMapOnVisibilityChanged(modelWar)
 
         modelWar:setExecutingAction(false)
     end)
@@ -912,7 +926,7 @@ local function executeSurface(action, modelWar)
             :showNormalAnimation()
 
         getModelGridEffect(modelWar):showAnimationSurface(pathNodes[#pathNodes])
-        getModelFogMap(modelWar):updateView()
+        updateTileAndUnitMapOnVisibilityChanged(modelWar)
 
         modelWar:setExecutingAction(false)
     end)
@@ -929,7 +943,7 @@ local function executeSurrender(action, modelWar)
     Destroyers.destroyPlayerForce(modelWar, playerIndex)
     modelWar:setEnded((isHumanLost) or (modelPlayerManager:getAliveTeamsCount() <= 1))
 
-    getModelFogMap(modelWar):updateView()
+    updateTileAndUnitMapOnVisibilityChanged(modelWar)
     getModelMessageIndicator(modelWar):showMessage(getLocalizedText(74, "Surrender", modelPlayer:getNickname()))
 
     if (not modelWar:isEnded()) then
@@ -956,7 +970,7 @@ local function executeWait(action, modelWar)
         focusModelUnit:updateView()
             :showNormalAnimation()
 
-        getModelFogMap(modelWar):updateView()
+        updateTileAndUnitMapOnVisibilityChanged(modelWar)
 
         if (path.isBlocked) then
             getModelGridEffect(modelWar):showAnimationBlock(pathNodes[#pathNodes])

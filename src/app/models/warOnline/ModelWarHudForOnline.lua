@@ -97,13 +97,14 @@ end
 --------------------------------------------------------------------------------
 -- The public callback function on start running.
 --------------------------------------------------------------------------------
-function ModelWarHudForOnline:onStartRunning(modelSceneWar)
-    self.m_ActorActionMenu     :getModel():onStartRunning(modelSceneWar)
-    self.m_ActorBattleInfo     :getModel():onStartRunning(modelSceneWar)
-    self.m_ActorMoneyEnergyInfo:getModel():onStartRunning(modelSceneWar)
-    self.m_ActorTileInfo       :getModel():onStartRunning(modelSceneWar)
-    self.m_ActorUnitInfo       :getModel():onStartRunning(modelSceneWar)
-    self.m_ActorWarCommandMenu :getModel():onStartRunning(modelSceneWar)
+function ModelWarHudForOnline:onStartRunning(modelWar)
+    self.m_ActorActionMenu     :getModel():onStartRunning(modelWar)
+    self.m_ActorBattleInfo     :getModel():onStartRunning(modelWar)
+    self.m_ActorMoneyEnergyInfo:getModel():onStartRunning(modelWar)
+    self.m_ActorTileInfo       :getModel():onStartRunning(modelWar)
+    self.m_ActorUnitInfo       :getModel():onStartRunning(modelWar)
+    self.m_ActorWarCommandMenu :getModel():onStartRunning(modelWar)
+    self.m_ActorTileDetail     :getModel():onStartRunning(modelWar)
 
     return self
 end

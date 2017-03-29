@@ -5,13 +5,10 @@ local GameConstantFunctions  = requireFW("src.app.utilities.GameConstantFunction
 local SerializationFunctions = requireFW("src.app.utilities.SerializationFunctions")
 local SingletonGetters       = requireFW("src.app.utilities.SingletonGetters")
 local TableFunctions         = requireFW("src.app.utilities.TableFunctions")
-local VisibilityFunctions    = requireFW("src.app.utilities.VisibilityFunctions")
 local WarFieldManager        = requireFW("src.app.utilities.WarFieldManager")
 local Actor                  = requireFW("src.global.actors.Actor")
 
-local ceil          = math.ceil
-local isTileVisible = VisibilityFunctions.isTileVisibleToPlayerIndex
-local toErrMsg      = SerializationFunctions.toErrorMessage
+local ceil = math.ceil
 
 --------------------------------------------------------------------------------
 -- The util functions.
@@ -47,7 +44,7 @@ local function createActorTilesMapWithWarFieldFileName(warFieldFileName)
                 baseID        = baseLayerData[idIndex],
                 GridIndexable = {x = x, y = y},
             }
-            map[x][y] = Actor.createWithModelAndViewName("warOnline.ModelTileForOnline", actorData, "common.ViewTile")
+            map[x][y] = Actor.createWithModelAndViewName("warCampaign.ModelTileForCampaign", actorData, "common.ViewTile")
         end
     end
 
@@ -146,8 +143,7 @@ end
 function ModelTileMapForCampaign:updateOnModelFogMapStartedRunning()
     local playerIndex = SingletonGetters.getModelPlayerManager(self.m_ModelWar):getPlayerIndexForHuman()
     self:forEachModelTile(function(modelTile)
-        modelTile:initHasFogOnClient(not isTileVisible(self.m_ModelWar, modelTile:getGridIndex(), playerIndex))
-            :updateView()
+        modelTile:updateView()
     end)
 
     return self

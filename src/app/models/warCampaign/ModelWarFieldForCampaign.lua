@@ -1,8 +1,11 @@
 
 local ModelWarFieldForCampaign = requireFW("src.global.functions.class")("ModelWarFieldForCampaign")
 
-local SingletonGetters = requireFW("src.app.utilities.SingletonGetters")
-local Actor            = requireFW("src.global.actors.Actor")
+local SingletonGetters    = requireFW("src.app.utilities.SingletonGetters")
+local VisibilityFunctions = requireFW("src.app.utilities.VisibilityFunctions")
+local Actor               = requireFW("src.global.actors.Actor")
+
+local isUnitVisible = VisibilityFunctions.isUnitOnMapVisibleToPlayerIndex
 
 --------------------------------------------------------------------------------
 -- The private callback functions on script events.
@@ -112,6 +115,10 @@ function ModelWarFieldForCampaign:onStartRunning(modelWar)
     self:getModelMapCursor()    :onStartRunning(modelWar)
 
     self:getModelTileMap():updateOnModelFogMapStartedRunning()
+    local playerIndex = SingletonGetters.getModelPlayerManager(modelWar):getPlayerIndexForHuman()
+    self:getModelUnitMap():forEachModelUnitOnMap(function(modelUnit)
+        modelUnit:setViewVisible(isUnitVisible(modelWar, modelUnit:getGridIndex(), modelUnit:getUnitType(), (modelUnit.isDiving) and (modelUnit:isDiving()), modelUnit:getPlayerIndex(), playerIndex))
+    end)
 
     SingletonGetters.getScriptEventDispatcher(modelWar)
         :addEventListener("EvtDragField",            self)

@@ -10,7 +10,6 @@ local SingletonGetters      = requireFW("src.app.utilities.SingletonGetters")
 local SupplyFunctions       = requireFW("src.app.utilities.SupplyFunctions")
 local VisibilityFunctions   = requireFW("src.app.utilities.VisibilityFunctions")
 
-local destroyActorUnitOnMap    = Destroyers.destroyActorUnitOnMap
 local getAdjacentGrids         = GridIndexFunctions.getAdjacentGrids
 local getLocalizedText         = LocalizationFunctions.getLocalizedText
 local getModelFogMap           = SingletonGetters.getModelFogMap
@@ -89,22 +88,20 @@ local function repairModelUnit(self, modelUnit, repairAmount)
     end
 end
 
-local function resetVisionOnClient(self)
+local function updateTileAndUnitMapOnVisibilityChanged(self)
     local modelWar    = self.m_ModelWar
     local playerIndex = self.m_PlayerIndexForHuman
     getModelUnitMap(modelWar):forEachModelUnitOnMap(function(modelUnit)
-        local gridIndex = modelUnit:getGridIndex()
-        if (not isUnitVisible(modelWar, gridIndex, modelUnit:getUnitType(), isModelUnitDiving(modelUnit), modelUnit:getPlayerIndex(), playerIndex)) then
-            destroyActorUnitOnMap(modelWar, gridIndex, true)
-        end
+        modelUnit:setViewVisible(isUnitVisible(modelWar, modelUnit:getGridIndex(), modelUnit:getUnitType(), isModelUnitDiving(modelUnit), modelUnit:getPlayerIndex(), playerIndex))
     end)
 
     getModelTileMap(modelWar):forEachModelTile(function(modelTile)
-        if (not isTileVisible(modelWar, modelTile:getGridIndex(), playerIndex)) then
-            modelTile:updateAsFogEnabled()
-                :updateView()
-        end
+        modelTile:updateView()
     end)
+
+    getScriptEventDispatcher(modelWar)
+        :dispatchEvent({name = "EvtModelTileMapUpdated"})
+        :dispatchEvent({name = "EvtModelUnitMapUpdated"})
 end
 
 --------------------------------------------------------------------------------
@@ -138,8 +135,8 @@ local function runTurnPhaseConsumeUnitFuel(self)
         local modelFogMap         = getModelFogMap( modelWar)
         local mapSize             = modelTileMap:getMapSize()
         local dispatcher          = getScriptEventDispatcher(modelWar)
-        local playerIndexLoggedIn = self.m_PlayerIndexForHuman
-        local shouldUpdateFogMap  = self.m_ModelPlayerManager:isSameTeamIndex(playerIndexActing, playerIndexLoggedIn)
+        local playerIndexForHuman = self.m_PlayerIndexForHuman
+        local shouldUpdateFogMap  = self.m_ModelPlayerManager:isSameTeamIndex(playerIndexActing, playerIndexForHuman)
 
         modelUnitMap:forEachModelUnitOnMap(function(modelUnit)
             if ((modelUnit:getPlayerIndex() == playerIndexActing) and
@@ -156,18 +153,17 @@ local function runTurnPhaseConsumeUnitFuel(self)
                         if (shouldUpdateFogMap) then
                             modelFogMap:updateMapForPathsWithModelUnitAndPath(modelUnit, {gridIndex})
                         end
-                        destroyActorUnitOnMap(modelWar, gridIndex, true)
+                        Destroyers.destroyActorUnitOnMap(modelWar, gridIndex, true)
                         dispatcher:dispatchEvent({
                             name      = "EvtDestroyViewUnit",
                             gridIndex = gridIndex,
                         })
 
-                        if (playerIndexActing == playerIndexLoggedIn) then
+                        if (playerIndexActing == playerIndexForHuman) then
                             for _, adjacentGridIndex in pairs(getAdjacentGrids(gridIndex, mapSize)) do
                                 local adjacentModelUnit = modelUnitMap:getModelUnit(adjacentGridIndex)
-                                if ((adjacentModelUnit)                                                                                                                                                                     and
-                                    (not isUnitVisible(modelWar, adjacentGridIndex, adjacentModelUnit:getUnitType(), isModelUnitDiving(adjacentModelUnit), adjacentModelUnit:getPlayerIndex(), playerIndexActing))) then
-                                    destroyActorUnitOnMap(modelWar, adjacentGridIndex, true)
+                                if (adjacentModelUnit) then
+                                    adjacentModelUnit:setViewVisible(isUnitVisible(modelWar, adjacentGridIndex, adjacentModelUnit:getUnitType(), isModelUnitDiving(adjacentModelUnit), adjacentModelUnit:getPlayerIndex(), playerIndexActing))
                                 end
                             end
                         end
@@ -269,7 +265,7 @@ local function runTurnPhaseResetVisionForEndingTurnPlayer(self)
     local playerIndex = self:getPlayerIndex()
     if (self.m_ModelPlayerManager:isSameTeamIndex(playerIndex, self.m_PlayerIndexForHuman)) then
         getModelFogMap(self.m_ModelWar):resetMapForPathsForPlayerIndex(playerIndex)
-        resetVisionOnClient(self)
+        updateTileAndUnitMapOnVisibilityChanged(self)
     end
 
     self.m_TurnPhaseCode = TURN_PHASE_CODES.TickTurnAndPlayerIndex
@@ -314,7 +310,7 @@ local function runTurnPhaseResetVisionForBeginningTurnPlayer(self)
     if (self.m_ModelPlayerManager:isSameTeamIndex(playerIndex, self.m_PlayerIndexForHuman)) then
         getModelFogMap(self.m_ModelWar):resetMapForTilesForPlayerIndex(playerIndex)
             :resetMapForUnitsForPlayerIndex(playerIndex)
-        resetVisionOnClient(self)
+        updateTileAndUnitMapOnVisibilityChanged(self)
     end
 
     self.m_TurnPhaseCode = TURN_PHASE_CODES.ResetVotedForDraw
