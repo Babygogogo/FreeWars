@@ -10,6 +10,7 @@ local LocalizationFunctions       = requireFW("src.app.utilities.LocalizationFun
 local MovePathFunctions           = requireFW("src.app.utilities.MovePathFunctions")
 local ReachableAreaFunctions      = requireFW("src.app.utilities.ReachableAreaFunctions")
 local SingletonGetters            = requireFW("src.app.utilities.SingletonGetters")
+local VisibilityFunctions         = requireFW("src.app.utilities.VisibilityFunctions")
 local Actor                       = requireFW("src.global.actors.Actor")
 
 local createPathForDispatch    = MovePathFunctions.createPathForDispatch
@@ -24,30 +25,43 @@ local getScriptEventDispatcher = SingletonGetters.getScriptEventDispatcher
 --------------------------------------------------------------------------------
 -- The util functions.
 --------------------------------------------------------------------------------
+local function isUnitVisible(self, modelUnit)
+    return VisibilityFunctions.isUnitOnMapVisibleToPlayerIndex(
+        self.m_ModelWar,
+        modelUnit:getGridIndex(),
+        modelUnit:getUnitType(),
+        (modelUnit.isDiving) and (modelUnit:isDiving()),
+        modelUnit:getPlayerIndex(),
+        self.m_PlayerIndexForHuman
+    )
+end
+
 local function getPathNodesDestination(pathNodes)
     return pathNodes[#pathNodes]
 end
 
-local function getMoveCost(gridIndex, modelUnit, modelUnitMap, modelTileMap)
+local function getMoveCost(self, gridIndex, modelUnit)
+    local modelUnitMap = getModelUnitMap(self.m_ModelWar)
     if (not GridIndexFunctions.isWithinMap(gridIndex, modelUnitMap:getMapSize())) then
         return nil
     else
         local existingModelUnit = modelUnitMap:getModelUnit(gridIndex)
-        if ((existingModelUnit) and (existingModelUnit:getTeamIndex() ~= modelUnit:getTeamIndex())) then
+        if ((existingModelUnit) and (existingModelUnit:getTeamIndex() ~= modelUnit:getTeamIndex()) and (isUnitVisible(self, existingModelUnit))) then
             return nil
         else
-            return modelTileMap:getModelTile(gridIndex):getMoveCostWithModelUnit(modelUnit)
+            return getModelTileMap(self.m_ModelWar):getModelTile(gridIndex):getMoveCostWithModelUnit(modelUnit)
         end
     end
 end
 
-local function canUnitStayInGrid(modelUnit, gridIndex, modelUnitMap, modelTileMap)
+local function canUnitStayInGrid(self, modelUnit, gridIndex)
     if (GridIndexFunctions.isEqual(modelUnit:getGridIndex(), gridIndex)) then
         return true
     else
-        local existingModelUnit = modelUnitMap:getModelUnit(gridIndex)
-        local tileType          = modelTileMap:getModelTile(gridIndex):getTileType()
+        local existingModelUnit = getModelUnitMap(self.m_ModelWar):getModelUnit(gridIndex)
+        local tileType          = getModelTileMap(self.m_ModelWar):getModelTile(gridIndex):getTileType()
         return (not existingModelUnit)                                                                       or
+            (not isUnitVisible(self, existingModelUnit))                                                     or
             (modelUnit:canJoinModelUnit(existingModelUnit))                                                  or
             (existingModelUnit.canLoadModelUnit and existingModelUnit:canLoadModelUnit(modelUnit, tileType))
     end
@@ -73,20 +87,23 @@ local function isDropGridSelected(gridIndex, selectedDropDestinations)
     return false
 end
 
-local function getAvailableDropGrids(droppingModelUnit, loaderBeginningGridIndex, loaderEndingGridIndex, modelUnitMap, modelTileMap, dropDestinations)
+local function getAvailableDropGrids(self, droppingModelUnit, loaderBeginningGridIndex, loaderEndingGridIndex, dropDestinations)
+    local modelWar     = self.m_ModelWar
+    local modelTileMap = getModelTileMap(modelWar)
     if (not modelTileMap:getModelTile(loaderEndingGridIndex):getMoveCostWithModelUnit(droppingModelUnit)) then
         return {}
     end
 
-    local mapSize  = modelTileMap:getMapSize()
-    local grids    = {}
+    local modelUnitMap = getModelUnitMap(modelWar)
+    local mapSize      = modelTileMap:getMapSize()
+    local grids        = {}
     for _, gridIndex in pairs(GridIndexFunctions.getAdjacentGrids(loaderEndingGridIndex)) do
         if ((GridIndexFunctions.isWithinMap(gridIndex, mapSize))                               and
             (modelTileMap:getModelTile(gridIndex):getMoveCostWithModelUnit(droppingModelUnit)) and
             (not isDropGridSelected(gridIndex, dropDestinations)))                             then
 
-            if ((not modelUnitMap:getModelUnit(gridIndex))                         or
-                (GridIndexFunctions.isEqual(gridIndex, loaderBeginningGridIndex))) then
+            local existingModelUnit = modelUnitMap:getModelUnit(gridIndex)
+            if ((not existingModelUnit) or (GridIndexFunctions.isEqual(gridIndex, loaderBeginningGridIndex)) or (not isUnitVisible(self, existingModelUnit))) then
                 grids[#grids + 1] = gridIndex
             end
         end
@@ -133,7 +150,7 @@ local function canDoAdditionalDropAction(self)
     local loaderEndingGridIndex    = getPathNodesDestination(self.m_PathNodes)
     for _, unitID in pairs(focusModelUnit:getLoadUnitIdList()) do
         if ((not isModelUnitDropped(unitID, dropDestinations)) and
-            (#getAvailableDropGrids(modelUnitMap:getLoadedModelUnitWithUnitId(unitID), loaderBeginningGridIndex, loaderEndingGridIndex, modelUnitMap, modelTileMap, dropDestinations) > 0)) then
+            (#getAvailableDropGrids(self, modelUnitMap:getLoadedModelUnitWithUnitId(unitID), loaderBeginningGridIndex, loaderEndingGridIndex, dropDestinations) > 0)) then
             return true
         end
     end
@@ -146,7 +163,7 @@ end
 --------------------------------------------------------------------------------
 local function updateMovePathWithDestinationGrid(self, gridIndex)
     local maxRange     = math.min(self.m_FocusModelUnit:getMoveRange(), self.m_FocusModelUnit:getCurrentFuel())
-    local nextMoveCost = getMoveCost(gridIndex, self.m_FocusModelUnit, getModelUnitMap(self.m_ModelWar), getModelTileMap(self.m_ModelWar))
+    local nextMoveCost = getMoveCost(self, gridIndex, self.m_FocusModelUnit)
 
     if ((not MovePathFunctions.truncateToGridIndex(self.m_PathNodes, gridIndex))                        and
         (not MovePathFunctions.extendToGridIndex(self.m_PathNodes, gridIndex, nextMoveCost, maxRange))) then
@@ -174,7 +191,7 @@ local function resetReachableArea(self, focusModelUnit)
         focusModelUnit:getGridIndex(),
         math.min(focusModelUnit:getMoveRange(), focusModelUnit:getCurrentFuel()),
         function(gridIndex)
-            return getMoveCost(gridIndex, focusModelUnit, getModelUnitMap(self.m_ModelWar), getModelTileMap(self.m_ModelWar))
+            return getMoveCost(self, gridIndex, focusModelUnit)
         end
     )
 
@@ -549,7 +566,7 @@ local function getActionsDropModelUnit(self)
     for _, unitID in ipairs(focusModelUnit:getLoadUnitIdList()) do
         if (not isModelUnitDropped(unitID, dropDestinations)) then
             local droppingModelUnit = getModelUnitMap(self.m_ModelWar):getLoadedModelUnitWithUnitId(unitID)
-            if (#getAvailableDropGrids(droppingModelUnit, loaderBeginningGridIndex, loaderEndingGridIndex, modelUnitMap, modelTileMap, dropDestinations) > 0) then
+            if (#getAvailableDropGrids(self, droppingModelUnit, loaderBeginningGridIndex, loaderEndingGridIndex, dropDestinations) > 0) then
                 actions[#actions + 1] = getSingleActionDropModelUnit(self, unitID)
             end
         end
@@ -624,8 +641,8 @@ local function getActionProduceModelUnitOnUnit(self)
 end
 
 local function getActionWait(self)
-    local existingUnitModel = getModelUnitMap(self.m_ModelWar):getModelUnit(getPathNodesDestination(self.m_PathNodes))
-    if (not existingUnitModel) or (self.m_FocusModelUnit == existingUnitModel) then
+    local existingModelUnit = getModelUnitMap(self.m_ModelWar):getModelUnit(getPathNodesDestination(self.m_PathNodes))
+    if (not existingModelUnit) or (not isUnitVisible(self, existingModelUnit)) or (self.m_FocusModelUnit == existingModelUnit) then
         return {
             name     = getLocalizedText(78, "Wait"),
             callback = function()
@@ -687,14 +704,14 @@ end
 -- The set state functions.
 --------------------------------------------------------------------------------
 local function canSetStatePreviewingAttackableArea(self, gridIndex)
-    local modelWar  = self.m_ModelWar
-    local modelUnit = getModelUnitMap(modelWar):getModelUnit(gridIndex)
-    if ((not modelUnit) or (not modelUnit.getAttackRangeMinMax)) then
+    local modelWar    = self.m_ModelWar
+    local modelUnit   = getModelUnitMap(modelWar):getModelUnit(gridIndex)
+    local playerIndex = self.m_PlayerIndexForHuman
+    if ((not modelUnit) or (not modelUnit.getAttackRangeMinMax) or (not isUnitVisible(self, modelUnit))) then
         return false
     elseif (not modelUnit:isStateIdle()) then
         return true
     else
-        local playerIndex = self.m_PlayerIndexForHuman
         return (playerIndex ~= modelUnit:getPlayerIndex()) or (playerIndex ~= getModelTurnManager(modelWar):getPlayerIndex())
     end
 end
@@ -711,22 +728,20 @@ setStatePreviewingAttackableArea = function(self, gridIndex)
     self.m_PreviewAttackModelUnits[#self.m_PreviewAttackModelUnits + 1] = modelUnit
     self.m_PreviewAttackableArea = AttackableGridListFunctions.createAttackableArea(gridIndex, getModelTileMap(self.m_ModelWar), getModelUnitMap(self.m_ModelWar), self.m_PreviewAttackableArea)
 
-    if (self.m_View) then
-        self.m_View:setPreviewAttackableArea(self.m_PreviewAttackableArea)
-            :setPreviewAttackableAreaVisible(true)
-        modelUnit:showMovingAnimation()
-    end
+    self.m_View:setPreviewAttackableArea(self.m_PreviewAttackableArea)
+        :setPreviewAttackableAreaVisible(true)
+    modelUnit:showMovingAnimation()
 end
 
 local function canSetStatePreviewingReachableArea(self, gridIndex)
-    local modelWar  = self.m_ModelWar
-    local modelUnit = getModelUnitMap(modelWar):getModelUnit(gridIndex)
-    if ((not modelUnit) or (modelUnit.getAttackRangeMinMax)) then
+    local modelWar    = self.m_ModelWar
+    local modelUnit   = getModelUnitMap(modelWar):getModelUnit(gridIndex)
+    local playerIndex = self.m_PlayerIndexForHuman
+    if ((not modelUnit) or (modelUnit.getAttackRangeMinMax) or (not isUnitVisible(self, modelUnit))) then
         return false
     elseif (not modelUnit:isStateIdle()) then
         return true
     else
-        local playerIndex = self.m_PlayerIndexForHuman
         return (playerIndex ~= modelUnit:getPlayerIndex()) or (playerIndex ~= getModelTurnManager(modelWar):getPlayerIndex())
     end
 end
@@ -740,15 +755,13 @@ setStatePreviewingReachableArea = function(self, gridIndex)
         gridIndex,
         math.min(modelUnit:getMoveRange(), modelUnit:getCurrentFuel()),
         function(gridIndex)
-            return getMoveCost(gridIndex, modelUnit, getModelUnitMap(self.m_ModelWar), getModelTileMap(self.m_ModelWar))
+            return getMoveCost(self, gridIndex, modelUnit)
         end
     )
 
-    if (self.m_View) then
-        self.m_View:setPreviewReachableArea(self.m_PreviewReachableArea)
-            :setPreviewReachableAreaVisible(true)
-        modelUnit:showMovingAnimation()
-    end
+    self.m_View:setPreviewReachableArea(self.m_PreviewReachableArea)
+        :setPreviewReachableAreaVisible(true)
+    modelUnit:showMovingAnimation()
 end
 
 local function canSetStateChoosingProductionTarget(self, gridIndex)
@@ -891,7 +904,7 @@ setStateChoosingDropDestination = function(self, unitID)
     self.m_State = "choosingDropDestination"
 
     local droppingModelUnit   = getModelUnitMap(self.m_ModelWar):getLoadedModelUnitWithUnitId(unitID)
-    self.m_AvailableDropGrids = getAvailableDropGrids(droppingModelUnit, self.m_FocusModelUnit:getGridIndex(), getPathNodesDestination(self.m_PathNodes), getModelUnitMap(self.m_ModelWar), getModelTileMap(self.m_ModelWar), self.m_SelectedDropDestinations)
+    self.m_AvailableDropGrids = getAvailableDropGrids(self, droppingModelUnit, self.m_FocusModelUnit:getGridIndex(), getPathNodesDestination(self.m_PathNodes), self.m_SelectedDropDestinations)
     self.m_DroppingUnitID     = unitID
 
     if (self.m_View) then
@@ -990,7 +1003,7 @@ local function onEvtGridSelected(self, event)
             else
                 self:setStateIdle(true)
             end
-        elseif (canUnitStayInGrid(self.m_FocusModelUnit, gridIndex, getModelUnitMap(self.m_ModelWar), getModelTileMap(self.m_ModelWar))) then
+        elseif (canUnitStayInGrid(self, self.m_FocusModelUnit, gridIndex)) then
             if ((self.m_LaunchUnitID) and (GridIndexFunctions.isEqual(self.m_FocusModelUnit:getGridIndex(), gridIndex))) then
                 setStateChoosingAction(self, self.m_PathNodes[1])
             else

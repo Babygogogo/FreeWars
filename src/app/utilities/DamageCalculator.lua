@@ -4,9 +4,11 @@ local DamageCalculator = {}
 local GameConstantFunctions  = requireFW("src.app.utilities.GameConstantFunctions")
 local GridIndexFunctions     = requireFW("src.app.utilities.GridIndexFunctions")
 local SkillModifierFunctions = requireFW("src.app.utilities.SkillModifierFunctions")
+local VisibilityFunctions    = requireFW("src.app.utilities.VisibilityFunctions")
 local ComponentManager       = requireFW("src.global.components.ComponentManager")
 
-local math = math
+local isUnitVisible = VisibilityFunctions.isUnitOnMapVisibleToPlayerIndex
+local math          = math
 
 local COMMAND_TOWER_ATTACK_BONUS  = GameConstantFunctions.getCommandTowerAttackBonus()
 local COMMAND_TOWER_DEFENSE_BONUS = GameConstantFunctions.getCommandTowerDefenseBonus()
@@ -79,7 +81,7 @@ local function getDefenseBonusMultiplier(attacker, attackerGridIndex, target, ta
     end
 end
 
-local function canAttack(attacker, attackerMovePath, target, targetMovePath)
+local function canAttack(modelWar, attacker, attackerMovePath, target, targetMovePath)
     if ((not attacker)                                      or
         (not target)                                        or
         (attacker:getTeamIndex() == target:getTeamIndex())) then
@@ -94,9 +96,11 @@ local function canAttack(attacker, attackerMovePath, target, targetMovePath)
 
     local attackerGridIndex = (attackerMovePath) and (getEndingGridIndex(attackerMovePath)) or (attacker:getGridIndex())
     local targetGridIndex   = (targetMovePath)   and (getEndingGridIndex(targetMovePath))   or (target:getGridIndex())
-    if (((not attackDoer:canAttackAfterMove()) and (attackerMovePath) and (#attackerMovePath > 1))   or
-        (not isInAttackRange(attackerGridIndex, targetGridIndex, attackDoer:getAttackRangeMinMax())) or
-        ((target.isDiving) and (target:isDiving()) and (not attackDoer:canAttackDivingTarget())))    then
+    local isTargetDiving    = (target.isDiving) and (target:isDiving())
+    if (((not attackDoer:canAttackAfterMove()) and (attackerMovePath) and (#attackerMovePath > 1))                                                                           or
+        (not isInAttackRange(attackerGridIndex, targetGridIndex, attackDoer:getAttackRangeMinMax()))                                                                         or
+        ((isTargetDiving) and (not attackDoer:canAttackDivingTarget()))                                                                                                      or
+        ((target.getUnitType) and (not isUnitVisible(modelWar, targetGridIndex, target:getUnitType(), isTargetDiving, target:getPlayerIndex(), attacker:getPlayerIndex())))) then
         return false
     end
 
@@ -128,7 +132,7 @@ local function getBattleDamage(attackerMovePath, launchUnitID, targetGridIndex, 
     local attacker      = modelUnitMap:getFocusModelUnit(attackerMovePath[1], launchUnitID)
     local target        = (modelUnitMap:getModelUnit(targetGridIndex)) or (modelWarField:getModelTileMap():getModelTile(targetGridIndex))
 
-    if (not canAttack(attacker, attackerMovePath, target, nil)) then
+    if (not canAttack(modelWar, attacker, attackerMovePath, target, nil)) then
         return nil, nil
     end
 
@@ -137,7 +141,7 @@ local function getBattleDamage(attackerMovePath, launchUnitID, targetGridIndex, 
     assert(attackDamage >= 0)
 
     if ((GridIndexFunctions.getDistance(attackerGridIndex, targetGridIndex) > 1) or
-        (not canAttack(target, nil, attacker, attackerMovePath)))                then
+        (not canAttack(modelWar, target, nil, attacker, attackerMovePath)))      then
         return attackDamage, nil
     else
         return attackDamage, getAttackDamage(target, targetGridIndex, target:getCurrentHP() - attackDamage, attacker, attackerGridIndex, modelWar, isWithLuck)

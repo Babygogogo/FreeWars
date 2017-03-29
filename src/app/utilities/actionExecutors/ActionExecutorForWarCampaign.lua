@@ -421,12 +421,12 @@ local function executeAttack(action, modelWar)
 
         updateTileAndUnitMapOnVisibilityChanged(modelWar)
 
-        if (not modelWar:isEnded()) then
+        if (modelWar:isEnded()) then
+            if (isHumanLost) then modelWar:showEffectLose(     callbackOnWarEndedForClient)
+            else                  modelWar:showEffectWin(      callbackOnWarEndedForClient)
+            end
+        elseif (lostPlayerIndex == modelTurnManager:getPlayerIndex()) then
             modelTurnManager:endTurnPhaseMain()
-        elseif (isHumanLost) then
-            modelWar:showEffectLose(callbackOnWarEndedForClient)
-        else
-            modelWar:showEffectWin(callbackOnWarEndedForClient)
         end
 
         modelWar:setExecutingAction(false)
