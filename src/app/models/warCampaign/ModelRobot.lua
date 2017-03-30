@@ -9,11 +9,38 @@ local MovePathFunctions      = requireFW("src.app.utilities.MovePathFunctions")
 local ReachableAreaFunctions = requireFW("src.app.utilities.ReachableAreaFunctions")
 local SerializationFunctions = requireFW("src.app.utilities.SerializationFunctions")
 local SingletonGetters       = requireFW("src.app.utilities.SingletonGetters")
+local TableFunctions         = requireFW("src.app.utilities.TableFunctions")
+local Actor                  = requireFW("src.global.actors.Actor")
 
 local assert, pairs = assert, pairs
 local math, table   = math, table
 
-local ACTION_CODES = ActionCodeFunctions.getFullList()
+local ACTION_CODES          = ActionCodeFunctions.getFullList()
+local PRODUCTION_CANDICATES = {
+    Factory = {
+        "Infantry",
+        "Mech",
+        "Bike",
+        "Recon",
+        "AntiAir",
+        "Tank",
+        "MediumTank",
+        "WarTank",
+        "Artillery",
+    },
+    Airport = {
+        "Fighter",
+        "Bomber",
+        "Duster",
+        "BattleCopter",
+    },
+    Seaport = {
+        "Battleship",
+        "Submarine",
+        "Cruiser",
+        "Gunboat",
+    }
+}
 
 --------------------------------------------------------------------------------
 -- The util functions.
@@ -133,6 +160,48 @@ local function getBetterScoreAndAction(oldScore, oldAction, newScore, newAction)
     end
 end
 
+local function getUnitValuesForPlayerIndex(self, playerIndex)
+    local values = {
+        Infantry        = 0,
+        Mech            = 0,
+        Bike            = 0,
+        Recon           = 0,
+        Flare           = 0,
+        AntiAir         = 0,
+        Tank            = 0,
+        MediumTank      = 0,
+        WarTank         = 0,
+        Artillery       = 0,
+        AntiTank        = 0,
+        Rockets         = 0,
+        Missiles        = 0,
+        Rig             = 0,
+        Fighter         = 0,
+        Bomber          = 0,
+        Duster          = 0,
+        BattleCopter    = 0,
+        TransportCopter = 0,
+        Seaplane        = 0,
+        Battleship      = 0,
+        Carrier         = 0,
+        Submarine       = 0,
+        Cruiser         = 0,
+        Lander          = 0,
+        Gunboat         = 0,
+    }
+    local func = function(modelUnit)
+        if (modelUnit:getPlayerIndex() == playerIndex) then
+            local unitType = modelUnit:getUnitType()
+            values[unitType] = values[unitType] + (modelUnit:getProductionCost()) * modelUnit:getNormalizedCurrentHP() / 10
+        end
+    end
+
+    self.m_ModelUnitMap:forEachModelUnitOnMap(func)
+        :forEachModelUnitLoaded(func)
+
+    return values
+end
+
 --------------------------------------------------------------------------------
 -- The score calculators.
 --------------------------------------------------------------------------------
@@ -160,13 +229,23 @@ local function getScoreForPosition(self, modelUnit, gridIndex)
         score = score + GridIndexFunctions.getDistance(gridIndex, self.m_PlayerHqGridIndex) * (-10)                             -- ADJUSTABLE
     end
 
+    local distanceToEnemies, enemiesCount = 0, 0
+    local distanceToFriends, friendsCount = 0, 0
     self.m_ModelUnitMap:forEachModelUnitOnMap(function(unitOnMap)
         if (unitOnMap:getPlayerIndex() == self.m_PlayerIndexForHuman) then
-            score = score + GridIndexFunctions.getDistance(gridIndex, unitOnMap:getGridIndex()) * (-10)                         -- ADJUSTABLE
+            distanceToEnemies = distanceToEnemies + GridIndexFunctions.getDistance(gridIndex, unitOnMap:getGridIndex())
+            enemiesCount      = enemiesCount + 1
         elseif (unitOnMap ~= modelUnit) then
-            score = score + GridIndexFunctions.getDistance(gridIndex, unitOnMap:getGridIndex()) * (-5)                          -- ADJUSTABLE
+            distanceToFriends = distanceToFriends + GridIndexFunctions.getDistance(gridIndex, unitOnMap:getGridIndex())
+            friendsCount      = friendsCount + 1
         end
     end)
+    if (enemiesCount > 0) then
+        score = score + distanceToEnemies / enemiesCount * (-10)                                                                -- ADJUSTABLE
+    end
+    if (friendsCount > 0) then
+        score = score + distanceToFriends / friendsCount * (-2)                                                                 -- ADJUSTABLE
+    end
 
     return score
 end
@@ -208,13 +287,13 @@ local function getScoreForActionCaptureModelTile(self, modelUnit, gridIndex)
     else
         local tileValue = (modelTile:getPlayerIndex() == (self.m_PlayerIndexForHuman)) and (100) or (0)                         -- ADJUSTABLE
         local tileType  = modelTile:getTileType()
-        if     (tileType == "Headquarters")  then tileValue = tileValue + 300                                                   -- ADJUSTABLE
-        elseif (tileType == "Factory")       then tileValue = tileValue + 200                                                   -- ADJUSTABLE
-        elseif (tileType == "Airport")       then tileValue = tileValue + 150                                                   -- ADJUSTABLE
-        elseif (tileType == "Seaport")       then tileValue = tileValue + 120                                                   -- ADJUSTABLE
-        elseif (tileType == "City")          then tileValue = tileValue + 100                                                   -- ADJUSTABLE
-        elseif (tileType == "CommandTower")  then tileValue = tileValue + 200                                                   -- ADJUSTABLE
-        elseif (tileType == "Radar")         then tileValue = tileValue + 100                                                   -- ADJUSTABLE
+        if     (tileType == "Headquarters")  then tileValue = tileValue + 500                                                   -- ADJUSTABLE
+        elseif (tileType == "Factory")       then tileValue = tileValue + 350                                                   -- ADJUSTABLE
+        elseif (tileType == "Airport")       then tileValue = tileValue + 250                                                   -- ADJUSTABLE
+        elseif (tileType == "Seaport")       then tileValue = tileValue + 200                                                   -- ADJUSTABLE
+        elseif (tileType == "City")          then tileValue = tileValue + 200                                                   -- ADJUSTABLE
+        elseif (tileType == "CommandTower")  then tileValue = tileValue + 400                                                   -- ADJUSTABLE
+        elseif (tileType == "Radar")         then tileValue = tileValue + 200                                                   -- ADJUSTABLE
         end
 
         if (captureAmount >= currentCapturePoint / 2) then
@@ -240,12 +319,60 @@ local function getScoreForActionLoadModelUnit(self, modelUnit, gridIndex)
     end
 end
 
+local function getScoreForActionProduceModelUnitOnTile(self, gridIndex, tiledID, idleFactoriesCount)
+    local modelUnit = Actor.createModel("warOnline.ModelUnitForOnline", {
+        tiledID       = tiledID,
+        unitID        = 0,
+        GridIndexable = gridIndex,
+    })
+    modelUnit:onStartRunning(self.m_ModelWar)
+
+    local playerIndexInTurn = modelUnit:getPlayerIndex()
+    local productionCost    = modelUnit:getProductionCost()
+    local fund              = self.m_ModelPlayerManager:getModelPlayer(playerIndexInTurn):getFund()
+    if (productionCost > fund) then
+        return nil
+    end
+
+    local score = -productionCost / 100                                                                                         -- ADJUSTABLE
+    local tileType = self.m_ModelTileMap:getModelTile(gridIndex):getTileType()
+    if (((tileType == "Factory") and ((idleFactoriesCount - 1) * 1500 > (fund - productionCost)))  or
+        ((tileType ~= "Factory") and ((idleFactoriesCount)     * 1500 > (fund - productionCost)))) then
+        score = score + (-1000)                                                                                                 -- ADJUSTABLE
+    end
+
+    score = score + getPossibleDamageInPlayerTurn(self, modelUnit, gridIndex) * (-modelUnit:getProductionCost() / 4000)         -- ADJUSTABLE
+
+    local distanceToEnemies, enemiesCount = 0, 0
+    local distanceToFriends, friendsCount = 0, 0
+    self.m_ModelUnitMap:forEachModelUnitOnMap(function(unitOnMap)
+        if (unitOnMap:getPlayerIndex() == self.m_PlayerIndexForHuman) then
+            distanceToEnemies = distanceToEnemies + GridIndexFunctions.getDistance(gridIndex, unitOnMap:getGridIndex())
+            enemiesCount      = enemiesCount + 1
+            if (modelUnit.getBaseDamage) then
+                score = score + ((modelUnit:getBaseDamage(unitOnMap:getUnitType()) or 0) * (unitOnMap:getProductionCost() / 4000))  -- ADJUSTABLE
+            end
+        else
+            distanceToFriends = distanceToFriends + GridIndexFunctions.getDistance(gridIndex, unitOnMap:getGridIndex())
+            friendsCount      = friendsCount + 1
+        end
+    end)
+    if (enemiesCount > 0) then
+        score = score + distanceToEnemies / enemiesCount * (-10)                                                                -- ADJUSTABLE
+    end
+    if (friendsCount > 0) then
+        score = score + distanceToFriends / friendsCount * (-2)                                                                 -- ADJUSTABLE
+    end
+
+    return score
+end
+
 local function getScoreForActionWait(self, modelUnit, gridIndex)
     return 0                                                                                                                    -- ADJUSTABLE
 end
 
 --------------------------------------------------------------------------------
--- The available action generators.
+-- The available action generators for units.
 --------------------------------------------------------------------------------
 local function getScoreAndActionAttack(self, modelUnit, gridIndex, pathNodes)
     if ((not modelUnit.getBaseDamage)                                                                                     or
@@ -596,6 +723,61 @@ local function getActionForMaxScoreWithCandicateUnit(self, candicateUnit)
 end
 
 --------------------------------------------------------------------------------
+-- The available action generators for production.
+--------------------------------------------------------------------------------
+local function getMaxScoreAndActionProduceUnitOnTileWithGridIndex(self, gridIndex, idleFactoriesCount)
+    local playerIndex = self.m_ModelTurnManager:getPlayerIndex()
+    local maxScore, targetTiledID
+    for _, unitType in ipairs(PRODUCTION_CANDICATES[self.m_ModelTileMap:getModelTile(gridIndex):getTileType()]) do
+        local tiledID = GameConstantFunctions.getTiledIdWithTileOrUnitName(unitType, playerIndex)
+        maxScore, targetTiledID = getBetterScoreAndAction(maxScore, targetTiledID, getScoreForActionProduceModelUnitOnTile(self, gridIndex, tiledID, idleFactoriesCount), tiledID)
+    end
+
+    if (not maxScore) then
+        return nil, nil
+    else
+        return maxScore, {
+            actionCode = ACTION_CODES.ActionProduceModelUnitOnTile,
+            gridIndex  = gridIndex,
+            tiledID    = targetTiledID,
+        }
+    end
+end
+
+local function getActionProduceModelUnitOnTileForMaxScore(self)
+    local playerIndexInTurn = self.m_ModelTurnManager:getPlayerIndex()
+    local modelUnitMap      = self.m_ModelUnitMap
+    local idleFactoriesPos, idleAirportsPos, idleSeaportsPos = {}, {}, {}
+    self.m_ModelTileMap:forEachModelTile(function(modelTile)
+        if ((modelTile:getPlayerIndex() == playerIndexInTurn) and (not modelUnitMap:getModelUnit(modelTile:getGridIndex()))) then
+            local tileType = modelTile:getTileType()
+            if     (tileType == "Factory") then idleFactoriesPos[#idleFactoriesPos + 1] = modelTile:getGridIndex()
+            elseif (tileType == "Airport") then idleAirportsPos[ #idleAirportsPos  + 1] = modelTile:getGridIndex()
+            elseif (tileType == "Seaport") then idleSeaportsPos[ #idleSeaportsPos  + 1] = modelTile:getGridIndex()
+            end
+        end
+    end)
+    --[[
+    local fund               = self.m_ModelPlayerManager:getModelPlayer(playerIndexInTurn):getFund()
+    local unitValuesForHuman = getUnitValuesForPlayerIndex(self.m_PlayerIndexForHuman)
+    local unitValuesForRobot = getUnitValuesForPlayerIndex(playerIndexInTurn)
+    ]]
+    local idleFactoriesCount, idleAirportsCount, idleSeaportsCount = #idleFactoriesPos, #idleAirportsPos, #idleSeaportsPos
+    local idleBuildingsPos = TableFunctions.clone(idleFactoriesPos)
+    TableFunctions.appendList(idleBuildingsPos, idleAirportsPos)
+    TableFunctions.appendList(idleBuildingsPos, idleSeaportsPos)
+
+    local maxScore, actionForMaxScore
+    for _, gridIndex in ipairs(idleBuildingsPos) do
+        maxScore, actionForMaxScore = getBetterScoreAndAction(maxScore, actionForMaxScore,
+            getMaxScoreAndActionProduceUnitOnTileWithGridIndex(self, gridIndex, idleFactoriesCount)
+        )
+    end
+
+    return actionForMaxScore
+end
+
+--------------------------------------------------------------------------------
 -- The candicate units generators.
 --------------------------------------------------------------------------------
 local function getCandicateUnitsForPhase1(self)
@@ -735,7 +917,7 @@ end
 -- Phase 6: spend energy on passive skills.
 local function getActionForPhase6(self)
     if (not self.m_IsPassiveSkillEnabled) then
-        self.m_PhaseCode = 9
+        self.m_PhaseCode = 8
         return nil
     end
 
@@ -752,7 +934,7 @@ local function getActionForPhase6(self)
 
     local targetSkillID = popRandomElement(availableSkillIds)
     if (not targetSkillID) then
-        self.m_PhaseCode = 9
+        self.m_PhaseCode = 8
         return nil
     else
         return {
@@ -762,6 +944,17 @@ local function getActionForPhase6(self)
             isActiveSkill = false,
         }
     end
+end
+
+-- Phase 8: build units.
+local function getActionForPhase8(self)
+    local action = getActionProduceModelUnitOnTileForMaxScore(self)
+    if (not action) then
+        self.m_PhaseCode = 9
+        return nil
+    end
+
+    return action
 end
 
 -- Phase 9: end turn.

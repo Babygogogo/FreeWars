@@ -795,6 +795,12 @@ GameConstant.categories = {
         "BattleCopter",
         "TransportCopter",
     },
+
+    ["TankUnits"] = {
+        "Tank",
+        "MediumTank",
+        "WarTank",
+    }
 }
 
 GameConstant.maxCapturePoint            = 20
