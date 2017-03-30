@@ -10,6 +10,7 @@ local GridIndexFunctions        = requireFW("src.app.utilities.GridIndexFunction
 local SingletonGetters          = requireFW("src.app.utilities.SingletonGetters")
 local SkillDescriptionFunctions = requireFW("src.app.utilities.SkillDescriptionFunctions")
 local VisibilityFunctions       = requireFW("src.app.utilities.VisibilityFunctions")
+local WarCampaignManager        = requireFW("src.app.utilities.WarCampaignManager")
 local WarFieldManager           = requireFW("src.app.utilities.WarFieldManager")
 local WebSocketManager          = requireFW("src.app.utilities.WebSocketManager")
 local Actor                     = requireFW("src.global.actors.Actor")
@@ -406,6 +407,8 @@ local function generateItemsForStateMain(self)
         self.m_ItemAuxiliaryCommands,
     }
     if (getModelTurnManager(self.m_ModelWar):getPlayerIndex() == self.m_PlayerIndexForHuman) then
+        items[#items + 1] = self.m_ItemSaveGame
+        items[#items + 1] = self.m_ItemLoadGame
         items[#items + 1] = self.m_ItemEndTurn
     end
 
@@ -707,6 +710,50 @@ local function initItemHideUI(self)
     self.m_ItemHideUI = item
 end
 
+local function initItemLoadGame(self)
+    self.m_ItemLoadGame = {
+        name     = getLocalizedText(65, "Load Game"),
+        callback = function()
+            local modelWar        = self.m_ModelWar
+            local modelConfirmBox = SingletonGetters.getModelConfirmBox(modelWar)
+            modelConfirmBox:setConfirmText(getLocalizedText(66, "ConfirmationLoadGame"))
+                :setOnConfirmYes(function()
+                    modelConfirmBox:setEnabled(false)
+                    self:setEnabled(false)
+
+                    local data = WarCampaignManager.loadCampaignData(modelWar:getSaveIndex())
+                    if (not data) then
+                        SingletonGetters.getModelMessageIndicator(modelWar):showMessage(getLocalizedText(66, "FailLoadGame"))
+                    else
+                        SingletonGetters.getModelMessageIndicator(modelWar):showMessage(getLocalizedText(66, "SucceedLoadGame"))
+                        local actorWarCampaign = Actor.createWithModelAndViewName("warCampaign.ModelWarCampaign", data, "common.ViewSceneWar")
+                        ActorManager.setAndRunRootActor(actorWarCampaign, "FADE", 1)
+                    end
+                end)
+                :setEnabled(true)
+        end,
+    }
+end
+
+local function initItemSaveGame(self)
+    self.m_ItemSaveGame = {
+        name     = getLocalizedText(65, "Save Game"),
+        callback = function()
+            local modelWar        = self.m_ModelWar
+            local modelConfirmBox = SingletonGetters.getModelConfirmBox(modelWar)
+            modelConfirmBox:setConfirmText(getLocalizedText(66, "ConfirmationSaveGame"))
+                :setOnConfirmYes(function()
+                    modelConfirmBox:setEnabled(false)
+                    self:setEnabled(false)
+
+                    WarCampaignManager.saveCampaignData(modelWar:toSerializableTable())
+                    SingletonGetters.getModelMessageIndicator(modelWar):showMessage(getLocalizedText(66, "SucceedSaveGame"))
+                end)
+                :setEnabled(true)
+        end,
+    }
+end
+
 local function initItemSkillInfo(self)
     self.m_ItemSkillInfo = {
         name     = getLocalizedText(22, "SkillInfo"),
@@ -850,6 +897,8 @@ function ModelWarCommandMenuForCampaign:ctor(param)
     initItemGameFlow(           self)
     initItemHelp(               self)
     initItemHideUI(             self)
+    initItemLoadGame(           self)
+    initItemSaveGame(           self)
     initItemSkillInfo(          self)
     initItemSkillSystem(        self)
     initItemSetMessageIndicator(self)

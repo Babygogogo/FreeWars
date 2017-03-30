@@ -794,6 +794,7 @@
     moveRangeModifier         28 :  integer
     attackModifier            29 :  integer
     visionModifier            30 :  integer
+    saveIndex                 31 :  integer
 }
 
 .WarIdForIndexing {
