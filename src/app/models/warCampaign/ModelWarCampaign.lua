@@ -12,6 +12,7 @@ local Actor                        = requireFW("src.global.actors.Actor")
 local EventDispatcher              = requireFW("src.global.events.EventDispatcher")
 
 local ipairs, next     = ipairs, next
+local coroutine, cc    = coroutine, cc
 local getLocalizedText = LocalizationFunctions.getLocalizedText
 
 local ACTION_CODE_BEGIN_TURN    = ActionCodeFunctions.getActionCode("ActionBeginTurn")
@@ -185,10 +186,16 @@ function ModelWarCampaign:onStartRunning()
                         self:translateAndExecuteAction(self.m_RobotAction)
                         self.m_RobotAction = nil
                     else
-                        self.m_RobotAction = coroutine.wrap(function()
-                            return self:getModelRobot():getNextAction()
-                        end)()
+                        self.m_RobotAction = self:getModelRobot():getNextAction()
                     end
+                    --[[
+                    elseif ((not self.m_ThreadForRobot) or (coroutine.status(self.m_ThreadForRobot) == "dead")) then
+                        self.m_ThreadForRobot = coroutine.create(function()
+                            self.m_RobotAction = self:getModelRobot():getNextAction()
+                        end)
+                        coroutine.resume(self.m_ThreadForRobot)
+                    end
+                    ]]
                 end
             end
         end)

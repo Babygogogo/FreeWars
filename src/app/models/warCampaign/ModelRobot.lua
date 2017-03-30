@@ -16,29 +16,37 @@ local assert, pairs = assert, pairs
 local math, table   = math, table
 
 local ACTION_CODES          = ActionCodeFunctions.getFullList()
-local PRODUCTION_CANDICATES = {
+local PRODUCTION_CANDICATES = {                                                                                             -- ADJUSTABLE
     Factory = {
-        "Infantry",
-        "Mech",
-        "Bike",
-        "Recon",
-        "AntiAir",
-        "Tank",
-        "MediumTank",
-        "WarTank",
-        "Artillery",
+        Infantry   = 200,
+        Mech       = 50,
+        Bike       = 150,
+        Recon      = 0,
+        Flare      = -100,
+        AntiAir    = 100,
+        Tank       = 300,
+        MediumTank = 150,
+        WarTank    = 50,
+        Artillery  = 100,
+        AntiTank   = -100,
+        Rockets    = -100,
+        Missiles   = -100,
+        Rig        = -100,
     },
     Airport = {
-        "Fighter",
-        "Bomber",
-        "Duster",
-        "BattleCopter",
+        Fighter         = -100,
+        Bomber          = 0,
+        Duster          = 0,
+        BattleCopter    = 100,
+        TransportCopter = -100,
     },
     Seaport = {
-        "Battleship",
-        "Submarine",
-        "Cruiser",
-        "Gunboat",
+        Battleship = 50,
+        Carrier    = -50,
+        Submarine  = 50,
+        Cruiser    = 50,
+        Lander     = -100,
+        Gunboat    = 50,
     }
 }
 
@@ -111,7 +119,7 @@ local function getPossibleDamageInPlayerTurn(self, robotUnit, gridIndex)
                 if ((distance <= maxRange) and (distance >= minRange)) then
                     damage = damage + DamageCalculator.getAttackDamage(attacker, attackerGridIndex, attacker:getCurrentHP(), robotUnit, gridIndex, modelWar, true)
                 end
-            else
+            elseif (maxRange + math.min(attacker:getMoveRange(), attacker:getCurrentFuel()) >= GridIndexFunctions.getDistance(attacker:getGridIndex(), gridIndex)) then
                 local reachableArea = getReachableArea(self, attacker, passableGridIndex, gridIndex)
                 for _, gridIndexWithinAttackRange in pairs(GridIndexFunctions.getGridsWithinDistance(gridIndex, minRange, maxRange, mapSize)) do
                     local x, y = gridIndexWithinAttackRange.x, gridIndexWithinAttackRange.y
@@ -206,7 +214,7 @@ end
 -- The score calculators.
 --------------------------------------------------------------------------------
 local function getScoreForPosition(self, modelUnit, gridIndex)
-    local score = getPossibleDamageInPlayerTurn(self, modelUnit, gridIndex) * (-modelUnit:getProductionCost() / 4000)           -- ADJUSTABLE
+    local score = getPossibleDamageInPlayerTurn(self, modelUnit, gridIndex) * (-modelUnit:getProductionCost() / 6000)           -- ADJUSTABLE
 
     local modelTile = self.m_ModelTileMap:getModelTile(gridIndex)
     if ((modelTile.canRepairTarget) and (modelTile:canRepairTarget(modelUnit))) then
@@ -229,22 +237,35 @@ local function getScoreForPosition(self, modelUnit, gridIndex)
         score = score + GridIndexFunctions.getDistance(gridIndex, self.m_PlayerHqGridIndex) * (-10)                             -- ADJUSTABLE
     end
 
-    local distanceToEnemies, enemiesCount = 0, 0
-    local distanceToFriends, friendsCount = 0, 0
+    local teamIndex                               = modelUnit:getTeamIndex()
+    local distanceToEnemyUnits, enemyUnitsCount   = 0, 0
+    local distanceToFriendUnits, friendUnitsCount = 0, 0
     self.m_ModelUnitMap:forEachModelUnitOnMap(function(unitOnMap)
-        if (unitOnMap:getPlayerIndex() == self.m_PlayerIndexForHuman) then
-            distanceToEnemies = distanceToEnemies + GridIndexFunctions.getDistance(gridIndex, unitOnMap:getGridIndex())
-            enemiesCount      = enemiesCount + 1
+        if (unitOnMap:getTeamIndex() ~= teamIndex) then
+            distanceToEnemyUnits = distanceToEnemyUnits + GridIndexFunctions.getDistance(gridIndex, unitOnMap:getGridIndex())
+            enemyUnitsCount      = enemyUnitsCount + 1
         elseif (unitOnMap ~= modelUnit) then
-            distanceToFriends = distanceToFriends + GridIndexFunctions.getDistance(gridIndex, unitOnMap:getGridIndex())
-            friendsCount      = friendsCount + 1
+            distanceToFriendUnits = distanceToFriendUnits + GridIndexFunctions.getDistance(gridIndex, unitOnMap:getGridIndex())
+            friendUnitsCount      = friendUnitsCount + 1
         end
     end)
-    if (enemiesCount > 0) then
-        score = score + distanceToEnemies / enemiesCount * (-10)                                                                -- ADJUSTABLE
+    if (enemyUnitsCount > 0) then
+        score = score + distanceToEnemyUnits / enemyUnitsCount * (-10)                                                          -- ADJUSTABLE
     end
-    if (friendsCount > 0) then
-        score = score + distanceToFriends / friendsCount * (-2)                                                                 -- ADJUSTABLE
+    if (friendUnitsCount > 0) then
+        score = score + distanceToFriendUnits / friendUnitsCount * (-1)                                                         -- ADJUSTABLE
+    end
+
+    local distanceToEnemyTiles, enemyTilesCount = 0, 0
+
+    self.m_ModelTileMap:forEachModelTile(function(modelTileOnMap)
+        if ((modelTileOnMap.getCurrentCapturePoint) and (modelTileOnMap:getTeamIndex() ~= teamIndex)) then
+            distanceToEnemyTiles = distanceToEnemyTiles + GridIndexFunctions.getDistance(modelTileOnMap:getGridIndex(), gridIndex)
+            enemyTilesCount      = enemyTilesCount + 1
+        end
+    end)
+    if (enemyTilesCount > 0) then
+        score = score + distanceToEnemyTiles / enemyTilesCount * (-5)                                                           -- ADJUSTABLE
     end
 
     return score
@@ -261,7 +282,7 @@ local function getScoreForActionAttack(self, modelUnit, gridIndex, targetGridInd
     end
 
     local targetUnit = self.m_ModelUnitMap:getModelUnit(targetGridIndex)
-    local score      = attackDamage * targetUnit:getProductionCost() * 1.5 / 4000                                               -- ADJUSTABLE
+    local score      = attackDamage * targetUnit:getProductionCost() * 2 / 6000                                                 -- ADJUSTABLE
     if (targetUnit:getCurrentHP() <= attackDamage) then
         score = score + 20                                                                                                      -- ADJUSTABLE
     end
@@ -269,7 +290,7 @@ local function getScoreForActionAttack(self, modelUnit, gridIndex, targetGridInd
     if (counterDamage) then
         local attackerHP = modelUnit:getCurrentHP()
         counterDamage    = math.min(counterDamage, attackerHP)
-        score            = score + (-counterDamage * modelUnit:getProductionCost() / 4000)                                      -- ADJUSTABLE
+        score            = score + (-counterDamage * modelUnit:getProductionCost() / 6000)                                      -- ADJUSTABLE
         if (attackerHP == counterDamage) then
             score = score + (-20)                                                                                               -- ADJUSTABLE
         end
@@ -334,34 +355,34 @@ local function getScoreForActionProduceModelUnitOnTile(self, gridIndex, tiledID,
         return nil
     end
 
-    local score = -productionCost / 100                                                                                         -- ADJUSTABLE
     local tileType = self.m_ModelTileMap:getModelTile(gridIndex):getTileType()
+    local score    = PRODUCTION_CANDICATES[tileType][modelUnit:getUnitType()]                                                   -- ADJUSTABLE
     if (((tileType == "Factory") and ((idleFactoriesCount - 1) * 1500 > (fund - productionCost)))  or
         ((tileType ~= "Factory") and ((idleFactoriesCount)     * 1500 > (fund - productionCost)))) then
         score = score + (-1000)                                                                                                 -- ADJUSTABLE
     end
 
-    score = score + getPossibleDamageInPlayerTurn(self, modelUnit, gridIndex) * (-modelUnit:getProductionCost() / 4000)         -- ADJUSTABLE
+    score = score + getPossibleDamageInPlayerTurn(self, modelUnit, gridIndex) * (-modelUnit:getProductionCost() / 6000)         -- ADJUSTABLE
 
-    local distanceToEnemies, enemiesCount = 0, 0
-    local distanceToFriends, friendsCount = 0, 0
+    local distanceToEnemyUnits, enemyUnitsCount = 0, 0
+    local distanceToFriendUnits, friendUnitsCount = 0, 0
     self.m_ModelUnitMap:forEachModelUnitOnMap(function(unitOnMap)
         if (unitOnMap:getPlayerIndex() == self.m_PlayerIndexForHuman) then
-            distanceToEnemies = distanceToEnemies + GridIndexFunctions.getDistance(gridIndex, unitOnMap:getGridIndex())
-            enemiesCount      = enemiesCount + 1
+            distanceToEnemyUnits = distanceToEnemyUnits + GridIndexFunctions.getDistance(gridIndex, unitOnMap:getGridIndex())
+            enemyUnitsCount      = enemyUnitsCount + 1
             if (modelUnit.getBaseDamage) then
-                score = score + ((modelUnit:getBaseDamage(unitOnMap:getUnitType()) or 0) * (unitOnMap:getProductionCost() / 4000))  -- ADJUSTABLE
+                score = score + ((modelUnit:getBaseDamage(unitOnMap:getUnitType()) or 0) * (unitOnMap:getProductionCost() / 6000))  -- ADJUSTABLE
             end
         else
-            distanceToFriends = distanceToFriends + GridIndexFunctions.getDistance(gridIndex, unitOnMap:getGridIndex())
-            friendsCount      = friendsCount + 1
+            distanceToFriendUnits = distanceToFriendUnits + GridIndexFunctions.getDistance(gridIndex, unitOnMap:getGridIndex())
+            friendUnitsCount      = friendUnitsCount + 1
         end
     end)
-    if (enemiesCount > 0) then
-        score = score + distanceToEnemies / enemiesCount * (-10)                                                                -- ADJUSTABLE
+    if (enemyUnitsCount > 0) then
+        score = score + distanceToEnemyUnits / enemyUnitsCount * (-10)                                                                -- ADJUSTABLE
     end
-    if (friendsCount > 0) then
-        score = score + distanceToFriends / friendsCount * (-2)                                                                 -- ADJUSTABLE
+    if (friendUnitsCount > 0) then
+        score = score + distanceToFriendUnits / friendUnitsCount * (-1)                                                                 -- ADJUSTABLE
     end
 
     return score
@@ -728,7 +749,7 @@ end
 local function getMaxScoreAndActionProduceUnitOnTileWithGridIndex(self, gridIndex, idleFactoriesCount)
     local playerIndex = self.m_ModelTurnManager:getPlayerIndex()
     local maxScore, targetTiledID
-    for _, unitType in ipairs(PRODUCTION_CANDICATES[self.m_ModelTileMap:getModelTile(gridIndex):getTileType()]) do
+    for unitType, _ in pairs(PRODUCTION_CANDICATES[self.m_ModelTileMap:getModelTile(gridIndex):getTileType()]) do
         local tiledID = GameConstantFunctions.getTiledIdWithTileOrUnitName(unitType, playerIndex)
         maxScore, targetTiledID = getBetterScoreAndAction(maxScore, targetTiledID, getScoreForActionProduceModelUnitOnTile(self, gridIndex, tiledID, idleFactoriesCount), tiledID)
     end
