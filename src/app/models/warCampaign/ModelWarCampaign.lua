@@ -176,7 +176,7 @@ function ModelWarCampaign:onStartRunning()
 
     self.m_PlayerIndexForHuman = modelPlayerManager:getPlayerIndexForHuman()
     self.m_View:runAction(cc.RepeatForever:create(cc.Sequence:create(
-        cc.DelayTime:create(0.2),
+        cc.DelayTime:create(0.1),
         cc.CallFunc:create(function()
             if ((not self:isExecutingAction()) and (not self:isEnded())) then
                 if (modelTurnManager:isTurnPhaseRequestToBegin()) then

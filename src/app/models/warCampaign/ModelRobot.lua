@@ -19,15 +19,15 @@ local ACTION_CODES          = ActionCodeFunctions.getFullList()
 local PRODUCTION_CANDICATES = {                                                                                             -- ADJUSTABLE
     Factory = {
         Infantry   = 200,
-        Mech       = 50,
-        Bike       = 150,
+        Mech       = 0,
+        Bike       = 180,
         Recon      = 0,
         Flare      = -100,
         AntiAir    = 100,
-        Tank       = 300,
+        Tank       = 400,
         MediumTank = 150,
         WarTank    = 50,
-        Artillery  = 100,
+        Artillery  = 150,
         AntiTank   = -100,
         Rockets    = -100,
         Missiles   = -100,
@@ -36,8 +36,8 @@ local PRODUCTION_CANDICATES = {                                                 
     Airport = {
         Fighter         = -100,
         Bomber          = 0,
-        Duster          = 0,
-        BattleCopter    = 100,
+        Duster          = 100,
+        BattleCopter    = 300,
         TransportCopter = -100,
     },
     Seaport = {
@@ -214,7 +214,7 @@ end
 -- The score calculators.
 --------------------------------------------------------------------------------
 local function getScoreForPosition(self, modelUnit, gridIndex)
-    local score = getPossibleDamageInPlayerTurn(self, modelUnit, gridIndex) * (-modelUnit:getProductionCost() / 6000)           -- ADJUSTABLE
+    local score = getPossibleDamageInPlayerTurn(self, modelUnit, gridIndex) * (-modelUnit:getProductionCost() / 8000)           -- ADJUSTABLE
 
     local modelTile = self.m_ModelTileMap:getModelTile(gridIndex)
     if ((modelTile.canRepairTarget) and (modelTile:canRepairTarget(modelUnit))) then
@@ -227,14 +227,10 @@ local function getScoreForPosition(self, modelUnit, gridIndex)
 
     if ((modelTile:getTeamIndex() == modelUnit:getTeamIndex())) then
         local tileType = modelTile:getTileType()
-        if     (tileType == "Factory") then score = score + (-200)                                                              -- ADJUSTABLE
-        elseif (tileType == "Airport") then score = score + (-50)                                                               -- ADJUSTABLE
-        elseif (tileType == "Seaport") then score = score + (-30)                                                               -- ADJUSTABLE
+        if     (tileType == "Factory") then score = score + (-500)                                                              -- ADJUSTABLE
+        elseif (tileType == "Airport") then score = score + (-200)                                                              -- ADJUSTABLE
+        elseif (tileType == "Seaport") then score = score + (-150)                                                              -- ADJUSTABLE
         end
-    end
-
-    if (self.m_PlayerHqGridIndex) then
-        score = score + GridIndexFunctions.getDistance(gridIndex, self.m_PlayerHqGridIndex) * (-10)                             -- ADJUSTABLE
     end
 
     local teamIndex                               = modelUnit:getTeamIndex()
@@ -253,7 +249,7 @@ local function getScoreForPosition(self, modelUnit, gridIndex)
         score = score + distanceToEnemyUnits / enemyUnitsCount * (-10)                                                          -- ADJUSTABLE
     end
     if (friendUnitsCount > 0) then
-        score = score + distanceToFriendUnits / friendUnitsCount * (-1)                                                         -- ADJUSTABLE
+        score = score + distanceToFriendUnits / friendUnitsCount * (4)                                                          -- ADJUSTABLE
     end
 
     local distanceToEnemyTiles, enemyTilesCount = 0, 0
@@ -278,23 +274,27 @@ local function getScoreForActionAttack(self, modelUnit, gridIndex, targetGridInd
 
     local targetTile = self.m_ModelTileMap:getModelTile(targetGridIndex)
     if (targetTile:getTileType() == "Meteor") then
-        return attackDamage                                                                                                     -- ADJUSTABLE
+        local score = math.min(attackDamage, targetTile:getCurrentHP())                                                         -- ADJUSTABLE
+        return score
     end
 
     local targetUnit = self.m_ModelUnitMap:getModelUnit(targetGridIndex)
-    local score      = attackDamage * targetUnit:getProductionCost() * 2 / 6000                                                 -- ADJUSTABLE
+    attackDamage     = math.min(attackDamage, targetUnit:getCurrentHP())
+    local score      = attackDamage * targetUnit:getProductionCost() * 2 / 8000                                                 -- ADJUSTABLE
     if (targetUnit:getCurrentHP() <= attackDamage) then
         score = score + 20                                                                                                      -- ADJUSTABLE
     end
 
     if ((targetUnit.isCapturingModelTile) and (targetUnit:isCapturingModelTile())) then
-        score = score + 30                                                                                                      -- ADJUSTABLE
+        score = score + 15                                                                                                      -- ADJUSTABLE
     end
+
+    score = score + (attackDamage - (counterDamage or 0))                                                                       -- ADJUSTABLE
 
     if (counterDamage) then
         local attackerHP = modelUnit:getCurrentHP()
         counterDamage    = math.min(counterDamage, attackerHP)
-        score            = score + (-counterDamage * modelUnit:getProductionCost() / 6000)                                      -- ADJUSTABLE
+        score            = score + (-counterDamage * modelUnit:getProductionCost() / 8000)                                      -- ADJUSTABLE
         if (attackerHP == counterDamage) then
             score = score + (-20)                                                                                               -- ADJUSTABLE
         end
@@ -312,13 +312,13 @@ local function getScoreForActionCaptureModelTile(self, modelUnit, gridIndex)
     else
         local tileValue = (modelTile:getPlayerIndex() == (self.m_PlayerIndexForHuman)) and (100) or (0)                         -- ADJUSTABLE
         local tileType  = modelTile:getTileType()
-        if     (tileType == "Headquarters")  then tileValue = tileValue + 350                                                   -- ADJUSTABLE
-        elseif (tileType == "Factory")       then tileValue = tileValue + 250                                                   -- ADJUSTABLE
-        elseif (tileType == "Airport")       then tileValue = tileValue + 150                                                   -- ADJUSTABLE
-        elseif (tileType == "Seaport")       then tileValue = tileValue + 150                                                   -- ADJUSTABLE
-        elseif (tileType == "City")          then tileValue = tileValue + 100                                                   -- ADJUSTABLE
-        elseif (tileType == "CommandTower")  then tileValue = tileValue + 250                                                   -- ADJUSTABLE
-        elseif (tileType == "Radar")         then tileValue = tileValue + 100                                                   -- ADJUSTABLE
+        if     (tileType == "Headquarters")  then tileValue = tileValue + 80                                                    -- ADJUSTABLE
+        elseif (tileType == "Factory")       then tileValue = tileValue + 80                                                    -- ADJUSTABLE
+        elseif (tileType == "Airport")       then tileValue = tileValue + 70                                                    -- ADJUSTABLE
+        elseif (tileType == "Seaport")       then tileValue = tileValue + 70                                                    -- ADJUSTABLE
+        elseif (tileType == "City")          then tileValue = tileValue + 60                                                    -- ADJUSTABLE
+        elseif (tileType == "CommandTower")  then tileValue = tileValue + 80                                                    -- ADJUSTABLE
+        elseif (tileType == "Radar")         then tileValue = tileValue + 60                                                    -- ADJUSTABLE
         end
 
         if (captureAmount >= currentCapturePoint / 2) then
@@ -360,26 +360,27 @@ local function getScoreForActionProduceModelUnitOnTile(self, gridIndex, tiledID,
     end
 
     local tileType = self.m_ModelTileMap:getModelTile(gridIndex):getTileType()
-    local score    = PRODUCTION_CANDICATES[tileType][modelUnit:getUnitType()]                                                   -- ADJUSTABLE
+    local unitType = modelUnit:getUnitType()
+    local score    = PRODUCTION_CANDICATES[tileType][unitType]                                                                  -- ADJUSTABLE
     if (((tileType == "Factory") and ((idleFactoriesCount - 1) * 1500 > (fund - productionCost)))  or
         ((tileType ~= "Factory") and ((idleFactoriesCount)     * 1500 > (fund - productionCost)))) then
         score = score + (-1000)                                                                                                 -- ADJUSTABLE
     end
 
-    if (modelUnit:getUnitType() == "AntiAir") then
+    if (unitType == "AntiAir") then
         local teamIndex = modelUnit:getTeamIndex()
         self.m_ModelUnitMap:forEachModelUnitOnMap(function(modelUnitOnMap)
             if (modelUnitOnMap:getTeamIndex() ~= teamIndex) then
                 if (GameConstantFunctions.isTypeInCategory(modelUnitOnMap:getUnitType(), "AirUnits")) then
-                    score = score + modelUnitOnMap:getProductionCost() * modelUnitOnMap:getCurrentHP() / 6000                   -- ADJUSTABLE
+                    score = score + modelUnitOnMap:getProductionCost() * modelUnitOnMap:getCurrentHP() / 8000                   -- ADJUSTABLE
                 end
             elseif (modelUnitOnMap:getUnitType() == "AntiAir") then
-                score = score + (-modelUnitOnMap:getProductionCost() * modelUnitOnMap:getCurrentHP() / 6000)                    -- ADJUSTABLE
+                score = score + (-modelUnitOnMap:getProductionCost() * modelUnitOnMap:getCurrentHP() / 8000)                    -- ADJUSTABLE
             end
         end)
     end
 
-    score = score + getPossibleDamageInPlayerTurn(self, modelUnit, gridIndex) * (-modelUnit:getProductionCost() / 6000)         -- ADJUSTABLE
+    score = score + getPossibleDamageInPlayerTurn(self, modelUnit, gridIndex) * (-modelUnit:getProductionCost() / 8000)         -- ADJUSTABLE
 
     local distanceToEnemyUnits,  enemyUnitsCount  = 0, 0
     local distanceToFriendUnits, friendUnitsCount = 0, 0
@@ -388,7 +389,12 @@ local function getScoreForActionProduceModelUnitOnTile(self, gridIndex, tiledID,
             distanceToEnemyUnits = distanceToEnemyUnits + GridIndexFunctions.getDistance(gridIndex, unitOnMap:getGridIndex())
             enemyUnitsCount      = enemyUnitsCount + 1
             if (modelUnit.getBaseDamage) then
-                score = score + ((modelUnit:getBaseDamage(unitOnMap:getUnitType()) or 0) * (unitOnMap:getProductionCost() / 6000))  -- ADJUSTABLE
+                local damage = math.min(modelUnit:getBaseDamage(unitOnMap:getUnitType()) or 0, unitOnMap:getCurrentHP())
+                score = score + (damage * unitOnMap:getProductionCost() / 8000)                                                 -- ADJUSTABLE
+            end
+            if (unitOnMap.getBaseDamage) then
+                local damage = (unitOnMap:getBaseDamage(unitType) or 0) * unitOnMap:getNormalizedCurrentHP() / 10
+                score = score + (-damage * productionCost / 8000)                                                               -- ADJUSTABLE
             end
         else
             distanceToFriendUnits = distanceToFriendUnits + GridIndexFunctions.getDistance(gridIndex, unitOnMap:getGridIndex())
