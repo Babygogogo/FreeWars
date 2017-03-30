@@ -81,27 +81,19 @@ end
 --------------------------------------------------------------------------------
 -- The functions for sending actions.
 --------------------------------------------------------------------------------
-local function sendActionActivateSkill(actionID, skillID, skillLevel, isActiveSkill)
-    -- TODO: send the action to the ActionTranslator.
-    --[[
-    WebSocketManager.sendAction({
+local function sendActionActivateSkill(self, skillID, skillLevel, isActiveSkill)
+    self.m_ModelWar:translateAndExecuteAction({
         actionCode    = ACTION_CODE_ACTIVATE_SKILL,
-        actionID      = actionID,
         skillID       = skillID,
         skillLevel    = skillLevel,
         isActiveSkill = isActiveSkill,
     })
-    ]]
 end
 
-local function sendActionDeclareSkill(actionID)
-    -- TODO: send the action to the ActionTranslator.
-    --[[
-    WebSocketManager.sendAction({
+local function sendActionDeclareSkill(self)
+    self.m_ModelWar:translateAndExecuteAction({
         actionCode  = ACTION_CODE_DECLARE_SKILL,
-        actionID    = actionID,
     })
-    ]]
 end
 
 local function cleanupAfterSendAction(modelWar)
@@ -139,7 +131,7 @@ local function generateItemsSkillLevels(self, skillID, isActiveSkill)
             callback    = function()
                 modelConfirmBox:setConfirmText(generateActivateSkillConfirmationText(self, skillID, level, isActiveSkill))
                     :setOnConfirmYes(function()
-                        sendActionActivateSkill(actionID, skillID, level, isActiveSkill)
+                        sendActionActivateSkill(self, skillID, level, isActiveSkill)
                         cleanupAfterSendAction(modelWar)
                         modelConfirmBox:setEnabled(false)
                     end)
@@ -269,7 +261,7 @@ local function initItemDeclareSkill(self)
             local modelConfirmBox = SingletonGetters.getModelConfirmBox(modelWar)
             modelConfirmBox:setConfirmText(getLocalizedText(22, "ConfirmationDeclareSkill"))
                 :setOnConfirmYes(function()
-                    sendActionDeclareSkill(SingletonGetters.getWarId(modelWar), SingletonGetters.getActionId(modelWar) + 1)
+                    sendActionDeclareSkill(self)
                     cleanupAfterSendAction(modelWar)
                     modelConfirmBox:setEnabled(false)
                 end)

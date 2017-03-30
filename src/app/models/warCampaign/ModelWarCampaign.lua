@@ -180,9 +180,15 @@ function ModelWarCampaign:onStartRunning()
             if ((not self:isExecutingAction()) and (not self:isEnded())) then
                 if (modelTurnManager:isTurnPhaseRequestToBegin()) then
                     self:translateAndExecuteAction({actionCode = ACTION_CODE_BEGIN_TURN})
-                elseif ((self.m_RobotAction) and (modelTurnManager:getPlayerIndex() ~= self.m_PlayerIndexForHuman)) then
-                    self:translateAndExecuteAction(self.m_RobotAction)
-                    self.m_RobotAction = nil
+                elseif (modelTurnManager:getPlayerIndex() ~= self.m_PlayerIndexForHuman) then
+                    if (self.m_RobotAction) then
+                        self:translateAndExecuteAction(self.m_RobotAction)
+                        self.m_RobotAction = nil
+                    else
+                        self.m_RobotAction = coroutine.wrap(function()
+                            return self:getModelRobot():getNextAction()
+                        end)()
+                    end
                 end
             end
         end)
@@ -240,16 +246,6 @@ end
 function ModelWarCampaign:setExecutingAction(executing)
     assert(self.m_IsExecutingAction ~= executing)
     self.m_IsExecutingAction = executing
-
-    if ((not executing)                                                             and
-        (not self:isEnded())                                                        and
-        (not self.m_RobotAction)                                                    and
-        (self.m_PlayerIndexForHuman ~= self:getModelTurnManager():getPlayerIndex()) and
-        (self:getModelTurnManager():isTurnPhaseMain()))                             then
-        self.m_RobotAction = coroutine.wrap(function()
-            return self:getModelRobot():getNextAction()
-        end)()
-    end
 
     return self
 end

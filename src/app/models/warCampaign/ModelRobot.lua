@@ -190,7 +190,7 @@ local function getScoreForActionAttack(self, modelUnit, gridIndex, targetGridInd
     if (counterDamage) then
         local attackerHP = modelUnit:getCurrentHP()
         counterDamage    = math.min(counterDamage, attackerHP)
-        score            = score + (-counterDamage * modelUnit:getProductionCost() / 2 / 4000)                                  -- ADJUSTABLE
+        score            = score + (-counterDamage * modelUnit:getProductionCost() / 4000)                                      -- ADJUSTABLE
         if (attackerHP == counterDamage) then
             score = score + (-20)                                                                                               -- ADJUSTABLE
         end
@@ -573,34 +573,7 @@ local function getMaxScoreAndAction(self, modelUnit, gridIndex, pathNodes)
     ]]
 end
 
---------------------------------------------------------------------------------
--- The candicate units generators.
---------------------------------------------------------------------------------
-local function getCandicateUnitsForPhase1(self)
-    local units             = {}
-    local playerIndexInTurn = self.m_ModelTurnManager:getPlayerIndex()
-    self.m_ModelUnitMap:forEachModelUnitOnMap(function(modelUnit)
-        if ((modelUnit:getPlayerIndex() == playerIndexInTurn) and (modelUnit:isStateIdle()) and (modelUnit.isCapturingModelTile)) then
-            units[#units + 1] = modelUnit
-        end
-    end)
-
-    return units
-end
-
---------------------------------------------------------------------------------
--- The phases.
---------------------------------------------------------------------------------
--- Phase 1: move the infantries, meches and bikes.
-local function getActionForPhase1(self)
-    self.m_CandicateUnits = self.m_CandicateUnits or getCandicateUnitsForPhase1(self)
-    local candicateUnit   = popRandomElement(self.m_CandicateUnits)
-    if (not candicateUnit) then
-        self.m_CandicateUnits = nil
-        self.m_PhaseCode      = 9
-        return nil
-    end
-
+local function getActionForMaxScoreWithCandicateUnit(self, candicateUnit)
     local maxScore, actionForMaxScore
     local reachableArea = getReachableArea(self, candicateUnit)
     for x = 1, self.m_MapWidth do
@@ -622,7 +595,92 @@ local function getActionForPhase1(self)
     return actionForMaxScore
 end
 
--- Phase 2: request the ranged units to attack enemy.
+--------------------------------------------------------------------------------
+-- The candicate units generators.
+--------------------------------------------------------------------------------
+local function getCandicateUnitsForPhase1(self)
+    local units             = {}
+    local playerIndexInTurn = self.m_ModelTurnManager:getPlayerIndex()
+    self.m_ModelUnitMap:forEachModelUnitOnMap(function(modelUnit)
+        if ((modelUnit:getPlayerIndex() == playerIndexInTurn) and (modelUnit:isStateIdle()) and (modelUnit.isCapturingModelTile)) then
+            units[#units + 1] = modelUnit
+        end
+    end)
+
+    return units
+end
+
+local function getCandicateUnitsForPhase2(self)
+    local units             = {}
+    local playerIndexInTurn = self.m_ModelTurnManager:getPlayerIndex()
+    self.m_ModelUnitMap:forEachModelUnitOnMap(function(modelUnit)
+        if ((modelUnit:getPlayerIndex() == playerIndexInTurn) and (modelUnit:isStateIdle()) and (modelUnit.getAttackRangeMinMax)) then
+            local minRange, maxRange = modelUnit:getAttackRangeMinMax()
+            if (maxRange > 1) then
+                units[#units + 1] = modelUnit
+            end
+        end
+    end)
+
+    return units
+end
+
+local function getCandicateUnitsForPhase3(self)
+    local units             = {}
+    local playerIndexInTurn = self.m_ModelTurnManager:getPlayerIndex()
+    self.m_ModelUnitMap:forEachModelUnitOnMap(function(modelUnit)
+        if ((modelUnit:getPlayerIndex() == playerIndexInTurn)                             and
+            (modelUnit:isStateIdle())                                                     and
+            (GameConstantFunctions.isTypeInCategory(modelUnit:getUnitType(), "AirUnits")) and
+            (modelUnit.getBaseDamage))                                                    then
+            units[#units + 1] = modelUnit
+        end
+    end)
+
+    return units
+end
+
+local function getCandicateUnitsForPhase4(self)
+    local units             = {}
+    local playerIndexInTurn = self.m_ModelTurnManager:getPlayerIndex()
+    self.m_ModelUnitMap:forEachModelUnitOnMap(function(modelUnit)
+        if ((modelUnit:getPlayerIndex() == playerIndexInTurn) and (modelUnit:isStateIdle()) and (modelUnit.getBaseDamage)) then
+            units[#units + 1] = modelUnit
+        end
+    end)
+
+    return units
+end
+
+local function getCandicateUnitsForPhase5(self)
+    local units             = {}
+    local playerIndexInTurn = self.m_ModelTurnManager:getPlayerIndex()
+    self.m_ModelUnitMap:forEachModelUnitOnMap(function(modelUnit)
+        if ((modelUnit:getPlayerIndex() == playerIndexInTurn) and (modelUnit:isStateIdle())) then
+            units[#units + 1] = modelUnit
+        end
+    end)
+
+    return units
+end
+
+--------------------------------------------------------------------------------
+-- The phases.
+--------------------------------------------------------------------------------
+-- Phase 1: move the infantries, meches and bikes.
+local function getActionForPhase1(self)
+    self.m_CandicateUnits = self.m_CandicateUnits or getCandicateUnitsForPhase1(self)
+    local candicateUnit   = popRandomElement(self.m_CandicateUnits)
+    if (not candicateUnit) then
+        self.m_CandicateUnits = nil
+        self.m_PhaseCode      = 2
+        return nil
+    end
+
+    return getActionForMaxScoreWithCandicateUnit(self, candicateUnit)
+end
+
+-- Phase 2: move the ranged units.
 local function getActionForPhase2(self)
     self.m_CandicateUnits = self.m_CandicateUnits or getCandicateUnitsForPhase2(self)
     local candicateUnit   = popRandomElement(self.m_CandicateUnits)
@@ -631,12 +689,99 @@ local function getActionForPhase2(self)
         self.m_PhaseCode      = 3
         return nil
     end
+
+    return getActionForMaxScoreWithCandicateUnit(self, candicateUnit)
+end
+
+-- Phase 3: move the air combat units.
+local function getActionForPhase3(self)
+    self.m_CandicateUnits = self.m_CandicateUnits or getCandicateUnitsForPhase3(self)
+    local candicateUnit   = popRandomElement(self.m_CandicateUnits)
+    if (not candicateUnit) then
+        self.m_CandicateUnits = nil
+        self.m_PhaseCode      = 4
+        return nil
+    end
+
+    return getActionForMaxScoreWithCandicateUnit(self, candicateUnit)
+end
+
+-- Phase 4: move the other combat units.
+local function getActionForPhase4(self)
+    self.m_CandicateUnits = self.m_CandicateUnits or getCandicateUnitsForPhase4(self)
+    local candicateUnit   = popRandomElement(self.m_CandicateUnits)
+    if (not candicateUnit) then
+        self.m_CandicateUnits = nil
+        self.m_PhaseCode      = 5
+        return nil
+    end
+
+    return getActionForMaxScoreWithCandicateUnit(self, candicateUnit)
+end
+
+-- Phase 5: move the other units.
+local function getActionForPhase5(self)
+    self.m_CandicateUnits = self.m_CandicateUnits or getCandicateUnitsForPhase5(self)
+    local candicateUnit   = popRandomElement(self.m_CandicateUnits)
+    if (not candicateUnit) then
+        self.m_CandicateUnits = nil
+        self.m_PhaseCode      = 6
+        return nil
+    end
+
+    return getActionForMaxScoreWithCandicateUnit(self, candicateUnit)
+end
+
+-- Phase 6: spend energy on passive skills.
+local function getActionForPhase6(self)
+    if (not self.m_IsPassiveSkillEnabled) then
+        self.m_PhaseCode = 9
+        return nil
+    end
+
+    local modelPlayer       = self.m_ModelPlayerManager:getModelPlayer(self.m_ModelTurnManager:getPlayerIndex())
+    local energy            = modelPlayer:getEnergy()
+    local availableSkillIds = {}
+    for skillID, energyCost in pairs(self.m_PassiveSkillData) do
+        if (energy >= energyCost) then
+            if (skillID ~= 11) then
+                availableSkillIds[#availableSkillIds + 1] = skillID
+            end
+        end
+    end
+
+    local targetSkillID = popRandomElement(availableSkillIds)
+    if (not targetSkillID) then
+        self.m_PhaseCode = 9
+        return nil
+    else
+        return {
+            actionCode    = ACTION_CODES.ActionActivateSkill,
+            skillID       = targetSkillID,
+            skillLevel    = 1,
+            isActiveSkill = false,
+        }
+    end
 end
 
 -- Phase 9: end turn.
 local function getActionForPhase9(self)
     self.m_PhaseCode = nil
     return {actionCode = ACTION_CODES.ActionEndTurn}
+end
+
+--------------------------------------------------------------------------------
+-- The composition elements.
+--------------------------------------------------------------------------------
+local function initPassiveSkillData(self)
+    local skills                = {}
+    local modelSkillDataManager = self.m_ModelSkillDataManager
+
+    for _, skillID in pairs(modelSkillDataManager:getSkillCategory("SkillsPassive")) do
+        skills[skillID] = modelSkillDataManager:getSkillPoints(skillID, 1, false)
+    end
+
+    self.m_PassiveSkillData = skills
 end
 
 --------------------------------------------------------------------------------
@@ -655,8 +800,10 @@ function ModelRobot:onStartRunning(modelWar)
     self.m_ModelTileMap               = SingletonGetters.getModelTileMap(      modelWar)
     self.m_ModelTurnManager           = SingletonGetters.getModelTurnManager(  modelWar)
     self.m_ModelUnitMap               = SingletonGetters.getModelUnitMap(      modelWar)
+    self.m_ModelSkillDataManager      = modelWar:getModelSkillDataManager()
     self.m_MapSize                    = self.m_ModelTileMap:getMapSize()
     self.m_MapWidth, self.m_MapHeight = self.m_MapSize.width, self.m_MapSize.height
+    self.m_IsPassiveSkillEnabled      = modelWar:isPassiveSkillEnabled()
     self.m_PlayerIndexForHuman        = self.m_ModelPlayerManager:getPlayerIndexForHuman()
 
     self.m_ModelTileMap:forEachModelTile(function(modelTile)
@@ -665,6 +812,8 @@ function ModelRobot:onStartRunning(modelWar)
         end
     end)
 
+    initPassiveSkillData(self)
+
     return self
 end
 
@@ -672,7 +821,7 @@ end
 -- The public functions.
 --------------------------------------------------------------------------------
 function ModelRobot:getNextAction()
-    print("ModelRobot:getNextAction()")
+    print("ModelRobot:getNextAction()", self.m_PhaseCode)
     local modelTurnManager = self.m_ModelTurnManager
     assert((modelTurnManager:getPlayerIndex() ~= self.m_PlayerIndexForHuman) and (modelTurnManager:isTurnPhaseMain()))
 
