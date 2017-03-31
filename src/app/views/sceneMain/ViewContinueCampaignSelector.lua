@@ -61,8 +61,8 @@ local IN_TURN_INDICATOR_OUTLINE_WIDTH = 1
 --------------------------------------------------------------------------------
 -- The util functions.
 --------------------------------------------------------------------------------
-local function createWarNameIndicator(warID)
-    local indicator = cc.Label:createWithTTF(AuxiliaryFunctions.getWarNameWithWarId(warID), ITEM_FONT_NAME, WAR_NAME_INDICATOR_FONT_SIZE)
+local function createSaveIndexIndicator(saveIndex)
+    local indicator = cc.Label:createWithTTF("" .. saveIndex, ITEM_FONT_NAME, WAR_NAME_INDICATOR_FONT_SIZE)
     indicator:ignoreAnchorPointForPosition(true)
 
         :setDimensions(ITEM_WIDTH, ITEM_HEIGHT)
@@ -121,10 +121,7 @@ local function createViewMenuItem(item)
 
     local backgroundRenderer = view:getRendererNormal()
     backgroundRenderer:addChild(createWarFieldNameIndicator(item.warFieldName))
-        :addChild(createWarNameIndicator(item.warID))
-    if (item.isInTurn) then
-        backgroundRenderer:addChild(createIsInTurnIndicator())
-    end
+        :addChild(createSaveIndexIndicator(item.saveIndex))
 
     return view
 end

@@ -904,4 +904,5 @@
     moveRangeModifier         21 :  integer
     attackModifier            22 :  integer
     visionModifier            23 :  integer
+    saveIndex                 24 :  integer
 }

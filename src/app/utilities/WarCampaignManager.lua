@@ -18,6 +18,14 @@ local DEFAULT_TURN_DATA  = {
 --------------------------------------------------------------------------------
 -- The util functions.
 --------------------------------------------------------------------------------
+local function getDataFilenameWithSaveIndex(saveIndex)
+    return CAMPAIGN_DATA_PATH .. saveIndex .. "_data.spdata"
+end
+
+local function getConfigurationFilenameWithSaveIndex(saveIndex)
+    return CAMPAIGN_DATA_PATH .. saveIndex .. "_configuration.spdata"
+end
+
 local function generateSinglePlayerData(account, playerIndex, teamIndex, startingEnergy, startingFund)
     return {
         account           = account,
@@ -42,8 +50,62 @@ local function generatePlayersData(warFieldFileName, playerIndex, startingEnergy
     return data
 end
 
-local function getFilenameWithSaveIndex(saveIndex)
-    return CAMPAIGN_DATA_PATH .. saveIndex .. ".spdata"
+local function generateCampaignConfiguration(campaignData)
+    local players = {}
+    for playerIndex, player in pairs(campaignData.players) do
+        players[playerIndex] = {
+            playerIndex = playerIndex,
+            teamIndex   = player.teamIndex,
+            account     = player.account,
+            nickname    = player.nickname,
+        }
+    end
+
+    return {
+        attackModifier            = campaignData.attackModifier,
+        energyGainModifier        = campaignData.energyGainModifier,
+        incomeModifier            = campaignData.incomeModifier,
+        isActiveSkillEnabled      = campaignData.isActiveSkillEnabled,
+        isFogOfWarByDefault       = campaignData.isFogOfWarByDefault,
+        isPassiveSkillEnabled     = campaignData.isPassiveSkillEnabled,
+        isSkillDeclarationEnabled = campaignData.isSkillDeclarationEnabled,
+        moveRangeModifier         = campaignData.moveRangeModifier,
+        players                   = players,
+        saveIndex                 = campaignData.saveIndex,
+        startingEnergy            = campaignData.startingEnergy,
+        startingFund              = campaignData.startingFund,
+        visionModifier            = campaignData.visionModifier,
+        warFieldFileName          = campaignData.warField.warFieldFileName,
+    }
+end
+
+local function loadCampaignConfiguration(saveIndex)
+    local filename = getConfigurationFilenameWithSaveIndex(saveIndex)
+    local file     = io.open(filename, "rb")
+    if (not file) then
+        cc.FileUtils:getInstance():createDirectory(CAMPAIGN_DATA_PATH)
+        file = io.open(filename, "rb")
+    end
+
+    if (not file) then
+        return nil
+    else
+        local encodedData = file:read("*a")
+        file:close()
+        return SerializationFunctions.decode("WarConfiguration", encodedData)
+    end
+end
+
+local function saveCampaignConfiguration(configuration)
+    local filename = getConfigurationFilenameWithSaveIndex(configuration.saveIndex)
+    local file     = io.open(filename, "wb")
+    if (not file) then
+        cc.FileUtils:getInstance():createDirectory(CAMPAIGN_DATA_PATH)
+        file = io.open(filename, "wb")
+    end
+
+    file:write(SerializationFunctions.encode("WarConfiguration", configuration))
+    file:close()
 end
 
 --------------------------------------------------------------------------------
@@ -74,7 +136,7 @@ function WarCampaignManager.createInitialCampaignData(campaignConfiguration)
 end
 
 function WarCampaignManager.loadCampaignData(saveIndex)
-    local filename = getFilenameWithSaveIndex(saveIndex)
+    local filename = getDataFilenameWithSaveIndex(saveIndex)
     local file     = io.open(filename, "rb")
     if (not file) then
         cc.FileUtils:getInstance():createDirectory(CAMPAIGN_DATA_PATH)
@@ -91,7 +153,9 @@ function WarCampaignManager.loadCampaignData(saveIndex)
 end
 
 function WarCampaignManager.saveCampaignData(campaignData)
-    local filename = getFilenameWithSaveIndex(campaignData.saveIndex)
+    saveCampaignConfiguration(generateCampaignConfiguration(campaignData))
+
+    local filename = getDataFilenameWithSaveIndex(campaignData.saveIndex)
     local file     = io.open(filename, "wb")
     if (not file) then
         cc.FileUtils:getInstance():createDirectory(CAMPAIGN_DATA_PATH)
@@ -100,6 +164,15 @@ function WarCampaignManager.saveCampaignData(campaignData)
 
     file:write(SerializationFunctions.encode("SceneWar", campaignData))
     file:close()
+end
+
+function WarCampaignManager.getAllCampaignConfigurations()
+    local configurations = {}
+    for saveIndex = 1, 10 do
+        configurations[#configurations + 1] = loadCampaignConfiguration(saveIndex)
+    end
+
+    return configurations
 end
 
 return WarCampaignManager

@@ -11,9 +11,9 @@ local ModelContinueCampaignSelector = class("ModelContinueCampaignSelector")
 
 local ActionCodeFunctions   = requireFW("src.app.utilities.ActionCodeFunctions")
 local AuxiliaryFunctions    = requireFW("src.app.utilities.AuxiliaryFunctions")
-local WebSocketManager      = requireFW("src.app.utilities.WebSocketManager")
 local LocalizationFunctions = requireFW("src.app.utilities.LocalizationFunctions")
 local SingletonGetters      = requireFW("src.app.utilities.SingletonGetters")
+local WarCampaignManager    = requireFW("src.app.utilities.WarCampaignManager")
 local WarFieldManager       = requireFW("src.app.utilities.WarFieldManager")
 local Actor                 = requireFW("src.global.actors.Actor")
 local ActorManager          = requireFW("src.global.actors.ActorManager")
@@ -27,20 +27,14 @@ local ACTION_CODE_RUN_SCENE_WAR                  = ActionCodeFunctions.getAction
 --------------------------------------------------------------------------------
 -- The util functions.
 --------------------------------------------------------------------------------
-local function getPlayerNicknames(warConfiguration, currentTime)
-    local playersCount = WarFieldManager.getPlayersCount(warConfiguration.warFieldFileName)
-    local players      = warConfiguration.players
-    local names        = {}
-
-    for i = 1, playersCount do
+local function getPlayerNicknames(campaignConfiguration, currentTime)
+    local players = campaignConfiguration.players
+    local names   = {}
+    for i = 1, WarFieldManager.getPlayersCount(campaignConfiguration.warFieldFileName) do
         names[i] = string.format("%s (%s: %s)", players[i].account, getLocalizedText(14, "TeamIndex"), AuxiliaryFunctions.getTeamNameWithTeamIndex(players[i].teamIndex))
-        if (i == warConfiguration.playerIndexInTurn) then
-            names[i] = names[i] .. string.format("(%s: %s)", getLocalizedText(34, "BootCountdown"),
-                AuxiliaryFunctions.formatTimeInterval(warConfiguration.intervalUntilBoot - currentTime + warConfiguration.enterTurnTime))
-        end
     end
 
-    return names, playersCount
+    return names
 end
 
 --------------------------------------------------------------------------------
@@ -79,27 +73,22 @@ local function getActorCampaignConfigurator(self)
     return self.m_ActorCampaignConfigurator
 end
 
-local function createOngoingWarList(self, warConfigurations)
-    local warList               = {}
-    local playerAccountLoggedIn = WebSocketManager.getLoggedInAccountAndPassword()
-
-    for warID, warConfiguration in pairs(warConfigurations) do
-        local warFieldFileName  = warConfiguration.warFieldFileName
-        local playerIndexInTurn = warConfiguration.playerIndexInTurn
-
+local function createCampaignList(self, campaignConfigurations)
+    local warList = {}
+    for _, campaignConfiguration in pairs(campaignConfigurations) do
+        local warFieldFileName  = campaignConfiguration.warFieldFileName
         warList[#warList + 1] = {
-            warID        = warID,
+            saveIndex    = campaignConfiguration.saveIndex,
             warFieldName = WarFieldManager.getWarFieldName(warFieldFileName),
-            isInTurn     = (warConfiguration.players[playerIndexInTurn].account == playerAccountLoggedIn),
             callback     = function()
                 getActorWarFieldPreviewer(self):getModel():setWarField(warFieldFileName)
-                    :setPlayerNicknames(getPlayerNicknames(warConfiguration, os.time()))
+                    :setPlayerNicknames(getPlayerNicknames(campaignConfiguration))
                     :setEnabled(true)
                 self.m_View:setButtonNextVisible(true)
 
                 self.m_OnButtonNextTouched = function()
                     getActorWarFieldPreviewer(self):getModel():setEnabled(false)
-                    getActorCampaignConfigurator(self):getModel():resetWithCampaignConfiguration(warConfiguration)
+                    getActorCampaignConfigurator(self):getModel():resetWithCampaignConfiguration(campaignConfiguration)
                         :setEnabled(true)
 
                     self.m_View:setMenuVisible(false)
@@ -109,11 +98,17 @@ local function createOngoingWarList(self, warConfigurations)
         }
     end
 
-    table.sort(warList, function(item1, item2)
-        return item1.warID < item2.warID
-    end)
-
     return warList
+end
+
+local function resetMenuItems(self)
+    local campaignConfigurations = WarCampaignManager.getAllCampaignConfigurations()
+    local campaignList           = createCampaignList(self, campaignConfigurations)
+    if (#campaignList == 0) then
+        SingletonGetters.getModelMessageIndicator(self.m_ModelSceneMain):showMessage(getLocalizedText(8, "NoContinuableWar"))
+    else
+        self.m_View:showWarList(campaignList)
+    end
 end
 
 --------------------------------------------------------------------------------
@@ -139,16 +134,14 @@ end
 function ModelContinueCampaignSelector:setEnabled(enabled)
     self.m_IsEnabled = enabled
 
-    if (enabled) then
-        SingletonGetters.getModelMessageIndicator(self.m_ModelSceneMain):showMessage(getLocalizedText(8, "TransferingData"))
-        WebSocketManager.sendAction({actionCode = ACTION_CODE_GET_ONGOING_WAR_CONFIGURATIONS})
-    end
-
     if (self.m_View) then
         self.m_View:setVisible(enabled)
             :setMenuVisible(true)
-            :removeAllItems()
             :setButtonNextVisible(false)
+
+        if (enabled) then
+            resetMenuItems(self)
+        end
     end
 
     getActorWarFieldPreviewer(self):getModel():setEnabled(false)
@@ -157,13 +150,9 @@ function ModelContinueCampaignSelector:setEnabled(enabled)
     return self
 end
 
-function ModelContinueCampaignSelector:isRetrievingOngoingWarConfigurations()
-    return self.m_IsEnabled
-end
-
-function ModelContinueCampaignSelector:updateWithOngoingWarConfigurations(warConfigurations)
+function ModelContinueCampaignSelector:updateWithOngoingWarConfigurations(campaignConfigurations)
     if (self.m_IsEnabled) then
-        local warList = createOngoingWarList(self, warConfigurations)
+        local warList = createCampaignList(self, campaignConfigurations)
         if (#warList == 0) then
             SingletonGetters.getModelMessageIndicator(self.m_ModelSceneMain):showMessage(getLocalizedText(8, "NoContinuableWar"))
         else
@@ -172,15 +161,6 @@ function ModelContinueCampaignSelector:updateWithOngoingWarConfigurations(warCon
     end
 
     return self
-end
-
-function ModelContinueCampaignSelector:isRetrievingOngoingWarData()
-    return self.m_IsEnabled
-end
-
-function ModelContinueCampaignSelector:updateWithOngoingWarData(warData)
-    local actorSceneWar = Actor.createWithModelAndViewName("warOnline.ModelWarOnline", warData, "common.ViewSceneWar")
-    ActorManager.setAndRunRootActor(actorSceneWar, "FADE", 1)
 end
 
 function ModelContinueCampaignSelector:onButtonBackTouched()

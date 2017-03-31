@@ -229,11 +229,10 @@ local function createAndEnterCampaign(self)
     ActorManager.setAndRunRootActor(actorWarCampaign, "FADE", 1)
 end
 
-local function sendActionRunSceneWar(warID)
-    WebSocketManager.sendAction({
-        actionCode = ACTION_CODE_RUN_SCENE_WAR,
-        warID      = warID,
-    })
+local function loadAndRunCampaign(saveIndex)
+    local campaignData     = WarCampaignManager.loadCampaignData(saveIndex)
+    local actorWarCampaign = Actor.createWithModelAndViewName("warCampaign.ModelWarCampaign", campaignData, "common.ViewSceneWar")
+    ActorManager.setAndRunRootActor(actorWarCampaign, "FADE", 1)
 end
 
 --------------------------------------------------------------------------------
@@ -758,7 +757,7 @@ function ModelCampaignConfigurator:setModeContinue()
     self.m_MenuTitleTextForMode           = getLocalizedText(14, "ContinueWar")
     self.m_CallbackOnButtonConfirmTouched = function()
         SingletonGetters.getModelMessageIndicator(self.m_ModelSceneMain):showMessage(getLocalizedText(14, "RetrievingWarData"))
-        sendActionRunSceneWar(self.m_CampaignConfiguration.warID)
+        loadAndRunCampaign(self.m_CampaignConfiguration.saveIndex)
     end
 
     return self
@@ -835,10 +834,6 @@ function ModelCampaignConfigurator:setEnabled(enabled)
     end
 
     return self
-end
-
-function ModelCampaignConfigurator:getWarId()
-    return self.m_CampaignConfiguration.warID
 end
 
 function ModelCampaignConfigurator:onButtonBackTouched()
