@@ -1,7 +1,7 @@
 
 local GameConstant = {}
 
-GameConstant.version = "0.0.9"
+GameConstant.version = "0.0.10"
 
 GameConstant.gridSize = {
     width = 72, height = 72
