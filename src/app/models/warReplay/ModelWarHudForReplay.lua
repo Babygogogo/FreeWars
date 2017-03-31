@@ -79,6 +79,7 @@ function ModelWarHudForReplay:onStartRunning(modelWarReplay)
     self.m_ActorTileInfo        :getModel():onStartRunning(modelWarReplay)
     self.m_ActorUnitInfo        :getModel():onStartRunning(modelWarReplay)
     self.m_ActorWarCommandMenu  :getModel():onStartRunning(modelWarReplay)
+    self.m_ActorTileDetail      :getModel():onStartRunning(modelWarReplay)
 
     return self
 end

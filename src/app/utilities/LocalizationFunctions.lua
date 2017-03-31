@@ -403,6 +403,19 @@ local s_LongText23_2 = [[
 Untranslated...
 ]]
 
+local s_LongText24_1 = [[
+本选项规定战局存档的位置。
+
+本游戏有多个相互独立的存档位置，您可以任选一个用于保存战局的进度。
+进入战局后，您可以随时存档/读档，但不能再更改存档的位置。
+
+默认为"1"。
+]]
+
+local s_LongText24_2 = [[
+Untranslated...
+]]
+
 --------------------------------------------------------------------------------
 -- The private functions.
 --------------------------------------------------------------------------------
@@ -425,13 +438,14 @@ local s_Texts = {
             elseif (textType == "Login")               then return "注 册 / 登 陆"
             elseif (textType == "MainMenu")            then return "主  菜  单"
             elseif (textType == "ManageReplay")        then return "管 理 回 放"
-            elseif (textType == "ManageWar")           then return "管 理 战 局"
+            elseif (textType == "MultiPlayersGame")    then return "多 人 游 戏"
             elseif (textType == "MyProfile")           then return "我 的 战 绩"
             elseif (textType == "NewGame")             then return "新 建 战 局"
             elseif (textType == "RankingList")         then return "排 行 榜"
             elseif (textType == "Save")                then return "保 存"
             elseif (textType == "SetMessageIndicator") then return "开/关信息提示"
             elseif (textType == "SetMusic")            then return "开 / 关 音 乐"
+            elseif (textType == "SinglePlayerGame")    then return "单 人 游 戏"
             elseif (textType == "SkillSystem")         then return "技 能 系 统"
             elseif (textType == "ViewGameRecord")      then return "浏 览 战 绩"
             elseif (textType == "WarControl")          then return "战 局 操 作"
@@ -455,13 +469,14 @@ local s_Texts = {
             elseif (textType == "Login")               then return "Login"
             elseif (textType == "MainMenu")            then return "Main Menu"
             elseif (textType == "ManageReplay")        then return "ManageReplay"
-            elseif (textType == "ManageWar")           then return "ManageWar"
+            elseif (textType == "MultiPlayersGame")    then return "MultiPlayers"
             elseif (textType == "MyProfile")           then return "My Profile"
             elseif (textType == "NewGame")             then return "New Game"
             elseif (textType == "RankingList")         then return "RankingList"
             elseif (textType == "Save")                then return "Save"
             elseif (textType == "SetMessageIndicator") then return "Set Message"
             elseif (textType == "SetMusic")            then return "Set Music"
+            elseif (textType == "SinglePlayerGame")    then return "SinglePlayer"
             elseif (textType == "SkillSystem")         then return "Skills"
             elseif (textType == "ViewGameRecord")      then return "View Records"
             elseif (textType == "WarControl")          then return "Controlling"
@@ -932,6 +947,8 @@ local s_Texts = {
             elseif (textType == "RetrievingJoinWarResult")      then return "正在参战，请稍候。若长时间没有反应，请返回重试。"
             elseif (textType == "RetrievingSkillConfiguration") then return "正在获取技能数据，请稍候。"
             elseif (textType == "RetrievingWarData")            then return "正在进入战局，请稍候。若长时间没有反应，请返回重试。"
+            elseif (textType == "Save Index")                   then return "存 档 位 置"
+            elseif (textType == "SaveIndex")                    then return "存档位置"
             elseif (textType == "Selected")                     then return "已选定"
             elseif (textType == "SkillConfiguration")           then return "我方技能配置"
             elseif (textType == "Starting Energy")              then return "初 始 能 量"
@@ -985,6 +1002,8 @@ local s_Texts = {
             elseif (textType == "RetrievingJoinWarResult")      then return "Joining the war, please wait."
             elseif (textType == "RetrievingSkillConfiguration") then return "Retrieving data..."
             elseif (textType == "RetrievingWarData")            then return "Retrieving war data, please wait."
+            elseif (textType == "Save Index")                   then return "SaveIndex"
+            elseif (textType == "SaveIndex")                    then return "SaveIndex"
             elseif (textType == "Selected")                     then return "Selected"
             elseif (textType == "SkillConfiguration")           then return "Skill Configuration"
             elseif (textType == "Starting Energy")              then return "Starting Energy"
@@ -1227,6 +1246,7 @@ local s_Texts = {
             elseif (textType == "HelpForMoveRangeModifier")      then return s_LongText20_1
             elseif (textType == "HelpForPlayerIndex")            then return s_LongText15_1
             elseif (textType == "HelpForRankMatch")              then return s_LongText16_1
+            elseif (textType == "HelpForSaveIndex")              then return s_LongText24_1
             elseif (textType == "HelpForStartingEnergy")         then return s_LongText17_1
             elseif (textType == "HelpForStartingFund")           then return s_LongText18_1
             elseif (textType == "HelpForTeamIndex")              then return s_LongText23_1
@@ -1247,6 +1267,7 @@ local s_Texts = {
             elseif (textType == "HelpForMoveRangeModifier")      then return s_LongText20_2
             elseif (textType == "HelpForPlayerIndex")            then return s_LongText15_2
             elseif (textType == "HelpForRankMatch")              then return s_LongText16_2
+            elseif (textType == "HelpForSaveIndex")              then return s_LongText24_2
             elseif (textType == "HelpForStartingEnergy")         then return s_LongText17_2
             elseif (textType == "HelpForStartingFund")           then return s_LongText18_2
             elseif (textType == "HelpForTeamIndex")              then return s_LongText23_2
@@ -1454,6 +1475,7 @@ local s_Texts = {
             elseif (textType == "IdleTiles")           then return "空闲工厂/机场/海港数量"
             elseif (textType == "IdleUnits")           then return "空闲部队数量"
             elseif (textType == "Income")              then return "收 入"
+            elseif (textType == "Load Game")           then return "读 档"
             elseif (textType == "Lost")                then return "已战败"
             elseif (textType == "MainWeapon")          then return "主武器"
             elseif (textType == "MapName")             then return "地图"
@@ -1464,6 +1486,7 @@ local s_Texts = {
             elseif (textType == "QuitWar")             then return "退 出"
             elseif (textType == "ReceiveChatText")     then return "收到聊天消息"
             elseif (textType == "ReloadWar")           then return "重 新 载 入"
+            elseif (textType == "Save Game")           then return "存 盘"
             elseif (textType == "Send")                then return "发 送"
             elseif (textType == "SkillInfo")           then return "技 能 信 息"
             elseif (textType == "SubWeapon")           then return "副武器"
@@ -1508,6 +1531,7 @@ local s_Texts = {
             elseif (textType == "IdleTiles")           then return "Idle factories/airports/seaports"
             elseif (textType == "IdleUnits")           then return "Idle units"
             elseif (textType == "Income")              then return "Income"
+            elseif (textType == "Load Game")           then return "Load"
             elseif (textType == "Lost")                then return "Lost"
             elseif (textType == "MainWeapon")          then return "Main"
             elseif (textType == "MapName")             then return "Map Name"
@@ -1518,6 +1542,7 @@ local s_Texts = {
             elseif (textType == "QuitWar")             then return "Quit"
             elseif (textType == "ReceiveChatText")     then return "ReceiveChatText"
             elseif (textType == "ReloadWar")           then return "Reload"
+            elseif (textType == "Save Game")           then return "Save"
             elseif (textType == "Send")                then return "Send"
             elseif (textType == "SkillInfo")           then return "Skill Info"
             elseif (textType == "SubWeapon")           then return "Sub"
@@ -1539,39 +1564,51 @@ local s_Texts = {
     },
     [66] = {
         [1] = function(textType)
-            if     (textType == "AgreeDraw")           then return "您确定要同意和局吗？"
-            elseif (textType == "DestroyOwnedUnit")    then return "摧毁部队将没有任何补偿！\n您确定要这样做吗？"
-            elseif (textType == "DisagreeDraw")        then return "您确定要拒绝和局吗？"
-            elseif (textType == "EndTurnConfirmation") then return "您确定要结束回合吗？"
-            elseif (textType == "ExitGame")            then return "是否确定退出游戏？"
-            elseif (textType == "NoIdleTile")          then return "您的所有建筑均已被占用。"
-            elseif (textType == "NoIdleTilesOrUnits")  then return "您的所有建筑和部队均已生产或行动完毕。"
-            elseif (textType == "NoIdleUnit")          then return "您的所有部队均已行动。"
-            elseif (textType == "ProposeDraw")         then return "求和需要战局内所有玩家一致同意才能生效。\n若中途有玩家战败，则需要重新求和。\n您确定要求和吗？"
-            elseif (textType == "RequireVoteForDraw")  then return "已有玩家提出求和。您需要先表决是否同意和局，才能结束本回合。"
-            elseif (textType == "QuitWar")             then return "您将回到主界面（可以随时再回到本战局）。\n是否确定？"
-            elseif (textType == "ReloadWar")           then return "是否确定要重新载入战局？"
-            elseif (textType == "SkillNotDeclared")    then return "您尚未发起特技宣言。"
-            elseif (textType == "Surrender")           then return "您将输掉本战局，且无法反悔！\n是否确定投降？"
-            else                                            return "未知66:" .. (textType or "")
+            if     (textType == "AgreeDraw")            then return "您确定要同意和局吗？"
+            elseif (textType == "ConfirmationLoadGame") then return "未存盘的数据都将丢失。\n此外，将要读入的数据未必属于本战局。\n\n您确定要读档吗？"
+            elseif (textType == "ConfirmationSaveGame") then return "已有的存盘数据将被覆盖。\n\n您确定要存盘吗？"
+            elseif (textType == "DestroyOwnedUnit")     then return "摧毁部队将没有任何补偿！\n您确定要这样做吗？"
+            elseif (textType == "DisagreeDraw")         then return "您确定要拒绝和局吗？"
+            elseif (textType == "EndTurnConfirmation")  then return "您确定要结束回合吗？"
+            elseif (textType == "ExitGame")             then return "是否确定退出游戏？"
+            elseif (textType == "FailLoadGame")         then return "读档失败，可能是因为该存档位置没有数据。"
+            elseif (textType == "FailSaveGame")         then return "存盘失败，请重试。"
+            elseif (textType == "NoIdleTile")           then return "您的所有建筑均已被占用。"
+            elseif (textType == "NoIdleTilesOrUnits")   then return "您的所有建筑和部队均已生产或行动完毕。"
+            elseif (textType == "NoIdleUnit")           then return "您的所有部队均已行动。"
+            elseif (textType == "ProposeDraw")          then return "求和需要战局内所有玩家一致同意才能生效。\n若中途有玩家战败，则需要重新求和。\n您确定要求和吗？"
+            elseif (textType == "RequireVoteForDraw")   then return "已有玩家提出求和。您需要先表决是否同意和局，才能结束本回合。"
+            elseif (textType == "QuitWar")              then return "您将回到主界面（可以随时再回到本战局）。\n是否确定？"
+            elseif (textType == "ReloadWar")            then return "是否确定要重新载入战局？"
+            elseif (textType == "SkillNotDeclared")     then return "您尚未发起特技宣言。"
+            elseif (textType == "SucceedLoadGame")      then return "已成功读档，正在载入战局。"
+            elseif (textType == "SucceedSaveGame")      then return "已成功存盘。"
+            elseif (textType == "Surrender")            then return "您将输掉本战局，且无法反悔！\n是否确定投降？"
+            else                                             return "未知66:" .. (textType or "")
             end
         end,
         [2] = function(textType)
-            if     (textType == "AgreeDraw")           then return "Are you sure to approve the draw?"
-            elseif (textType == "DestroyOwnedUnit")    then return "You won't get anything in return!\nAre you sure to destroy it?"
-            elseif (textType == "DisagreeDraw")        then return "Are you sure to decline the draw?"
-            elseif (textType == "EndTurnConfirmation") then return "Are you sure to end you turn?"
-            elseif (textType == "ExitGame")            then return "Are you sure to exit the game?"
-            elseif (textType == "NoIdleTile")          then return "None of your tiles is idle."
-            elseif (textType == "NoIdleTilesOrUnits")  then return "All your buildings and units have taken action already."
-            elseif (textType == "NoIdleUnit")          then return "None of your units is idle."
-            elseif (textType == "ProposeDraw")         then return "Are you sure to propose a draw?"
-            elseif (textType == "RequireVoteForDraw")  then return "A draw has been proposed. You must approve/decline it before ending your turn."
-            elseif (textType == "QuitWar")             then return "You are quitting the war (you may reenter it later).\nAre you sure?"
-            elseif (textType == "ReloadWar")           then return "Are you sure to reload the war?"
-            elseif (textType == "SkillNotDeclared")    then return "You haven't made a skill declaration."
-            elseif (textType == "Surrender")           then return "You will lose the game by surrendering!\nAre you sure?"
-            else                                            return "Unrecognized:[66]" .. textType
+            if     (textType == "AgreeDraw")            then return "Are you sure to approve the draw?"
+            elseif (textType == "ConfirmationLoadGame") then return "The current data will be lost.\nAre you sure to load game?"
+            elseif (textType == "ConfirmationSaveGame") then return "The existing data will be overwritten.\nAre you sure to save game?"
+            elseif (textType == "DestroyOwnedUnit")     then return "You won't get anything in return!\nAre you sure to destroy it?"
+            elseif (textType == "DisagreeDraw")         then return "Are you sure to decline the draw?"
+            elseif (textType == "EndTurnConfirmation")  then return "Are you sure to end you turn?"
+            elseif (textType == "ExitGame")             then return "Are you sure to exit the game?"
+            elseif (textType == "FailLoadGame")         then return "Fail to load game. Please retry."
+            elseif (textType == "FailSaveGame")         then return "Fail to save game. Please retry."
+            elseif (textType == "NoIdleTile")           then return "None of your tiles is idle."
+            elseif (textType == "NoIdleTilesOrUnits")   then return "All your buildings and units have taken action already."
+            elseif (textType == "NoIdleUnit")           then return "None of your units is idle."
+            elseif (textType == "ProposeDraw")          then return "Are you sure to propose a draw?"
+            elseif (textType == "RequireVoteForDraw")   then return "A draw has been proposed. You must approve/decline it before ending your turn."
+            elseif (textType == "QuitWar")              then return "You are quitting the war (you may reenter it later).\nAre you sure?"
+            elseif (textType == "ReloadWar")            then return "Are you sure to reload the war?"
+            elseif (textType == "SkillNotDeclared")     then return "You haven't made a skill declaration."
+            elseif (textType == "SucceedLoadGame")      then return "Load game successfully. Now entering the game..."
+            elseif (textType == "SucceedSaveGame")      then return "Save game successfully."
+            elseif (textType == "Surrender")            then return "You will lose the game by surrendering!\nAre you sure?"
+            else                                             return "Unrecognized:[66]" .. textType
             end
         end,
     },

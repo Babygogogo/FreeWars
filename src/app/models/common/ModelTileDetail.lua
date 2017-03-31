@@ -18,9 +18,17 @@ function ModelTileDetail:ctor(param)
     return self
 end
 
+function ModelTileDetail:onStartRunning(modelWar)
+    self.m_ModelWar = modelWar
+end
+
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
+function ModelTileDetail:getModelWar()
+    return self.m_ModelWar
+end
+
 function ModelTileDetail:updateWithModelTile(modelTile)
     if (self.m_View) then
         self.m_View:updateWithModelTile(modelTile)

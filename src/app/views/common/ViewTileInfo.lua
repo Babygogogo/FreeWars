@@ -3,6 +3,10 @@ local ViewTileInfo = class("ViewTileInfo", cc.Node)
 
 local AnimationLoader       = requireFW("src.app.utilities.AnimationLoader")
 local GameConstantFunctions = requireFW("src.app.utilities.GameConstantFunctions")
+local SingletonGetters      = requireFW("src.app.utilities.SingletonGetters")
+local VisibilityFunctions   = requireFW("src.app.utilities.VisibilityFunctions")
+
+local isTileVisible = VisibilityFunctions.isTileVisibleToPlayerIndex
 
 local TILE_LABEL_Z_ORDER = 3
 local INFO_LABEL_Z_ORDER = 2
@@ -205,8 +209,18 @@ end
 -- The private functions for updating the composition elements.
 --------------------------------------------------------------------------------
 local function updateTileIconWithModelTile(self, tile)
+    local modelWar = self.m_Model:getModelWar()
+    local tiledID  = tile:getTiledId()
+    local tileType = tile:getTileType()
+    if ((SingletonGetters.isWarCampaign(modelWar))                                                                                     and
+        (tile.getCurrentCapturePoint)                                                                                                  and
+        (tileType ~= "Headquarters")                                                                                                   and
+        (not isTileVisible(modelWar, tile:getGridIndex(), SingletonGetters.getModelPlayerManager(modelWar):getPlayerIndexForHuman()))) then
+        tiledID = GameConstantFunctions.getTiledIdWithTileOrUnitName(tileType, 0)
+    end
+
     self.m_TileIcon:stopAllActions()
-        :playAnimationForever(AnimationLoader.getTileAnimationWithTiledId(tile:getTiledId()))
+        :playAnimationForever(AnimationLoader.getTileAnimationWithTiledId(tiledID))
 end
 
 local function updateTileLabelWithModelTile(self, tile)
@@ -218,12 +232,22 @@ local function updateDefenseInfoWithModelTile(self, tile)
 end
 
 local function updateCaptureInfoWithModelTile(self, tile)
+    local modelWar   = self.m_Model:getModelWar()
+    local isCampaign = SingletonGetters.isWarCampaign(modelWar)
+
     if (tile.getCurrentCapturePoint) then
+        local capturePoint = ((isCampaign) and (not isTileVisible(modelWar, tile:getGridIndex(), SingletonGetters.getModelPlayerManager(modelWar):getPlayerIndexForHuman()))) and
+            tile:getMaxCapturePoint()                                                                                                                                         or
+            tile:getCurrentCapturePoint()
         self.m_CaptureIcon:setVisible(true)
         self.m_CaptureLabel:setVisible(true)
-            :setInt(tile:getCurrentCapturePoint())
+            :setInt(capturePoint)
+
     elseif (tile.getCurrentBuildPoint) then
-        local buildPoint = tile:getCurrentBuildPoint()
+        local buildPoint = ((isCampaign) and (not isTileVisible(modelWar, tile:getGridIndex(), SingletonGetters.getModelPlayerManager(modelWar):getPlayerIndexForHuman()))) and
+            tile:getMaxBuildPoint()                                                                                                                                         or
+            tile:getCurrentBuildPoint()
+
         if (buildPoint < tile:getMaxBuildPoint()) then
             self.m_CaptureIcon:setVisible(true)
             self.m_CaptureLabel:setVisible(true)
@@ -232,6 +256,7 @@ local function updateCaptureInfoWithModelTile(self, tile)
             self.m_CaptureIcon:setVisible(false)
             self.m_CaptureLabel:setVisible(false)
         end
+
     else
         self.m_CaptureIcon:setVisible(false)
         self.m_CaptureLabel:setVisible(false)

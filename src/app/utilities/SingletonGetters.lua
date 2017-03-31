@@ -48,6 +48,14 @@ function SingletonGetters.getScriptEventDispatcher(modelSceneWar)
     return modelSceneWar:getScriptEventDispatcher()
 end
 
+function SingletonGetters.isWarCampaign(modelWar)
+    return modelWar.isWarCampaign()
+end
+
+function SingletonGetters.isWarOnline(modelWar)
+    return modelWar.isWarOnline()
+end
+
 function SingletonGetters.isWarReplay(modelWar)
     return modelWar.isWarReplay()
 end

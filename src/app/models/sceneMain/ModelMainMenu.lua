@@ -24,17 +24,17 @@ end
 --------------------------------------------------------------------------------
 -- The composition actors.
 --------------------------------------------------------------------------------
-local function getActorNewWarCreator(self)
-    if (not self.m_ActorNewWarCreator) then
-        local actor = Actor.createWithModelAndViewName("sceneMain.ModelNewWarCreator", nil, "sceneMain.ViewNewWarCreator")
+local function getActorContinueCampaignSelector(self)
+    if (not self.m_ActorContinueCampaignSelector) then
+        local actor = Actor.createWithModelAndViewName("sceneMain.ModelContinueCampaignSelector", nil, "sceneMain.ViewContinueCampaignSelector")
         actor:getModel():onStartRunning(self.m_ModelSceneMain)
             :setEnabled(false)
 
-        self.m_ActorNewWarCreator = actor
-        self.m_View:setViewNewWarCreator(actor:getView())
+        self.m_ActorContinueCampaignSelector = actor
+        self.m_View:setViewContinueCampaignSelector(actor:getView())
     end
 
-    return self.m_ActorNewWarCreator
+    return self.m_ActorContinueCampaignSelector
 end
 
 local function getActorContinueWarSelector(self)
@@ -74,6 +74,32 @@ local function getActorJoinWarSelector(self)
     end
 
     return self.m_ActorJoinWarSelector
+end
+
+local function getActorNewCampaignSelector(self)
+    if (not self.m_ActorNewCampaignSelector) then
+        local actor = Actor.createWithModelAndViewName("sceneMain.ModelNewCampaignSelector", nil, "sceneMain.ViewNewCampaignSelector")
+        actor:getModel():onStartRunning(self.m_ModelSceneMain)
+            :setEnabled(false)
+
+        self.m_ActorNewCampaignSelector = actor
+        self.m_View:setViewNewCampaignSelector(actor:getView())
+    end
+
+    return self.m_ActorNewCampaignSelector
+end
+
+local function getActorNewWarCreator(self)
+    if (not self.m_ActorNewWarCreator) then
+        local actor = Actor.createWithModelAndViewName("sceneMain.ModelNewWarCreator", nil, "sceneMain.ViewNewWarCreator")
+        actor:getModel():onStartRunning(self.m_ModelSceneMain)
+            :setEnabled(false)
+
+        self.m_ActorNewWarCreator = actor
+        self.m_View:setViewNewWarCreator(actor:getView())
+    end
+
+    return self.m_ActorNewWarCreator
 end
 
 local function getActorReplayManager(self)
@@ -141,15 +167,15 @@ local function setStateAuxiliaryCommands(self)
         })
 end
 
-local function setStateMain(self, isPlayerLoggedIn)
-    self.m_State            = "stateMain"
-    self.m_IsPlayerLoggedIn = isPlayerLoggedIn
-
+local function setStateMain(self)
+    self.m_State = "stateMain"
     self.m_View:setMenuTitleText(getLocalizedText(1, "MainMenu"))
         :setButtonExitText(getLocalizedText(1, "Exit"))
-    if (isPlayerLoggedIn) then
+
+    if (self.m_IsPlayerLoggedIn) then
         self.m_View:setItems({
-            self.m_ItemManageWar,
+            self.m_ItemSinglePlayerGame,
+            self.m_ItemMultiPlayersGame,
             self.m_ItemManageReplay,
             self.m_ItemViewGameRecord,
             self.m_ItemLogin,
@@ -158,6 +184,7 @@ local function setStateMain(self, isPlayerLoggedIn)
         })
     else
         self.m_View:setItems({
+            self.m_ItemSinglePlayerGame,
             self.m_ItemLogin,
             self.m_ItemManageReplay,
             self.m_ItemAuxiliaryCommands,
@@ -166,16 +193,26 @@ local function setStateMain(self, isPlayerLoggedIn)
     end
 end
 
-local function setStateManageWar(self)
-    self.m_State = "stateManageWar"
+local function setStateMultiPlayersGame(self)
+    self.m_State = "stateMultiPlayersGame"
 
-    self.m_View:setMenuTitleText(getLocalizedText(1, "ManageWar"))
+    self.m_View:setMenuTitleText(getLocalizedText(1, "MultiPlayersGame"))
         :setButtonExitText(getLocalizedText(1, "Back"))
         :setItems({
             self.m_ItemNewWar,
             self.m_ItemContinue,
             self.m_ItemJoinWar,
             self.m_ItemExitWar,
+        })
+end
+
+local function setStateSinglePlayerGame(self)
+    self.m_State = "stateSinglePlayerGame"
+    self.m_View:setMenuTitleText(getLocalizedText(1, "SinglePlayerGame"))
+        :setButtonExitText(getLocalizedText(1, "Back"))
+        :setItems({
+            self.m_ItemSingleNew,
+            self.m_ItemSingleContinue,
         })
 end
 
@@ -187,6 +224,35 @@ local function initItemAuxiliaryCommands(self)
         name     = getLocalizedText(1, "AuxiliaryCommands"),
         callback = function()
             setStateAuxiliaryCommands(self)
+        end,
+    }
+end
+
+local function initItemSingleContinue(self)
+    self.m_ItemSingleContinue = {
+        name     = getLocalizedText(1, "Continue"),
+        callback = function()
+            self:setMenuEnabled(false)
+                :getModelContinueCampaignSelector():setEnabled(true)
+        end
+    }
+end
+
+local function initItemSingleNew(self)
+    self.m_ItemSingleNew = {
+        name     = getLocalizedText(1, "NewGame"),
+        callback = function()
+            self:setMenuEnabled(false)
+                :getModelNewCampaignSelector():setEnabled(true)
+        end
+    }
+end
+
+local function initItemSinglePlayerGame(self)
+    self.m_ItemSinglePlayerGame = {
+        name     = getLocalizedText(1, "SinglePlayerGame"),
+        callback = function()
+            setStateSinglePlayerGame(self)
         end,
     }
 end
@@ -261,11 +327,11 @@ local function initItemManageReplay(self)
     self.m_ItemManageReplay = item
 end
 
-local function initItemManageWar(self)
-    self.m_ItemManageWar = {
-        name     = getLocalizedText(1, "ManageWar"),
+local function initItemMultiPlayersGame(self)
+    self.m_ItemMultiPlayersGame = {
+        name     = getLocalizedText(1, "MultiPlayersGame"),
         callback = function()
-            setStateManageWar(self)
+            setStateMultiPlayersGame(self)
         end,
     }
 end
@@ -330,10 +396,13 @@ function ModelMainMenu:ctor(param)
     initItemJoinWar(            self)
     initItemLogin(              self)
     initItemManageReplay(       self)
-    initItemManageWar(          self)
+    initItemMultiPlayersGame(   self)
     initItemNewWar(             self)
     initItemSetMessageIndicator(self)
     initItemSetMusic(           self)
+    initItemSingleContinue(     self)
+    initItemSingleNew(          self)
+    initItemSinglePlayerGame(   self)
     initItemViewGameRecord(     self)
 
     return self
@@ -377,7 +446,8 @@ function ModelMainMenu:setMenuEnabled(enabled)
 end
 
 function ModelMainMenu:updateWithIsPlayerLoggedIn(isPlayerLoggedIn)
-    setStateMain(self, isPlayerLoggedIn)
+    self.m_IsPlayerLoggedIn = isPlayerLoggedIn
+    setStateMain(self)
 
     return self
 end
@@ -385,20 +455,26 @@ end
 function ModelMainMenu:onButtonExitTouched()
     local state = self.m_State
     if (state == "stateAuxiliaryCommands") then
-        setStateMain(self, self.m_IsPlayerLoggedIn)
-    elseif (state == "stateManageWar") then
-        setStateMain(self, self.m_IsPlayerLoggedIn)
+        setStateMain(self)
     elseif (state == "stateMain") then
         SingletonGetters.getModelConfirmBox(self.m_ModelSceneMain):setConfirmText(getLocalizedText(66, "ExitGame"))
             :setOnConfirmYes(function()
                 cc.Director:getInstance():endToLua()
             end)
             :setEnabled(true)
+    elseif (state == "stateMultiPlayersGame") then
+        setStateMain(self)
+    elseif (state == "stateSinglePlayerGame") then
+        setStateMain(self)
     else
         assert("ModelMainMenu:onButtonExitTouched() invalid state: " .. (state or ""))
     end
 
     return self
+end
+
+function ModelMainMenu:getModelContinueCampaignSelector()
+    return getActorContinueCampaignSelector(self):getModel()
 end
 
 function ModelMainMenu:getModelContinueWarSelector()
@@ -419,6 +495,10 @@ end
 
 function ModelMainMenu:getModelLoginPanel()
     return getActorLoginPanel(self):getModel()
+end
+
+function ModelMainMenu:getModelNewCampaignSelector()
+    return getActorNewCampaignSelector(self):getModel()
 end
 
 function ModelMainMenu:getModelNewWarCreator()

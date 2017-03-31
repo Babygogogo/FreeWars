@@ -175,7 +175,7 @@ end
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
-function ModelMapCursor:ctor(param)
+function ModelMapCursor:ctor()
     if (not ComponentManager:getComponent(self, "GridIndexable")) then
         ComponentManager.bindComponent(self, "GridIndexable", {instantialData = {x = 1, y = 1}})
     end
@@ -207,7 +207,7 @@ function ModelMapCursor:onStartRunning(modelWar)
     self.m_MapSize               = SingletonGetters.getModelTileMap(         modelWar):getMapSize()
     self.m_ModelWarCommandMenu   = SingletonGetters.getModelWarCommandMenu(  modelWar)
     self.m_ScriptEventDispatcher = SingletonGetters.getScriptEventDispatcher(modelWar)
-    if (not SingletonGetters.isWarReplay(modelWar)) then
+    if (SingletonGetters.isWarOnline(modelWar)) then
         self.m_ModelChatManager  = SingletonGetters.getModelChatManager(     modelWar)
     end
 

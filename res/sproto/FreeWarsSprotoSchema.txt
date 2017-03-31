@@ -794,6 +794,7 @@
     moveRangeModifier         28 :  integer
     attackModifier            29 :  integer
     visionModifier            30 :  integer
+    saveIndex                 31 :  integer
 }
 
 .WarIdForIndexing {
@@ -903,4 +904,5 @@
     moveRangeModifier         21 :  integer
     attackModifier            22 :  integer
     visionModifier            23 :  integer
+    saveIndex                 24 :  integer
 }

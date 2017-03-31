@@ -78,9 +78,10 @@ end
 -- The callback functions on start running/script events.
 --------------------------------------------------------------------------------
 function ModelTileInfo:onStartRunning(modelWar)
+    self.m_ModelWar            = modelWar
     self.m_ModelTileMap        = SingletonGetters.getModelTileMap(       modelWar)
     self.m_ModelWarCommandMenu = SingletonGetters.getModelWarCommandMenu(modelWar)
-    if (not SingletonGetters.isWarReplay(modelWar)) then
+    if (SingletonGetters.isWarOnline(modelWar)) then
         self.m_ModelChatManager = SingletonGetters.getModelChatManager(modelWar)
     end
 
@@ -121,6 +122,10 @@ function ModelTileInfo:onPlayerTouch()
     end
 
     return self
+end
+
+function ModelTileInfo:getModelWar()
+    return self.m_ModelWar
 end
 
 return ModelTileInfo

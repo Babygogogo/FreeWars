@@ -1,23 +1,5 @@
 
---[[--------------------------------------------------------------------------------
--- ModelWarHudForOnline是战局场景上的各个UI的集合。
---
--- 主要职责和使用场景举例：
---   构造和显示各个UI。
---
--- 其他：
---  - ModelWarHudForOnline目前由以下子actor组成：
---    - WarCommandMenu
---    - MoneyEnergyInfo
---    - ActionMenu
---    - UnitDetail
---    - UnitInfo
---    - TileDetail
---    - TileInfo
---    - BattleInfo
---]]--------------------------------------------------------------------------------
-
-local ModelWarHudForOnline = class("ModelWarHudForOnline")
+local ModelWarHudForCampaign = class("ModelWarHudForCampaign")
 
 local Actor = requireFW("src.global.actors.Actor")
 
@@ -25,7 +7,7 @@ local Actor = requireFW("src.global.actors.Actor")
 -- The composition actors.
 --------------------------------------------------------------------------------
 local function initActorWarCommandMenu(self)
-    self.m_ActorWarCommandMenu = Actor.createWithModelAndViewName("warOnline.ModelWarCommandMenuForOnline", nil, "common.ViewWarCommandMenu")
+    self.m_ActorWarCommandMenu = Actor.createWithModelAndViewName("warCampaign.ModelWarCommandMenuForCampaign", nil, "common.ViewWarCommandMenu")
 end
 
 local function initActorMoneyEnergyInfo(self)
@@ -65,7 +47,7 @@ end
 --------------------------------------------------------------------------------
 -- The contructor and initializers.
 --------------------------------------------------------------------------------
-function ModelWarHudForOnline:ctor()
+function ModelWarHudForCampaign:ctor()
     initActorWarCommandMenu( self)
     initActorMoneyEnergyInfo(self)
     initActorActionMenu(     self)
@@ -78,9 +60,9 @@ function ModelWarHudForOnline:ctor()
     return self
 end
 
-function ModelWarHudForOnline:initView()
+function ModelWarHudForCampaign:initView()
     local view = self.m_View
-    assert(view, "ModelWarHudForOnline:initView() no view is attached to the actor of the model.")
+    assert(view, "ModelWarHudForCampaign:initView() no view is attached to the actor of the model.")
 
     view:setViewActionMenu(     self.m_ActorActionMenu:     getView())
         :setViewBattleInfo(     self.m_ActorBattleInfo:     getView())
@@ -97,7 +79,7 @@ end
 --------------------------------------------------------------------------------
 -- The public callback function on start running.
 --------------------------------------------------------------------------------
-function ModelWarHudForOnline:onStartRunning(modelWar)
+function ModelWarHudForCampaign:onStartRunning(modelWar)
     self.m_ActorActionMenu     :getModel():onStartRunning(modelWar)
     self.m_ActorBattleInfo     :getModel():onStartRunning(modelWar)
     self.m_ActorMoneyEnergyInfo:getModel():onStartRunning(modelWar)
@@ -112,8 +94,8 @@ end
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
-function ModelWarHudForOnline:getModelWarCommandMenu()
+function ModelWarHudForCampaign:getModelWarCommandMenu()
     return self.m_ActorWarCommandMenu:getModel()
 end
 
-return ModelWarHudForOnline
+return ModelWarHudForCampaign

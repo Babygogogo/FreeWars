@@ -335,7 +335,15 @@ end
 --------------------------------------------------------------------------------
 -- The public functions/accessors.
 --------------------------------------------------------------------------------
-function ModelWarOnline:isWarReplay()
+function ModelWarOnline.isWarCampaign()
+    return false
+end
+
+function ModelWarOnline.isWarOnline()
+    return true
+end
+
+function ModelWarOnline.isWarReplay()
     return false
 end
 

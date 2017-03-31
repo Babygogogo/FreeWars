@@ -1,8 +1,12 @@
 
 local ViewTileDetail = class("ViewTileDetail", cc.Node)
 
-local LocalizationFunctions = requireFW("src.app.utilities.LocalizationFunctions")
 local DisplayNodeFunctions  = requireFW("src.app.utilities.DisplayNodeFunctions")
+local LocalizationFunctions = requireFW("src.app.utilities.LocalizationFunctions")
+local SingletonGetters      = requireFW("src.app.utilities.SingletonGetters")
+local VisibilityFunctions   = requireFW("src.app.utilities.VisibilityFunctions")
+
+local isTileVisible = VisibilityFunctions.isTileVisibleToPlayerIndex
 
 local LABEL_Z_ORDER       = 1
 local BOTTOM_LINE_Z_ORDER = 0
@@ -214,7 +218,11 @@ local function updateCaptureInfoWithModelTile(self, tile)
     if (not tile.getCurrentCapturePoint) then
         self.m_CaptureLabel:setString(LocalizationFunctions.getLocalizedText(107))
     else
-        self.m_CaptureLabel:setString(LocalizationFunctions.getLocalizedText(106, tile:getCurrentCapturePoint(), tile:getMaxCapturePoint()))
+        local modelWar     = self.m_Model:getModelWar()
+        local capturePoint = ((SingletonGetters.isWarCampaign(modelWar)) and (not isTileVisible(modelWar, tile:getGridIndex(), SingletonGetters.getModelPlayerManager(modelWar):getPlayerIndexForHuman()))) and
+            tile:getMaxCapturePoint()                                                                                                                                                                       or
+            tile:getCurrentCapturePoint()
+        self.m_CaptureLabel:setString(LocalizationFunctions.getLocalizedText(106, capturePoint, tile:getMaxCapturePoint()))
     end
 end
 
