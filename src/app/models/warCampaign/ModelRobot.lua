@@ -16,37 +16,37 @@ local assert, pairs = assert, pairs
 local math, table   = math, table
 
 local ACTION_CODES          = ActionCodeFunctions.getFullList()
-local PRODUCTION_CANDICATES = {                                                                                             -- ADJUSTABLE
+local PRODUCTION_CANDIDATES = {                                                                                             -- ADJUSTABLE
     Factory = {
-        Infantry   = 200,
+        Infantry   = 250,
         Mech       = 0,
-        Bike       = 180,
-        Recon      = 0,
-        Flare      = -100,
-        AntiAir    = 150,
-        Tank       = 400,
-        MediumTank = 150,
-        WarTank    = 50,
-        Artillery  = 150,
-        AntiTank   = -100,
-        Rockets    = -100,
-        Missiles   = -100,
-        Rig        = -100,
+        Bike       = 200,
+        Recon      = -100,
+        Flare      = -1000,
+        AntiAir    = 300,
+        Tank       = 600,
+        MediumTank = 200,
+        WarTank    = 100,
+        Artillery  = 100,
+        AntiTank   = 0,
+        Rockets    = 100,
+        Missiles   = -1000,
+        Rig        = -1000,
     },
     Airport = {
-        Fighter         = -100,
+        Fighter         = -1000,
         Bomber          = 0,
         Duster          = 100,
-        BattleCopter    = 250,
-        TransportCopter = -100,
+        BattleCopter    = 400,
+        TransportCopter = -1000,
     },
     Seaport = {
         Battleship = 50,
-        Carrier    = -50,
+        Carrier    = -1000,
         Submarine  = 50,
-        Cruiser    = 50,
-        Lander     = -100,
-        Gunboat    = 50,
+        Cruiser    = 150,
+        Lander     = -1000,
+        Gunboat    = 200,
     }
 }
 
@@ -95,7 +95,8 @@ local function getReachableArea(self, modelUnit, passableGridIndex, blockedGridI
     )
 end
 
-local function getPossibleDamageInPlayerTurn(self, robotUnit, gridIndex)
+local function getPossibleDamageInPlayerTurn(self, robotUnit, gridIndex, minBaseDamage)
+    minBaseDamage             = minBaseDamage or 0
     local modelWar            = self.m_ModelWar
     local playerIndexForHuman = self.m_PlayerIndexForHuman
     local modelUnitMap        = self.m_ModelUnitMap
@@ -108,9 +109,11 @@ local function getPossibleDamageInPlayerTurn(self, robotUnit, gridIndex)
     end
 
     modelUnitMap:forEachModelUnitOnMap(function(attacker)
-        if ((attacker:getPlayerIndex() == playerIndexForHuman) and
-            (attacker.getBaseDamage)                           and
-            (attacker:getBaseDamage(unitType)))                then
+        if ((attacker:getPlayerIndex() == playerIndexForHuman) and (attacker.getBaseDamage)) then
+            local baseDamage = attacker:getBaseDamage(unitType)
+            if ((not baseDamage) or (baseDamage < minBaseDamage)) then
+                return
+            end
 
             local minRange, maxRange = attacker:getAttackRangeMinMax()
             if (not attacker:canAttackAfterMove()) then
@@ -377,12 +380,13 @@ local function getScoreForActionProduceModelUnitOnTile(self, gridIndex, tiledID,
 
     local tileType = self.m_ModelTileMap:getModelTile(gridIndex):getTileType()
     local unitType = modelUnit:getUnitType()
-    local score    = PRODUCTION_CANDICATES[tileType][unitType]                                                                  -- ADJUSTABLE
+    local score    = PRODUCTION_CANDIDATES[tileType][unitType]                                                                  -- ADJUSTABLE
     if (((tileType == "Factory") and ((idleFactoriesCount - 1) * 1500 > (fund - productionCost)))  or
         ((tileType ~= "Factory") and ((idleFactoriesCount)     * 1500 > (fund - productionCost)))) then
-        score = score + (-1000)                                                                                                 -- ADJUSTABLE
+        score = score + (-999999)                                                                                               -- ADJUSTABLE
     end
 
+    --[[
     if (unitType == "AntiAir") then
         local teamIndex = modelUnit:getTeamIndex()
         self.m_ModelUnitMap:forEachModelUnitOnMap(function(modelUnitOnMap)
@@ -395,8 +399,9 @@ local function getScoreForActionProduceModelUnitOnTile(self, gridIndex, tiledID,
             end
         end)
     end
+    ]]
 
-    score = score + getPossibleDamageInPlayerTurn(self, modelUnit, gridIndex) * (-modelUnit:getProductionCost() / 6000)         -- ADJUSTABLE
+    score = score + getPossibleDamageInPlayerTurn(self, modelUnit, gridIndex, 10)                                               -- ADJUSTABLE
 
     local distanceToEnemyUnits,  enemyUnitsCount  = 0, 0
     local distanceToFriendUnits, friendUnitsCount = 0, 0
@@ -404,17 +409,20 @@ local function getScoreForActionProduceModelUnitOnTile(self, gridIndex, tiledID,
         if (unitOnMap:getPlayerIndex() == self.m_PlayerIndexForHuman) then
             distanceToEnemyUnits = distanceToEnemyUnits + GridIndexFunctions.getDistance(gridIndex, unitOnMap:getGridIndex())
             enemyUnitsCount      = enemyUnitsCount + 1
+
             if (modelUnit.getBaseDamage) then
                 local damage = math.min(modelUnit:getBaseDamage(unitOnMap:getUnitType()) or 0, unitOnMap:getCurrentHP())
-                score = score + (damage * unitOnMap:getProductionCost() / 6000)                                                 -- ADJUSTABLE
+                score = score + (damage)                                                                                        -- ADJUSTABLE
             end
             if (unitOnMap.getBaseDamage) then
-                local damage = (unitOnMap:getBaseDamage(unitType) or 0) * unitOnMap:getNormalizedCurrentHP() / 10
-                score = score + (-damage * productionCost / 6000)                                                               -- ADJUSTABLE
+                local damage = math.min((unitOnMap:getBaseDamage(unitType) or 0) * unitOnMap:getNormalizedCurrentHP() / 10, 100)
+                score = score + (-damage)                                                                                       -- ADJUSTABLE
             end
         else
             distanceToFriendUnits = distanceToFriendUnits + GridIndexFunctions.getDistance(gridIndex, unitOnMap:getGridIndex())
             friendUnitsCount      = friendUnitsCount + 1
+
+            score = score + (-unitOnMap:getCurrentHP())                                                                         -- ADJUSTABLE
         end
     end)
     if (enemyUnitsCount > 0) then
@@ -754,7 +762,6 @@ local function getMaxScoreAndAction(self, modelUnit, gridIndex, pathNodes)
     list[#list + 1] = getActionLaunchSilo(            self)
     list[#list + 1] = getActionProduceModelUnitOnUnit(self)
 
-    local itemWait = getScoreAndActionWait(self)
     assert((#list > 0) or (itemWait), "ModelRobot-getMaxScoreAndAction() the generated list has no valid action item.")
     return list, itemWait
     ]]
@@ -788,7 +795,7 @@ end
 local function getMaxScoreAndActionProduceUnitOnTileWithGridIndex(self, gridIndex, idleFactoriesCount)
     local playerIndex = self.m_ModelTurnManager:getPlayerIndex()
     local maxScore, targetTiledID
-    for unitType, _ in pairs(PRODUCTION_CANDICATES[self.m_ModelTileMap:getModelTile(gridIndex):getTileType()]) do
+    for unitType, _ in pairs(PRODUCTION_CANDIDATES[self.m_ModelTileMap:getModelTile(gridIndex):getTileType()]) do
         local tiledID = GameConstantFunctions.getTiledIdWithTileOrUnitName(unitType, playerIndex)
         maxScore, targetTiledID = getBetterScoreAndAction(maxScore, targetTiledID, getScoreForActionProduceModelUnitOnTile(self, gridIndex, tiledID, idleFactoriesCount), tiledID)
     end
@@ -805,30 +812,24 @@ local function getMaxScoreAndActionProduceUnitOnTileWithGridIndex(self, gridInde
 end
 
 local function getActionProduceModelUnitOnTileForMaxScore(self)
-    local playerIndexInTurn = self.m_ModelTurnManager:getPlayerIndex()
-    local modelUnitMap      = self.m_ModelUnitMap
-    local idleFactoriesPos, idleAirportsPos, idleSeaportsPos = {}, {}, {}
+    local playerIndexInTurn  = self.m_ModelTurnManager:getPlayerIndex()
+    local modelUnitMap       = self.m_ModelUnitMap
+    local idleBuildingsPos   = {}
+    local idleFactoriesCount = 0
+
     self.m_ModelTileMap:forEachModelTile(function(modelTile)
-        if ((modelTile:getPlayerIndex() == playerIndexInTurn) and (not modelUnitMap:getModelUnit(modelTile:getGridIndex()))) then
-            local tileType = modelTile:getTileType()
-            if     (tileType == "Factory") then idleFactoriesPos[#idleFactoriesPos + 1] = modelTile:getGridIndex()
-            elseif (tileType == "Airport") then idleAirportsPos[ #idleAirportsPos  + 1] = modelTile:getGridIndex()
-            elseif (tileType == "Seaport") then idleSeaportsPos[ #idleSeaportsPos  + 1] = modelTile:getGridIndex()
+        if ((modelTile:getPlayerIndex() == playerIndexInTurn)         and
+            (not modelUnitMap:getModelUnit(modelTile:getGridIndex())) and
+            (modelTile.getProductionList))                            then
+            idleBuildingsPos[#idleBuildingsPos + 1] = modelTile:getGridIndex()
+            if (modelTile:getTileType() == "Factory") then
+                idleFactoriesCount = idleFactoriesCount + 1
             end
         end
     end)
-    --[[
-    local fund               = self.m_ModelPlayerManager:getModelPlayer(playerIndexInTurn):getFund()
-    local unitValuesForHuman = getUnitValuesForPlayerIndex(self.m_PlayerIndexForHuman)
-    local unitValuesForRobot = getUnitValuesForPlayerIndex(playerIndexInTurn)
-    ]]
-    local idleFactoriesCount, idleAirportsCount, idleSeaportsCount = #idleFactoriesPos, #idleAirportsPos, #idleSeaportsPos
-    local idleBuildingsPos = TableFunctions.clone(idleFactoriesPos)
-    TableFunctions.appendList(idleBuildingsPos, idleAirportsPos)
-    TableFunctions.appendList(idleBuildingsPos, idleSeaportsPos)
 
     local maxScore, actionForMaxScore
-    for _, gridIndex in ipairs(idleBuildingsPos) do
+    for _, gridIndex in pairs(idleBuildingsPos) do
         maxScore, actionForMaxScore = getBetterScoreAndAction(maxScore, actionForMaxScore,
             getMaxScoreAndActionProduceUnitOnTileWithGridIndex(self, gridIndex, idleFactoriesCount)
         )
