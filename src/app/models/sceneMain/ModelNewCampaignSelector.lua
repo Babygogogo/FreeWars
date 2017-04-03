@@ -45,7 +45,7 @@ end
 
 local function initWarFieldList(self, list)
     local list = {}
-    for _, warFieldFileName in ipairs(WarFieldManager.getWarFieldFileNameList()) do
+    for _, warFieldFileName in ipairs(WarFieldManager.getWarFieldFilenameList("Campaign")) do
         list[#list + 1] = {
             name     = WarFieldManager.getWarFieldName(warFieldFileName),
             callback = function()

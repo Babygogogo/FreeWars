@@ -1,36 +1,25 @@
 
 local WarFieldManager = {}
 
-local WAR_FIELD_PATH = "res.data.templateWarField."
+local WAR_FIELD_PATH           = "res.data.templateWarField."
+local WAR_FIELD_FILENAME_LISTS = requireFW(WAR_FIELD_PATH .. "WarFieldFilenameLists")
 
-local string, pairs, ipairs, require = string, pairs, ipairs, require
+local string, pairs, ipairs, require, assert = string, pairs, ipairs, require, assert
+local math                                   = math
 
 local s_IsInitialized          = false
-local s_WarFieldFileNameList
 local s_WarFieldList
 local s_WarFieldListDeprecated = {}
 
 --------------------------------------------------------------------------------
 -- The util functions.
 --------------------------------------------------------------------------------
-local function loadWarFieldFileNameList()
-    return requireFW(WAR_FIELD_PATH .. "WarFieldList")
-end
-
-local function createWarFieldList(warFieldFileNameList)
+local function createWarFieldList()
     local list = {}
-    for _, warFieldFileName in ipairs(warFieldFileNameList) do
-        list[warFieldFileName] = requireFW(WAR_FIELD_PATH .. warFieldFileName)
-    end
-
-    for warFieldFileName, warFieldData in pairs(list) do
-        if (WarFieldManager.isRandomWarField(warFieldFileName)) then
-            local candidateList = warFieldData.list
-            assert(#candidateList > 0, "WarFieldManager-createWarFieldList() the candidateList of the random map is invalid: " .. warFieldFileName)
-
-            for _, candidateFileName in ipairs(candidateList) do
-                assert(list[candidateFileName], "WarFieldManager-createWarFieldList() a candidate war field is not found: " .. candidateFileName)
-            end
+    for _1, subList in pairs(WAR_FIELD_FILENAME_LISTS) do
+        assert(#subList > 0)
+        for _2, warFieldFilename in pairs(subList) do
+            list[warFieldFilename] = list[warFieldFilename] or requireFW(WAR_FIELD_PATH .. warFieldFilename)
         end
     end
 
@@ -44,48 +33,54 @@ function WarFieldManager.init()
     if (not s_IsInitialized) then
         s_IsInitialized = true
 
-        s_WarFieldFileNameList = loadWarFieldFileNameList()
-        s_WarFieldList         = createWarFieldList(s_WarFieldFileNameList)
+        s_WarFieldList = createWarFieldList()
     end
 
     return WarFieldManager
 end
 
-function WarFieldManager.isRandomWarField(warFieldFileName)
-    return (string.find(warFieldFileName, "Random", 1, true) == 1)
+function WarFieldManager.isRandomWarField(warFieldFilename)
+    return (string.find(warFieldFilename, "Random", 1, true) == 1)
 end
 
-function WarFieldManager.getWarFieldData(warFieldFileName)
+function WarFieldManager.getRandomWarFieldFilename(warFieldFilename)
+    local list = WAR_FIELD_FILENAME_LISTS[warFieldFilename]
+    return list[math.random(#list)]
+end
+
+function WarFieldManager.getWarFieldData(warFieldFilename)
     assert(s_IsInitialized, "WarFieldManager.getWarFieldData() the manager has not been initialized yet.")
-    if (s_WarFieldList[warFieldFileName]) then
-        return s_WarFieldList[warFieldFileName]
+    if (s_WarFieldList[warFieldFilename]) then
+        return s_WarFieldList[warFieldFilename]
     else
-        if (not s_WarFieldListDeprecated[warFieldFileName]) then
-            s_WarFieldListDeprecated[warFieldFileName] = requireFW(WAR_FIELD_PATH .. warFieldFileName)
+        if (not s_WarFieldListDeprecated[warFieldFilename]) then
+            s_WarFieldListDeprecated[warFieldFilename] = requireFW(WAR_FIELD_PATH .. warFieldFilename)
         end
-        return s_WarFieldListDeprecated[warFieldFileName]
+        return s_WarFieldListDeprecated[warFieldFilename]
     end
 end
 
-function WarFieldManager.getWarFieldFileNameList()
-    assert(s_IsInitialized, "WarFieldManager.getWarFieldFileNameList() the manager has not been initialized yet.")
-    return s_WarFieldFileNameList
+function WarFieldManager.getWarFieldFilenameList(listName)
+    local list = WAR_FIELD_FILENAME_LISTS[listName]
+    assert(list, "WarFieldManager.getWarFieldFilenameList() the list doesn't exist.")
+
+    return list
 end
 
-function WarFieldManager.getWarFieldName(warFieldFileName)
-    return WarFieldManager.getWarFieldData(warFieldFileName).warFieldName
+function WarFieldManager.getWarFieldName(warFieldFilename)
+    return WarFieldManager.getWarFieldData(warFieldFilename).warFieldName
 end
 
-function WarFieldManager.getWarFieldAuthorName(warFieldFileName)
-    return WarFieldManager.getWarFieldData(warFieldFileName).authorName
+function WarFieldManager.getWarFieldAuthorName(warFieldFilename)
+    return WarFieldManager.getWarFieldData(warFieldFilename).authorName
 end
 
-function WarFieldManager.getPlayersCount(warFieldFileName)
-    return WarFieldManager.getWarFieldData(warFieldFileName).playersCount
+function WarFieldManager.getPlayersCount(warFieldFilename)
+    return WarFieldManager.getWarFieldData(warFieldFilename).playersCount
 end
 
-function WarFieldManager.getMapSize(warFieldFileName)
-    local data = WarFieldManager.getWarFieldData(warFieldFileName)
+function WarFieldManager.getMapSize(warFieldFilename)
+    local data = WarFieldManager.getWarFieldData(warFieldFilename)
     return {width = data.width, height = data.height}
 end
 
