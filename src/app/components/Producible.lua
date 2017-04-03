@@ -32,19 +32,10 @@ function Producible:loadTemplate(template)
 end
 
 --------------------------------------------------------------------------------
--- The public callback function on start running.
---------------------------------------------------------------------------------
-function Producible:onStartRunning(modelSceneWar)
-    self.m_ModelSceneWar = modelSceneWar
-
-    return self
-end
-
---------------------------------------------------------------------------------
 -- The exported functions.
 --------------------------------------------------------------------------------
 function Producible:getProductionCost()
-    return Producible.getProductionCostWithTiledId(self.m_Owner:getTiledId(), SingletonGetters.getModelPlayerManager(self.m_ModelSceneWar))
+    return self.m_Template.productionCost
 end
 
 function Producible:getBaseProductionCost()

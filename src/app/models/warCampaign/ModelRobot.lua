@@ -18,34 +18,34 @@ local math, table   = math, table
 local ACTION_CODES          = ActionCodeFunctions.getFullList()
 local PRODUCTION_CANDIDATES = {                                                                                             -- ADJUSTABLE
     Factory = {
-        Infantry   = 250,
-        Mech       = 0,
+        Infantry   = 300,
+        Mech       = -100,
         Bike       = 200,
-        Recon      = -100,
-        Flare      = -1000,
-        AntiAir    = 300,
+        Recon      = -300,
+        Flare      = -10000,
+        AntiAir    = 200,
         Tank       = 600,
-        MediumTank = 200,
-        WarTank    = 100,
+        MediumTank = 500,
+        WarTank    = 500,
         Artillery  = 100,
-        AntiTank   = 0,
+        AntiTank   = 100,
         Rockets    = 100,
         Missiles   = -1000,
-        Rig        = -1000,
+        Rig        = -10000,
     },
     Airport = {
         Fighter         = -1000,
         Bomber          = 0,
         Duster          = 100,
         BattleCopter    = 400,
-        TransportCopter = -1000,
+        TransportCopter = -10000,
     },
     Seaport = {
         Battleship = 50,
-        Carrier    = -1000,
+        Carrier    = -10000,
         Submarine  = 50,
         Cruiser    = 150,
-        Lander     = -1000,
+        Lander     = -10000,
         Gunboat    = 200,
     }
 }
@@ -349,6 +349,9 @@ local function getScoreForActionCaptureModelTile(self, modelUnit, gridIndex)
 end
 
 local function getScoreForActionJoinModelUnit(self, modelUnit, gridIndex)
+    if (self.m_ModelUnitMap:getModelUnit(gridIndex):isStateIdle()) then
+        return nil
+    end
     return -200                                                                                                                 -- ADJUSTABLE
 end
 
@@ -401,7 +404,7 @@ local function getScoreForActionProduceModelUnitOnTile(self, gridIndex, tiledID,
     end
     ]]
 
-    score = score + getPossibleDamageInPlayerTurn(self, modelUnit, gridIndex, 10)                                               -- ADJUSTABLE
+    score = score + (-getPossibleDamageInPlayerTurn(self, modelUnit, gridIndex, 15))                                            -- ADJUSTABLE
 
     local distanceToEnemyUnits,  enemyUnitsCount  = 0, 0
     local distanceToFriendUnits, friendUnitsCount = 0, 0
@@ -422,7 +425,9 @@ local function getScoreForActionProduceModelUnitOnTile(self, gridIndex, tiledID,
             distanceToFriendUnits = distanceToFriendUnits + GridIndexFunctions.getDistance(gridIndex, unitOnMap:getGridIndex())
             friendUnitsCount      = friendUnitsCount + 1
 
-            score = score + (-unitOnMap:getCurrentHP())                                                                         -- ADJUSTABLE
+            if (unitOnMap:getUnitType() == unitType) then
+                score = score + (-unitOnMap:getCurrentHP())                                                                     -- ADJUSTABLE
+            end
         end
     end)
     if (enemyUnitsCount > 0) then
@@ -733,12 +738,12 @@ end
 
 local function getMaxScoreAndAction(self, modelUnit, gridIndex, pathNodes)
     local scoreForActionLoadModelUnit, actionLoadModelUnit = getScoreAndActionLoadModelUnit(self, modelUnit, gridIndex, pathNodes)
-    if (scoreForActionLoadModelUnit) then
+    if (actionLoadModelUnit) then
         return scoreForActionLoadModelUnit, actionLoadModelUnit
     end
 
     local scoreForActionJoinModelUnit, actionJoinModelUnit = getScoreAndActionJoinModelUnit(self, modelUnit, gridIndex, pathNodes)
-    if (scoreForActionJoinModelUnit) then
+    if (actionJoinModelUnit) then
         return scoreForActionJoinModelUnit, actionJoinModelUnit
     end
 
