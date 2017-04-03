@@ -102,6 +102,8 @@ local function createCampaignList(self, campaignConfigurations)
 end
 
 local function resetMenuItems(self)
+    self.m_View:removeAllItems()
+
     local campaignConfigurations = WarCampaignManager.getAllCampaignConfigurations()
     local campaignList           = createCampaignList(self, campaignConfigurations)
     if (#campaignList == 0) then
