@@ -241,27 +241,13 @@ local function getScoreForPosition(self, modelUnit, gridIndex)
     local distanceToEnemyUnits, enemyUnitsCount   = 0, 0
     local distanceToFriendUnits, friendUnitsCount = 0, 0
     self.m_ModelUnitMap:forEachModelUnitOnMap(function(unitOnMap)
-        if (unitOnMap:getTeamIndex() ~= teamIndex) then
-            distanceToEnemyUnits = distanceToEnemyUnits + GridIndexFunctions.getDistance(gridIndex, unitOnMap:getGridIndex())
-            enemyUnitsCount      = enemyUnitsCount + 1
-        elseif (unitOnMap ~= modelUnit) then
+        if ((unitOnMap:getTeamIndex() == teamIndex) and (unitOnMap ~= modelUnit)) then
             distanceToFriendUnits = distanceToFriendUnits + GridIndexFunctions.getDistance(gridIndex, unitOnMap:getGridIndex())
             friendUnitsCount      = friendUnitsCount + 1
         end
     end)
-    if (enemyUnitsCount > 0) then
-        if (GameConstantFunctions.isTypeInCategory(modelUnit:getUnitType(), "IndirectUnits")) then
-            score = score + distanceToEnemyUnits / enemyUnitsCount * 8                                                          -- ADJUSTABLE
-        else
-            score = score + distanceToEnemyUnits / enemyUnitsCount * 4                                                          -- ADJUSTABLE
-        end
-    end
     if (friendUnitsCount > 0) then
-        if (GameConstantFunctions.isTypeInCategory(modelUnit:getUnitType(), "IndirectUnits")) then
-            score = score + distanceToFriendUnits / friendUnitsCount * (-8)                                                     -- ADJUSTABLE
-        else
-            score = score + distanceToFriendUnits / friendUnitsCount * (4)                                                      -- ADJUSTABLE
-        end
+        score = score + distanceToFriendUnits / friendUnitsCount * (4)                                                          -- ADJUSTABLE
     end
 
     local distanceToEnemyTiles, enemyTilesCount = 0, 0
@@ -269,7 +255,7 @@ local function getScoreForPosition(self, modelUnit, gridIndex)
         if ((modelTileOnMap.getCurrentCapturePoint) and (modelTileOnMap:getTeamIndex() ~= teamIndex)) then
             local multiplier = 1
             if (modelTileOnMap:getPlayerIndex() == self.m_PlayerIndexForHuman) then
-                multiplier = 0.5
+                multiplier = 0.3                                                                                                -- ADJUSTABLE
             end
             distanceToEnemyTiles = distanceToEnemyTiles + GridIndexFunctions.getDistance(modelTileOnMap:getGridIndex(), gridIndex) * multiplier
             enemyTilesCount      = enemyTilesCount + 1
@@ -288,7 +274,8 @@ local function getScoreForActionAttack(self, modelUnit, gridIndex, targetGridInd
     end
 
     local targetTile = self.m_ModelTileMap:getModelTile(targetGridIndex)
-    if (targetTile:getTileType() == "Meteor") then
+    local tileType   = targetTile:getTileType()
+    if (tileType == "Meteor") then
         local score = math.min(attackDamage, targetTile:getCurrentHP())                                                         -- ADJUSTABLE
         return score
     end
@@ -302,6 +289,9 @@ local function getScoreForActionAttack(self, modelUnit, gridIndex, targetGridInd
 
     if ((targetUnit.isCapturingModelTile) and (targetUnit:isCapturingModelTile())) then
         score = score + 15                                                                                                      -- ADJUSTABLE
+        if ((tileType == "Headquarters") or (tileType == "Factory") or (tileType == "Airport") or (tileType == "Seaport")) then
+            score = score + 99999                                                                                               -- ADJUSTABLE
+        end
     end
 
     score = score + (attackDamage - (counterDamage or 0))                                                                       -- ADJUSTABLE
@@ -334,6 +324,7 @@ local function getScoreForActionCaptureModelTile(self, modelUnit, gridIndex)
         elseif (tileType == "City")          then tileValue = tileValue + 30                                                    -- ADJUSTABLE
         elseif (tileType == "CommandTower")  then tileValue = tileValue + 40                                                    -- ADJUSTABLE
         elseif (tileType == "Radar")         then tileValue = tileValue + 30                                                    -- ADJUSTABLE
+        else                                      tileValue = tileValue + 10                                                    -- ADJUSTABLE
         end
 
         if (modelTile:getPlayerIndex() ~= 0) then
