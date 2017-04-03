@@ -1,11 +1,13 @@
 
 local ModelNewCampaignSelector = class("ModelNewCampaignSelector")
 
-local SingletonGetters = requireFW("src.app.utilities.SingletonGetters")
-local WarFieldManager  = requireFW("src.app.utilities.WarFieldManager")
-local Actor            = requireFW("src.global.actors.Actor")
+local LocalizationFunctions = requireFW("src.app.utilities.LocalizationFunctions")
+local SingletonGetters      = requireFW("src.app.utilities.SingletonGetters")
+local WarFieldManager       = requireFW("src.app.utilities.WarFieldManager")
+local Actor                 = requireFW("src.global.actors.Actor")
 
-local ipairs = ipairs
+local getLocalizedText = LocalizationFunctions.getLocalizedText
+local ipairs           = ipairs
 
 --------------------------------------------------------------------------------
 -- The composition elements.
@@ -43,9 +45,9 @@ local function getActorCampaignConfigurator(self)
     return self.m_ActorCampaignConfigurator
 end
 
-local function initWarFieldList(self, list)
+local function createWarFieldList(self, listName)
     local list = {}
-    for _, warFieldFileName in ipairs(WarFieldManager.getWarFieldFilenameList("Campaign")) do
+    for _, warFieldFileName in ipairs(WarFieldManager.getWarFieldFilenameList(listName)) do
         list[#list + 1] = {
             name     = WarFieldManager.getWarFieldName(warFieldFileName),
             callback = function()
@@ -58,25 +60,13 @@ local function initWarFieldList(self, list)
         }
     end
 
-    self.m_ItemListWarField = list
+    return list
 end
 
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
 function ModelNewCampaignSelector:ctor(param)
-    initWarFieldList(self)
-
-    return self
-end
-
-function ModelNewCampaignSelector:initView()
-    local view = self.m_View
-    assert(view, "ModelNewCampaignSelector:initView() no view is attached to the actor of the model.")
-
-    view:removeAllItems()
-        :showListWarField(self.m_ItemListWarField)
-
     return self
 end
 
@@ -93,6 +83,26 @@ end
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
+function ModelNewCampaignSelector:setModeCampaign()
+    if (self.m_View) then
+        self.m_View:setMenuTitleText(getLocalizedText(1, "Campaign"))
+            :removeAllItems()
+            :showListWarField(createWarFieldList(self, "Campaign"))
+    end
+
+    return self
+end
+
+function ModelNewCampaignSelector:setModeFreeGame()
+    if (self.m_View) then
+        self.m_View:setMenuTitleText(getLocalizedText(1, "Free Game"))
+            :removeAllItems()
+            :showListWarField(createWarFieldList(self, "SinglePlayerGame"))
+    end
+
+    return self
+end
+
 function ModelNewCampaignSelector:isEnabled()
     return self.m_IsEnabled
 end

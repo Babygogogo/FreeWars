@@ -211,8 +211,9 @@ local function setStateSinglePlayerGame(self)
     self.m_View:setMenuTitleText(getLocalizedText(1, "SinglePlayerGame"))
         :setButtonExitText(getLocalizedText(1, "Back"))
         :setItems({
-            self.m_ItemSingleNew,
-            self.m_ItemSingleContinue,
+            self.m_ItemSingleCampaign,
+            self.m_ItemSingleFreeGame,
+            self.m_ItemSingleLoadGame,
         })
 end
 
@@ -228,22 +229,14 @@ local function initItemAuxiliaryCommands(self)
     }
 end
 
-local function initItemSingleContinue(self)
-    self.m_ItemSingleContinue = {
-        name     = getLocalizedText(1, "Continue"),
+local function initItemSingleCampaign(self)
+    self.m_ItemSingleCampaign = {
+        name     = getLocalizedText(1, "Campaign"),
         callback = function()
             self:setMenuEnabled(false)
-                :getModelContinueCampaignSelector():setEnabled(true)
-        end
-    }
-end
-
-local function initItemSingleNew(self)
-    self.m_ItemSingleNew = {
-        name     = getLocalizedText(1, "NewGame"),
-        callback = function()
-            self:setMenuEnabled(false)
-                :getModelNewCampaignSelector():setEnabled(true)
+            self:getModelNewCampaignSelector()
+                :setModeCampaign()
+                :setEnabled(true)
         end
     }
 end
@@ -257,7 +250,7 @@ local function initItemSinglePlayerGame(self)
     }
 end
 
-local function initItemContinue(self)
+local function initItemMultiContinue(self)
     local item = {
         name     = getLocalizedText(1, "Continue"),
         callback = function()
@@ -269,7 +262,7 @@ local function initItemContinue(self)
     self.m_ItemContinue = item
 end
 
-local function initItemExitWar(self)
+local function initItemMultiExitWar(self)
     self.m_ItemExitWar = {
         name     = getLocalizedText(1, "ExitWar"),
         callback = function()
@@ -291,7 +284,7 @@ local function initItemHelp(self)
     self.m_ItemHelp = item
 end
 
-local function initItemJoinWar(self)
+local function initItemMultiJoinWar(self)
     local item = {
         name     = getLocalizedText(1, "JoinWar"),
         callback = function()
@@ -336,7 +329,7 @@ local function initItemMultiPlayersGame(self)
     }
 end
 
-local function initItemNewWar(self)
+local function initItemMultiNewWar(self)
     local item = {
         name     = getLocalizedText(1, "NewGame"),
         callback = function()
@@ -375,6 +368,28 @@ local function initItemSetMusic(self)
     self.m_ItemSetMusic = item
 end
 
+local function initItemSingleLoadGame(self)
+    self.m_ItemSingleLoadGame = {
+        name     = getLocalizedText(1, "Load Game"),
+        callback = function()
+            self:setMenuEnabled(false)
+                :getModelContinueCampaignSelector():setEnabled(true)
+        end
+    }
+end
+
+local function initItemSingleFreeGame(self)
+    self.m_ItemSingleFreeGame = {
+        name     = getLocalizedText(1, "Free Game"),
+        callback = function()
+            self:setMenuEnabled(false)
+            self:getModelNewCampaignSelector()
+                :setModeFreeGame()
+                :setEnabled(true)
+        end,
+    }
+end
+
 local function initItemViewGameRecord(self)
     self.m_ItemViewGameRecord = {
         name     = getLocalizedText(1, "ViewGameRecord"),
@@ -390,18 +405,19 @@ end
 --------------------------------------------------------------------------------
 function ModelMainMenu:ctor(param)
     initItemAuxiliaryCommands(  self)
-    initItemContinue(           self)
-    initItemExitWar(            self)
     initItemHelp(               self)
-    initItemJoinWar(            self)
     initItemLogin(              self)
     initItemManageReplay(       self)
+    initItemMultiContinue(      self)
+    initItemMultiExitWar(       self)
+    initItemMultiJoinWar(       self)
+    initItemMultiNewWar(        self)
     initItemMultiPlayersGame(   self)
-    initItemNewWar(             self)
     initItemSetMessageIndicator(self)
     initItemSetMusic(           self)
-    initItemSingleContinue(     self)
-    initItemSingleNew(          self)
+    initItemSingleCampaign(     self)
+    initItemSingleLoadGame(     self)
+    initItemSingleFreeGame(     self)
     initItemSinglePlayerGame(   self)
     initItemViewGameRecord(     self)
 
