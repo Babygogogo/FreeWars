@@ -214,6 +214,12 @@ end
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
+function ViewNewCampaignSelector:setMenuTitleText(text)
+    self.m_MenuTitle:setString(text)
+
+    return self
+end
+
 function ViewNewCampaignSelector:removeAllItems()
     self.m_MenuListView:removeAllItems()
 

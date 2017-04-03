@@ -754,7 +754,7 @@ end
 
 function ModelCampaignConfigurator:setModeContinue()
     self.m_Mode                           = "modeContinue"
-    self.m_MenuTitleTextForMode           = getLocalizedText(14, "ContinueWar")
+    self.m_MenuTitleTextForMode           = getLocalizedText(1, "Load Game")
     self.m_CallbackOnButtonConfirmTouched = function()
         SingletonGetters.getModelMessageIndicator(self.m_ModelSceneMain):showMessage(getLocalizedText(14, "RetrievingWarData"))
         loadAndRunCampaign(self.m_CampaignConfiguration.saveIndex)
