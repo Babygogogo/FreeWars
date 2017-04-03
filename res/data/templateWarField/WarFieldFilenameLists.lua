@@ -1,6 +1,8 @@
 return {
     Campaign = {
-        "BaZhenTuEr",
+        "PVE_YiDongYuJinGong",
+        "PVE_JianZhuWu",
+        "PVE_DuMuQiao",
     },
 
     MultiPlayerGame = {
@@ -34,6 +36,7 @@ return {
         "WuGuangDeWuTai",
         "WuShangZhiAi",
         "YangFanYuanHang",
+        "YongZheShiShi",
         "YunShiQun",
         "ZhengZhengFangFang",
 
@@ -132,6 +135,7 @@ return {
         "WuGuangDeWuTai",
         "WuShangZhiAi",
         "YangFanYuanHang",
+        "YongZheShiShi",
         "YunShiQun",
         "ZhengZhengFangFang",
     },
