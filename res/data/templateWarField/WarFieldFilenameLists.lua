@@ -61,7 +61,6 @@ return {
     SinglePlayerGame = {
         "BaZhenTuEr",               -- 2p
         "BaoChiWeiXiao_2",
-        "BaoFengYan",
         "BeiZhong",
         "BiFengGang",
         "CuiMian",
@@ -69,14 +68,11 @@ return {
         "DuoYanPingYuan",
         "FangBaoPingZhang",
         "FeiXu_2",
-        "FengBaoQianXian",
         "FuWuTai",
         "GaoLaMiJia",
         "GanHeZhiJing",
         "GeBiTan",
-        "HaiAnTuJi",
         "HeiSenLin",
-        "Ling",
         "ManShouXueXing",
         "SanHeGu",
         "ShenSeYanCaoZhanZheng",
@@ -85,10 +81,8 @@ return {
         "SiTongBaDa",
         "TanXinWan",
         "WangPaiKongJun",
-        "WeiJiSiFu",
         "WuGuangDeWuTai",
         "WuShangZhiAi",
-        "YangFanYuanHang",
         "YunShiQun",
         "ZhengZhengFangFang",
 
@@ -99,7 +93,6 @@ return {
         "BeiPan",                   -- 4p
         "DuiKangZhaoTianTong",
         "HuiLangYu",
-        "ShiJieDaZhan",
         "XiaoGuoZhengBaSai",
         "XuanZe",
     },
