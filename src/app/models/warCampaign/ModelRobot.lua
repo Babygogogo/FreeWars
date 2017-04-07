@@ -335,7 +335,10 @@ local function getScoreForPosition(self, modelUnit, gridIndex)
             local multiplier = 1
             local tileType   = modelTileOnMap:getTileType()
             if ((tileType == "Factory") or (tileType == "Airport") or (tileType == "Seaport") or (tileType == "CommandTower")) then
-                multiplier = 2                                                                                                  -- ADJUSTABLE
+                multiplier = multiplier * 2                                                                                     -- ADJUSTABLE
+            end
+            if (modelTileOnMap:getPlayerIndex() == self.m_PlayerIndexForHuman) then
+                multiplier = multiplier * 0.5
             end
 
             distanceToEnemyTiles = distanceToEnemyTiles + GridIndexFunctions.getDistance(modelTileOnMap:getGridIndex(), gridIndex) * multiplier
