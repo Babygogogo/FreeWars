@@ -18,35 +18,35 @@ local math, table   = math, table
 local ACTION_CODES          = ActionCodeFunctions.getFullList()
 local PRODUCTION_CANDIDATES = {                                                                                             -- ADJUSTABLE
     Factory = {
-        Infantry   = 600,
-        Mech       = -500,
-        Bike       = 400,
-        Recon      = -100000,
-        Flare      = -100000,
-        AntiAir    = 0,
-        Tank       = 1000,
-        MediumTank = 800,
-        WarTank    = 600,
-        Artillery  = 0,
-        AntiTank   = 100,
+        Infantry   = 1500,
+        Mech       = 0,
+        Bike       = 1200,
+        Recon      = -999999,
+        Flare      = -999999,
+        AntiAir    = 500,
+        Tank       = 2000,
+        MediumTank = 1800,
+        WarTank    = 1600,
+        Artillery  = 1400,
+        AntiTank   = 1000,
         Rockets    = 0,
-        Missiles   = -100000,
-        Rig        = -100000,
+        Missiles   = -999999,
+        Rig        = -999999,
     },
     Airport = {
-        Fighter         = -100000,
+        Fighter         = -999999,
         Bomber          = 0,
-        Duster          = 200,
-        BattleCopter    = 600,
-        TransportCopter = -100000,
+        Duster          = 1200,
+        BattleCopter    = 1800,
+        TransportCopter = -999999,
     },
     Seaport = {
         Battleship = 0,
-        Carrier    = -100000,
+        Carrier    = -999999,
         Submarine  = 0,
-        Cruiser    = 100,
-        Lander     = -100000,
-        Gunboat    = 200,
+        Cruiser    = 900,
+        Lander     = -999999,
+        Gunboat    = 1000,
     }
 }
 
@@ -67,6 +67,26 @@ end
 
 local function isModelUnitLoaded(self, modelUnit)
     return self.m_ModelUnitMap:getLoadedModelUnitWithUnitId(modelUnit:getUnitId()) ~= nil
+end
+
+local function calculateUnitValueRatio(self)
+    local aiUnitValue, humanUnitValue = 0, 0
+    local func                        = function(modelUnit)
+        if (modelUnit:getPlayerIndex() == self.m_PlayerIndexForHuman) then
+            humanUnitValue = humanUnitValue + modelUnit:getProductionCost() * modelUnit:getCurrentHP() / 100
+        else
+            aiUnitValue    = aiUnitValue    + modelUnit:getProductionCost() * modelUnit:getCurrentHP() / 100
+        end
+    end
+
+    self.m_ModelUnitMap:forEachModelUnitOnMap(func)
+        :forEachModelUnitLoaded(func)
+
+    if (humanUnitValue > 0) then
+        return aiUnitValue / humanUnitValue
+    else
+        return 1
+    end
 end
 
 local function getReachableArea(self, modelUnit, passableGridIndex, blockedGridIndex)
@@ -159,6 +179,73 @@ local function getPossibleDamageInPlayerTurn(self, robotUnit, gridIndex, minBase
     return damage
 end
 
+local function isUnitThreatened(self, robotUnit, gridIndex, minDamage)
+    minDamage                 = math.min(minDamage or 50, robotUnit:getCurrentHP())
+    local modelWar            = self.m_ModelWar
+    local playerIndexForHuman = self.m_PlayerIndexForHuman
+    local modelUnitMap        = self.m_ModelUnitMap
+    local unitType            = robotUnit:getUnitType()
+    local mapSize             = modelUnitMap:getMapSize()
+    local isThreatened        = false
+    local passableGridIndex
+    if ((not GridIndexFunctions.isEqual(robotUnit:getGridIndex(), gridIndex)) and (not isModelUnitLoaded(self, robotUnit))) then
+        passableGridIndex = robotUnit:getGridIndex()
+    end
+
+    modelUnitMap:forEachModelUnitOnMap(function(attacker)
+        if ((not isThreatened) and (attacker:getPlayerIndex() == playerIndexForHuman) and (attacker.getBaseDamage) and (attacker:getBaseDamage(unitType))) then
+            local minRange, maxRange = attacker:getAttackRangeMinMax()
+            if (not attacker:canAttackAfterMove()) then
+                local attackerGridIndex = attacker:getGridIndex()
+                local distance          = GridIndexFunctions.getDistance(attackerGridIndex, gridIndex)
+                if ((distance <= maxRange)                                                                                                                       and
+                    (distance >= minRange)                                                                                                                       and
+                    (DamageCalculator.getAttackDamage(attacker, attackerGridIndex, attacker:getCurrentHP(), robotUnit, gridIndex, modelWar, true) >= minDamage)) then
+                    isThreatened = true
+                end
+
+            elseif (maxRange + math.min(attacker:getMoveRange(), attacker:getCurrentFuel()) >= GridIndexFunctions.getDistance(attacker:getGridIndex(), gridIndex)) then
+                local reachableArea = getReachableArea(self, attacker, passableGridIndex, gridIndex)
+                for _, gridIndexWithinAttackRange in pairs(GridIndexFunctions.getGridsWithinDistance(gridIndex, minRange, maxRange, mapSize)) do
+                    local x, y = gridIndexWithinAttackRange.x, gridIndexWithinAttackRange.y
+                    if ((reachableArea[x])                                                                                                                                    and
+                        (reachableArea[x][y])                                                                                                                                 and
+                        (DamageCalculator.getAttackDamage(attacker, gridIndexWithinAttackRange, attacker:getCurrentHP(), robotUnit, gridIndex, modelWar, true) >= minDamage)) then
+                        isThreatened = true
+                        break
+                    end
+                end
+            end
+        end
+    end)
+
+    modelUnitMap:forEachModelUnitLoaded(function(attacker)
+        local loader = modelUnitMap:getModelUnit(attacker:getGridIndex())
+        if ((not isThreatened)                                 and
+            (attacker:getPlayerIndex() == playerIndexForHuman) and
+            (attacker.getBaseDamage)                           and
+            (attacker:getBaseDamage(unitType))                 and
+            (attacker:canAttackAfterMove())                    and
+            (loader:hasLoadUnitId(attacker:getUnitId()))       and
+            (loader:canLaunchModelUnit()))                     then
+
+            local minRange, maxRange = attacker:getAttackRangeMinMax()
+            local reachableArea      = getReachableArea(self, attacker, passableGridIndex, gridIndex)
+            for _, gridIndexWithinAttackRange in pairs(GridIndexFunctions.getGridsWithinDistance(gridIndex, minRange, maxRange, mapSize)) do
+                local x, y = gridIndexWithinAttackRange.x, gridIndexWithinAttackRange.y
+                if ((reachableArea[x])                                                                                                                                    and
+                    (reachableArea[x][y])                                                                                                                                 and
+                    (DamageCalculator.getAttackDamage(attacker, gridIndexWithinAttackRange, attacker:getCurrentHP(), robotUnit, gridIndex, modelWar, true) >= minDamage)) then
+                    isThreatened = true
+                    break
+                end
+            end
+        end
+    end)
+
+    return isThreatened
+end
+
 local function getBetterScoreAndAction(oldScore, oldAction, newScore, newAction)
     if (not newScore) then
         return oldScore, oldAction
@@ -217,7 +304,13 @@ end
 -- The score calculators.
 --------------------------------------------------------------------------------
 local function getScoreForPosition(self, modelUnit, gridIndex)
-    local score     = 0                                                                                                         -- ADJUSTABLE
+    local score
+    if ((GameConstantFunctions.isTypeInCategory(modelUnit:getUnitType(), "InfantryUnits")) or (not isUnitThreatened(self, modelUnit, gridIndex))) then
+        score = 0                                                                                                               -- ADJUSTABLE
+    else
+        score = -math.min(modelUnit:getCurrentHP(), 50) * (2 + modelUnit:getProductionCost() / 1000)                            -- ADJUSTABLE
+    end
+
     local modelTile = self.m_ModelTileMap:getModelTile(gridIndex)
     if ((modelTile.canRepairTarget) and (modelTile:canRepairTarget(modelUnit))) then
         score = score + (10 - modelUnit:getNormalizedCurrentHP()) * 10                                                          -- ADJUSTABLE
@@ -235,26 +328,19 @@ local function getScoreForPosition(self, modelUnit, gridIndex)
         end
     end
 
-    local teamIndex                               = modelUnit:getTeamIndex()
-    local distanceToEnemyUnits, enemyUnitsCount   = 0, 0
-    local distanceToFriendUnits, friendUnitsCount = 0, 0
-    self.m_ModelUnitMap:forEachModelUnitOnMap(function(unitOnMap)
-        if ((unitOnMap:getTeamIndex() == teamIndex) and (unitOnMap ~= modelUnit)) then
-            distanceToFriendUnits = distanceToFriendUnits + GridIndexFunctions.getDistance(gridIndex, unitOnMap:getGridIndex())
-            friendUnitsCount      = friendUnitsCount + 1
-        end
-    end)
-    if (friendUnitsCount > 0) then
-        score = score + distanceToFriendUnits / friendUnitsCount * (5)                                                          -- ADJUSTABLE
-    end
-
+    local teamIndex                             = modelUnit:getTeamIndex()
     local distanceToEnemyTiles, enemyTilesCount = 0, 0
     self.m_ModelTileMap:forEachModelTile(function(modelTileOnMap)
         if ((modelTileOnMap.getCurrentCapturePoint) and (modelTileOnMap:getTeamIndex() ~= teamIndex)) then
             local multiplier = 1
-            if ((modelTileOnMap:getPlayerIndex() == self.m_PlayerIndexForHuman) or (modelTileOnMap:getCurrentCapturePoint() < 20)) then
-                multiplier = 0.3                                                                                                -- ADJUSTABLE
+            local tileType   = modelTileOnMap:getTileType()
+            if ((tileType == "Factory") or (tileType == "Airport") or (tileType == "Seaport") or (tileType == "CommandTower")) then
+                multiplier = multiplier * 2                                                                                     -- ADJUSTABLE
             end
+            if (modelTileOnMap:getPlayerIndex() == self.m_PlayerIndexForHuman) then
+                multiplier = multiplier * 0.5
+            end
+
             distanceToEnemyTiles = distanceToEnemyTiles + GridIndexFunctions.getDistance(modelTileOnMap:getGridIndex(), gridIndex) * multiplier
             enemyTilesCount      = enemyTilesCount + 1
         end
@@ -279,13 +365,17 @@ local function getScoreForActionAttack(self, modelUnit, gridIndex, targetGridInd
 
     local targetUnit = self.m_ModelUnitMap:getModelUnit(targetGridIndex)
     attackDamage     = math.min(attackDamage, targetUnit:getCurrentHP())
-    local score      = 10 + attackDamage * (2 + targetUnit:getProductionCost() / 1000)                                          -- ADJUSTABLE
+    local score      = 10 + attackDamage * (2 + targetUnit:getProductionCost() / 1000 * math.max(1, self.m_UnitValueRatio))     -- ADJUSTABLE
     if (targetUnit:getCurrentHP() <= attackDamage) then
         score = score + 30                                                                                                      -- ADJUSTABLE
     end
 
     if ((targetUnit.isCapturingModelTile) and (targetUnit:isCapturingModelTile())) then
-        score = score + 20                                                                                                      -- ADJUSTABLE
+        if (targetTile:getCurrentCapturePoint() > targetUnit:getCaptureAmount()) then
+            score = score + 20                                                                                                  -- ADJUSTABLE
+        else
+            score = score + 200                                                                                                 -- ADJUSTABLE
+        end
         if ((tileType == "Headquarters") or (tileType == "Factory") or (tileType == "Airport") or (tileType == "Seaport")) then
             score = score + 99999                                                                                               -- ADJUSTABLE
         end
@@ -309,27 +399,25 @@ local function getScoreForActionCaptureModelTile(self, modelUnit, gridIndex)
     local captureAmount       = modelUnit:getCaptureAmount()
     if (captureAmount >= currentCapturePoint) then
         return 10000                                                                                                            -- ADJUSTABLE
+    elseif (captureAmount < currentCapturePoint / 3) then
+        return 0
     else
         local tileValue = 0
         local tileType  = modelTile:getTileType()
-        if     (tileType == "Headquarters")  then tileValue = tileValue + 50                                                    -- ADJUSTABLE
-        elseif (tileType == "Factory")       then tileValue = tileValue + 50                                                    -- ADJUSTABLE
-        elseif (tileType == "Airport")       then tileValue = tileValue + 40                                                    -- ADJUSTABLE
-        elseif (tileType == "Seaport")       then tileValue = tileValue + 40                                                    -- ADJUSTABLE
-        elseif (tileType == "City")          then tileValue = tileValue + 30                                                    -- ADJUSTABLE
-        elseif (tileType == "CommandTower")  then tileValue = tileValue + 40                                                    -- ADJUSTABLE
-        elseif (tileType == "Radar")         then tileValue = tileValue + 30                                                    -- ADJUSTABLE
-        else                                      tileValue = tileValue + 10                                                    -- ADJUSTABLE
-        end
-
-        if (modelTile:getPlayerIndex() ~= 0) then
-            tileValue = tileValue * 2                                                                                           -- ADJUSTABLE
+        if     (tileType == "Headquarters")  then tileValue = tileValue + 40                                                    -- ADJUSTABLE
+        elseif (tileType == "Factory")       then tileValue = tileValue + 60                                                    -- ADJUSTABLE
+        elseif (tileType == "Airport")       then tileValue = tileValue + 50                                                    -- ADJUSTABLE
+        elseif (tileType == "Seaport")       then tileValue = tileValue + 50                                                    -- ADJUSTABLE
+        elseif (tileType == "City")          then tileValue = tileValue + 40                                                    -- ADJUSTABLE
+        elseif (tileType == "CommandTower")  then tileValue = tileValue + 60                                                    -- ADJUSTABLE
+        elseif (tileType == "Radar")         then tileValue = tileValue + 40                                                    -- ADJUSTABLE
+        else                                      tileValue = tileValue + 20                                                    -- ADJUSTABLE
         end
 
         if (captureAmount >= currentCapturePoint / 2) then
             return tileValue                                                                                                    -- ADJUSTABLE
         else
-            return tileValue / 2 / math.ceil(currentCapturePoint / captureAmount)                                               -- ADJUSTABLE
+            return tileValue / 2                                                                                                -- ADJUSTABLE
         end
     end
 end
@@ -1042,11 +1130,11 @@ end
 -- The public functions.
 --------------------------------------------------------------------------------
 function ModelRobot:getNextAction()
-    print("ModelRobot:getNextAction()", self.m_PhaseCode)
     local modelTurnManager = self.m_ModelTurnManager
     assert((modelTurnManager:getPlayerIndex() ~= self.m_PlayerIndexForHuman) and (modelTurnManager:isTurnPhaseMain()))
 
-    self.m_PhaseCode = self.m_PhaseCode or 1
+    self.m_PhaseCode      = self.m_PhaseCode or 1
+    self.m_UnitValueRatio = calculateUnitValueRatio(self)
     local action
     if ((not action) and (self.m_PhaseCode == 1)) then action = getActionForPhase1(self) end
     if ((not action) and (self.m_PhaseCode == 2)) then action = getActionForPhase2(self) end
