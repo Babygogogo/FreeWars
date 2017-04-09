@@ -258,48 +258,6 @@ local function getBetterScoreAndAction(oldScore, oldAction, newScore, newAction)
     end
 end
 
-local function getUnitValuesForPlayerIndex(self, playerIndex)
-    local values = {
-        Infantry        = 0,
-        Mech            = 0,
-        Bike            = 0,
-        Recon           = 0,
-        Flare           = 0,
-        AntiAir         = 0,
-        Tank            = 0,
-        MediumTank      = 0,
-        WarTank         = 0,
-        Artillery       = 0,
-        AntiTank        = 0,
-        Rockets         = 0,
-        Missiles        = 0,
-        Rig             = 0,
-        Fighter         = 0,
-        Bomber          = 0,
-        Duster          = 0,
-        BattleCopter    = 0,
-        TransportCopter = 0,
-        Seaplane        = 0,
-        Battleship      = 0,
-        Carrier         = 0,
-        Submarine       = 0,
-        Cruiser         = 0,
-        Lander          = 0,
-        Gunboat         = 0,
-    }
-    local func = function(modelUnit)
-        if (modelUnit:getPlayerIndex() == playerIndex) then
-            local unitType = modelUnit:getUnitType()
-            values[unitType] = values[unitType] + (modelUnit:getProductionCost()) * modelUnit:getNormalizedCurrentHP() / 10
-        end
-    end
-
-    self.m_ModelUnitMap:forEachModelUnitOnMap(func)
-        :forEachModelUnitLoaded(func)
-
-    return values
-end
-
 --------------------------------------------------------------------------------
 -- The score calculators.
 --------------------------------------------------------------------------------
@@ -330,6 +288,7 @@ local function getScoreForPosition(self, modelUnit, gridIndex)
 
     local teamIndex                             = modelUnit:getTeamIndex()
     local distanceToEnemyTiles, enemyTilesCount = 0, 0
+    local minDistance
     self.m_ModelTileMap:forEachModelTile(function(modelTileOnMap)
         if ((modelTileOnMap.getCurrentCapturePoint) and (modelTileOnMap:getTeamIndex() ~= teamIndex)) then
             local multiplier = 1
@@ -341,12 +300,18 @@ local function getScoreForPosition(self, modelUnit, gridIndex)
                 multiplier = multiplier * 0.5
             end
 
-            distanceToEnemyTiles = distanceToEnemyTiles + GridIndexFunctions.getDistance(modelTileOnMap:getGridIndex(), gridIndex) * multiplier
+            local distance       = GridIndexFunctions.getDistance(modelTileOnMap:getGridIndex(), gridIndex)
+            distanceToEnemyTiles = distanceToEnemyTiles + distance * multiplier
             enemyTilesCount      = enemyTilesCount + 1
+            if (not minDistance) then
+                minDistance = distance
+            else
+                minDistance = math.min(minDistance, distance)
+            end
         end
     end)
     if (enemyTilesCount > 0) then
-        score = score + distanceToEnemyTiles / enemyTilesCount * (-15)                                                          -- ADJUSTABLE
+        score = score + (distanceToEnemyTiles / enemyTilesCount + minDistance / 3) * (-15)                                      -- ADJUSTABLE
     end
 
     return score
@@ -365,7 +330,7 @@ local function getScoreForActionAttack(self, modelUnit, gridIndex, targetGridInd
 
     local targetUnit = self.m_ModelUnitMap:getModelUnit(targetGridIndex)
     attackDamage     = math.min(attackDamage, targetUnit:getCurrentHP())
-    local score      = 10 + attackDamage * (2 + targetUnit:getProductionCost() / 1000 * math.max(1, self.m_UnitValueRatio))     -- ADJUSTABLE
+    local score      = 10 + attackDamage * (2 + targetUnit:getProductionCost() / 1000 + math.max(0, self.m_UnitValueRatio - 1)) -- ADJUSTABLE
     if (targetUnit:getCurrentHP() <= attackDamage) then
         score = score + 30                                                                                                      -- ADJUSTABLE
     end
