@@ -3,6 +3,8 @@ return {
         "PVE_YiDongYuJinGong",
         "PVE_JianZhuWu",
         "PVE_DuMuQiao",
+        "PVE_HuanChongDai",
+        "PVE_ShenHanZhiHai",
         "PVE_WeiWenTuMing",
     },
 

@@ -115,6 +115,22 @@ local function getReachableArea(self, modelUnit, passableGridIndex, blockedGridI
     )
 end
 
+local function getReachableAreaOnCandicateGridIndex(self, modelUnit, candicateGridIndex)
+    local modelTileMap = self.m_ModelTileMap
+    local mapSize      = modelTileMap:getMapSize()
+    return ReachableAreaFunctions.createArea(
+        candicateGridIndex,
+        modelUnit:getMoveRange() * 4,
+        function(gridIndex)
+            if (not GridIndexFunctions.isWithinMap(gridIndex, mapSize)) then
+                return nil
+            else
+                return modelTileMap:getModelTile(gridIndex):getMoveCostWithModelUnit(modelUnit)
+            end
+        end
+    )
+end
+
 local function getPossibleDamageInPlayerTurn(self, robotUnit, gridIndex, minBaseDamage)
     minBaseDamage             = minBaseDamage or 0
     local modelWar            = self.m_ModelWar
@@ -258,48 +274,6 @@ local function getBetterScoreAndAction(oldScore, oldAction, newScore, newAction)
     end
 end
 
-local function getUnitValuesForPlayerIndex(self, playerIndex)
-    local values = {
-        Infantry        = 0,
-        Mech            = 0,
-        Bike            = 0,
-        Recon           = 0,
-        Flare           = 0,
-        AntiAir         = 0,
-        Tank            = 0,
-        MediumTank      = 0,
-        WarTank         = 0,
-        Artillery       = 0,
-        AntiTank        = 0,
-        Rockets         = 0,
-        Missiles        = 0,
-        Rig             = 0,
-        Fighter         = 0,
-        Bomber          = 0,
-        Duster          = 0,
-        BattleCopter    = 0,
-        TransportCopter = 0,
-        Seaplane        = 0,
-        Battleship      = 0,
-        Carrier         = 0,
-        Submarine       = 0,
-        Cruiser         = 0,
-        Lander          = 0,
-        Gunboat         = 0,
-    }
-    local func = function(modelUnit)
-        if (modelUnit:getPlayerIndex() == playerIndex) then
-            local unitType = modelUnit:getUnitType()
-            values[unitType] = values[unitType] + (modelUnit:getProductionCost()) * modelUnit:getNormalizedCurrentHP() / 10
-        end
-    end
-
-    self.m_ModelUnitMap:forEachModelUnitOnMap(func)
-        :forEachModelUnitLoaded(func)
-
-    return values
-end
-
 --------------------------------------------------------------------------------
 -- The score calculators.
 --------------------------------------------------------------------------------
@@ -320,7 +294,8 @@ local function getScoreForPosition(self, modelUnit, gridIndex)
         end
     end
 
-    if ((modelTile:getTeamIndex() == modelUnit:getTeamIndex())) then
+    local teamIndex = modelUnit:getTeamIndex()
+    if ((modelTile:getTeamIndex() == teamIndex)) then
         local tileType = modelTile:getTileType()
         if     (tileType == "Factory") then score = score + (-500)                                                              -- ADJUSTABLE
         elseif (tileType == "Airport") then score = score + (-200)                                                              -- ADJUSTABLE
@@ -328,10 +303,15 @@ local function getScoreForPosition(self, modelUnit, gridIndex)
         end
     end
 
-    local teamIndex                             = modelUnit:getTeamIndex()
     local distanceToEnemyTiles, enemyTilesCount = 0, 0
+    local reachableArea                         = getReachableAreaOnCandicateGridIndex(self, modelUnit, gridIndex)
+    local minDistanceToEnemyTiles
     self.m_ModelTileMap:forEachModelTile(function(modelTileOnMap)
-        if ((modelTileOnMap.getCurrentCapturePoint) and (modelTileOnMap:getTeamIndex() ~= teamIndex)) then
+        local x, y = modelTileOnMap:getGridIndex().x, modelTileOnMap:getGridIndex().y
+        if ((reachableArea[x])                            and
+            (reachableArea[x][y])                         and
+            (modelTileOnMap.getCurrentCapturePoint)       and
+            (modelTileOnMap:getTeamIndex() ~= teamIndex)) then
             local multiplier = 1
             local tileType   = modelTileOnMap:getTileType()
             if ((tileType == "Factory") or (tileType == "Airport") or (tileType == "Seaport") or (tileType == "CommandTower")) then
@@ -341,12 +321,29 @@ local function getScoreForPosition(self, modelUnit, gridIndex)
                 multiplier = multiplier * 0.5
             end
 
-            distanceToEnemyTiles = distanceToEnemyTiles + GridIndexFunctions.getDistance(modelTileOnMap:getGridIndex(), gridIndex) * multiplier
+            local distance       = reachableArea[x][y].totalMoveCost
+            distanceToEnemyTiles = distanceToEnemyTiles + distance * multiplier
             enemyTilesCount      = enemyTilesCount + 1
+            if (not minDistanceToEnemyTiles) then
+                minDistanceToEnemyTiles = distance
+            else
+                minDistanceToEnemyTiles = math.min(minDistanceToEnemyTiles, distance)
+            end
         end
     end)
     if (enemyTilesCount > 0) then
-        score = score + distanceToEnemyTiles / enemyTilesCount * (-15)                                                          -- ADJUSTABLE
+        score = score + (distanceToEnemyTiles / enemyTilesCount + minDistanceToEnemyTiles / 3) * (-15)                          -- ADJUSTABLE
+    else
+        local distanceToEnemyUnits, enemyUnitsCount = 0, 0
+        self.m_ModelUnitMap:forEachModelUnitOnMap(function(modelUnitOnMap)
+            if (modelUnitOnMap:getPlayerIndex() == self.m_PlayerIndexForHuman) then
+                distanceToEnemyUnits = distanceToEnemyUnits + GridIndexFunctions.getDistance(modelUnitOnMap:getGridIndex(), gridIndex)
+                enemyUnitsCount      = enemyUnitsCount + 1
+            end
+        end)
+        if (enemyUnitsCount > 0) then
+            score = score + (distanceToEnemyUnits / enemyUnitsCount) * (-15)                                                    -- ADJUSTABLE
+        end
     end
 
     return score
@@ -365,7 +362,7 @@ local function getScoreForActionAttack(self, modelUnit, gridIndex, targetGridInd
 
     local targetUnit = self.m_ModelUnitMap:getModelUnit(targetGridIndex)
     attackDamage     = math.min(attackDamage, targetUnit:getCurrentHP())
-    local score      = 10 + attackDamage * (2 + targetUnit:getProductionCost() / 1000 * math.max(1, self.m_UnitValueRatio))     -- ADJUSTABLE
+    local score      = 10 + attackDamage * (2 + targetUnit:getProductionCost() / 1000 + math.max(0, self.m_UnitValueRatio - 1)) -- ADJUSTABLE
     if (targetUnit:getCurrentHP() <= attackDamage) then
         score = score + 30                                                                                                      -- ADJUSTABLE
     end
@@ -896,7 +893,19 @@ end
 --------------------------------------------------------------------------------
 -- The candicate units generators.
 --------------------------------------------------------------------------------
-local function getCandicateUnitsForPhase1(self)
+local function getCandidateUnitsForPhase1(self)
+    local units             = {}
+    local playerIndexInTurn = self.m_ModelTurnManager:getPlayerIndex()
+    self.m_ModelUnitMap:forEachModelUnitOnMap(function(modelUnit)
+        if ((modelUnit:getPlayerIndex() == playerIndexInTurn) and (modelUnit:isStateIdle()) and (modelUnit.isCapturingModelTile) and (modelUnit:isCapturingModelTile())) then
+            units[#units + 1] = modelUnit
+        end
+    end)
+
+    return units
+end
+
+local function getCandidateUnitsForPhase2(self)
     local units             = {}
     local playerIndexInTurn = self.m_ModelTurnManager:getPlayerIndex()
     self.m_ModelUnitMap:forEachModelUnitOnMap(function(modelUnit)
@@ -908,7 +917,7 @@ local function getCandicateUnitsForPhase1(self)
     return units
 end
 
-local function getCandicateUnitsForPhase2(self)
+local function getCandidateUnitsForPhase3(self)
     local units             = {}
     local playerIndexInTurn = self.m_ModelTurnManager:getPlayerIndex()
     self.m_ModelUnitMap:forEachModelUnitOnMap(function(modelUnit)
@@ -923,7 +932,7 @@ local function getCandicateUnitsForPhase2(self)
     return units
 end
 
-local function getCandicateUnitsForPhase3(self)
+local function getCandidateUnitsForPhase4(self)
     local units             = {}
     local playerIndexInTurn = self.m_ModelTurnManager:getPlayerIndex()
     self.m_ModelUnitMap:forEachModelUnitOnMap(function(modelUnit)
@@ -938,7 +947,7 @@ local function getCandicateUnitsForPhase3(self)
     return units
 end
 
-local function getCandicateUnitsForPhase4(self)
+local function getCandidateUnitsForPhase5(self)
     local units             = {}
     local playerIndexInTurn = self.m_ModelTurnManager:getPlayerIndex()
     self.m_ModelUnitMap:forEachModelUnitOnMap(function(modelUnit)
@@ -950,7 +959,7 @@ local function getCandicateUnitsForPhase4(self)
     return units
 end
 
-local function getCandicateUnitsForPhase5(self)
+local function getCandidateUnitsForPhase6(self)
     local units             = {}
     local playerIndexInTurn = self.m_ModelTurnManager:getPlayerIndex()
     self.m_ModelUnitMap:forEachModelUnitOnMap(function(modelUnit)
@@ -965,9 +974,9 @@ end
 --------------------------------------------------------------------------------
 -- The phases.
 --------------------------------------------------------------------------------
--- Phase 1: move the infantries, meches and bikes.
+-- Phase 1: move the infantries, meches and bikes that are capturing buildings.
 local function getActionForPhase1(self)
-    self.m_CandicateUnits = self.m_CandicateUnits or getCandicateUnitsForPhase1(self)
+    self.m_CandicateUnits = self.m_CandicateUnits or getCandidateUnitsForPhase1(self)
     local candicateUnit   = popRandomElement(self.m_CandicateUnits)
     if (not candicateUnit) then
         self.m_CandicateUnits = nil
@@ -978,9 +987,9 @@ local function getActionForPhase1(self)
     return getActionForMaxScoreWithCandicateUnit(self, candicateUnit)
 end
 
--- Phase 2: move the ranged units.
+-- Phase 2: move the other infantries, meches and bikes.
 local function getActionForPhase2(self)
-    self.m_CandicateUnits = self.m_CandicateUnits or getCandicateUnitsForPhase2(self)
+    self.m_CandicateUnits = self.m_CandicateUnits or getCandidateUnitsForPhase2(self)
     local candicateUnit   = popRandomElement(self.m_CandicateUnits)
     if (not candicateUnit) then
         self.m_CandicateUnits = nil
@@ -991,9 +1000,9 @@ local function getActionForPhase2(self)
     return getActionForMaxScoreWithCandicateUnit(self, candicateUnit)
 end
 
--- Phase 3: move the air combat units.
+-- Phase 3: move the ranged units.
 local function getActionForPhase3(self)
-    self.m_CandicateUnits = self.m_CandicateUnits or getCandicateUnitsForPhase3(self)
+    self.m_CandicateUnits = self.m_CandicateUnits or getCandidateUnitsForPhase3(self)
     local candicateUnit   = popRandomElement(self.m_CandicateUnits)
     if (not candicateUnit) then
         self.m_CandicateUnits = nil
@@ -1004,9 +1013,9 @@ local function getActionForPhase3(self)
     return getActionForMaxScoreWithCandicateUnit(self, candicateUnit)
 end
 
--- Phase 4: move the other combat units.
+-- Phase 4: move the air combat units.
 local function getActionForPhase4(self)
-    self.m_CandicateUnits = self.m_CandicateUnits or getCandicateUnitsForPhase4(self)
+    self.m_CandicateUnits = self.m_CandicateUnits or getCandidateUnitsForPhase4(self)
     local candicateUnit   = popRandomElement(self.m_CandicateUnits)
     if (not candicateUnit) then
         self.m_CandicateUnits = nil
@@ -1017,9 +1026,9 @@ local function getActionForPhase4(self)
     return getActionForMaxScoreWithCandicateUnit(self, candicateUnit)
 end
 
--- Phase 5: move the other units.
+-- Phase 5: move the other combat units.
 local function getActionForPhase5(self)
-    self.m_CandicateUnits = self.m_CandicateUnits or getCandicateUnitsForPhase5(self)
+    self.m_CandicateUnits = self.m_CandicateUnits or getCandidateUnitsForPhase5(self)
     local candicateUnit   = popRandomElement(self.m_CandicateUnits)
     if (not candicateUnit) then
         self.m_CandicateUnits = nil
@@ -1030,8 +1039,21 @@ local function getActionForPhase5(self)
     return getActionForMaxScoreWithCandicateUnit(self, candicateUnit)
 end
 
--- Phase 6: spend energy on passive skills.
+-- Phase 6: move the other units.
 local function getActionForPhase6(self)
+    self.m_CandicateUnits = self.m_CandicateUnits or getCandidateUnitsForPhase6(self)
+    local candicateUnit   = popRandomElement(self.m_CandicateUnits)
+    if (not candicateUnit) then
+        self.m_CandicateUnits = nil
+        self.m_PhaseCode      = 7
+        return nil
+    end
+
+    return getActionForMaxScoreWithCandicateUnit(self, candicateUnit)
+end
+
+-- Phase 7: spend energy on passive skills.
+local function getActionForPhase7(self)
     if (not self.m_IsPassiveSkillEnabled) then
         self.m_PhaseCode = 8
         return nil
