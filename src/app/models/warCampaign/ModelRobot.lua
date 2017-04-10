@@ -913,11 +913,11 @@ local function getCandidateUnitsForPhase2(self)
     local units             = {}
     local playerIndexInTurn = self.m_ModelTurnManager:getPlayerIndex()
     self.m_ModelUnitMap:forEachModelUnitOnMap(function(modelUnit)
-        if ((modelUnit:getPlayerIndex() == playerIndexInTurn) and
-            (modelUnit:isStateIdle())                         and
-            (modelUnit.getAttackRangeMinMax)                  and
-            ({modelUnit:getAttackRangeMinMax()}[2] > 1))      then
-            units[#units + 1] = modelUnit
+        if ((modelUnit:getPlayerIndex() == playerIndexInTurn) and (modelUnit:isStateIdle()) and (modelUnit.getAttackRangeMinMax)) then
+            local minRange, maxRange = modelUnit:getAttackRangeMinMax()
+            if (maxRange > 1) then
+                units[#units + 1] = modelUnit
+            end
         end
     end)
 
@@ -967,10 +967,15 @@ local function getCandidateUnitsForPhase6(self)
     local units             = {}
     local playerIndexInTurn = self.m_ModelTurnManager:getPlayerIndex()
     self.m_ModelUnitMap:forEachModelUnitOnMap(function(modelUnit)
-        if ((modelUnit:getPlayerIndex() == playerIndexInTurn)                                       and
-            (modelUnit:isStateIdle())                                                               and
-            ((not modelUnit.getAttackRangeMinMax) or ({modelUnit:getAttackRangeMinMax()}[2] == 1))) then
-            units[#units + 1] = modelUnit
+        if ((modelUnit:getPlayerIndex() == playerIndexInTurn) and (modelUnit:isStateIdle())) then
+            if (not modelUnit.getAttackRangeMinMax) then
+                units[#units + 1] = modelUnit
+            else
+                local minRange, maxRange = modelUnit:getAttackRangeMinMax()
+                if (maxRange == 1) then
+                    units[#units + 1] = modelUnit
+                end
+            end
         end
     end)
 
