@@ -401,7 +401,7 @@ local function getScoreForActionCaptureModelTile(self, modelUnit, gridIndex)
     if (captureAmount >= currentCapturePoint) then
         return 10000                                                                                                            -- ADJUSTABLE
     elseif (captureAmount < currentCapturePoint / 3) then
-        return 0
+        return 0                                                                                                                -- ADJUSTABLE
     else
         local tileValue = 0
         local tileType  = modelTile:getTileType()
@@ -913,7 +913,10 @@ local function getCandidateUnitsForPhase2(self)
     local units             = {}
     local playerIndexInTurn = self.m_ModelTurnManager:getPlayerIndex()
     self.m_ModelUnitMap:forEachModelUnitOnMap(function(modelUnit)
-        if ((modelUnit:getPlayerIndex() == playerIndexInTurn) and (modelUnit:isStateIdle()) and (modelUnit.isCapturingModelTile)) then
+        if ((modelUnit:getPlayerIndex() == playerIndexInTurn) and
+            (modelUnit:isStateIdle())                         and
+            (modelUnit.getAttackRangeMinMax)                  and
+            ({modelUnit:getAttackRangeMinMax()}[2] > 1))      then
             units[#units + 1] = modelUnit
         end
     end)
@@ -925,11 +928,8 @@ local function getCandidateUnitsForPhase3(self)
     local units             = {}
     local playerIndexInTurn = self.m_ModelTurnManager:getPlayerIndex()
     self.m_ModelUnitMap:forEachModelUnitOnMap(function(modelUnit)
-        if ((modelUnit:getPlayerIndex() == playerIndexInTurn) and (modelUnit:isStateIdle()) and (modelUnit.getAttackRangeMinMax)) then
-            local minRange, maxRange = modelUnit:getAttackRangeMinMax()
-            if (maxRange > 1) then
-                units[#units + 1] = modelUnit
-            end
+        if ((modelUnit:getPlayerIndex() == playerIndexInTurn) and (modelUnit:isStateIdle()) and (modelUnit.isCapturingModelTile)) then
+            units[#units + 1] = modelUnit
         end
     end)
 
@@ -967,6 +967,20 @@ local function getCandidateUnitsForPhase6(self)
     local units             = {}
     local playerIndexInTurn = self.m_ModelTurnManager:getPlayerIndex()
     self.m_ModelUnitMap:forEachModelUnitOnMap(function(modelUnit)
+        if ((modelUnit:getPlayerIndex() == playerIndexInTurn)                                       and
+            (modelUnit:isStateIdle())                                                               and
+            ((not modelUnit.getAttackRangeMinMax) or ({modelUnit:getAttackRangeMinMax()}[2] == 1))) then
+            units[#units + 1] = modelUnit
+        end
+    end)
+
+    return units
+end
+
+local function getCandidateUntisForPhase7(self)
+    local units             = {}
+    local playerIndexInTurn = self.m_ModelTurnManager:getPlayerIndex()
+    self.m_ModelUnitMap:forEachModelUnitOnMap(function(modelUnit)
         if ((modelUnit:getPlayerIndex() == playerIndexInTurn) and (modelUnit:isStateIdle())) then
             units[#units + 1] = modelUnit
         end
@@ -991,20 +1005,26 @@ local function getActionForPhase1(self)
     return getActionForMaxScoreWithCandicateUnit(self, candicateUnit)
 end
 
--- Phase 2: move the other infantries, meches and bikes.
+-- Phase 2: make the ranged units to attack enemies.
 local function getActionForPhase2(self)
     self.m_CandicateUnits = self.m_CandicateUnits or getCandidateUnitsForPhase2(self)
-    local candicateUnit   = popRandomElement(self.m_CandicateUnits)
-    if (not candicateUnit) then
-        self.m_CandicateUnits = nil
-        self.m_PhaseCode      = 3
-        return nil
+
+    local action
+    while ((not action) or (action.actionCode ~= ACTION_CODES.ActionAttack)) do
+        local candicateUnit = popRandomElement(self.m_CandicateUnits)
+        if (not candicateUnit) then
+            self.m_CandicateUnits = nil
+            self.m_PhaseCode      = 3
+            return nil
+        end
+
+        action = getActionForMaxScoreWithCandicateUnit(self, candicateUnit)
     end
 
-    return getActionForMaxScoreWithCandicateUnit(self, candicateUnit)
+    return action
 end
 
--- Phase 3: move the ranged units.
+-- Phase 3: move the other infantries, meches and bikes.
 local function getActionForPhase3(self)
     self.m_CandicateUnits = self.m_CandicateUnits or getCandidateUnitsForPhase3(self)
     local candicateUnit   = popRandomElement(self.m_CandicateUnits)
@@ -1043,7 +1063,7 @@ local function getActionForPhase5(self)
     return getActionForMaxScoreWithCandicateUnit(self, candicateUnit)
 end
 
--- Phase 6: move the other units.
+-- Phase 6: move the other units except the remaining ranged units.
 local function getActionForPhase6(self)
     self.m_CandicateUnits = self.m_CandicateUnits or getCandidateUnitsForPhase6(self)
     local candicateUnit   = popRandomElement(self.m_CandicateUnits)
@@ -1056,10 +1076,23 @@ local function getActionForPhase6(self)
     return getActionForMaxScoreWithCandicateUnit(self, candicateUnit)
 end
 
--- Phase 7: spend energy on passive skills.
+-- Phase 7: move the remaining units.
 local function getActionForPhase7(self)
+    self.m_CandicateUnits = self.m_CandicateUnits or getCandidateUntisForPhase7(self)
+    local candicateUnit   = popRandomElement(self.m_CandicateUnits)
+    if (not candicateUnit) then
+        self.m_CandicateUnits = nil
+        self.m_PhaseCode      = 8
+        return nil
+    end
+
+    return getActionForMaxScoreWithCandicateUnit(self, candicateUnit)
+end
+
+-- Phase 8: spend energy on passive skills.
+local function getActionForPhase8(self)
     if (not self.m_IsPassiveSkillEnabled) then
-        self.m_PhaseCode = 8
+        self.m_PhaseCode = 9
         return nil
     end
 
@@ -1076,7 +1109,7 @@ local function getActionForPhase7(self)
 
     local targetSkillID = popRandomElement(availableSkillIds)
     if (not targetSkillID) then
-        self.m_PhaseCode = 8
+        self.m_PhaseCode = 9
         return nil
     else
         return {
@@ -1088,19 +1121,19 @@ local function getActionForPhase7(self)
     end
 end
 
--- Phase 8: build units.
-local function getActionForPhase8(self)
+-- Phase 9: build units.
+local function getActionForPhase9(self)
     local action = getActionProduceModelUnitOnTileForMaxScore(self)
     if (not action) then
-        self.m_PhaseCode = 9
+        self.m_PhaseCode = 10
         return nil
     end
 
     return action
 end
 
--- Phase 9: end turn.
-local function getActionForPhase9(self)
+-- Phase 10: end turn.
+local function getActionForPhase10(self)
     self.m_PhaseCode = nil
     return {actionCode = ACTION_CODES.ActionEndTurn}
 end
@@ -1162,15 +1195,16 @@ function ModelRobot:getNextAction()
     self.m_PhaseCode      = self.m_PhaseCode or 1
     self.m_UnitValueRatio = calculateUnitValueRatio(self)
     local action
-    if ((not action) and (self.m_PhaseCode == 1)) then action = getActionForPhase1(self) end
-    if ((not action) and (self.m_PhaseCode == 2)) then action = getActionForPhase2(self) end
-    if ((not action) and (self.m_PhaseCode == 3)) then action = getActionForPhase3(self) end
-    if ((not action) and (self.m_PhaseCode == 4)) then action = getActionForPhase4(self) end
-    if ((not action) and (self.m_PhaseCode == 5)) then action = getActionForPhase5(self) end
-    if ((not action) and (self.m_PhaseCode == 6)) then action = getActionForPhase6(self) end
-    if ((not action) and (self.m_PhaseCode == 7)) then action = getActionForPhase7(self) end
-    if ((not action) and (self.m_PhaseCode == 8)) then action = getActionForPhase8(self) end
-    if ((not action) and (self.m_PhaseCode == 9)) then action = getActionForPhase9(self) end
+    if ((not action) and (self.m_PhaseCode == 1))  then action = getActionForPhase1( self) end
+    if ((not action) and (self.m_PhaseCode == 2))  then action = getActionForPhase2( self) end
+    if ((not action) and (self.m_PhaseCode == 3))  then action = getActionForPhase3( self) end
+    if ((not action) and (self.m_PhaseCode == 4))  then action = getActionForPhase4( self) end
+    if ((not action) and (self.m_PhaseCode == 5))  then action = getActionForPhase5( self) end
+    if ((not action) and (self.m_PhaseCode == 6))  then action = getActionForPhase6( self) end
+    if ((not action) and (self.m_PhaseCode == 7))  then action = getActionForPhase7( self) end
+    if ((not action) and (self.m_PhaseCode == 8))  then action = getActionForPhase8( self) end
+    if ((not action) and (self.m_PhaseCode == 9))  then action = getActionForPhase9( self) end
+    if ((not action) and (self.m_PhaseCode == 10)) then action = getActionForPhase10(self) end
 
     return action
 end
