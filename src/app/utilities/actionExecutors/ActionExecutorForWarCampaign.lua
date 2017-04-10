@@ -309,7 +309,7 @@ local function executeActivateSkill(action, modelWar)
             end
         end)
 
-    dispatchEvtModelPlayerUpdated(modelWar, playerIndex)
+    dispatchEvtModelPlayerUpdated(modelWar, playerIndexInTurn)
 
     modelWar:setExecutingAction(false)
 end

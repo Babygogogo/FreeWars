@@ -16,6 +16,7 @@ local assert, pairs = assert, pairs
 local math, table   = math, table
 
 local ACTION_CODES          = ActionCodeFunctions.getFullList()
+local SEARCH_PATH_LENGTH    = 10
 local PRODUCTION_CANDIDATES = {                                                                                             -- ADJUSTABLE
     Factory = {
         Infantry   = 1500,
@@ -29,7 +30,7 @@ local PRODUCTION_CANDIDATES = {                                                 
         WarTank    = 1600,
         Artillery  = 1400,
         AntiTank   = 1000,
-        Rockets    = 0,
+        Rockets    = 200,
         Missiles   = -999999,
         Rig        = -999999,
     },
@@ -120,7 +121,7 @@ local function getReachableAreaOnCandicateGridIndex(self, modelUnit, candicateGr
     local mapSize      = modelTileMap:getMapSize()
     return ReachableAreaFunctions.createArea(
         candicateGridIndex,
-        modelUnit:getMoveRange() * 4,
+        math.max(SEARCH_PATH_LENGTH, modelUnit:getMoveRange()),
         function(gridIndex)
             if (not GridIndexFunctions.isWithinMap(gridIndex, mapSize)) then
                 return nil
@@ -295,16 +296,17 @@ local function getScoreForPosition(self, modelUnit, gridIndex)
     end
 
     local teamIndex = modelUnit:getTeamIndex()
-    if ((modelTile:getTeamIndex() == teamIndex)) then
+    if (modelTile:getTeamIndex() == teamIndex) then
         local tileType = modelTile:getTileType()
         if     (tileType == "Factory") then score = score + (-500)                                                              -- ADJUSTABLE
         elseif (tileType == "Airport") then score = score + (-200)                                                              -- ADJUSTABLE
         elseif (tileType == "Seaport") then score = score + (-150)                                                              -- ADJUSTABLE
         end
+    elseif ((modelTile.getCurrentCapturePoint) and (not modelUnit.getCaptureAmount)) then
+        score = score - 50                                                                                                      -- ADJUSTABLE
     end
 
-    local distanceToEnemyTiles, enemyTilesCount = 0, 0
-    local reachableArea                         = getReachableAreaOnCandicateGridIndex(self, modelUnit, gridIndex)
+    local reachableArea = getReachableAreaOnCandicateGridIndex(self, modelUnit, gridIndex)
     local minDistanceToEnemyTiles
     self.m_ModelTileMap:forEachModelTile(function(modelTileOnMap)
         local x, y = modelTileOnMap:getGridIndex().x, modelTileOnMap:getGridIndex().y
@@ -312,18 +314,18 @@ local function getScoreForPosition(self, modelUnit, gridIndex)
             (reachableArea[x][y])                         and
             (modelTileOnMap.getCurrentCapturePoint)       and
             (modelTileOnMap:getTeamIndex() ~= teamIndex)) then
-            local multiplier = 1
-            local tileType   = modelTileOnMap:getTileType()
+            local distance = reachableArea[x][y].totalMoveCost
+            local tileType = modelTileOnMap:getTileType()
             if ((tileType == "Factory") or (tileType == "Airport") or (tileType == "Seaport") or (tileType == "CommandTower")) then
-                multiplier = multiplier * 2                                                                                     -- ADJUSTABLE
+                distance = distance / 2                                                                                         -- ADJUSTABLE
             end
-            if (modelTileOnMap:getPlayerIndex() == self.m_PlayerIndexForHuman) then
-                multiplier = multiplier * 0.5
+            if (modelTileOnMap:getPlayerIndex() == 0) then
+                distance = distance / 2
+            end
+            if (modelTileOnMap:getCurrentCapturePoint() < 20) then
+                distance = distance * 1.5                                                                                       -- ADJUSTABLE
             end
 
-            local distance       = reachableArea[x][y].totalMoveCost
-            distanceToEnemyTiles = distanceToEnemyTiles + distance * multiplier
-            enemyTilesCount      = enemyTilesCount + 1
             if (not minDistanceToEnemyTiles) then
                 minDistanceToEnemyTiles = distance
             else
@@ -331,19 +333,21 @@ local function getScoreForPosition(self, modelUnit, gridIndex)
             end
         end
     end)
-    if (enemyTilesCount > 0) then
-        score = score + (distanceToEnemyTiles / enemyTilesCount + minDistanceToEnemyTiles / 3) * (-15)                          -- ADJUSTABLE
+    if (minDistanceToEnemyTiles) then
+        score = score + (minDistanceToEnemyTiles) * (-20)                                                                       -- ADJUSTABLE
     else
-        local distanceToEnemyUnits, enemyUnitsCount = 0, 0
-        self.m_ModelUnitMap:forEachModelUnitOnMap(function(modelUnitOnMap)
-            if (modelUnitOnMap:getPlayerIndex() == self.m_PlayerIndexForHuman) then
-                distanceToEnemyUnits = distanceToEnemyUnits + GridIndexFunctions.getDistance(modelUnitOnMap:getGridIndex(), gridIndex)
-                enemyUnitsCount      = enemyUnitsCount + 1
-            end
-        end)
-        if (enemyUnitsCount > 0) then
-            score = score + (distanceToEnemyUnits / enemyUnitsCount) * (-15)                                                    -- ADJUSTABLE
+        score = score + (math.max(SEARCH_PATH_LENGTH, modelUnit:getMoveRange()) + 1) * (-20 * 1.5)                              -- ADJUSTABLE
+    end
+
+    local distanceToEnemyUnits, enemyUnitsCount = 0, 0
+    self.m_ModelUnitMap:forEachModelUnitOnMap(function(modelUnitOnMap)
+        if (modelUnitOnMap:getPlayerIndex() == self.m_PlayerIndexForHuman) then
+            distanceToEnemyUnits = distanceToEnemyUnits + GridIndexFunctions.getDistance(modelUnitOnMap:getGridIndex(), gridIndex)
+            enemyUnitsCount      = enemyUnitsCount + 1
         end
+    end)
+    if (enemyUnitsCount > 0) then
+        score = score + (distanceToEnemyUnits / enemyUnitsCount) * (-10)                                                        -- ADJUSTABLE
     end
 
     return score
