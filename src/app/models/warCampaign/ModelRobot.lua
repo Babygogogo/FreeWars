@@ -30,21 +30,21 @@ local PRODUCTION_CANDIDATES = {                                                 
         WarTank    = 1600,
         Artillery  = 1400,
         AntiTank   = 1000,
-        Rockets    = 200,
+        Rockets    = 600,
         Missiles   = -999999,
         Rig        = -999999,
     },
     Airport = {
-        Fighter         = -999999,
-        Bomber          = 0,
+        Fighter         = 600,
+        Bomber          = 600,
         Duster          = 1200,
         BattleCopter    = 1800,
         TransportCopter = -999999,
     },
     Seaport = {
-        Battleship = 0,
+        Battleship = 600,
         Carrier    = -999999,
-        Submarine  = 0,
+        Submarine  = 800,
         Cruiser    = 900,
         Lander     = -999999,
         Gunboat    = 1000,
@@ -657,53 +657,6 @@ local function getActionDive(self)
     end
 end
 
-local function getActionBuildModelTile(self)
-    local tileType       = getModelTileMap(self.m_ModelWar):getModelTile(getPathNodesDestination(self.m_PathNodes)):getTileType()
-    local focusModelUnit = self.m_FocusModelUnit
-
-    if ((focusModelUnit.canBuildOnTileType)           and
-        (focusModelUnit:canBuildOnTileType(tileType)) and
-        (focusModelUnit:getCurrentMaterial() > 0))    then
-        local buildTiledId = focusModelUnit:getBuildTiledIdWithTileType(tileType)
-        local icon         = cc.Sprite:create()
-        icon:setAnchorPoint(0, 0)
-            :setScale(0.5)
-            :playAnimationForever(AnimationLoader.getTileAnimationWithTiledId(buildTiledId))
-
-        return {
-            name     = getLocalizedText(78, "BuildModelTile"),
-            icon     = icon,
-            callback = function()
-                sendActionBuildModelTile(self)
-            end,
-        }
-    end
-end
-
-local function getActionSupplyModelUnit(self)
-    local focusModelUnit = self.m_FocusModelUnit
-    if (not focusModelUnit.canSupplyModelUnit) then
-        return nil
-    end
-
-    local modelUnitMap = getModelUnitMap(self.m_ModelWar)
-    for _, gridIndex in pairs(GridIndexFunctions.getAdjacentGrids(getPathNodesDestination(self.m_PathNodes), modelUnitMap:getMapSize())) do
-        local modelUnit = modelUnitMap:getModelUnit(gridIndex)
-        if ((modelUnit)                                     and
-            (modelUnit ~= focusModelUnit)                   and
-            (focusModelUnit:canSupplyModelUnit(modelUnit))) then
-            return {
-                name     = getLocalizedText(78, "SupplyModelUnit"),
-                callback = function()
-                    sendActionSupplyModelUnit(self)
-                end,
-            }
-        end
-    end
-
-    return nil
-end
-
 local function getActionSurface(self)
     local focusModelUnit = self.m_FocusModelUnit
     if ((focusModelUnit.isDiving) and (focusModelUnit:isDiving())) then
@@ -711,97 +664,6 @@ local function getActionSurface(self)
             name     = getLocalizedText(78, "Surface"),
             callback = function()
                 sendActionSurface(self)
-            end,
-        }
-    end
-end
-
-local function getSingleActionDropModelUnit(self, unitID)
-    local icon = Actor.createView("common.ViewUnit")
-    icon:updateWithModelUnit(getModelUnitMap(self.m_ModelWar):getLoadedModelUnitWithUnitId(unitID))
-        :ignoreAnchorPointForPosition(true)
-        :setScale(0.5)
-
-    return {
-        name     = getLocalizedText(78, "DropModelUnit"),
-        icon     = icon,
-        callback = function()
-            setStateChoosingDropDestination(self, unitID)
-        end,
-    }
-end
-
-local function getActionsDropModelUnit(self)
-    local focusModelUnit        = self.m_FocusModelUnit
-    local dropDestinations      = self.m_SelectedDropDestinations
-    local modelTileMap          = getModelTileMap(self.m_ModelWar)
-    local loaderEndingGridIndex = getPathNodesDestination(self.m_PathNodes)
-
-    if ((not focusModelUnit.getCurrentLoadCount)                                                               or
-        (focusModelUnit:getCurrentLoadCount() <= #dropDestinations)                                            or
-        (not focusModelUnit:canDropModelUnit(modelTileMap:getModelTile(loaderEndingGridIndex):getTileType()))) then
-        return {}
-    end
-
-    local actions = {}
-    local loaderBeginningGridIndex = self.m_FocusModelUnit:getGridIndex()
-    local modelUnitMap             = getModelUnitMap(self.m_ModelWar)
-
-    for _, unitID in ipairs(focusModelUnit:getLoadUnitIdList()) do
-        if (not isModelUnitDropped(unitID, dropDestinations)) then
-            local droppingModelUnit = getModelUnitMap(self.m_ModelWar):getLoadedModelUnitWithUnitId(unitID)
-            if (#getAvailableDropGrids(self, droppingModelUnit, loaderBeginningGridIndex, loaderEndingGridIndex, dropDestinations) > 0) then
-                actions[#actions + 1] = getSingleActionDropModelUnit(self, unitID)
-            end
-        end
-    end
-
-    return actions
-end
-
-local function getActionLaunchSilo(self)
-    local focusModelUnit = self.m_FocusModelUnit
-    local modelTile      = getModelTileMap(self.m_ModelWar):getModelTile(getPathNodesDestination(self.m_PathNodes))
-
-    if ((focusModelUnit.canLaunchSiloOnTileType) and
-        (focusModelUnit:canLaunchSiloOnTileType(modelTile:getTileType()))) then
-        return {
-            name     = getLocalizedText(78, "LaunchSilo"),
-            callback = function()
-                setStateChoosingSiloTarget(self)
-            end,
-        }
-    else
-        return nil
-    end
-end
-
-local function getActionProduceModelUnitOnUnit(self)
-    local focusModelUnit = self.m_FocusModelUnit
-    if ((self.m_LaunchUnitID)                            or
-        (#self.m_PathNodes ~= 1)                         or
-        (not focusModelUnit.getCurrentMaterial)          or
-        (not focusModelUnit.getMovableProductionTiledId) or
-        (not focusModelUnit.getCurrentLoadCount))        then
-        return nil
-    else
-        local produceTiledId = focusModelUnit:getMovableProductionTiledId()
-        local icon           = cc.Sprite:create()
-        icon:setAnchorPoint(0, 0)
-            :setScale(0.5)
-            :playAnimationForever(AnimationLoader.getUnitAnimationWithTiledId(produceTiledId))
-
-        return {
-            name        = string.format("%s\n%d",
-                getLocalizedText(78, "ProduceModelUnitOnUnit"),
-                Producible.getProductionCostWithTiledId(produceTiledId, self.m_ModelPlayerManager)
-            ),
-            icon        = icon,
-            isAvailable = (focusModelUnit:getCurrentMaterial() >= 1)                                and
-                (focusModelUnit:getMovableProductionCost() <= self.m_ModelPlayerForHuman:getFund()) and
-                (focusModelUnit:getCurrentLoadCount() < focusModelUnit:getMaxLoadCount()),
-            callback    = function()
-                sendActionProduceModelUnitOnUnit(self)
             end,
         }
     end
@@ -851,18 +713,8 @@ local function getMaxScoreAndAction(self, modelUnit, gridIndex, pathNodes)
 
     return maxScore, actionForMaxScore
     --[[
-    local list = {}
     list[#list + 1] = getActionDive(                  self)
     list[#list + 1] = getActionSurface(               self)
-    list[#list + 1] = getActionBuildModelTile(        self)
-    list[#list + 1] = getActionSupplyModelUnit(       self)
-    for _, action in ipairs(getActionsDropModelUnit(self)) do
-        list[#list + 1] = action
-    end
-    list[#list + 1] = getActionProduceModelUnitOnUnit(self)
-
-    assert((#list > 0) or (itemWait), "ModelRobot-getMaxScoreAndAction() the generated list has no valid action item.")
-    return list, itemWait
     ]]
 end
 
