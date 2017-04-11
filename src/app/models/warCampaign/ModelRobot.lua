@@ -22,7 +22,7 @@ local PRODUCTION_CANDIDATES = {                                                 
         Infantry   = 1500,
         Mech       = 0,
         Bike       = 1200,
-        Recon      = -999999,
+        Recon      = 0,
         Flare      = -999999,
         AntiAir    = 500,
         Tank       = 2000,
@@ -66,6 +66,17 @@ local function popRandomElement(array)
     end
 end
 
+local function popRandomCandidateUnit(modelUnitMap, candidateUnits)
+    local modelUnit = popRandomElement(candidateUnits)
+    if (not modelUnit) then
+        return nil
+    elseif ((modelUnitMap:getModelUnit(modelUnit:getGridIndex()) == modelUnit) or (modelUnitMap:getLoadedModelUnitWithUnitId(modelUnit:getUnitId()))) then
+        return modelUnit
+    else
+        return popRandomCandidateUnit(modelUnitMap, candidateUnits)
+    end
+end
+
 local function isModelUnitLoaded(self, modelUnit)
     return self.m_ModelUnitMap:getLoadedModelUnitWithUnitId(modelUnit:getUnitId()) ~= nil
 end
@@ -74,9 +85,9 @@ local function calculateUnitValueRatio(self)
     local aiUnitValue, humanUnitValue = 0, 0
     local func                        = function(modelUnit)
         if (modelUnit:getPlayerIndex() == self.m_PlayerIndexForHuman) then
-            humanUnitValue = humanUnitValue + modelUnit:getProductionCost() * modelUnit:getCurrentHP() / 100
+            humanUnitValue = humanUnitValue + modelUnit:getProductionCost() * modelUnit:getCurrentHP()
         else
-            aiUnitValue    = aiUnitValue    + modelUnit:getProductionCost() * modelUnit:getCurrentHP() / 100
+            aiUnitValue    = aiUnitValue    + modelUnit:getProductionCost() * modelUnit:getCurrentHP()
         end
     end
 
@@ -279,19 +290,17 @@ end
 -- The score calculators.
 --------------------------------------------------------------------------------
 local function getScoreForPosition(self, modelUnit, gridIndex)
-    local score
-    if ((GameConstantFunctions.isTypeInCategory(modelUnit:getUnitType(), "InfantryUnits")) or (not isUnitThreatened(self, modelUnit, gridIndex))) then
-        score = 0                                                                                                               -- ADJUSTABLE
-    else
-        score = -math.min(modelUnit:getCurrentHP(), 50) * (2 + modelUnit:getProductionCost() / 1000)                            -- ADJUSTABLE
+    local score = 0
+    if (isUnitThreatened(self, modelUnit, gridIndex)) then
+        score = -math.min(modelUnit:getCurrentHP(), 50) * (2 + modelUnit:getProductionCost() / 1000) / (math.max(1, self.m_UnitValueRatio) ^ 2) -- ADJUSTABLE
     end
 
     local modelTile = self.m_ModelTileMap:getModelTile(gridIndex)
     if ((modelTile.canRepairTarget) and (modelTile:canRepairTarget(modelUnit))) then
-        score = score + (10 - modelUnit:getNormalizedCurrentHP()) * 10                                                          -- ADJUSTABLE
+        score = score + (10 - modelUnit:getNormalizedCurrentHP()) * 15                                                          -- ADJUSTABLE
         if ((modelUnit.hasPrimaryWeapon) and (modelUnit:hasPrimaryWeapon())) then
             local maxAmmo = modelUnit:getPrimaryWeaponMaxAmmo()
-            score = score + (maxAmmo - modelUnit:getPrimaryWeaponCurrentAmmo()) / maxAmmo * 5                                   -- ADJUSTABLE
+            score = score + (maxAmmo - modelUnit:getPrimaryWeaponCurrentAmmo()) / maxAmmo * 55                                  -- ADJUSTABLE
         end
     end
 
@@ -302,8 +311,6 @@ local function getScoreForPosition(self, modelUnit, gridIndex)
         elseif (tileType == "Airport") then score = score + (-200)                                                              -- ADJUSTABLE
         elseif (tileType == "Seaport") then score = score + (-150)                                                              -- ADJUSTABLE
         end
-    elseif ((modelTile.getCurrentCapturePoint) and (not modelUnit.getCaptureAmount)) then
-        score = score - 50                                                                                                      -- ADJUSTABLE
     end
 
     local reachableArea = getReachableAreaOnCandicateGridIndex(self, modelUnit, gridIndex)
@@ -323,7 +330,7 @@ local function getScoreForPosition(self, modelUnit, gridIndex)
                 distance = distance / 2
             end
             if (modelTileOnMap:getCurrentCapturePoint() < 20) then
-                distance = distance * 1.5                                                                                       -- ADJUSTABLE
+                distance = distance * 2                                                                                         -- ADJUSTABLE
             end
 
             if (not minDistanceToEnemyTiles) then
@@ -336,7 +343,7 @@ local function getScoreForPosition(self, modelUnit, gridIndex)
     if (minDistanceToEnemyTiles) then
         score = score + (minDistanceToEnemyTiles) * (-20)                                                                       -- ADJUSTABLE
     else
-        score = score + (math.max(SEARCH_PATH_LENGTH, modelUnit:getMoveRange()) + 1) * (-20 * 1.5)                              -- ADJUSTABLE
+        score = score + (math.max(SEARCH_PATH_LENGTH, modelUnit:getMoveRange()) + 1) * (-20 * 2)                                -- ADJUSTABLE
     end
 
     local distanceToEnemyUnits, enemyUnitsCount = 0, 0
@@ -424,10 +431,13 @@ local function getScoreForActionCaptureModelTile(self, modelUnit, gridIndex)
 end
 
 local function getScoreForActionJoinModelUnit(self, modelUnit, gridIndex)
-    if (self.m_ModelUnitMap:getModelUnit(gridIndex):isStateIdle()) then
-        return nil
+    local targetModelUnit = self.m_ModelUnitMap:getModelUnit(gridIndex)
+    if (targetModelUnit:isStateIdle()) then
+        return -9999                                                                                                            -- ADJUSTABLE
+    else
+        local newHP = modelUnit:getNormalizedCurrentHP() + targetModelUnit:getNormalizedCurrentHP()
+        return (newHP > 10) and ((newHP - 10) * (-50)) or ((10 - newHP) * 5)                                                    -- ADJUSTABLE
     end
-    return -200                                                                                                                 -- ADJUSTABLE
 end
 
 local function getScoreForActionLaunchSilo(self, unitValueMap, targetGridIndex)
@@ -498,7 +508,7 @@ local function getScoreForActionWait(self, modelUnit, gridIndex)
     if ((modelTile.getCurrentCapturePoint)                      and
         (not modelUnit.getCaptureAmount)                        and
         (modelTile:getTeamIndex() ~= modelUnit:getTeamIndex())) then
-        return -20                                                                                                              -- ADJUSTABLE
+        return -200                                                                                                             -- ADJUSTABLE
     else
         return 0                                                                                                                -- ADJUSTABLE
     end
@@ -1033,7 +1043,7 @@ end
 -- Phase 1: move the infantries, meches and bikes that are capturing buildings.
 local function getActionForPhase1(self)
     self.m_CandicateUnits = self.m_CandicateUnits or getCandidateUnitsForPhase1(self)
-    local candicateUnit   = popRandomElement(self.m_CandicateUnits)
+    local candicateUnit   = popRandomCandidateUnit(self.m_ModelUnitMap, self.m_CandicateUnits)
     if (not candicateUnit) then
         self.m_CandicateUnits = nil
         self.m_PhaseCode      = 2
@@ -1049,7 +1059,7 @@ local function getActionForPhase2(self)
 
     local action
     while ((not action) or (action.actionCode ~= ACTION_CODES.ActionAttack)) do
-        local candicateUnit = popRandomElement(self.m_CandicateUnits)
+        local candicateUnit = popRandomCandidateUnit(self.m_ModelUnitMap, self.m_CandicateUnits)
         if (not candicateUnit) then
             self.m_CandicateUnits = nil
             self.m_PhaseCode      = 3
@@ -1065,7 +1075,7 @@ end
 -- Phase 3: move the other infantries, meches and bikes.
 local function getActionForPhase3(self)
     self.m_CandicateUnits = self.m_CandicateUnits or getCandidateUnitsForPhase3(self)
-    local candicateUnit   = popRandomElement(self.m_CandicateUnits)
+    local candicateUnit   = popRandomCandidateUnit(self.m_ModelUnitMap, self.m_CandicateUnits)
     if (not candicateUnit) then
         self.m_CandicateUnits = nil
         self.m_PhaseCode      = 4
@@ -1078,7 +1088,7 @@ end
 -- Phase 4: move the air combat units.
 local function getActionForPhase4(self)
     self.m_CandicateUnits = self.m_CandicateUnits or getCandidateUnitsForPhase4(self)
-    local candicateUnit   = popRandomElement(self.m_CandicateUnits)
+    local candicateUnit   = popRandomCandidateUnit(self.m_ModelUnitMap, self.m_CandicateUnits)
     if (not candicateUnit) then
         self.m_CandicateUnits = nil
         self.m_PhaseCode      = 5
@@ -1091,7 +1101,7 @@ end
 -- Phase 5: move the other combat units.
 local function getActionForPhase5(self)
     self.m_CandicateUnits = self.m_CandicateUnits or getCandidateUnitsForPhase5(self)
-    local candicateUnit   = popRandomElement(self.m_CandicateUnits)
+    local candicateUnit   = popRandomCandidateUnit(self.m_ModelUnitMap, self.m_CandicateUnits)
     if (not candicateUnit) then
         self.m_CandicateUnits = nil
         self.m_PhaseCode      = 6
@@ -1104,7 +1114,7 @@ end
 -- Phase 6: move the other units except the remaining ranged units.
 local function getActionForPhase6(self)
     self.m_CandicateUnits = self.m_CandicateUnits or getCandidateUnitsForPhase6(self)
-    local candicateUnit   = popRandomElement(self.m_CandicateUnits)
+    local candicateUnit   = popRandomCandidateUnit(self.m_ModelUnitMap, self.m_CandicateUnits)
     if (not candicateUnit) then
         self.m_CandicateUnits = nil
         self.m_PhaseCode      = 7
@@ -1117,7 +1127,7 @@ end
 -- Phase 7: move the remaining units.
 local function getActionForPhase7(self)
     self.m_CandicateUnits = self.m_CandicateUnits or getCandidateUntisForPhase7(self)
-    local candicateUnit   = popRandomElement(self.m_CandicateUnits)
+    local candicateUnit   = popRandomCandidateUnit(self.m_ModelUnitMap, self.m_CandicateUnits)
     if (not candicateUnit) then
         self.m_CandicateUnits = nil
         self.m_PhaseCode      = 8
