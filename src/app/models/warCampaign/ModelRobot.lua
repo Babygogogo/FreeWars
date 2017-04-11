@@ -430,6 +430,15 @@ local function getScoreForActionJoinModelUnit(self, modelUnit, gridIndex)
     return -200                                                                                                                 -- ADJUSTABLE
 end
 
+local function getScoreForActionLaunchSilo(self, unitValueMap, targetGridIndex)
+    local score = 10000                                                                                                         -- ADJUSTABLE
+    for _, gridIndex in pairs(GridIndexFunctions.getGridsWithinDistance(targetGridIndex, 0, 2, self.m_MapSize)) do
+        score = score + unitValueMap[gridIndex.x][gridIndex.y]                                                                  -- ADJUSTABLE
+    end
+
+    return score
+end
+
 local function getScoreForActionLoadModelUnit(self, modelUnit, gridIndex)
     local loader = self.m_ModelUnitMap:getModelUnit(gridIndex)
     if (not loader:canLaunchModelUnit()) then
@@ -544,6 +553,49 @@ local function getScoreAndActionCaptureModelTile(self, modelUnit, gridIndex, pat
         actionCode   = ACTION_CODES.ActionCaptureModelTile,
         path         = {pathNodes = pathNodes},
         launchUnitID = (isModelUnitLoaded(self, modelUnit)) and (modelUnit:getUnitId()) or (nil),
+    }
+end
+
+local function getScoreAndActionLaunchSilo(self, modelUnit, gridIndex, pathNodes)
+    local modelUnitMap      = self.m_ModelUnitMap
+    local existingModelUnit = modelUnitMap:getModelUnit(gridIndex)
+    if ((existingModelUnit) and (existingModelUnit ~= modelUnit)) then
+        return nil, nil
+    end
+
+    local tileType = self.m_ModelTileMap:getModelTile(gridIndex):getTileType()
+    if ((not modelUnit.canLaunchSiloOnTileType) or (not modelUnit:canLaunchSiloOnTileType(tileType))) then
+        return nil, nil
+    end
+
+    local unitValueMap = {}
+    for x = 1, self.m_MapWidth do
+        unitValueMap[x] = {}
+        for y = 1, self.m_MapHeight do
+            local targetModelUnit = modelUnitMap:getModelUnit({x = x, y = y})
+            if ((not targetModelUnit) or (targetModelUnit == modelUnit)) then
+                unitValueMap[x][y] = 0
+            else
+                local value = math.min(30, targetModelUnit:getCurrentHP() - 1) * targetModelUnit:getProductionCost() / 10
+                unitValueMap[x][y] = (targetModelUnit:getPlayerIndex() == self.m_PlayerIndexForHuman) and (value) or (-value)
+            end
+        end
+    end
+    unitValueMap[gridIndex.x][gridIndex.y] = -math.min(30, modelUnit:getCurrentHP() - 1) * modelUnit:getProductionCost() / 10
+
+    local maxScore, targetGridIndex
+    for x = 1, self.m_MapWidth do
+        for y = 1, self.m_MapHeight do
+            local newTargetGridIndex = {x = x, y = y}
+            maxScore, targetGridIndex = getBetterScoreAndAction(maxScore, targetGridIndex, getScoreForActionLaunchSilo(self, unitValueMap, newTargetGridIndex), newTargetGridIndex)
+        end
+    end
+
+    return maxScore, {
+        actionCode      = ACTION_CODES.ActionLaunchSilo,
+        path            = {pathNodes = pathNodes},
+        targetGridIndex = targetGridIndex,
+        launchUnitID    = (isModelUnitLoaded(self, modelUnit)) and (modelUnit:getUnitId()) or (nil),
     }
 end
 
@@ -697,23 +749,6 @@ local function getActionsDropModelUnit(self)
     return actions
 end
 
-local function getActionLaunchFlare(self)
-    local focusModelUnit = self.m_FocusModelUnit
-    if ((not getModelFogMap(self.m_ModelWar):isFogOfWarCurrently()) or
-        (#self.m_PathNodes ~= 1)                                         or
-        (not focusModelUnit.getCurrentFlareAmmo)                         or
-        (focusModelUnit:getCurrentFlareAmmo() == 0))                     then
-        return nil
-    else
-        return {
-            name     = getLocalizedText(78, "LaunchFlare"),
-            callback = function()
-                setStateChoosingFlareTarget(self)
-            end,
-        }
-    end
-end
-
 local function getActionLaunchSilo(self)
     local focusModelUnit = self.m_FocusModelUnit
     local modelTile      = getModelTileMap(self.m_ModelWar):getModelTile(getPathNodesDestination(self.m_PathNodes))
@@ -801,12 +836,12 @@ local function getMaxScoreAndAction(self, modelUnit, gridIndex, pathNodes)
     local maxScore, actionForMaxScore
     maxScore, actionForMaxScore = getBetterScoreAndAction(maxScore, actionForMaxScore, getScoreAndActionAttack(          self, modelUnit, gridIndex, pathNodes))
     maxScore, actionForMaxScore = getBetterScoreAndAction(maxScore, actionForMaxScore, getScoreAndActionCaptureModelTile(self, modelUnit, gridIndex, pathNodes))
+    maxScore, actionForMaxScore = getBetterScoreAndAction(maxScore, actionForMaxScore, getScoreAndActionLaunchSilo(      self, modelUnit, gridIndex, pathNodes))
     maxScore, actionForMaxScore = getBetterScoreAndAction(maxScore, actionForMaxScore, getScoreAndActionWait(            self, modelUnit, gridIndex, pathNodes))
 
     return maxScore, actionForMaxScore
     --[[
     local list = {}
-    list[#list + 1] = getActionAttack(                self)
     list[#list + 1] = getActionDive(                  self)
     list[#list + 1] = getActionSurface(               self)
     list[#list + 1] = getActionBuildModelTile(        self)
@@ -814,8 +849,6 @@ local function getMaxScoreAndAction(self, modelUnit, gridIndex, pathNodes)
     for _, action in ipairs(getActionsDropModelUnit(self)) do
         list[#list + 1] = action
     end
-    list[#list + 1] = getActionLaunchFlare(           self)
-    list[#list + 1] = getActionLaunchSilo(            self)
     list[#list + 1] = getActionProduceModelUnitOnUnit(self)
 
     assert((#list > 0) or (itemWait), "ModelRobot-getMaxScoreAndAction() the generated list has no valid action item.")
