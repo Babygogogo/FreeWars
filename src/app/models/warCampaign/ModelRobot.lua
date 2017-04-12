@@ -430,6 +430,10 @@ local function getScoreForActionCaptureModelTile(self, modelUnit, gridIndex)
     end
 end
 
+local function getScoreForActionDive(self, modelUnit, gridIndex)
+    return (modelUnit:getCurrentFuel() <= 35) and (-10) or (10)
+end
+
 local function getScoreForActionJoinModelUnit(self, modelUnit, gridIndex)
     local targetModelUnit = self.m_ModelUnitMap:getModelUnit(gridIndex)
     if (targetModelUnit:isStateIdle()) then
@@ -503,6 +507,10 @@ local function getScoreForActionProduceModelUnitOnTile(self, gridIndex, tiledID,
     return score
 end
 
+local function getScoreForActionSurface(self, modelUnit, gridIndex)
+    return (modelUnit:getCurrentFuel() <= 35) and (10) or (-10)
+end
+
 local function getScoreForActionWait(self, modelUnit, gridIndex)
     local modelTile = self.m_ModelTileMap:getModelTile(gridIndex)
     if ((modelTile.getCurrentCapturePoint)                      and
@@ -566,6 +574,18 @@ local function getScoreAndActionCaptureModelTile(self, modelUnit, gridIndex, pat
     }
 end
 
+local function getScoreAndActionDive(self, modelUnit, gridIndex, pathNodes)
+    if ((not modelUnit.canDive) or (not modelUnit:canDive())) then
+        return nil, nil
+    end
+
+    return getScoreForActionDive(self, modelUnit, gridIndex), {
+        actionCode   = ACTION_CODES.ActionDive,
+        path         = {pathNodes = pathNodes},
+        launchUnitID = (isModelUnitLoaded(self, modelUnit)) and (modelUnit:getUnitId()) or (nil),
+    }
+end
+
 local function getScoreAndActionLaunchSilo(self, modelUnit, gridIndex, pathNodes)
     local modelUnitMap      = self.m_ModelUnitMap
     local existingModelUnit = modelUnitMap:getModelUnit(gridIndex)
@@ -606,6 +626,18 @@ local function getScoreAndActionLaunchSilo(self, modelUnit, gridIndex, pathNodes
         path            = {pathNodes = pathNodes},
         targetGridIndex = targetGridIndex,
         launchUnitID    = (isModelUnitLoaded(self, modelUnit)) and (modelUnit:getUnitId()) or (nil),
+    }
+end
+
+local function getScoreAndActionSurface(self, modelUnit, gridIndex, pathNodes)
+    if ((not modelUnit.canSurface) or (not modelUnit:canSurface())) then
+        return nil, nil
+    end
+
+    return getScoreForActionSurface(self, modelUnit, gridIndex), {
+        actionCode   = ACTION_CODES.ActionSurface,
+        path         = {pathNodes = pathNodes},
+        launchUnitID = (isModelUnitLoaded(self, modelUnit)) and (modelUnit:getUnitId()) or (nil),
     }
 end
 
@@ -708,14 +740,12 @@ local function getMaxScoreAndAction(self, modelUnit, gridIndex, pathNodes)
     local maxScore, actionForMaxScore
     maxScore, actionForMaxScore = getBetterScoreAndAction(maxScore, actionForMaxScore, getScoreAndActionAttack(          self, modelUnit, gridIndex, pathNodes))
     maxScore, actionForMaxScore = getBetterScoreAndAction(maxScore, actionForMaxScore, getScoreAndActionCaptureModelTile(self, modelUnit, gridIndex, pathNodes))
+    maxScore, actionForMaxScore = getBetterScoreAndAction(maxScore, actionForMaxScore, getScoreAndActionDive(            self, modelUnit, gridIndex, pathNodes))
     maxScore, actionForMaxScore = getBetterScoreAndAction(maxScore, actionForMaxScore, getScoreAndActionLaunchSilo(      self, modelUnit, gridIndex, pathNodes))
+    maxScore, actionForMaxScore = getBetterScoreAndAction(maxScore, actionForMaxScore, getScoreAndActionSurface(         self, modelUnit, gridIndex, pathNodes))
     maxScore, actionForMaxScore = getBetterScoreAndAction(maxScore, actionForMaxScore, getScoreAndActionWait(            self, modelUnit, gridIndex, pathNodes))
 
     return maxScore, actionForMaxScore
-    --[[
-    list[#list + 1] = getActionDive(                  self)
-    list[#list + 1] = getActionSurface(               self)
-    ]]
 end
 
 local function getActionForMaxScoreWithCandicateUnit(self, candicateUnit)
