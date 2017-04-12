@@ -3,6 +3,7 @@ local WarFieldManager = {}
 
 local WAR_FIELD_PATH           = "res.data.templateWarField."
 local WAR_FIELD_FILENAME_LISTS = requireFW(WAR_FIELD_PATH .. "WarFieldFilenameLists")
+local IS_SERVER                = require("src.app.utilities.GameConstantFunctions").isServer()
 
 local string, pairs, ipairs, require, assert = string, pairs, ipairs, require, assert
 local math                                   = math
@@ -16,10 +17,13 @@ local s_WarFieldListDeprecated = {}
 --------------------------------------------------------------------------------
 local function createWarFieldList()
     local list = {}
-    for _1, subList in pairs(WAR_FIELD_FILENAME_LISTS) do
-        assert(#subList > 0)
-        for _2, warFieldFilename in pairs(subList) do
-            list[warFieldFilename] = list[warFieldFilename] or requireFW(WAR_FIELD_PATH .. warFieldFilename)
+    for categoryName, subList in pairs(WAR_FIELD_FILENAME_LISTS) do
+        if ((not IS_SERVER)                                                          or
+            ((categoryName ~= "Campaign") and (categoryName ~= "SinglePlayerGame"))) then
+            assert(#subList > 0)
+            for _, warFieldFilename in pairs(subList) do
+                list[warFieldFilename] = list[warFieldFilename] or requireFW(WAR_FIELD_PATH .. warFieldFilename)
+            end
         end
     end
 
