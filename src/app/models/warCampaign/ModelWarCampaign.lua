@@ -175,31 +175,26 @@ function ModelWarCampaign:onStartRunning()
     self:getModelRobot()   :onStartRunning(self)
 
     self.m_PlayerIndexForHuman = modelPlayerManager:getPlayerIndexForHuman()
-    self.m_View:runAction(cc.RepeatForever:create(cc.Sequence:create(
-        cc.DelayTime:create(0.1),
-        cc.CallFunc:create(function()
-            if ((not self:isExecutingAction()) and (not self:isEnded())) then
-                if (modelTurnManager:isTurnPhaseRequestToBegin()) then
-                    self:translateAndExecuteAction({actionCode = ACTION_CODE_BEGIN_TURN})
-                elseif (modelTurnManager:getPlayerIndex() ~= self.m_PlayerIndexForHuman) then
-                    if (self.m_RobotAction) then
-                        self:translateAndExecuteAction(self.m_RobotAction)
-                        self.m_RobotAction = nil
-                    else
-                        self.m_RobotAction = self:getModelRobot():getNextAction()
-                    end
-                    --[[
-                    elseif ((not self.m_ThreadForRobot) or (coroutine.status(self.m_ThreadForRobot) == "dead")) then
-                        self.m_ThreadForRobot = coroutine.create(function()
+    self.m_View:scheduleUpdateWithPriorityLua(function(dt)
+        if ((not self:isExecutingAction()) and (not self:isEnded())) then
+            if (modelTurnManager:isTurnPhaseRequestToBegin()) then
+                self:translateAndExecuteAction({actionCode = ACTION_CODE_BEGIN_TURN})
+            elseif (modelTurnManager:getPlayerIndex() ~= self.m_PlayerIndexForHuman) then
+                if (self.m_RobotAction) then
+                    self:translateAndExecuteAction(self.m_RobotAction)
+                    self.m_RobotAction    = nil
+                    self.m_ThreadForRobot = nil
+                else
+                    if (not self.m_ThreadForRobot) then
+                        self.m_ThreadForRobot = coroutine.wrap(function()
                             self.m_RobotAction = self:getModelRobot():getNextAction()
                         end)
-                        coroutine.resume(self.m_ThreadForRobot)
                     end
-                    ]]
+                    self.m_ThreadForRobot()
                 end
             end
-        end)
-    )))
+        end
+    end, 0)
 
     self:getScriptEventDispatcher():dispatchEvent({name = "EvtSceneWarStarted"})
     AudioManager.playRandomWarMusic()

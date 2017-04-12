@@ -12,8 +12,8 @@ local SingletonGetters       = requireFW("src.app.utilities.SingletonGetters")
 local TableFunctions         = requireFW("src.app.utilities.TableFunctions")
 local Actor                  = requireFW("src.global.actors.Actor")
 
-local assert, pairs = assert, pairs
-local math, table   = math, table
+local assert, pairs          = assert, pairs
+local coroutine, math, table = coroutine, math, table
 
 local ACTION_CODES          = ActionCodeFunctions.getFullList()
 local SEARCH_PATH_LENGTH    = 10
@@ -761,6 +761,7 @@ local function getActionForMaxScoreWithCandicateUnit(self, candicateUnit)
                     if (scoreForAction) then
                         local totalScore = scoreForAction + getScoreForPosition(self, candicateUnit, gridIndex)
                         maxScore, actionForMaxScore = getBetterScoreAndAction(maxScore, actionForMaxScore, totalScore, action)
+                        coroutine.yield()
                     end
                 end
             end
