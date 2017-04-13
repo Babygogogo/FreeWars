@@ -183,14 +183,19 @@ function ModelWarCampaign:onStartRunning()
                 if (self.m_RobotAction) then
                     self:translateAndExecuteAction(self.m_RobotAction)
                     self.m_RobotAction    = nil
-                    self.m_ThreadForRobot = nil
                 else
-                    if (not self.m_ThreadForRobot) then
-                        self.m_ThreadForRobot = coroutine.wrap(function()
-                            self.m_RobotAction = self:getModelRobot():getNextAction()
-                        end)
+                    self.m_ThreadForRobot = (self.m_ThreadForRobot) or (coroutine.create(function()
+                        return self:getModelRobot():getNextAction()
+                    end))
+                    if (coroutine.status(self.m_ThreadForRobot) ~= "dead") then
+                        local isSucceesful, result = coroutine.resume(self.m_ThreadForRobot)
+                        assert(isSucceesful, result)
+
+                        if (result) then
+                            self.m_RobotAction    = result
+                            self.m_ThreadForRobot = nil
+                        end
                     end
-                    self.m_ThreadForRobot()
                 end
             end
         end

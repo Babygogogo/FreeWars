@@ -881,8 +881,11 @@ local function getCandidateUnitsForPhase5(self)
     local units             = {}
     local playerIndexInTurn = self.m_ModelTurnManager:getPlayerIndex()
     self.m_ModelUnitMap:forEachModelUnitOnMap(function(modelUnit)
-        if ((modelUnit:getPlayerIndex() == playerIndexInTurn) and (modelUnit:isStateIdle()) and (modelUnit.getBaseDamage)) then
-            units[#units + 1] = modelUnit
+        if ((modelUnit:getPlayerIndex() == playerIndexInTurn) and (modelUnit:isStateIdle()) and (modelUnit.getAttackRangeMinMax)) then
+            local minRange, maxRange = modelUnit:getAttackRangeMinMax()
+            if (maxRange == 1) then
+                units[#units + 1] = modelUnit
+            end
         end
     end)
 
@@ -981,7 +984,7 @@ local function getActionForPhase4(self)
     return getActionForMaxScoreWithCandicateUnit(self, candicateUnit)
 end
 
--- Phase 5: move the other combat units.
+-- Phase 5: move the remaining direct units.
 local function getActionForPhase5(self)
     self.m_CandicateUnits = self.m_CandicateUnits or getCandidateUnitsForPhase5(self)
     local candicateUnit   = popRandomCandidateUnit(self.m_ModelUnitMap, self.m_CandicateUnits)
