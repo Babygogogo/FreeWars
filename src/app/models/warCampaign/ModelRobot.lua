@@ -302,6 +302,10 @@ local function getScoreForPosition(self, modelUnit, gridIndex)
             local maxAmmo = modelUnit:getPrimaryWeaponMaxAmmo()
             score = score + (maxAmmo - modelUnit:getPrimaryWeaponCurrentAmmo()) / maxAmmo * 55                                  -- ADJUSTABLE
         end
+
+        local multiplierForFuelScore = (modelUnit:shouldDestroyOnOutOfFuel()) and (2) or (1)
+        local maxFuel                = modelUnit:getMaxFuel()
+        score = score + (maxFuel - modelUnit:getCurrentFuel()) / maxFuel * 50 * multiplierForFuelScore
     end
 
     local teamIndex = modelUnit:getTeamIndex()
