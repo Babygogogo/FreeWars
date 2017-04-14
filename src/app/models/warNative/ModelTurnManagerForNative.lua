@@ -155,6 +155,7 @@ local function runTurnPhaseConsumeUnitFuel(self)
                         if (shouldUpdateFogMap) then
                             modelFogMap:updateMapForPathsWithModelUnitAndPath(modelUnit, {gridIndex})
                         end
+                        modelWar:setTotalLostUnitValueForPlayer(modelWar:getTotalLostUnitValueForPlayer() + math.floor(modelUnit:getProductionCost() * modelUnit:getNormalizedCurrentHP() / 10))
                         Destroyers.destroyActorUnitOnMap(modelWar, gridIndex, true)
                         dispatcher:dispatchEvent({
                             name      = "EvtDestroyViewUnit",

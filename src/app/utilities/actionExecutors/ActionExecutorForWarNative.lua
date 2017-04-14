@@ -68,6 +68,13 @@ end
 local function updateFundWithCost(modelWar, playerIndex, cost)
     local modelPlayer = getModelPlayerManager(modelWar):getModelPlayer(playerIndex)
     modelPlayer:setFund(modelPlayer:getFund() - cost)
+
+    if (playerIndex == getModelPlayerManager(modelWar):getPlayerIndexForHuman()) then
+        modelWar:setTotalBuiltUnitValueForPlayer(modelWar:getTotalBuiltUnitValueForPlayer() + cost)
+    else
+        modelWar:setTotalBuiltUnitValueForAi(modelWar:getTotalBuiltUnitValueForAi() + cost)
+    end
+
     dispatchEvtModelPlayerUpdated(modelWar, playerIndex)
 end
 
@@ -185,6 +192,10 @@ end
 
 local function getEnergyModifierWithTargetAndDamage(target, damage, energyGainModifier)
     return math.floor((target:getNormalizedCurrentHP() - math.ceil(math.max(0, target:getCurrentHP() - (damage or 0)) / 10)) * energyGainModifier)
+end
+
+local function getLostValueWithTargetAndDamage(target, damage)
+    return math.floor((target:getNormalizedCurrentHP() - math.ceil(math.max(0, target:getCurrentHP() - (damage or 0)) / 10)) * target:getProductionCost() / 10)
 end
 
 local function getAdjacentPlasmaGridIndexes(gridIndex, modelTileMap)
@@ -353,6 +364,18 @@ local function executeAttack(action, modelWar)
         end
         if (not targetModelPlayer:isActivatingSkill()) then
             targetModelPlayer  :setEnergy(targetModelPlayer:getEnergy()   + attackEnergy + counterEnergy)
+        end
+
+        if (targetPlayerIndex == modelPlayerManager:getPlayerIndexForHuman()) then
+            modelWar:setTotalLostUnitValueForPlayer(
+                modelWar:getTotalLostUnitValueForPlayer() +
+                getLostValueWithTargetAndDamage(attackTarget, attackDamage)
+            )
+        else
+            modelWar:setTotalLostUnitValueForPlayer(
+                modelWar:getTotalLostUnitValueForPlayer() +
+                getLostValueWithTargetAndDamage(attacker, counterDamage)
+            )
         end
 
         dispatchEvtModelPlayerUpdated(modelWar, attackerPlayerIndex)
@@ -602,7 +625,9 @@ local function executeDestroyOwnedModelUnit(action, modelWar)
     modelWar:setExecutingAction(true)
 
     local gridIndex = action.gridIndex
-    getModelFogMap(modelWar):updateMapForPathsWithModelUnitAndPath(getModelUnitMap(modelWar):getModelUnit(gridIndex), {gridIndex})
+    local modelUnit = getModelUnitMap(modelWar):getModelUnit(gridIndex)
+    getModelFogMap(modelWar):updateMapForPathsWithModelUnitAndPath(modelUnit, {gridIndex})
+    modelWar:setTotalLostUnitValueForPlayer(modelWar:getTotalLostUnitValueForPlayer() + math.floor(modelUnit:getProductionCost() * modelUnit:getNormalizedCurrentHP() / 10))
     Destroyers.destroyActorUnitOnMap(modelWar, gridIndex, true)
 
     getModelGridEffect(modelWar):showAnimationExplosion(gridIndex)

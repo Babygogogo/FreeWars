@@ -97,24 +97,27 @@ end
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
 function ModelWarNative:ctor(warData)
-    self.m_ActionID                  = warData.actionID
-    self.m_AttackModifier            = warData.attackModifier
-    self.m_EnergyGainModifier        = warData.energyGainModifier
-    self.m_IncomeModifier            = warData.incomeModifier
-    self.m_IsActiveSkillEnabled      = warData.isActiveSkillEnabled
-    self.m_IsFogOfWarByDefault       = warData.isFogOfWarByDefault
-    self.m_IsPassiveSkillEnabled     = warData.isPassiveSkillEnabled
-    self.m_IsCampaign                = warData.isCampaign
-    self.m_IsSkillDeclarationEnabled = warData.isSkillDeclarationEnabled
-    self.m_IsWarEnded                = warData.isWarEnded
-    self.m_MoveRangeModifier         = warData.moveRangeModifier
-    self.m_SaveIndex                 = warData.saveIndex
-    self.m_StartingEnergy            = warData.startingEnergy
-    self.m_StartingFund              = warData.startingFund
-    self.m_TotalAttackDamage         = warData.totalAttackDamage or 0
-    self.m_TotalAttacksCount         = warData.totalAttacksCount or 0
-    self.m_TotalKillsCount           = warData.totalKillsCount   or 0
-    self.m_VisionModifier            = warData.visionModifier
+    self.m_ActionID                     = warData.actionID
+    self.m_AttackModifier               = warData.attackModifier
+    self.m_EnergyGainModifier           = warData.energyGainModifier
+    self.m_IncomeModifier               = warData.incomeModifier
+    self.m_IsActiveSkillEnabled         = warData.isActiveSkillEnabled
+    self.m_IsFogOfWarByDefault          = warData.isFogOfWarByDefault
+    self.m_IsPassiveSkillEnabled        = warData.isPassiveSkillEnabled
+    self.m_IsCampaign                   = warData.isCampaign
+    self.m_IsSkillDeclarationEnabled    = warData.isSkillDeclarationEnabled
+    self.m_IsWarEnded                   = warData.isWarEnded
+    self.m_MoveRangeModifier            = warData.moveRangeModifier
+    self.m_SaveIndex                    = warData.saveIndex
+    self.m_StartingEnergy               = warData.startingEnergy
+    self.m_StartingFund                 = warData.startingFund
+    self.m_TotalAttackDamage            = warData.totalAttackDamage            or 0
+    self.m_TotalAttacksCount            = warData.totalAttacksCount            or 0
+    self.m_TotalBuiltUnitValueForAI     = warData.totalBuiltUnitValueForAI     or 0
+    self.m_TotalBuiltUnitValueForPlayer = warData.totalBuiltUnitValueForPlayer or 0
+    self.m_TotalKillsCount              = warData.totalKillsCount              or 0
+    self.m_TotalLostUnitValueForPlayer  = warData.totalLostUnitValueForPlayer  or 0
+    self.m_VisionModifier               = warData.visionModifier
 
     initScriptEventDispatcher(self)
     initActorConfirmBox(      self)
@@ -145,28 +148,31 @@ end
 --------------------------------------------------------------------------------
 function ModelWarNative:toSerializableTable()
     return {
-        actionID                  = self:getActionId(),
-        attackModifier            = self.m_AttackModifier,
-        energyGainModifier        = self.m_EnergyGainModifier,
-        incomeModifier            = self.m_IncomeModifier,
-        isActiveSkillEnabled      = self.m_IsActiveSkillEnabled,
-        isFogOfWarByDefault       = self.m_IsFogOfWarByDefault,
-        isPassiveSkillEnabled     = self.m_IsPassiveSkillEnabled,
-        isCampaign                = self.m_IsCampaign,
-        isSkillDeclarationEnabled = self.m_IsSkillDeclarationEnabled,
-        isWarEnded                = self.m_IsWarEnded,
-        moveRangeModifier         = self.m_MoveRangeModifier,
-        saveIndex                 = self.m_SaveIndex,
-        startingEnergy            = self.m_StartingEnergy,
-        startingFund              = self.m_StartingFund,
-        totalAttackDamage         = self.m_TotalAttackDamage,
-        totalAttacksCount         = self.m_TotalAttacksCount,
-        totalKillsCount           = self.m_TotalKillsCount,
-        visionModifier            = self.m_VisionModifier,
-        players                   = self:getModelPlayerManager()   :toSerializableTable(),
-        skillData                 = self:getModelSkillDataManager():toSerializableTable(),
-        turn                      = self:getModelTurnManager()     :toSerializableTable(),
-        warField                  = self:getModelWarField()        :toSerializableTable(),
+        actionID                     = self:getActionId(),
+        attackModifier               = self.m_AttackModifier,
+        energyGainModifier           = self.m_EnergyGainModifier,
+        incomeModifier               = self.m_IncomeModifier,
+        isActiveSkillEnabled         = self.m_IsActiveSkillEnabled,
+        isFogOfWarByDefault          = self.m_IsFogOfWarByDefault,
+        isPassiveSkillEnabled        = self.m_IsPassiveSkillEnabled,
+        isCampaign                   = self.m_IsCampaign,
+        isSkillDeclarationEnabled    = self.m_IsSkillDeclarationEnabled,
+        isWarEnded                   = self.m_IsWarEnded,
+        moveRangeModifier            = self.m_MoveRangeModifier,
+        saveIndex                    = self.m_SaveIndex,
+        startingEnergy               = self.m_StartingEnergy,
+        startingFund                 = self.m_StartingFund,
+        totalAttackDamage            = self.m_TotalAttackDamage,
+        totalAttacksCount            = self.m_TotalAttacksCount,
+        totalBuiltUnitValueForAI     = self.m_TotalBuiltUnitValueForAI,
+        totalBuiltUnitValueForPlayer = self.m_TotalBuiltUnitValueForPlayer,
+        totalKillsCount              = self.m_TotalKillsCount,
+        totalLostUnitValueForPlayer  = self.m_TotalLostUnitValueForPlayer,
+        visionModifier               = self.m_VisionModifier,
+        players                      = self:getModelPlayerManager()   :toSerializableTable(),
+        skillData                    = self:getModelSkillDataManager():toSerializableTable(),
+        turn                         = self:getModelTurnManager()     :toSerializableTable(),
+        warField                     = self:getModelWarField()        :toSerializableTable(),
     }
 end
 
@@ -183,6 +189,19 @@ function ModelWarNative:onStartRunning()
     self:getModelRobot()   :onStartRunning(self)
 
     self.m_PlayerIndexForHuman = modelPlayerManager:getPlayerIndexForHuman()
+    if ((modelTurnManager:getTurnIndex() == 1) and (modelTurnManager:isTurnPhaseRequestToBegin())) then
+        local func = function(modelUnit)
+            if (modelUnit:getPlayerIndex() == self.m_PlayerIndexForHuman) then
+                self.m_TotalBuiltUnitValueForPlayer = self.m_TotalBuiltUnitValueForPlayer + modelUnit:getProductionCost()
+            else
+                self.m_TotalBuiltUnitValueForAI     = self.m_TotalBuiltUnitValueForAI     + modelUnit:getProductionCost()
+            end
+        end
+        self:getModelWarField():getModelUnitMap()
+            :forEachModelUnitOnMap(func)
+            :forEachModelUnitLoaded(func)
+    end
+
     self.m_View:scheduleUpdateWithPriorityLua(function(dt)
         if ((not self:isExecutingAction()) and (not self:isEnded())) then
             if (modelTurnManager:isTurnPhaseRequestToBegin()) then
@@ -306,6 +325,36 @@ end
 
 function ModelWarNative:setTotalKillsCount(count)
     self.m_TotalKillsCount = count
+
+    return self
+end
+
+function ModelWarNative:getTotalBuiltUnitValueForAi()
+    return self.m_TotalBuiltUnitValueForAI
+end
+
+function ModelWarNative:setTotalBuiltUnitValueForAi(value)
+    self.m_TotalBuiltUnitValueForAI = value
+
+    return self
+end
+
+function ModelWarNative:getTotalBuiltUnitValueForPlayer()
+    return self.m_TotalBuiltUnitValueForPlayer
+end
+
+function ModelWarNative:setTotalBuiltUnitValueForPlayer(value)
+    self.m_TotalBuiltUnitValueForPlayer = value
+
+    return self
+end
+
+function ModelWarNative:getTotalLostUnitValueForPlayer()
+    return self.m_TotalLostUnitValueForPlayer
+end
+
+function ModelWarNative:setTotalLostUnitValueForPlayer(value)
+    self.m_TotalLostUnitValueForPlayer = value
 
     return self
 end

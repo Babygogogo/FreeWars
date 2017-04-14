@@ -223,7 +223,28 @@ local function getTextAndScoreForPower(self)
 end
 
 local function getTextAndScoreForTechnique(self)
-    return "", 0
+    local modelWar            = self.m_ModelWar
+    local builtValueForAi     = modelWar:getTotalBuiltUnitValueForAi()
+    local builtValueForPlayer = modelWar:getTotalBuiltUnitValueForPlayer()
+    local lostValueForPlayer  = modelWar:getTotalLostUnitValueForPlayer()
+    local reference           = math.sqrt(builtValueForAi) / (math.max(1, math.sqrt(builtValueForPlayer) + math.sqrt(lostValueForPlayer)))
+    local score               = (reference >= 0.8)         and
+        (math.floor(math.min(reference * 62.5 + 50, 150))) or
+        (math.floor(math.max(reference * 125,       0)))
+    --[[
+    技术（Technique）
+    技术分的评判参数是R=「sqrt（敌总单位价值）/[sqrt（我总单位价值）+sqrt（我损失单位价值）]」
+    计算公式为：
+    （1）当R≤0.8时：技术分=max（Rx125，0）
+    （2）当R≥0.8时：技术分=min（Rx62.5+50，150）
+    ]]
+
+    return string.format("%s: %d\n%s: %d      %s: %d      %s: %d",
+        getLocalizedText(65, "ScoreForTechnique"),       score,
+        getLocalizedText(65, "TotalUnitValueForAI"),     builtValueForAi,
+        getLocalizedText(65, "TotalUnitValueForPlayer"), builtValueForPlayer,
+        getLocalizedText(65, "LostUnitValueForPlayer"),  lostValueForPlayer
+    ), score
 end
 
 local function generateTextScoreInfo(self)
