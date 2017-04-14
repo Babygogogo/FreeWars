@@ -8,7 +8,7 @@ local WarFieldManager        = requireFW("src.app.utilities.WarFieldManager")
 local io = io
 
 local WRITABLE_PATH = cc.FileUtils:getInstance():getWritablePath() .. "writablePath/"
-local WAR_DATA_PATH = WRITABLE_PATH .. "campaignData/"
+local WAR_DATA_PATH = WRITABLE_PATH .. "nativeWarData/"
 local DEFAULT_TURN_DATA  = {
     turnIndex     = 1,
     playerIndex   = 1,
@@ -119,6 +119,7 @@ function NativeWarManager.createInitialWarData(warConfiguration)
         energyGainModifier        = warConfiguration.energyGainModifier,
         incomeModifier            = warConfiguration.incomeModifier,
         isActiveSkillEnabled      = warConfiguration.isActiveSkillEnabled,
+        isCampaign                = warConfiguration.isCampaign,
         isFogOfWarByDefault       = warConfiguration.isFogOfWarByDefault,
         isPassiveSkillEnabled     = warConfiguration.isPassiveSkillEnabled,
         isSkillDeclarationEnabled = warConfiguration.isSkillDeclarationEnabled,

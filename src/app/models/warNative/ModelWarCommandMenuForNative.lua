@@ -26,7 +26,8 @@ local getModelTurnManager      = SingletonGetters.getModelTurnManager
 local getModelUnitMap          = SingletonGetters.getModelUnitMap
 local getScriptEventDispatcher = SingletonGetters.getScriptEventDispatcher
 
-local table, string, ipairs, pairs = table, string, ipairs, pairs
+local table, string, math = table, string, math
+local ipairs, pairs       = ipairs, pairs
 
 local ACTION_CODE_DESTROY_OWNED_UNIT   = ActionCodeFunctions.getActionCode("ActionDestroyOwnedModelUnit")
 local ACTION_CODE_END_TURN             = ActionCodeFunctions.getActionCode("ActionEndTurn")
@@ -167,6 +168,47 @@ local function generateTextWarInfo(self)
     end
 
     return table.concat(stringList, "\n--------------------\n")
+end
+
+--------------------------------------------------------------------------------
+-- The dynamic text generator for score info.
+--------------------------------------------------------------------------------
+local function getTextAndScoreForSpeed(self)
+    local modelWar         = self.m_ModelWar
+    local warFieldFileName = SingletonGetters.getModelWarField(modelWar):getWarFieldFileName()
+    local advancedSettings = WarFieldManager.getWarFieldData(warFieldFileName).advancedSettings or {}
+    local targetTurnsCount = advancedSettings.targetTurnsCount or 15
+    local currentTurnIndex = SingletonGetters.getModelTurnManager(modelWar):getTurnIndex()
+    local score            = (currentTurnIndex <= targetTurnsCount)                and
+        math.min(math.floor(200 - 100 * currentTurnIndex / targetTurnsCount), 150) or
+        math.max(math.floor(150 - 50  * currentTurnIndex / targetTurnsCount), 0)
+
+    return string.format("%s: %d\n%s: %d        %s: %d",
+        getLocalizedText(65, "ScoreForSpeed"),    score,
+        getLocalizedText(65, "TargetTurnsCount"), targetTurnsCount,
+        getLocalizedText(65, "CurrentTurnIndex"), currentTurnIndex
+    ), score
+end
+
+local function getTextAndScoreForPower(self)
+    return "", 0
+end
+
+local function getTextAndScoreForTechnique(self)
+    return "", 0
+end
+
+local function generateTextScoreInfo(self)
+    local textSpeed,     scoreSpeed     = getTextAndScoreForSpeed(    self)
+    local textPower,     scorePower     = getTextAndScoreForPower(    self)
+    local textTechnique, scoreTechnique = getTextAndScoreForTechnique(self)
+
+    return table.concat({
+        textSpeed,
+        textPower,
+        textTechnique,
+        string.format("%s: %d", getLocalizedText(65, "TotalScore"), scoreSpeed + scorePower + scoreTechnique),
+    }, "\n--------------------\n")
 end
 
 --------------------------------------------------------------------------------
@@ -411,6 +453,9 @@ local function generateItemsForStateMain(self)
         self.m_ItemSkillInfo,
         self.m_ItemAuxiliaryCommands,
     }
+    if (self.m_ModelWar:isCampaign()) then
+        items[#items + 1] = self.m_ItemScoreInfo
+    end
     if (getModelTurnManager(self.m_ModelWar):getPlayerIndex() == self.m_PlayerIndexForHuman) then
         items[#items + 1] = self.m_ItemSaveGame
         items[#items + 1] = self.m_ItemLoadGame
@@ -759,6 +804,15 @@ local function initItemSaveGame(self)
     }
 end
 
+local function initItemScoreInfo(self)
+    self.m_ItemScoreInfo = {
+        name     = getLocalizedText(65, "Score Info"),
+        callback = function()
+            self.m_View:setOverviewString(generateTextScoreInfo(self))
+        end,
+    }
+end
+
 local function initItemSkillInfo(self)
     self.m_ItemSkillInfo = {
         name     = getLocalizedText(22, "SkillInfo"),
@@ -904,6 +958,7 @@ function ModelWarCommandMenuForNative:ctor(param)
     initItemHideUI(             self)
     initItemLoadGame(           self)
     initItemSaveGame(           self)
+    initItemScoreInfo(          self)
     initItemSkillInfo(          self)
     initItemSkillSystem(        self)
     initItemSetMessageIndicator(self)

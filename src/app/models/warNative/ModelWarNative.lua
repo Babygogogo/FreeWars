@@ -104,7 +104,7 @@ function ModelWarNative:ctor(warData)
     self.m_IsActiveSkillEnabled      = warData.isActiveSkillEnabled
     self.m_IsFogOfWarByDefault       = warData.isFogOfWarByDefault
     self.m_IsPassiveSkillEnabled     = warData.isPassiveSkillEnabled
-    self.m_IsScoreGame               = warData.isScoreGame
+    self.m_IsCampaign                = warData.isCampaign
     self.m_IsSkillDeclarationEnabled = warData.isSkillDeclarationEnabled
     self.m_IsWarEnded                = warData.isWarEnded
     self.m_MoveRangeModifier         = warData.moveRangeModifier
@@ -149,7 +149,7 @@ function ModelWarNative:toSerializableTable()
         isActiveSkillEnabled      = self.m_IsActiveSkillEnabled,
         isFogOfWarByDefault       = self.m_IsFogOfWarByDefault,
         isPassiveSkillEnabled     = self.m_IsPassiveSkillEnabled,
-        isScoreGame               = self.m_IsScoreGame,
+        isCampaign                = self.m_IsCampaign,
         isSkillDeclarationEnabled = self.m_IsSkillDeclarationEnabled,
         isWarEnded                = self.m_IsWarEnded,
         moveRangeModifier         = self.m_MoveRangeModifier,
@@ -290,8 +290,8 @@ function ModelWarNative:isSkillDeclarationEnabled()
     return self.m_IsSkillDeclarationEnabled
 end
 
-function ModelWarNative:isScoreGame()
-    return self.m_IsScoreGame
+function ModelWarNative:isCampaign()
+    return self.m_IsCampaign
 end
 
 function ModelWarNative:getIncomeModifier()
