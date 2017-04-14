@@ -81,10 +81,12 @@ local function repairModelUnit(self, modelUnit, repairAmount)
 
     modelUnit:updateView()
 
-    if (repairAmount >= 10) then
-        SingletonGetters.getModelGridEffect(self.m_ModelWar):showAnimationRepair(modelUnit:getGridIndex())
-    elseif (hasSupplied) then
-        SingletonGetters.getModelGridEffect(self.m_ModelWar):showAnimationSupply(modelUnit:getGridIndex())
+    if (isUnitVisible(self.m_ModelWar, modelUnit:getGridIndex(), modelUnit:getUnitType(), isModelUnitDiving(modelUnit), modelUnit:getPlayerIndex(), self.m_PlayerIndexForHuman)) then
+        if (repairAmount >= 10) then
+            SingletonGetters.getModelGridEffect(self.m_ModelWar):showAnimationRepair(modelUnit:getGridIndex())
+        elseif (hasSupplied) then
+            SingletonGetters.getModelGridEffect(self.m_ModelWar):showAnimationSupply(modelUnit:getGridIndex())
+        end
     end
 end
 
@@ -211,8 +213,10 @@ local function runTurnPhaseSupplyUnit(self)
         if (supplyData.onMapData) then
             for unitID, data in pairs(supplyData.onMapData) do
                 local gridIndex = data.gridIndex
-                supplyWithAmmoAndFuel(modelUnitMap:getModelUnit(gridIndex), true)
-                if (modelGridEffect) then
+                local modelUnit = modelUnitMap:getModelUnit(gridIndex)
+                supplyWithAmmoAndFuel(modelUnit, true)
+
+                if (isUnitVisible(modelWar, gridIndex, modelUnit:getUnitType(), isModelUnitDiving(modelUnit), modelUnit:getPlayerIndex(), self.m_PlayerIndexForHuman)) then
                     modelGridEffect:showAnimationSupply(gridIndex)
                 end
             end
@@ -222,8 +226,11 @@ local function runTurnPhaseSupplyUnit(self)
             for unitID, data in pairs(supplyData.loadedData) do
                 local modelUnit = modelUnitMap:getLoadedModelUnitWithUnitId(unitID)
                 supplyWithAmmoAndFuel(modelUnit, true)
-                if (modelGridEffect) then
-                    modelGridEffect:showAnimationSupply(modelUnit:getGridIndex())
+
+                local gridIndex = modelUnit:getGridIndex()
+                local loader    = modelUnitMap:getModelUnit(gridIndex)
+                if (isUnitVisible(modelWar, gridIndex, loader:getUnitType(), isModelUnitDiving(loader), loader:getPlayerIndex(), self.m_PlayerIndexForHuman)) then
+                    modelGridEffect:showAnimationSupply(gridIndex)
                 end
             end
         end

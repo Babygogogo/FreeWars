@@ -12,16 +12,17 @@ local SingletonGetters       = requireFW("src.app.utilities.SingletonGetters")
 local TableFunctions         = requireFW("src.app.utilities.TableFunctions")
 local Actor                  = requireFW("src.global.actors.Actor")
 
-local assert, pairs = assert, pairs
-local math, table   = math, table
+local assert, pairs          = assert, pairs
+local coroutine, math, table = coroutine, math, table
 
 local ACTION_CODES          = ActionCodeFunctions.getFullList()
+local SEARCH_PATH_LENGTH    = 10
 local PRODUCTION_CANDIDATES = {                                                                                             -- ADJUSTABLE
     Factory = {
         Infantry   = 1500,
         Mech       = 0,
         Bike       = 1200,
-        Recon      = -999999,
+        Recon      = 0,
         Flare      = -999999,
         AntiAir    = 500,
         Tank       = 2000,
@@ -29,21 +30,21 @@ local PRODUCTION_CANDIDATES = {                                                 
         WarTank    = 1600,
         Artillery  = 1400,
         AntiTank   = 1000,
-        Rockets    = 0,
+        Rockets    = 600,
         Missiles   = -999999,
         Rig        = -999999,
     },
     Airport = {
-        Fighter         = -999999,
-        Bomber          = 0,
+        Fighter         = 600,
+        Bomber          = 600,
         Duster          = 1200,
         BattleCopter    = 1800,
         TransportCopter = -999999,
     },
     Seaport = {
-        Battleship = 0,
+        Battleship = 600,
         Carrier    = -999999,
-        Submarine  = 0,
+        Submarine  = 800,
         Cruiser    = 900,
         Lander     = -999999,
         Gunboat    = 1000,
@@ -65,6 +66,17 @@ local function popRandomElement(array)
     end
 end
 
+local function popRandomCandidateUnit(modelUnitMap, candidateUnits)
+    local modelUnit = popRandomElement(candidateUnits)
+    if (not modelUnit) then
+        return nil
+    elseif ((modelUnitMap:getModelUnit(modelUnit:getGridIndex()) == modelUnit) or (modelUnitMap:getLoadedModelUnitWithUnitId(modelUnit:getUnitId()))) then
+        return modelUnit
+    else
+        return popRandomCandidateUnit(modelUnitMap, candidateUnits)
+    end
+end
+
 local function isModelUnitLoaded(self, modelUnit)
     return self.m_ModelUnitMap:getLoadedModelUnitWithUnitId(modelUnit:getUnitId()) ~= nil
 end
@@ -73,9 +85,9 @@ local function calculateUnitValueRatio(self)
     local aiUnitValue, humanUnitValue = 0, 0
     local func                        = function(modelUnit)
         if (modelUnit:getPlayerIndex() == self.m_PlayerIndexForHuman) then
-            humanUnitValue = humanUnitValue + modelUnit:getProductionCost() * modelUnit:getCurrentHP() / 100
+            humanUnitValue = humanUnitValue + modelUnit:getProductionCost() * modelUnit:getCurrentHP()
         else
-            aiUnitValue    = aiUnitValue    + modelUnit:getProductionCost() * modelUnit:getCurrentHP() / 100
+            aiUnitValue    = aiUnitValue    + modelUnit:getProductionCost() * modelUnit:getCurrentHP()
         end
     end
 
@@ -120,7 +132,7 @@ local function getReachableAreaOnCandicateGridIndex(self, modelUnit, candicateGr
     local mapSize      = modelTileMap:getMapSize()
     return ReachableAreaFunctions.createArea(
         candicateGridIndex,
-        modelUnit:getMoveRange() * 4,
+        math.max(SEARCH_PATH_LENGTH, modelUnit:getMoveRange()),
         function(gridIndex)
             if (not GridIndexFunctions.isWithinMap(gridIndex, mapSize)) then
                 return nil
@@ -278,24 +290,26 @@ end
 -- The score calculators.
 --------------------------------------------------------------------------------
 local function getScoreForPosition(self, modelUnit, gridIndex)
-    local score
-    if ((GameConstantFunctions.isTypeInCategory(modelUnit:getUnitType(), "InfantryUnits")) or (not isUnitThreatened(self, modelUnit, gridIndex))) then
-        score = 0                                                                                                               -- ADJUSTABLE
-    else
-        score = -math.min(modelUnit:getCurrentHP(), 50) * (2 + modelUnit:getProductionCost() / 1000)                            -- ADJUSTABLE
+    local score = 0
+    if (isUnitThreatened(self, modelUnit, gridIndex)) then
+        score = -math.min(modelUnit:getCurrentHP(), 50) * (2 + modelUnit:getProductionCost() / 1000) / (math.max(1, self.m_UnitValueRatio) ^ 2) -- ADJUSTABLE
     end
 
     local modelTile = self.m_ModelTileMap:getModelTile(gridIndex)
     if ((modelTile.canRepairTarget) and (modelTile:canRepairTarget(modelUnit))) then
-        score = score + (10 - modelUnit:getNormalizedCurrentHP()) * 10                                                          -- ADJUSTABLE
+        score = score + (10 - modelUnit:getNormalizedCurrentHP()) * 15                                                          -- ADJUSTABLE
         if ((modelUnit.hasPrimaryWeapon) and (modelUnit:hasPrimaryWeapon())) then
             local maxAmmo = modelUnit:getPrimaryWeaponMaxAmmo()
-            score = score + (maxAmmo - modelUnit:getPrimaryWeaponCurrentAmmo()) / maxAmmo * 5                                   -- ADJUSTABLE
+            score = score + (maxAmmo - modelUnit:getPrimaryWeaponCurrentAmmo()) / maxAmmo * 55                                  -- ADJUSTABLE
         end
+
+        local multiplierForFuelScore = (modelUnit:shouldDestroyOnOutOfFuel()) and (2) or (1)
+        local maxFuel                = modelUnit:getMaxFuel()
+        score = score + (maxFuel - modelUnit:getCurrentFuel()) / maxFuel * 50 * multiplierForFuelScore
     end
 
     local teamIndex = modelUnit:getTeamIndex()
-    if ((modelTile:getTeamIndex() == teamIndex)) then
+    if (modelTile:getTeamIndex() == teamIndex) then
         local tileType = modelTile:getTileType()
         if     (tileType == "Factory") then score = score + (-500)                                                              -- ADJUSTABLE
         elseif (tileType == "Airport") then score = score + (-200)                                                              -- ADJUSTABLE
@@ -303,8 +317,7 @@ local function getScoreForPosition(self, modelUnit, gridIndex)
         end
     end
 
-    local distanceToEnemyTiles, enemyTilesCount = 0, 0
-    local reachableArea                         = getReachableAreaOnCandicateGridIndex(self, modelUnit, gridIndex)
+    local reachableArea = getReachableAreaOnCandicateGridIndex(self, modelUnit, gridIndex)
     local minDistanceToEnemyTiles
     self.m_ModelTileMap:forEachModelTile(function(modelTileOnMap)
         local x, y = modelTileOnMap:getGridIndex().x, modelTileOnMap:getGridIndex().y
@@ -312,18 +325,18 @@ local function getScoreForPosition(self, modelUnit, gridIndex)
             (reachableArea[x][y])                         and
             (modelTileOnMap.getCurrentCapturePoint)       and
             (modelTileOnMap:getTeamIndex() ~= teamIndex)) then
-            local multiplier = 1
-            local tileType   = modelTileOnMap:getTileType()
+            local distance = reachableArea[x][y].totalMoveCost
+            local tileType = modelTileOnMap:getTileType()
             if ((tileType == "Factory") or (tileType == "Airport") or (tileType == "Seaport") or (tileType == "CommandTower")) then
-                multiplier = multiplier * 2                                                                                     -- ADJUSTABLE
+                distance = distance / 2                                                                                         -- ADJUSTABLE
             end
-            if (modelTileOnMap:getPlayerIndex() == self.m_PlayerIndexForHuman) then
-                multiplier = multiplier * 0.5
+            if (modelTileOnMap:getPlayerIndex() == 0) then
+                distance = distance / 2
+            end
+            if (modelTileOnMap:getCurrentCapturePoint() < 20) then
+                distance = distance * 2                                                                                         -- ADJUSTABLE
             end
 
-            local distance       = reachableArea[x][y].totalMoveCost
-            distanceToEnemyTiles = distanceToEnemyTiles + distance * multiplier
-            enemyTilesCount      = enemyTilesCount + 1
             if (not minDistanceToEnemyTiles) then
                 minDistanceToEnemyTiles = distance
             else
@@ -331,19 +344,21 @@ local function getScoreForPosition(self, modelUnit, gridIndex)
             end
         end
     end)
-    if (enemyTilesCount > 0) then
-        score = score + (distanceToEnemyTiles / enemyTilesCount + minDistanceToEnemyTiles / 3) * (-15)                          -- ADJUSTABLE
+    if (minDistanceToEnemyTiles) then
+        score = score + (minDistanceToEnemyTiles) * (-20)                                                                       -- ADJUSTABLE
     else
-        local distanceToEnemyUnits, enemyUnitsCount = 0, 0
-        self.m_ModelUnitMap:forEachModelUnitOnMap(function(modelUnitOnMap)
-            if (modelUnitOnMap:getPlayerIndex() == self.m_PlayerIndexForHuman) then
-                distanceToEnemyUnits = distanceToEnemyUnits + GridIndexFunctions.getDistance(modelUnitOnMap:getGridIndex(), gridIndex)
-                enemyUnitsCount      = enemyUnitsCount + 1
-            end
-        end)
-        if (enemyUnitsCount > 0) then
-            score = score + (distanceToEnemyUnits / enemyUnitsCount) * (-15)                                                    -- ADJUSTABLE
+        score = score + (math.max(SEARCH_PATH_LENGTH, modelUnit:getMoveRange()) + 1) * (-20 * 2)                                -- ADJUSTABLE
+    end
+
+    local distanceToEnemyUnits, enemyUnitsCount = 0, 0
+    self.m_ModelUnitMap:forEachModelUnitOnMap(function(modelUnitOnMap)
+        if (modelUnitOnMap:getPlayerIndex() == self.m_PlayerIndexForHuman) then
+            distanceToEnemyUnits = distanceToEnemyUnits + GridIndexFunctions.getDistance(modelUnitOnMap:getGridIndex(), gridIndex)
+            enemyUnitsCount      = enemyUnitsCount + 1
         end
+    end)
+    if (enemyUnitsCount > 0) then
+        score = score + (distanceToEnemyUnits / enemyUnitsCount) * (-10)                                                        -- ADJUSTABLE
     end
 
     return score
@@ -397,7 +412,7 @@ local function getScoreForActionCaptureModelTile(self, modelUnit, gridIndex)
     if (captureAmount >= currentCapturePoint) then
         return 10000                                                                                                            -- ADJUSTABLE
     elseif (captureAmount < currentCapturePoint / 3) then
-        return 0
+        return 0                                                                                                                -- ADJUSTABLE
     else
         local tileValue = 0
         local tileType  = modelTile:getTileType()
@@ -419,11 +434,35 @@ local function getScoreForActionCaptureModelTile(self, modelUnit, gridIndex)
     end
 end
 
+local function getScoreForActionDive(self, modelUnit, gridIndex)
+    return (modelUnit:getCurrentFuel() <= 35) and (-10) or (10)
+end
+
 local function getScoreForActionJoinModelUnit(self, modelUnit, gridIndex)
-    if (self.m_ModelUnitMap:getModelUnit(gridIndex):isStateIdle()) then
-        return nil
+    local targetModelUnit = self.m_ModelUnitMap:getModelUnit(gridIndex)
+    if (targetModelUnit:isStateIdle()) then
+        return -9999                                                                                                            -- ADJUSTABLE
+    elseif ((targetModelUnit.isCapturingModelTile) and (targetModelUnit:isCapturingModelTile())) then
+        local currentCapturePoint = self.m_ModelTileMap:getModelTile(gridIndex):getCurrentCapturePoint()
+        local newHP               = modelUnit:getNormalizedCurrentHP() + targetModelUnit:getNormalizedCurrentHP()
+        if (targetModelUnit:getCaptureAmount() >= currentCapturePoint) then
+            return (newHP > 10) and ((newHP - 10) * (-50)) or ((10 - newHP) * 5)                                                    -- ADJUSTABLE
+        else
+            return (math.min(10, newHP) >= currentCapturePoint) and (60) or (30)
+        end
+    else
+        local newHP = modelUnit:getNormalizedCurrentHP() + targetModelUnit:getNormalizedCurrentHP()
+        return (newHP > 10) and ((newHP - 10) * (-50)) or ((10 - newHP) * 5)                                                    -- ADJUSTABLE
     end
-    return -200                                                                                                                 -- ADJUSTABLE
+end
+
+local function getScoreForActionLaunchSilo(self, unitValueMap, targetGridIndex)
+    local score = 10000                                                                                                         -- ADJUSTABLE
+    for _, gridIndex in pairs(GridIndexFunctions.getGridsWithinDistance(targetGridIndex, 0, 2, self.m_MapSize)) do
+        score = score + unitValueMap[gridIndex.x][gridIndex.y]                                                                  -- ADJUSTABLE
+    end
+
+    return score
 end
 
 local function getScoreForActionLoadModelUnit(self, modelUnit, gridIndex)
@@ -480,12 +519,16 @@ local function getScoreForActionProduceModelUnitOnTile(self, gridIndex, tiledID,
     return score
 end
 
+local function getScoreForActionSurface(self, modelUnit, gridIndex)
+    return (modelUnit:getCurrentFuel() <= 35) and (10) or (-10)
+end
+
 local function getScoreForActionWait(self, modelUnit, gridIndex)
     local modelTile = self.m_ModelTileMap:getModelTile(gridIndex)
     if ((modelTile.getCurrentCapturePoint)                      and
         (not modelUnit.getCaptureAmount)                        and
         (modelTile:getTeamIndex() ~= modelUnit:getTeamIndex())) then
-        return -20                                                                                                              -- ADJUSTABLE
+        return -200                                                                                                             -- ADJUSTABLE
     else
         return 0                                                                                                                -- ADJUSTABLE
     end
@@ -543,6 +586,73 @@ local function getScoreAndActionCaptureModelTile(self, modelUnit, gridIndex, pat
     }
 end
 
+local function getScoreAndActionDive(self, modelUnit, gridIndex, pathNodes)
+    if ((not modelUnit.canDive) or (not modelUnit:canDive())) then
+        return nil, nil
+    end
+
+    return getScoreForActionDive(self, modelUnit, gridIndex), {
+        actionCode   = ACTION_CODES.ActionDive,
+        path         = {pathNodes = pathNodes},
+        launchUnitID = (isModelUnitLoaded(self, modelUnit)) and (modelUnit:getUnitId()) or (nil),
+    }
+end
+
+local function getScoreAndActionLaunchSilo(self, modelUnit, gridIndex, pathNodes)
+    local modelUnitMap      = self.m_ModelUnitMap
+    local existingModelUnit = modelUnitMap:getModelUnit(gridIndex)
+    if ((existingModelUnit) and (existingModelUnit ~= modelUnit)) then
+        return nil, nil
+    end
+
+    local tileType = self.m_ModelTileMap:getModelTile(gridIndex):getTileType()
+    if ((not modelUnit.canLaunchSiloOnTileType) or (not modelUnit:canLaunchSiloOnTileType(tileType))) then
+        return nil, nil
+    end
+
+    local unitValueMap = {}
+    for x = 1, self.m_MapWidth do
+        unitValueMap[x] = {}
+        for y = 1, self.m_MapHeight do
+            local targetModelUnit = modelUnitMap:getModelUnit({x = x, y = y})
+            if ((not targetModelUnit) or (targetModelUnit == modelUnit)) then
+                unitValueMap[x][y] = 0
+            else
+                local value = math.min(30, targetModelUnit:getCurrentHP() - 1) * targetModelUnit:getProductionCost() / 10
+                unitValueMap[x][y] = (targetModelUnit:getPlayerIndex() == self.m_PlayerIndexForHuman) and (value) or (-value)
+            end
+        end
+    end
+    unitValueMap[gridIndex.x][gridIndex.y] = -math.min(30, modelUnit:getCurrentHP() - 1) * modelUnit:getProductionCost() / 10
+
+    local maxScore, targetGridIndex
+    for x = 1, self.m_MapWidth do
+        for y = 1, self.m_MapHeight do
+            local newTargetGridIndex = {x = x, y = y}
+            maxScore, targetGridIndex = getBetterScoreAndAction(maxScore, targetGridIndex, getScoreForActionLaunchSilo(self, unitValueMap, newTargetGridIndex), newTargetGridIndex)
+        end
+    end
+
+    return maxScore, {
+        actionCode      = ACTION_CODES.ActionLaunchSilo,
+        path            = {pathNodes = pathNodes},
+        targetGridIndex = targetGridIndex,
+        launchUnitID    = (isModelUnitLoaded(self, modelUnit)) and (modelUnit:getUnitId()) or (nil),
+    }
+end
+
+local function getScoreAndActionSurface(self, modelUnit, gridIndex, pathNodes)
+    if ((not modelUnit.canSurface) or (not modelUnit:canSurface())) then
+        return nil, nil
+    end
+
+    return getScoreForActionSurface(self, modelUnit, gridIndex), {
+        actionCode   = ACTION_CODES.ActionSurface,
+        path         = {pathNodes = pathNodes},
+        launchUnitID = (isModelUnitLoaded(self, modelUnit)) and (modelUnit:getUnitId()) or (nil),
+    }
+end
+
 local function getScoreAndActionJoinModelUnit(self, modelUnit, gridIndex, pathNodes)
     if (GridIndexFunctions.isEqual(gridIndex, modelUnit:getGridIndex())) then
         return nil, nil
@@ -591,53 +701,6 @@ local function getActionDive(self)
     end
 end
 
-local function getActionBuildModelTile(self)
-    local tileType       = getModelTileMap(self.m_ModelWar):getModelTile(getPathNodesDestination(self.m_PathNodes)):getTileType()
-    local focusModelUnit = self.m_FocusModelUnit
-
-    if ((focusModelUnit.canBuildOnTileType)           and
-        (focusModelUnit:canBuildOnTileType(tileType)) and
-        (focusModelUnit:getCurrentMaterial() > 0))    then
-        local buildTiledId = focusModelUnit:getBuildTiledIdWithTileType(tileType)
-        local icon         = cc.Sprite:create()
-        icon:setAnchorPoint(0, 0)
-            :setScale(0.5)
-            :playAnimationForever(AnimationLoader.getTileAnimationWithTiledId(buildTiledId))
-
-        return {
-            name     = getLocalizedText(78, "BuildModelTile"),
-            icon     = icon,
-            callback = function()
-                sendActionBuildModelTile(self)
-            end,
-        }
-    end
-end
-
-local function getActionSupplyModelUnit(self)
-    local focusModelUnit = self.m_FocusModelUnit
-    if (not focusModelUnit.canSupplyModelUnit) then
-        return nil
-    end
-
-    local modelUnitMap = getModelUnitMap(self.m_ModelWar)
-    for _, gridIndex in pairs(GridIndexFunctions.getAdjacentGrids(getPathNodesDestination(self.m_PathNodes), modelUnitMap:getMapSize())) do
-        local modelUnit = modelUnitMap:getModelUnit(gridIndex)
-        if ((modelUnit)                                     and
-            (modelUnit ~= focusModelUnit)                   and
-            (focusModelUnit:canSupplyModelUnit(modelUnit))) then
-            return {
-                name     = getLocalizedText(78, "SupplyModelUnit"),
-                callback = function()
-                    sendActionSupplyModelUnit(self)
-                end,
-            }
-        end
-    end
-
-    return nil
-end
-
 local function getActionSurface(self)
     local focusModelUnit = self.m_FocusModelUnit
     if ((focusModelUnit.isDiving) and (focusModelUnit:isDiving())) then
@@ -645,114 +708,6 @@ local function getActionSurface(self)
             name     = getLocalizedText(78, "Surface"),
             callback = function()
                 sendActionSurface(self)
-            end,
-        }
-    end
-end
-
-local function getSingleActionDropModelUnit(self, unitID)
-    local icon = Actor.createView("common.ViewUnit")
-    icon:updateWithModelUnit(getModelUnitMap(self.m_ModelWar):getLoadedModelUnitWithUnitId(unitID))
-        :ignoreAnchorPointForPosition(true)
-        :setScale(0.5)
-
-    return {
-        name     = getLocalizedText(78, "DropModelUnit"),
-        icon     = icon,
-        callback = function()
-            setStateChoosingDropDestination(self, unitID)
-        end,
-    }
-end
-
-local function getActionsDropModelUnit(self)
-    local focusModelUnit        = self.m_FocusModelUnit
-    local dropDestinations      = self.m_SelectedDropDestinations
-    local modelTileMap          = getModelTileMap(self.m_ModelWar)
-    local loaderEndingGridIndex = getPathNodesDestination(self.m_PathNodes)
-
-    if ((not focusModelUnit.getCurrentLoadCount)                                                               or
-        (focusModelUnit:getCurrentLoadCount() <= #dropDestinations)                                            or
-        (not focusModelUnit:canDropModelUnit(modelTileMap:getModelTile(loaderEndingGridIndex):getTileType()))) then
-        return {}
-    end
-
-    local actions = {}
-    local loaderBeginningGridIndex = self.m_FocusModelUnit:getGridIndex()
-    local modelUnitMap             = getModelUnitMap(self.m_ModelWar)
-
-    for _, unitID in ipairs(focusModelUnit:getLoadUnitIdList()) do
-        if (not isModelUnitDropped(unitID, dropDestinations)) then
-            local droppingModelUnit = getModelUnitMap(self.m_ModelWar):getLoadedModelUnitWithUnitId(unitID)
-            if (#getAvailableDropGrids(self, droppingModelUnit, loaderBeginningGridIndex, loaderEndingGridIndex, dropDestinations) > 0) then
-                actions[#actions + 1] = getSingleActionDropModelUnit(self, unitID)
-            end
-        end
-    end
-
-    return actions
-end
-
-local function getActionLaunchFlare(self)
-    local focusModelUnit = self.m_FocusModelUnit
-    if ((not getModelFogMap(self.m_ModelWar):isFogOfWarCurrently()) or
-        (#self.m_PathNodes ~= 1)                                         or
-        (not focusModelUnit.getCurrentFlareAmmo)                         or
-        (focusModelUnit:getCurrentFlareAmmo() == 0))                     then
-        return nil
-    else
-        return {
-            name     = getLocalizedText(78, "LaunchFlare"),
-            callback = function()
-                setStateChoosingFlareTarget(self)
-            end,
-        }
-    end
-end
-
-local function getActionLaunchSilo(self)
-    local focusModelUnit = self.m_FocusModelUnit
-    local modelTile      = getModelTileMap(self.m_ModelWar):getModelTile(getPathNodesDestination(self.m_PathNodes))
-
-    if ((focusModelUnit.canLaunchSiloOnTileType) and
-        (focusModelUnit:canLaunchSiloOnTileType(modelTile:getTileType()))) then
-        return {
-            name     = getLocalizedText(78, "LaunchSilo"),
-            callback = function()
-                setStateChoosingSiloTarget(self)
-            end,
-        }
-    else
-        return nil
-    end
-end
-
-local function getActionProduceModelUnitOnUnit(self)
-    local focusModelUnit = self.m_FocusModelUnit
-    if ((self.m_LaunchUnitID)                            or
-        (#self.m_PathNodes ~= 1)                         or
-        (not focusModelUnit.getCurrentMaterial)          or
-        (not focusModelUnit.getMovableProductionTiledId) or
-        (not focusModelUnit.getCurrentLoadCount))        then
-        return nil
-    else
-        local produceTiledId = focusModelUnit:getMovableProductionTiledId()
-        local icon           = cc.Sprite:create()
-        icon:setAnchorPoint(0, 0)
-            :setScale(0.5)
-            :playAnimationForever(AnimationLoader.getUnitAnimationWithTiledId(produceTiledId))
-
-        return {
-            name        = string.format("%s\n%d",
-                getLocalizedText(78, "ProduceModelUnitOnUnit"),
-                Producible.getProductionCostWithTiledId(produceTiledId, self.m_ModelPlayerManager)
-            ),
-            icon        = icon,
-            isAvailable = (focusModelUnit:getCurrentMaterial() >= 1)                                and
-                (focusModelUnit:getMovableProductionCost() <= self.m_ModelPlayerForHuman:getFund()) and
-                (focusModelUnit:getCurrentLoadCount() < focusModelUnit:getMaxLoadCount()),
-            callback    = function()
-                sendActionProduceModelUnitOnUnit(self)
             end,
         }
     end
@@ -797,26 +752,12 @@ local function getMaxScoreAndAction(self, modelUnit, gridIndex, pathNodes)
     local maxScore, actionForMaxScore
     maxScore, actionForMaxScore = getBetterScoreAndAction(maxScore, actionForMaxScore, getScoreAndActionAttack(          self, modelUnit, gridIndex, pathNodes))
     maxScore, actionForMaxScore = getBetterScoreAndAction(maxScore, actionForMaxScore, getScoreAndActionCaptureModelTile(self, modelUnit, gridIndex, pathNodes))
+    maxScore, actionForMaxScore = getBetterScoreAndAction(maxScore, actionForMaxScore, getScoreAndActionDive(            self, modelUnit, gridIndex, pathNodes))
+    maxScore, actionForMaxScore = getBetterScoreAndAction(maxScore, actionForMaxScore, getScoreAndActionLaunchSilo(      self, modelUnit, gridIndex, pathNodes))
+    maxScore, actionForMaxScore = getBetterScoreAndAction(maxScore, actionForMaxScore, getScoreAndActionSurface(         self, modelUnit, gridIndex, pathNodes))
     maxScore, actionForMaxScore = getBetterScoreAndAction(maxScore, actionForMaxScore, getScoreAndActionWait(            self, modelUnit, gridIndex, pathNodes))
 
     return maxScore, actionForMaxScore
-    --[[
-    local list = {}
-    list[#list + 1] = getActionAttack(                self)
-    list[#list + 1] = getActionDive(                  self)
-    list[#list + 1] = getActionSurface(               self)
-    list[#list + 1] = getActionBuildModelTile(        self)
-    list[#list + 1] = getActionSupplyModelUnit(       self)
-    for _, action in ipairs(getActionsDropModelUnit(self)) do
-        list[#list + 1] = action
-    end
-    list[#list + 1] = getActionLaunchFlare(           self)
-    list[#list + 1] = getActionLaunchSilo(            self)
-    list[#list + 1] = getActionProduceModelUnitOnUnit(self)
-
-    assert((#list > 0) or (itemWait), "ModelRobot-getMaxScoreAndAction() the generated list has no valid action item.")
-    return list, itemWait
-    ]]
 end
 
 local function getActionForMaxScoreWithCandicateUnit(self, candicateUnit)
@@ -832,6 +773,7 @@ local function getActionForMaxScoreWithCandicateUnit(self, candicateUnit)
                     if (scoreForAction) then
                         local totalScore = scoreForAction + getScoreForPosition(self, candicateUnit, gridIndex)
                         maxScore, actionForMaxScore = getBetterScoreAndAction(maxScore, actionForMaxScore, totalScore, action)
+                        coroutine.yield()
                     end
                 end
             end
@@ -897,8 +839,11 @@ local function getCandidateUnitsForPhase1(self)
     local units             = {}
     local playerIndexInTurn = self.m_ModelTurnManager:getPlayerIndex()
     self.m_ModelUnitMap:forEachModelUnitOnMap(function(modelUnit)
-        if ((modelUnit:getPlayerIndex() == playerIndexInTurn) and (modelUnit:isStateIdle()) and (modelUnit.isCapturingModelTile) and (modelUnit:isCapturingModelTile())) then
-            units[#units + 1] = modelUnit
+        if ((modelUnit:getPlayerIndex() == playerIndexInTurn) and (modelUnit:isStateIdle()) and (modelUnit.getAttackRangeMinMax)) then
+            local minRange, maxRange = modelUnit:getAttackRangeMinMax()
+            if (maxRange > 1) then
+                units[#units + 1] = modelUnit
+            end
         end
     end)
 
@@ -909,7 +854,7 @@ local function getCandidateUnitsForPhase2(self)
     local units             = {}
     local playerIndexInTurn = self.m_ModelTurnManager:getPlayerIndex()
     self.m_ModelUnitMap:forEachModelUnitOnMap(function(modelUnit)
-        if ((modelUnit:getPlayerIndex() == playerIndexInTurn) and (modelUnit:isStateIdle()) and (modelUnit.isCapturingModelTile)) then
+        if ((modelUnit:getPlayerIndex() == playerIndexInTurn) and (modelUnit:isStateIdle()) and (modelUnit.isCapturingModelTile) and (modelUnit:isCapturingModelTile())) then
             units[#units + 1] = modelUnit
         end
     end)
@@ -921,11 +866,8 @@ local function getCandidateUnitsForPhase3(self)
     local units             = {}
     local playerIndexInTurn = self.m_ModelTurnManager:getPlayerIndex()
     self.m_ModelUnitMap:forEachModelUnitOnMap(function(modelUnit)
-        if ((modelUnit:getPlayerIndex() == playerIndexInTurn) and (modelUnit:isStateIdle()) and (modelUnit.getAttackRangeMinMax)) then
-            local minRange, maxRange = modelUnit:getAttackRangeMinMax()
-            if (maxRange > 1) then
-                units[#units + 1] = modelUnit
-            end
+        if ((modelUnit:getPlayerIndex() == playerIndexInTurn) and (modelUnit:isStateIdle()) and (modelUnit.isCapturingModelTile)) then
+            units[#units + 1] = modelUnit
         end
     end)
 
@@ -951,8 +893,11 @@ local function getCandidateUnitsForPhase5(self)
     local units             = {}
     local playerIndexInTurn = self.m_ModelTurnManager:getPlayerIndex()
     self.m_ModelUnitMap:forEachModelUnitOnMap(function(modelUnit)
-        if ((modelUnit:getPlayerIndex() == playerIndexInTurn) and (modelUnit:isStateIdle()) and (modelUnit.getBaseDamage)) then
-            units[#units + 1] = modelUnit
+        if ((modelUnit:getPlayerIndex() == playerIndexInTurn) and (modelUnit:isStateIdle()) and (modelUnit.getAttackRangeMinMax)) then
+            local minRange, maxRange = modelUnit:getAttackRangeMinMax()
+            if (maxRange == 1) then
+                units[#units + 1] = modelUnit
+            end
         end
     end)
 
@@ -960,6 +905,25 @@ local function getCandidateUnitsForPhase5(self)
 end
 
 local function getCandidateUnitsForPhase6(self)
+    local units             = {}
+    local playerIndexInTurn = self.m_ModelTurnManager:getPlayerIndex()
+    self.m_ModelUnitMap:forEachModelUnitOnMap(function(modelUnit)
+        if ((modelUnit:getPlayerIndex() == playerIndexInTurn) and (modelUnit:isStateIdle())) then
+            if (not modelUnit.getAttackRangeMinMax) then
+                units[#units + 1] = modelUnit
+            else
+                local minRange, maxRange = modelUnit:getAttackRangeMinMax()
+                if (maxRange == 1) then
+                    units[#units + 1] = modelUnit
+                end
+            end
+        end
+    end)
+
+    return units
+end
+
+local function getCandidateUntisForPhase7(self)
     local units             = {}
     local playerIndexInTurn = self.m_ModelTurnManager:getPlayerIndex()
     self.m_ModelUnitMap:forEachModelUnitOnMap(function(modelUnit)
@@ -974,23 +938,29 @@ end
 --------------------------------------------------------------------------------
 -- The phases.
 --------------------------------------------------------------------------------
--- Phase 1: move the infantries, meches and bikes that are capturing buildings.
+-- Phase 1: make the ranged units to attack enemies.
 local function getActionForPhase1(self)
     self.m_CandicateUnits = self.m_CandicateUnits or getCandidateUnitsForPhase1(self)
-    local candicateUnit   = popRandomElement(self.m_CandicateUnits)
-    if (not candicateUnit) then
-        self.m_CandicateUnits = nil
-        self.m_PhaseCode      = 2
-        return nil
+
+    local action
+    while ((not action) or (action.actionCode ~= ACTION_CODES.ActionAttack)) do
+        local candicateUnit = popRandomCandidateUnit(self.m_ModelUnitMap, self.m_CandicateUnits)
+        if (not candicateUnit) then
+            self.m_CandicateUnits = nil
+            self.m_PhaseCode      = 2
+            return nil
+        end
+
+        action = getActionForMaxScoreWithCandicateUnit(self, candicateUnit)
     end
 
-    return getActionForMaxScoreWithCandicateUnit(self, candicateUnit)
+    return action
 end
 
--- Phase 2: move the other infantries, meches and bikes.
+-- Phase 2: move the infantries, meches and bikes that are capturing buildings.
 local function getActionForPhase2(self)
     self.m_CandicateUnits = self.m_CandicateUnits or getCandidateUnitsForPhase2(self)
-    local candicateUnit   = popRandomElement(self.m_CandicateUnits)
+    local candicateUnit   = popRandomCandidateUnit(self.m_ModelUnitMap, self.m_CandicateUnits)
     if (not candicateUnit) then
         self.m_CandicateUnits = nil
         self.m_PhaseCode      = 3
@@ -1000,10 +970,10 @@ local function getActionForPhase2(self)
     return getActionForMaxScoreWithCandicateUnit(self, candicateUnit)
 end
 
--- Phase 3: move the ranged units.
+-- Phase 3: move the other infantries, meches and bikes.
 local function getActionForPhase3(self)
     self.m_CandicateUnits = self.m_CandicateUnits or getCandidateUnitsForPhase3(self)
-    local candicateUnit   = popRandomElement(self.m_CandicateUnits)
+    local candicateUnit   = popRandomCandidateUnit(self.m_ModelUnitMap, self.m_CandicateUnits)
     if (not candicateUnit) then
         self.m_CandicateUnits = nil
         self.m_PhaseCode      = 4
@@ -1016,7 +986,7 @@ end
 -- Phase 4: move the air combat units.
 local function getActionForPhase4(self)
     self.m_CandicateUnits = self.m_CandicateUnits or getCandidateUnitsForPhase4(self)
-    local candicateUnit   = popRandomElement(self.m_CandicateUnits)
+    local candicateUnit   = popRandomCandidateUnit(self.m_ModelUnitMap, self.m_CandicateUnits)
     if (not candicateUnit) then
         self.m_CandicateUnits = nil
         self.m_PhaseCode      = 5
@@ -1026,10 +996,10 @@ local function getActionForPhase4(self)
     return getActionForMaxScoreWithCandicateUnit(self, candicateUnit)
 end
 
--- Phase 5: move the other combat units.
+-- Phase 5: move the remaining direct units.
 local function getActionForPhase5(self)
     self.m_CandicateUnits = self.m_CandicateUnits or getCandidateUnitsForPhase5(self)
-    local candicateUnit   = popRandomElement(self.m_CandicateUnits)
+    local candicateUnit   = popRandomCandidateUnit(self.m_ModelUnitMap, self.m_CandicateUnits)
     if (not candicateUnit) then
         self.m_CandicateUnits = nil
         self.m_PhaseCode      = 6
@@ -1039,10 +1009,10 @@ local function getActionForPhase5(self)
     return getActionForMaxScoreWithCandicateUnit(self, candicateUnit)
 end
 
--- Phase 6: move the other units.
+-- Phase 6: move the other units except the remaining ranged units.
 local function getActionForPhase6(self)
     self.m_CandicateUnits = self.m_CandicateUnits or getCandidateUnitsForPhase6(self)
-    local candicateUnit   = popRandomElement(self.m_CandicateUnits)
+    local candicateUnit   = popRandomCandidateUnit(self.m_ModelUnitMap, self.m_CandicateUnits)
     if (not candicateUnit) then
         self.m_CandicateUnits = nil
         self.m_PhaseCode      = 7
@@ -1052,10 +1022,23 @@ local function getActionForPhase6(self)
     return getActionForMaxScoreWithCandicateUnit(self, candicateUnit)
 end
 
--- Phase 7: spend energy on passive skills.
+-- Phase 7: move the remaining units.
 local function getActionForPhase7(self)
+    self.m_CandicateUnits = self.m_CandicateUnits or getCandidateUntisForPhase7(self)
+    local candicateUnit   = popRandomCandidateUnit(self.m_ModelUnitMap, self.m_CandicateUnits)
+    if (not candicateUnit) then
+        self.m_CandicateUnits = nil
+        self.m_PhaseCode      = 8
+        return nil
+    end
+
+    return getActionForMaxScoreWithCandicateUnit(self, candicateUnit)
+end
+
+-- Phase 8: spend energy on passive skills.
+local function getActionForPhase8(self)
     if (not self.m_IsPassiveSkillEnabled) then
-        self.m_PhaseCode = 8
+        self.m_PhaseCode = 9
         return nil
     end
 
@@ -1072,7 +1055,7 @@ local function getActionForPhase7(self)
 
     local targetSkillID = popRandomElement(availableSkillIds)
     if (not targetSkillID) then
-        self.m_PhaseCode = 8
+        self.m_PhaseCode = 9
         return nil
     else
         return {
@@ -1084,19 +1067,19 @@ local function getActionForPhase7(self)
     end
 end
 
--- Phase 8: build units.
-local function getActionForPhase8(self)
+-- Phase 9: build units.
+local function getActionForPhase9(self)
     local action = getActionProduceModelUnitOnTileForMaxScore(self)
     if (not action) then
-        self.m_PhaseCode = 9
+        self.m_PhaseCode = 10
         return nil
     end
 
     return action
 end
 
--- Phase 9: end turn.
-local function getActionForPhase9(self)
+-- Phase 10: end turn.
+local function getActionForPhase10(self)
     self.m_PhaseCode = nil
     return {actionCode = ACTION_CODES.ActionEndTurn}
 end
@@ -1158,15 +1141,16 @@ function ModelRobot:getNextAction()
     self.m_PhaseCode      = self.m_PhaseCode or 1
     self.m_UnitValueRatio = calculateUnitValueRatio(self)
     local action
-    if ((not action) and (self.m_PhaseCode == 1)) then action = getActionForPhase1(self) end
-    if ((not action) and (self.m_PhaseCode == 2)) then action = getActionForPhase2(self) end
-    if ((not action) and (self.m_PhaseCode == 3)) then action = getActionForPhase3(self) end
-    if ((not action) and (self.m_PhaseCode == 4)) then action = getActionForPhase4(self) end
-    if ((not action) and (self.m_PhaseCode == 5)) then action = getActionForPhase5(self) end
-    if ((not action) and (self.m_PhaseCode == 6)) then action = getActionForPhase6(self) end
-    if ((not action) and (self.m_PhaseCode == 7)) then action = getActionForPhase7(self) end
-    if ((not action) and (self.m_PhaseCode == 8)) then action = getActionForPhase8(self) end
-    if ((not action) and (self.m_PhaseCode == 9)) then action = getActionForPhase9(self) end
+    if ((not action) and (self.m_PhaseCode == 1))  then action = getActionForPhase1( self) end
+    if ((not action) and (self.m_PhaseCode == 2))  then action = getActionForPhase2( self) end
+    if ((not action) and (self.m_PhaseCode == 3))  then action = getActionForPhase3( self) end
+    if ((not action) and (self.m_PhaseCode == 4))  then action = getActionForPhase4( self) end
+    if ((not action) and (self.m_PhaseCode == 5))  then action = getActionForPhase5( self) end
+    if ((not action) and (self.m_PhaseCode == 6))  then action = getActionForPhase6( self) end
+    if ((not action) and (self.m_PhaseCode == 7))  then action = getActionForPhase7( self) end
+    if ((not action) and (self.m_PhaseCode == 8))  then action = getActionForPhase8( self) end
+    if ((not action) and (self.m_PhaseCode == 9))  then action = getActionForPhase9( self) end
+    if ((not action) and (self.m_PhaseCode == 10)) then action = getActionForPhase10(self) end
 
     return action
 end

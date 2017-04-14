@@ -70,11 +70,11 @@ SkillData.skills = {
         maxLevelActive      = 5,
         modifierUnit = "",
         levels = {
-            [1] = {modifierPassive = nil, pointsPassive = nil, modifierActive = -1, pointsActive = 17500},
-            [2] = {modifierPassive = nil, pointsPassive = nil, modifierActive = -2, pointsActive = 35000},
-            [3] = {modifierPassive = nil, pointsPassive = nil, modifierActive = -3, pointsActive = 52500},
-            [4] = {modifierPassive = nil, pointsPassive = nil, modifierActive = -4, pointsActive = 70000},
-            [5] = {modifierPassive = nil, pointsPassive = nil, modifierActive = -5, pointsActive = 87500},
+            [1] = {modifierPassive = nil, pointsPassive = nil, modifierActive = -1, pointsActive = 12500},
+            [2] = {modifierPassive = nil, pointsPassive = nil, modifierActive = -2, pointsActive = 25000},
+            [3] = {modifierPassive = nil, pointsPassive = nil, modifierActive = -3, pointsActive = 37500},
+            [4] = {modifierPassive = nil, pointsPassive = nil, modifierActive = -4, pointsActive = 50000},
+            [5] = {modifierPassive = nil, pointsPassive = nil, modifierActive = -5, pointsActive = 62500},
         },
     },
 

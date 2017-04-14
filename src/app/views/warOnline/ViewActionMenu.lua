@@ -43,6 +43,7 @@ local LIST_VIEW_POS_X_FOR_PRODUCTION = 0
 local LIST_VIEW_POS_Y_FOR_PRODUCTION = 6
 
 local BUTTON_CONFIRM_FONT_COLOR = {r = 96,  g = 224, b = 88}
+local BUTTON_WAIT_FONT_COLOR    = {r = 240, g = 80,  b = 56}
 local BUTTON_WAIT_POS_X         = (MENU_BACKGROUND_WIDTH_FOR_ACTION_ITEM - ITEM_WIDTH_FOR_ACTION) / 2
 local BUTTON_WAIT_POS_Y         = 15
 
@@ -55,8 +56,8 @@ local function setAllButtomConfirmEnabled(self, enabled)
     end
 end
 
-local function createViewAction(itemModel)
-    local text     = itemModel.name
+local function createViewItem(modelItem, fontColor)
+    local text     = modelItem.name
     local fontSize = (string.len(text) >= 10) and (ITEM_FONT_SIZE_SMALL) or (ITEM_FONT_SIZE_LARGE)
     local label    = cc.Label:createWithTTF(text, ITEM_FONT_NAME, fontSize)
     label:ignoreAnchorPointForPosition(true)
@@ -65,7 +66,7 @@ local function createViewAction(itemModel)
         :setHorizontalAlignment(cc.TEXT_ALIGNMENT_CENTER)
         :setVerticalAlignment(cc.VERTICAL_TEXT_ALIGNMENT_BOTTOM)
 
-        :setTextColor(ITEM_FONT_COLOR)
+        :setTextColor(fontColor or ITEM_FONT_COLOR)
         :enableOutline(ITEM_FONT_OUTLINE_COLOR, ITEM_FONT_OUTLINE_WIDTH)
 
     local view = ccui.Button:create()
@@ -79,17 +80,17 @@ local function createViewAction(itemModel)
 
         :addTouchEventListener(function(sender, eventType)
             if eventType == ccui.TouchEventType.ended then
-                itemModel.callback()
+                modelItem.callback()
             end
         end)
 
     local renderer = view:getRendererNormal()
     renderer:addChild(label)
-    if (itemModel.icon) then
-        renderer:addChild(itemModel.icon)
+    if (modelItem.icon) then
+        renderer:addChild(modelItem.icon)
     end
 
-    if ((itemModel.isAvailable ~= nil) and (not itemModel.isAvailable)) then
+    if ((modelItem.isAvailable ~= nil) and (not modelItem.isAvailable)) then
         renderer:setCascadeColorEnabled(true)
         view:setCascadeColorEnabled(true)
             :setEnabled(false)
@@ -298,10 +299,10 @@ function ViewActionMenu:showActionList(list, itemWait)
 
     local listView = self.m_ListView
     for _, listItem in ipairs(list) do
-        listView:pushBackCustomItem(createViewAction(listItem))
+        listView:pushBackCustomItem(createViewItem(listItem))
     end
     if (itemWait) then
-        local buttonWait = createViewAction(itemWait)
+        local buttonWait = createViewItem(itemWait, BUTTON_WAIT_FONT_COLOR)
         buttonWait:ignoreAnchorPointForPosition(true)
             :setPosition(BUTTON_WAIT_POS_X, BUTTON_WAIT_POS_Y)
 

@@ -163,7 +163,10 @@ end
 --------------------------------------------------------------------------------
 local function createItemsForStateMain(self)
     local mode = self.m_Mode
-    if (mode == "modeCreate") then
+    if (mode == "modeCreateCampaign") then
+        return {self.m_ItemSaveIndex}
+
+    elseif (mode == "modeCreateFreeGame") then
         return {
             self.m_ItemPlayerIndex,
             self.m_ItemFogOfWar,
@@ -736,9 +739,25 @@ function ModelCampaignConfigurator:setCallbackOnButtonBackTouched(callback)
     return self
 end
 
-function ModelCampaignConfigurator:setModeCreate()
-    self.m_Mode                           = "modeCreate"
-    self.m_MenuTitleTextForMode           = getLocalizedText(14, "CreateWar")
+function ModelCampaignConfigurator:setModeCreateCampaign()
+    self.m_Mode                           = "modeCreateCampaign"
+    self.m_MenuTitleTextForMode           = getLocalizedText(1, "Campaign")
+    self.m_CallbackOnButtonConfirmTouched = function()
+        local modelConfirmBox = SingletonGetters.getModelConfirmBox(self.m_ModelSceneMain)
+        modelConfirmBox:setConfirmText(getLocalizedText(8, "NewWarConfirmation"))
+            :setOnConfirmYes(function()
+                modelConfirmBox:setEnabled(false)
+                createAndEnterCampaign(self)
+            end)
+            :setEnabled(true)
+    end
+
+    return self
+end
+
+function ModelCampaignConfigurator:setModeCreateFreeGame()
+    self.m_Mode                           = "modeCreateFreeGame"
+    self.m_MenuTitleTextForMode           = getLocalizedText(1, "Free Game")
     self.m_CallbackOnButtonConfirmTouched = function()
         local modelConfirmBox = SingletonGetters.getModelConfirmBox(self.m_ModelSceneMain)
         modelConfirmBox:setConfirmText(getLocalizedText(8, "NewWarConfirmation"))
@@ -775,7 +794,32 @@ end
 function ModelCampaignConfigurator:resetWithCampaignConfiguration(campaignConfiguration)
     self.m_CampaignConfiguration = campaignConfiguration
     local mode = self.m_Mode
-    if (mode == "modeCreate") then
+    if (mode == "modeCreateCampaign") then
+        local advancedSettings = WarFieldManager.getWarFieldData(campaignConfiguration.warFieldFileName).advancedSettings or {}
+        self.m_AttackModifier            = advancedSettings.attackModifier              or 0
+        self.m_EnergyGainModifier        = advancedSettings.energyGainModifier          or 100
+        self.m_IncomeModifier            = advancedSettings.incomeModifier              or 100
+        self.m_IsActiveSkillEnabled      = advancedSettings.isActiveSkillEnabled
+        self.m_IsFogOfWarByDefault       = advancedSettings.isFogOfWarByDefault
+        self.m_IsPassiveSkillEnabled     = advancedSettings.isPassiveSkillEnabled
+        self.m_IsSkillDeclarationEnabled = advancedSettings.isSkillDeclarationEnabled
+        self.m_ItemsForStatePlayerIndex  = nil
+        self.m_MoveRangeModifier         = advancedSettings.moveRangeModifier           or 0
+        self.m_PlayerIndex               = advancedSettings.playerIndex                 or 1
+        self.m_SaveIndex                 = 1
+        self.m_StartingEnergy            = advancedSettings.startingEnergy              or 0
+        self.m_StartingFund              = advancedSettings.startingFund                or 0
+        self.m_TeamIndex                 = 1
+        self.m_VisionModifier            = advancedSettings.visionModifier              or 0
+
+        if (type(self.m_IsActiveSkillEnabled)      ~= "boolean") then self.m_IsActiveSkillEnabled      = true  end
+        if (type(self.m_IsFogOfWarByDefault)       ~= "boolean") then self.m_IsFogOfWarByDefault       = false end
+        if (type(self.m_IsPassiveSkillEnabled)     ~= "boolean") then self.m_IsPassiveSkillEnabled     = true  end
+        if (type(self.m_IsSkillDeclarationEnabled) ~= "boolean") then self.m_IsSkillDeclarationEnabled = true  end
+
+        self.m_View:setButtonConfirmText(getLocalizedText(14, "ConfirmCreateWar"))
+
+    elseif (mode == "modeCreateFreeGame") then
         self.m_AttackModifier            = 0
         self.m_EnergyGainModifier        = 100
         self.m_IncomeModifier            = 100

@@ -143,22 +143,25 @@ local function generateTextWarInfo(self)
     local modelWar          = self.m_ModelWar
     local stringList        = {getMapInfo(self)}
     local playerIndexInTurn = getModelTurnManager(modelWar):getPlayerIndex()
+    local isFogOfWar        = getModelFogMap(modelWar):isFogOfWarCurrently()
     for i = 1, self.m_ModelPlayerManager:getPlayersCount() do
         if (not dataForEachPlayer[i]) then
             stringList[#stringList + 1] = string.format("%s %d: %s", getLocalizedText(65, "Player"), i, getLocalizedText(65, "Lost"))
         else
-            local d              = dataForEachPlayer[i]
-            local isPlayerInTurn = i == playerIndexInTurn
-            stringList[#stringList + 1] = string.format("%s %d: %s\n%s: %s        %s: %d        %s: %s\n%s: %d        %s: %s        %s: %d\n%s: %d%s        %s: %d",
+            local d                    = dataForEachPlayer[i]
+            local shouldShowTilesCount = (not isFogOfWar) or (i == self.m_PlayerIndexForHuman)
+            local shouldShowIdleUnits  = (i == playerIndexInTurn) and (i == self.m_PlayerIndexForHuman)
+
+            stringList[#stringList + 1] = string.format("%s %d: %s\n%s: %s        %s: %d        %s: %s\n%s: %s        %s: %s        %s: %s\n%s: %s%s        %s: %s",
                 getLocalizedText(65, "Player"),       i,           d.nickname,
                 getLocalizedText(14, "TeamIndex"),    AuxiliaryFunctions.getTeamNameWithTeamIndex(d.teamIndex),
                 getLocalizedText(65, "Energy"),       d.energy,
                 getLocalizedText(22, "DeclareSkill"), (d.isSkillDeclared) and (getLocalizedText(22, "Yes")) or (getLocalizedText(22, "No")),
-                getLocalizedText(65, "TilesCount"),   d.tilesCount,
+                getLocalizedText(65, "TilesCount"),   (shouldShowTilesCount) and ("" .. d.tilesCount) or ("--"),
                 getLocalizedText(65, "Fund"),         "" .. d.fund,
-                getLocalizedText(65, "Income"),       d.income,
-                getLocalizedText(65, "UnitsCount"),   d.unitsCount, ((isPlayerInTurn) and (string.format(" (%d)", d.idleUnitsCount)) or ("")),
-                getLocalizedText(65, "UnitsValue"),   d.unitsValue
+                getLocalizedText(65, "Income"),       (shouldShowTilesCount) and ("" .. d.income) or ("--"),
+                getLocalizedText(65, "UnitsCount"),   (shouldShowTilesCount) and ("" .. d.unitsCount) or ("--"), ((shouldShowIdleUnits) and (string.format(" (%d)", d.idleUnitsCount)) or ("")),
+                getLocalizedText(65, "UnitsValue"),   (shouldShowTilesCount) and ("" .. d.unitsValue) or ("--")
             )
         end
     end
@@ -226,6 +229,8 @@ local function generateTextTileInfo(self)
     modelPlayerManager:forEachModelPlayer(function(modelPlayer, playerIndex)
         if (not modelPlayer:isAlive()) then
             textList[#textList + 1] = string.format("%s %d: %s (%s)", getLocalizedText(65, "Player"), playerIndex, modelPlayer:getNickname(), getLocalizedText(65, "Lost"))
+        elseif (getModelFogMap(modelWar):isFogOfWarCurrently() and (playerIndex ~= self.m_PlayerIndexForHuman)) then
+            textList[#textList + 1] = string.format("%s %d: %s\n???", getLocalizedText(65, "Player"), playerIndex, modelPlayer:getNickname())
         else
             textList[#textList + 1] = string.format("%s %d: %s\n%s", getLocalizedText(65, "Player"), playerIndex, modelPlayer:getNickname(), generateTileInfoWithCounters(tileCounters[playerIndex]))
         end

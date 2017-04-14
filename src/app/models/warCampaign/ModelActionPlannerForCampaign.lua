@@ -988,7 +988,9 @@ local function onEvtGridSelected(self, event)
     local state     = self.m_State
     local gridIndex = event.gridIndex
 
-    if (state == "idle") then
+    if (self.m_PlayerIndexForHuman ~= SingletonGetters.getModelTurnManager(self.m_ModelWar):getPlayerIndex()) then
+        self:setStateIdle(true)
+    elseif (state == "idle") then
         if     (canSetStateMakingMovePath(          self, gridIndex)) then setStateMakingMovePath(          self, gridIndex)
         elseif (canSetStateChoosingProductionTarget(self, gridIndex)) then setStateChoosingProductionTarget(self, gridIndex)
         elseif (canSetStatePreviewingAttackableArea(self, gridIndex)) then setStatePreviewingAttackableArea(self, gridIndex)

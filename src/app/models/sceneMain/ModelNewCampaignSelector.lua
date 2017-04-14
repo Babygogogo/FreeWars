@@ -28,8 +28,7 @@ local function getActorCampaignConfigurator(self)
         local model = Actor.createModel("sceneMain.ModelCampaignConfigurator")
         local view  = Actor.createView( "sceneMain.ViewCampaignConfigurator")
 
-        model:setModeCreate()
-            :setEnabled(false)
+        model:setEnabled(false)
             :setCallbackOnButtonBackTouched(function()
                 model:setEnabled(false)
                 getActorWarFieldPreviewer(self):getModel():setEnabled(false)
@@ -84,6 +83,8 @@ end
 -- The public functions.
 --------------------------------------------------------------------------------
 function ModelNewCampaignSelector:setModeCampaign()
+    getActorCampaignConfigurator(self):getModel():setModeCreateCampaign()
+
     if (self.m_View) then
         self.m_View:setMenuTitleText(getLocalizedText(1, "Campaign"))
             :removeAllItems()
@@ -94,6 +95,8 @@ function ModelNewCampaignSelector:setModeCampaign()
 end
 
 function ModelNewCampaignSelector:setModeFreeGame()
+    getActorCampaignConfigurator(self):getModel():setModeCreateFreeGame()
+
     if (self.m_View) then
         self.m_View:setMenuTitleText(getLocalizedText(1, "Free Game"))
             :removeAllItems()

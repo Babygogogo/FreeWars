@@ -11,9 +11,9 @@ local TableFunctions               = requireFW("src.app.utilities.TableFunctions
 local Actor                        = requireFW("src.global.actors.Actor")
 local EventDispatcher              = requireFW("src.global.events.EventDispatcher")
 
-local ipairs, next     = ipairs, next
-local coroutine, cc    = coroutine, cc
-local getLocalizedText = LocalizationFunctions.getLocalizedText
+local assert, ipairs, next = assert, ipairs, next
+local coroutine, cc, os    = coroutine, cc, os
+local getLocalizedText     = LocalizationFunctions.getLocalizedText
 
 local ACTION_CODE_BEGIN_TURN    = ActionCodeFunctions.getActionCode("ActionBeginTurn")
 local TIME_INTERVAL_FOR_ACTIONS = 1
@@ -175,31 +175,28 @@ function ModelWarCampaign:onStartRunning()
     self:getModelRobot()   :onStartRunning(self)
 
     self.m_PlayerIndexForHuman = modelPlayerManager:getPlayerIndexForHuman()
-    self.m_View:runAction(cc.RepeatForever:create(cc.Sequence:create(
-        cc.DelayTime:create(0.1),
-        cc.CallFunc:create(function()
-            if ((not self:isExecutingAction()) and (not self:isEnded())) then
-                if (modelTurnManager:isTurnPhaseRequestToBegin()) then
-                    self:translateAndExecuteAction({actionCode = ACTION_CODE_BEGIN_TURN})
-                elseif (modelTurnManager:getPlayerIndex() ~= self.m_PlayerIndexForHuman) then
-                    if (self.m_RobotAction) then
-                        self:translateAndExecuteAction(self.m_RobotAction)
-                        self.m_RobotAction = nil
-                    else
-                        self.m_RobotAction = self:getModelRobot():getNextAction()
+    self.m_View:scheduleUpdateWithPriorityLua(function(dt)
+        if ((not self:isExecutingAction()) and (not self:isEnded())) then
+            if (modelTurnManager:isTurnPhaseRequestToBegin()) then
+                self:translateAndExecuteAction({actionCode = ACTION_CODE_BEGIN_TURN})
+            elseif (modelTurnManager:getPlayerIndex() ~= self.m_PlayerIndexForHuman) then
+                self.m_ThreadForRobot = (self.m_ThreadForRobot) or (coroutine.create(function()
+                    return self:getModelRobot():getNextAction()
+                end))
+
+                local beginTime = os.clock()
+                while ((self.m_ThreadForRobot) and (os.clock() - beginTime <= 0.01)) do
+                    local isSuccessful, result = coroutine.resume(self.m_ThreadForRobot)
+                    assert(isSuccessful, result)
+
+                    if (result) then
+                        self.m_ThreadForRobot = nil
+                        self:translateAndExecuteAction(result)
                     end
-                    --[[
-                    elseif ((not self.m_ThreadForRobot) or (coroutine.status(self.m_ThreadForRobot) == "dead")) then
-                        self.m_ThreadForRobot = coroutine.create(function()
-                            self.m_RobotAction = self:getModelRobot():getNextAction()
-                        end)
-                        coroutine.resume(self.m_ThreadForRobot)
-                    end
-                    ]]
                 end
             end
-        end)
-    )))
+        end
+    end, 0)
 
     self:getScriptEventDispatcher():dispatchEvent({name = "EvtSceneWarStarted"})
     AudioManager.playRandomWarMusic()

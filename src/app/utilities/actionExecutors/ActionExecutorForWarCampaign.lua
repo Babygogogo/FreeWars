@@ -279,8 +279,8 @@ local function executeActivateSkill(action, modelWar)
     local skillID                 = action.skillID
     local skillLevel              = action.skillLevel
     local isActiveSkill           = action.isActiveSkill
-    local playerIndex             = getModelTurnManager(modelWar):getPlayerIndex()
-    local modelPlayer             = getModelPlayerManager(modelWar):getModelPlayer(playerIndex)
+    local playerIndexInTurn       = getModelTurnManager(modelWar):getPlayerIndex()
+    local modelPlayer             = getModelPlayerManager(modelWar):getModelPlayer(playerIndexInTurn)
     local modelSkillConfiguration = modelPlayer:getModelSkillConfiguration()
     modelPlayer:setEnergy(modelPlayer:getEnergy() - modelWar:getModelSkillDataManager():getSkillPoints(skillID, skillLevel, isActiveSkill))
     if (not isActiveSkill) then
@@ -291,17 +291,25 @@ local function executeActivateSkill(action, modelWar)
         modelSkillConfiguration:getModelSkillGroupActive():pushBackSkill(skillID, skillLevel)
     end
 
-    local modelGridEffect = getModelGridEffect(modelWar)
-    local func            = function(modelUnit)
-        if (modelUnit:getPlayerIndex() == playerIndex) then
-            modelGridEffect:showAnimationSkillActivation(modelUnit:getGridIndex())
-            modelUnit:updateView()
-        end
-    end
-    getModelUnitMap(modelWar):forEachModelUnitOnMap(func)
-        :forEachModelUnitLoaded(func)
+    local modelGridEffect     = getModelGridEffect(modelWar)
+    local playerIndexForHuman = getModelPlayerManager(modelWar):getPlayerIndexForHuman(modelWar)
+    getModelUnitMap(modelWar):forEachModelUnitOnMap(function(modelUnit)
+            local playerIndex = modelUnit:getPlayerIndex()
+            if (playerIndex == playerIndexInTurn) then
+                modelUnit:updateView()
+                local gridIndex = modelUnit:getGridIndex()
+                if (isUnitVisible(modelWar, gridIndex, modelUnit:getUnitType(), isModelUnitDiving(modelUnit), playerIndex, playerIndexForHuman)) then
+                    modelGridEffect:showAnimationSkillActivation(gridIndex)
+                end
+            end
+        end)
+        :forEachModelUnitLoaded(function(modelUnit)
+            if (modelUnit:getPlayerIndex() == playerIndexInTurn) then
+                modelUnit:updateView()
+            end
+        end)
 
-    dispatchEvtModelPlayerUpdated(modelWar, playerIndex)
+    dispatchEvtModelPlayerUpdated(modelWar, playerIndexInTurn)
 
     modelWar:setExecutingAction(false)
 end
@@ -607,7 +615,9 @@ local function executeDive(action, modelWar)
         focusModelUnit:updateView()
             :showNormalAnimation()
 
-        getModelGridEffect(modelWar):showAnimationDive(pathNodes[#pathNodes])
+        if (isUnitVisible(modelWar, pathNodes[#pathNodes], focusModelUnit:getUnitType(), false, focusModelUnit:getPlayerIndex(), getModelPlayerManager(modelWar):getPlayerIndexForHuman())) then
+            getModelGridEffect(modelWar):showAnimationDive(pathNodes[#pathNodes])
+        end
         updateTileAndUnitMapOnVisibilityChanged(modelWar)
 
         modelWar:setExecutingAction(false)
@@ -899,10 +909,15 @@ local function executeSupplyModelUnit(action, modelWar)
         focusModelUnit:updateView()
             :showNormalAnimation()
 
-        local modelGridEffect = getModelGridEffect(modelWar)
+        local modelGridEffect     = getModelGridEffect(modelWar)
+        local playerIndexForHuman = getModelPlayerManager(modelWar):getPlayerIndexForHuman()
         for _, targetModelUnit in pairs(getAndSupplyAdjacentModelUnits(modelWar, pathNodes[#pathNodes], focusModelUnit:getPlayerIndex())) do
             targetModelUnit:updateView()
-            modelGridEffect:showAnimationSupply(targetModelUnit:getGridIndex())
+
+            local gridIndex = targetModelUnit:getGridIndex()
+            if (isUnitVisible(modelWar, gridIndex, targetModelUnit:getUnitType(), isModelUnitDiving(targetModelUnit), targetModelUnit:getPlayerIndex(), playerIndexForHuman)) then
+                modelGridEffect:showAnimationSupply(gridIndex)
+            end
         end
 
         updateTileAndUnitMapOnVisibilityChanged(modelWar)
@@ -925,7 +940,10 @@ local function executeSurface(action, modelWar)
         focusModelUnit:updateView()
             :showNormalAnimation()
 
-        getModelGridEffect(modelWar):showAnimationSurface(pathNodes[#pathNodes])
+        local gridIndex = pathNodes[#pathNodes]
+        if (isUnitVisible(modelWar, gridIndex, focusModelUnit:getUnitType(), false, focusModelUnit:getPlayerIndex(), getModelPlayerManager(modelWar):getPlayerIndexForHuman())) then
+            getModelGridEffect(modelWar):showAnimationSurface(gridIndex)
+        end
         updateTileAndUnitMapOnVisibilityChanged(modelWar)
 
         modelWar:setExecutingAction(false)
