@@ -1,5 +1,5 @@
 
-local ViewCampaignConfigurator = class("ViewCampaignConfigurator", cc.Node)
+local ViewWarConfiguratorForNative = class("ViewWarConfiguratorForNative", cc.Node)
 
 local DisplayNodeFunctions  = requireFW("src.app.utilities.DisplayNodeFunctions")
 local LocalizationFunctions = requireFW("src.app.utilities.LocalizationFunctions")
@@ -268,7 +268,7 @@ end
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
-function ViewCampaignConfigurator:ctor()
+function ViewWarConfiguratorForNative:ctor()
     -- initEditBoxPassword(   self)
 
     initMenuBackground(    self)
@@ -284,13 +284,13 @@ end
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
-function ViewCampaignConfigurator:removeAllItems()
+function ViewWarConfiguratorForNative:removeAllItems()
     self.m_MenuListView:removeAllItems()
 
     return self
 end
 
-function ViewCampaignConfigurator:setItems(items)
+function ViewWarConfiguratorForNative:setItems(items)
     local listView = self.m_MenuListView
     listView:removeAllItems()
 
@@ -301,17 +301,17 @@ function ViewCampaignConfigurator:setItems(items)
     return self
 end
 
-function ViewCampaignConfigurator:getEditBoxPassword()
+function ViewWarConfiguratorForNative:getEditBoxPassword()
     return self.m_EditBoxPassword
 end
 
-function ViewCampaignConfigurator:setMenuTitleText(text)
+function ViewWarConfiguratorForNative:setMenuTitleText(text)
     self.m_MenuTitle:setString(text)
 
     return self
 end
 
-function ViewCampaignConfigurator:setOverviewText(text)
+function ViewWarConfiguratorForNative:setOverviewText(text)
     local label = self.m_OverviewLabel
     label:setString(text)
 
@@ -322,10 +322,10 @@ function ViewCampaignConfigurator:setOverviewText(text)
     return self
 end
 
-function ViewCampaignConfigurator:setButtonConfirmText(text)
+function ViewWarConfiguratorForNative:setButtonConfirmText(text)
     self.m_ButtonConfirm:setTitleText(text)
 
     return self
 end
 
-return ViewCampaignConfigurator
+return ViewWarConfiguratorForNative

@@ -1,5 +1,5 @@
 
-local ModelActionPlannerForCampaign = class("ModelActionPlannerForCampaign")
+local ModelActionPlannerForNative = class("ModelActionPlannerForNative")
 
 local Producible                  = requireFW("src.app.components.Producible")
 local ActionCodeFunctions         = requireFW("src.app.utilities.ActionCodeFunctions")
@@ -682,7 +682,7 @@ local function getAvailableActionList(self)
     list[#list + 1] = getActionProduceModelUnitOnUnit(self)
 
     local itemWait = getActionWait(self)
-    assert((#list > 0) or (itemWait), "ModelActionPlannerForCampaign-getAvailableActionList() the generated list has no valid action item.")
+    assert((#list > 0) or (itemWait), "ModelActionPlannerForNative-getAvailableActionList() the generated list has no valid action item.")
     return list, itemWait
 end
 
@@ -1064,7 +1064,7 @@ local function onEvtGridSelected(self, event)
     elseif (state == "previewingReachableArea") then
         self:setStateIdle(true)
     else
-        error("ModelActionPlannerForCampaign-onEvtGridSelected() the state of the planner is invalid.")
+        error("ModelActionPlannerForNative-onEvtGridSelected() the state of the planner is invalid.")
     end
 
     self.m_CursorGridIndex = GridIndexFunctions.clone(gridIndex)
@@ -1073,7 +1073,7 @@ end
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
-function ModelActionPlannerForCampaign:ctor(param)
+function ModelActionPlannerForNative:ctor(param)
     self.m_State                      = "idle"
     self.m_PreviewAttackModelUnits    = {}
     self.m_SelectedDropDestinations   = {}
@@ -1084,7 +1084,7 @@ end
 --------------------------------------------------------------------------------
 -- The callback functions on start running/script events.
 --------------------------------------------------------------------------------
-function ModelActionPlannerForCampaign:onStartRunning(modelWar)
+function ModelActionPlannerForNative:onStartRunning(modelWar)
     self.m_ModelWar = modelWar
     getScriptEventDispatcher(modelWar)
         :addEventListener("EvtGridSelected",               self)
@@ -1100,7 +1100,7 @@ function ModelActionPlannerForCampaign:onStartRunning(modelWar)
     return self
 end
 
-function ModelActionPlannerForCampaign:onEvent(event)
+function ModelActionPlannerForNative:onEvent(event)
     local name = event.name
     if     (name == "EvtGridSelected")               then onEvtGridSelected(              self, event)
     elseif (name == "EvtPlayerIndexUpdated")         then onEvtPlayerIndexUpdated(        self, event)
@@ -1114,7 +1114,7 @@ end
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
-function ModelActionPlannerForCampaign:setStateIdle(resetUnitAnimation)
+function ModelActionPlannerForNative:setStateIdle(resetUnitAnimation)
     if (self.m_View) then
         self.m_View:setReachableAreaVisible(  false)
             :setAttackableGridsVisible(       false)
@@ -1152,4 +1152,4 @@ function ModelActionPlannerForCampaign:setStateIdle(resetUnitAnimation)
     return self
 end
 
-return ModelActionPlannerForCampaign
+return ModelActionPlannerForNative

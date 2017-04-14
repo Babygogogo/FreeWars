@@ -78,7 +78,7 @@ local function initActorSkillDataManager(self, skillData)
 end
 
 local function initActorWarField(self, warFieldData)
-    self.m_ActorWarField = Actor.createWithModelAndViewName("warNative.ModelWarFieldForCampaign", warFieldData, "common.ViewWarField")
+    self.m_ActorWarField = Actor.createWithModelAndViewName("warNative.ModelWarFieldForNative", warFieldData, "common.ViewWarField")
 end
 
 local function initActorRobot(self)
@@ -86,42 +86,42 @@ local function initActorRobot(self)
 end
 
 local function initActorWarHud(self)
-    self.m_ActorWarHud = Actor.createWithModelAndViewName("warNative.ModelWarHudForCampaign", nil, "common.ViewWarHud")
+    self.m_ActorWarHud = Actor.createWithModelAndViewName("warNative.ModelWarHudForNative", nil, "common.ViewWarHud")
 end
 
 local function initActorTurnManager(self, turnData)
-    self.m_ActorTurnManager = Actor.createWithModelAndViewName("warNative.ModelTurnManagerForCampaign", turnData, "common.ViewTurnManager")
+    self.m_ActorTurnManager = Actor.createWithModelAndViewName("warNative.ModelTurnManagerForNative", turnData, "common.ViewTurnManager")
 end
 
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
-function ModelWarNative:ctor(campaignData)
-    self.m_ActionID                  = campaignData.actionID
-    self.m_AttackModifier            = campaignData.attackModifier
-    self.m_EnergyGainModifier        = campaignData.energyGainModifier
-    self.m_IncomeModifier            = campaignData.incomeModifier
-    self.m_IsActiveSkillEnabled      = campaignData.isActiveSkillEnabled
-    self.m_IsFogOfWarByDefault       = campaignData.isFogOfWarByDefault
-    self.m_IsPassiveSkillEnabled     = campaignData.isPassiveSkillEnabled
-    self.m_IsScoreGame               = campaignData.isScoreGame
-    self.m_IsSkillDeclarationEnabled = campaignData.isSkillDeclarationEnabled
-    self.m_IsWarEnded                = campaignData.isWarEnded
-    self.m_MoveRangeModifier         = campaignData.moveRangeModifier
-    self.m_SaveIndex                 = campaignData.saveIndex
-    self.m_StartingEnergy            = campaignData.startingEnergy
-    self.m_StartingFund              = campaignData.startingFund
-    self.m_VisionModifier            = campaignData.visionModifier
+function ModelWarNative:ctor(warData)
+    self.m_ActionID                  = warData.actionID
+    self.m_AttackModifier            = warData.attackModifier
+    self.m_EnergyGainModifier        = warData.energyGainModifier
+    self.m_IncomeModifier            = warData.incomeModifier
+    self.m_IsActiveSkillEnabled      = warData.isActiveSkillEnabled
+    self.m_IsFogOfWarByDefault       = warData.isFogOfWarByDefault
+    self.m_IsPassiveSkillEnabled     = warData.isPassiveSkillEnabled
+    self.m_IsScoreGame               = warData.isScoreGame
+    self.m_IsSkillDeclarationEnabled = warData.isSkillDeclarationEnabled
+    self.m_IsWarEnded                = warData.isWarEnded
+    self.m_MoveRangeModifier         = warData.moveRangeModifier
+    self.m_SaveIndex                 = warData.saveIndex
+    self.m_StartingEnergy            = warData.startingEnergy
+    self.m_StartingFund              = warData.startingFund
+    self.m_VisionModifier            = warData.visionModifier
 
     initScriptEventDispatcher(self)
     initActorConfirmBox(      self)
     initActorMessageIndicator(self)
     initActorRobot(           self)
     initActorWarHud(          self)
-    initActorPlayerManager(   self, campaignData.players)
-    initActorSkillDataManager(self, campaignData.skillData)
-    initActorTurnManager(     self, campaignData.turn)
-    initActorWarField(        self, campaignData.warField)
+    initActorPlayerManager(   self, warData.players)
+    initActorSkillDataManager(self, warData.skillData)
+    initActorTurnManager(     self, warData.turn)
+    initActorWarField(        self, warData.warField)
 
     return self
 end

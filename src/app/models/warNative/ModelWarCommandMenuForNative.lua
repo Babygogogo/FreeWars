@@ -1,5 +1,5 @@
 
-local ModelWarCommandMenuForCampaign = class("ModelWarCommandMenuForCampaign")
+local ModelWarCommandMenuForNative = class("ModelWarCommandMenuForNative")
 
 local ActionCodeFunctions       = requireFW("src.app.utilities.ActionCodeFunctions")
 local AudioManager              = requireFW("src.app.utilities.AudioManager")
@@ -10,7 +10,7 @@ local GridIndexFunctions        = requireFW("src.app.utilities.GridIndexFunction
 local SingletonGetters          = requireFW("src.app.utilities.SingletonGetters")
 local SkillDescriptionFunctions = requireFW("src.app.utilities.SkillDescriptionFunctions")
 local VisibilityFunctions       = requireFW("src.app.utilities.VisibilityFunctions")
-local WarCampaignManager        = requireFW("src.app.utilities.WarCampaignManager")
+local NativeWarManager          = requireFW("src.app.utilities.NativeWarManager")
 local WarFieldManager           = requireFW("src.app.utilities.WarFieldManager")
 local WebSocketManager          = requireFW("src.app.utilities.WebSocketManager")
 local Actor                     = requireFW("src.global.actors.Actor")
@@ -519,7 +519,7 @@ end
 --------------------------------------------------------------------------------
 getActorSkillConfigurator = function(self)
     if (not self.m_ActorSkillConfigurator) then
-        local model = Actor.createModel("warNative.ModelSkillConfiguratorForCampaign")
+        local model = Actor.createModel("warNative.ModelSkillConfiguratorForNative")
         model:onStartRunning(self.m_ModelWar)
             :setCallbackOnButtonBackTouched(function()
                 model:setEnabled(false)
@@ -726,7 +726,7 @@ local function initItemLoadGame(self)
                     modelConfirmBox:setEnabled(false)
                     self:setEnabled(false)
 
-                    local data = WarCampaignManager.loadCampaignData(modelWar:getSaveIndex())
+                    local data = NativeWarManager.loadCampaignData(modelWar:getSaveIndex())
                     if (not data) then
                         SingletonGetters.getModelMessageIndicator(modelWar):showMessage(getLocalizedText(66, "FailLoadGame"))
                     else
@@ -751,7 +751,7 @@ local function initItemSaveGame(self)
                     modelConfirmBox:setEnabled(false)
                     self:setEnabled(false)
 
-                    WarCampaignManager.saveCampaignData(modelWar:toSerializableTable())
+                    NativeWarManager.saveCampaignData(modelWar:toSerializableTable())
                     SingletonGetters.getModelMessageIndicator(modelWar):showMessage(getLocalizedText(66, "SucceedSaveGame"))
                 end)
                 :setEnabled(true)
@@ -888,7 +888,7 @@ end
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
-function ModelWarCommandMenuForCampaign:ctor(param)
+function ModelWarCommandMenuForNative:ctor(param)
     self.m_State = "stateDisabled"
 
     initItemAbout(              self)
@@ -920,7 +920,7 @@ end
 --------------------------------------------------------------------------------
 -- The public callback function on start running or script events.
 --------------------------------------------------------------------------------
-function ModelWarCommandMenuForCampaign:onStartRunning(modelWar)
+function ModelWarCommandMenuForNative:onStartRunning(modelWar)
     self.m_ModelWar             = modelWar
     self.m_SkillDeclarationCost = modelWar:getModelSkillDataManager():getSkillDeclarationCost()
     self.m_ModelPlayerManager   = SingletonGetters.getModelPlayerManager(modelWar)
@@ -933,7 +933,7 @@ function ModelWarCommandMenuForCampaign:onStartRunning(modelWar)
     return self
 end
 
-function ModelWarCommandMenuForCampaign:onEvent(event)
+function ModelWarCommandMenuForNative:onEvent(event)
     local eventName = event.name
     if     (eventName == "EvtGridSelected")   then onEvtGridSelected(  self, event)
     elseif (eventName == "EvtMapCursorMoved") then onEvtMapCursorMoved(self, event)
@@ -945,15 +945,15 @@ end
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
-function ModelWarCommandMenuForCampaign:isEnabled()
+function ModelWarCommandMenuForNative:isEnabled()
     return (self.m_State ~= "stateDisabled") and (self.m_State ~= "stateHiddenWithHideUI")
 end
 
-function ModelWarCommandMenuForCampaign:isHiddenWithHideUI()
+function ModelWarCommandMenuForNative:isHiddenWithHideUI()
     return self.m_State == "stateHiddenWithHideUI"
 end
 
-function ModelWarCommandMenuForCampaign:setEnabled(enabled)
+function ModelWarCommandMenuForNative:setEnabled(enabled)
     if (enabled) then
         setStateMain(self)
     else
@@ -963,16 +963,16 @@ function ModelWarCommandMenuForCampaign:setEnabled(enabled)
     return self
 end
 
-function ModelWarCommandMenuForCampaign:onButtonBackTouched()
+function ModelWarCommandMenuForNative:onButtonBackTouched()
     local state = self.m_State
     if     (state == "stateAuxiliaryCommands") then setStateMain(             self)
     elseif (state == "stateHelp")              then setStateAuxiliaryCommands(self)
     elseif (state == "stateMain")              then setStateDisabled(         self)
     elseif (state == "stateUnitPropertyList")  then setStateAuxiliaryCommands(self)
-    else                                       error("ModelWarCommandMenuForCampaign:onButtonBackTouched() the state is invalid: " .. (state or ""))
+    else                                       error("ModelWarCommandMenuForNative:onButtonBackTouched() the state is invalid: " .. (state or ""))
     end
 
     return self
 end
 
-return ModelWarCommandMenuForCampaign
+return ModelWarCommandMenuForNative

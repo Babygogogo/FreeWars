@@ -1,5 +1,5 @@
 
-local ModelTurnManagerForCampaign = requireFW("src.global.functions.class")("ModelTurnManagerForCampaign")
+local ModelTurnManagerForNative = requireFW("src.global.functions.class")("ModelTurnManagerForNative")
 
 local ActionCodeFunctions   = requireFW("src.app.utilities.ActionCodeFunctions")
 local AuxiliaryFunctions    = requireFW("src.app.utilities.AuxiliaryFunctions")
@@ -65,7 +65,7 @@ local function getNextTurnAndPlayerIndex(self, playerManager)
             nextTurnIndex   = nextTurnIndex + 1
         end
 
-        assert(nextPlayerIndex ~= self.m_PlayerIndex, "ModelTurnManagerForCampaign-getNextTurnAndPlayerIndex() the number of alive players is less than 2.")
+        assert(nextPlayerIndex ~= self.m_PlayerIndex, "ModelTurnManagerForNative-getNextTurnAndPlayerIndex() the number of alive players is less than 2.")
 
         if (playerManager:getModelPlayer(nextPlayerIndex):isAlive()) then
             return nextTurnIndex, nextPlayerIndex
@@ -335,7 +335,7 @@ end
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
-function ModelTurnManagerForCampaign:ctor(param)
+function ModelTurnManagerForNative:ctor(param)
     self.m_TurnIndex     = param.turnIndex
     self.m_PlayerIndex   = param.playerIndex
     self.m_TurnPhaseCode = param.turnPhaseCode
@@ -346,7 +346,7 @@ end
 --------------------------------------------------------------------------------
 -- The functions for serialization.
 --------------------------------------------------------------------------------
-function ModelTurnManagerForCampaign:toSerializableTable()
+function ModelTurnManagerForNative:toSerializableTable()
     return {
         turnIndex     = self:getTurnIndex(),
         playerIndex   = self:getPlayerIndex(),
@@ -357,7 +357,7 @@ end
 --------------------------------------------------------------------------------
 -- The public functions for doing actions.
 --------------------------------------------------------------------------------
-function ModelTurnManagerForCampaign:onStartRunning(modelWar)
+function ModelTurnManagerForNative:onStartRunning(modelWar)
     self.m_ModelWar             = modelWar
     self.m_ModelPlayerManager   = SingletonGetters.getModelPlayerManager(modelWar)
     self.m_ModelMessageIndiator = SingletonGetters.getModelMessageIndicator(modelWar)
@@ -369,23 +369,23 @@ end
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
-function ModelTurnManagerForCampaign:getTurnIndex()
+function ModelTurnManagerForNative:getTurnIndex()
     return self.m_TurnIndex
 end
 
-function ModelTurnManagerForCampaign:getPlayerIndex()
+function ModelTurnManagerForNative:getPlayerIndex()
     return self.m_PlayerIndex
 end
 
-function ModelTurnManagerForCampaign:isTurnPhaseRequestToBegin()
+function ModelTurnManagerForNative:isTurnPhaseRequestToBegin()
     return self.m_TurnPhaseCode == TURN_PHASE_CODES.RequestToBegin
 end
 
-function ModelTurnManagerForCampaign:isTurnPhaseMain()
+function ModelTurnManagerForNative:isTurnPhaseMain()
     return self.m_TurnPhaseCode == TURN_PHASE_CODES.Main
 end
 
-function ModelTurnManagerForCampaign:runTurn()
+function ModelTurnManagerForNative:runTurn()
     if (self.m_TurnPhaseCode == TURN_PHASE_CODES.Beginning)                         then runTurnPhaseBeginning(                        self) end
     if (self.m_TurnPhaseCode == TURN_PHASE_CODES.GetFund)                           then runTurnPhaseGetFund(                          self) end
     if (self.m_TurnPhaseCode == TURN_PHASE_CODES.ConsumeUnitFuel)                   then runTurnPhaseConsumeUnitFuel(                  self) end
@@ -408,8 +408,8 @@ function ModelTurnManagerForCampaign:runTurn()
     return self
 end
 
-function ModelTurnManagerForCampaign:beginTurnPhaseBeginning(income, repairData, supplyData, callbackOnEnterTurnPhaseMain)
-    assert(self:isTurnPhaseRequestToBegin(), "ModelTurnManagerForCampaign:beginTurnPhaseBeginning() invalid turn phase code: " .. self.m_TurnPhaseCode)
+function ModelTurnManagerForNative:beginTurnPhaseBeginning(income, repairData, supplyData, callbackOnEnterTurnPhaseMain)
+    assert(self:isTurnPhaseRequestToBegin(), "ModelTurnManagerForNative:beginTurnPhaseBeginning() invalid turn phase code: " .. self.m_TurnPhaseCode)
 
     self.m_IncomeForNextTurn                       = income
     self.m_RepairDataForNextTurn                   = repairData
@@ -421,12 +421,12 @@ function ModelTurnManagerForCampaign:beginTurnPhaseBeginning(income, repairData,
     return self
 end
 
-function ModelTurnManagerForCampaign:endTurnPhaseMain()
-    assert(self:isTurnPhaseMain(), "ModelTurnManagerForCampaign:endTurnPhaseMain() invalid turn phase code: " .. self.m_TurnPhaseCode)
+function ModelTurnManagerForNative:endTurnPhaseMain()
+    assert(self:isTurnPhaseMain(), "ModelTurnManagerForNative:endTurnPhaseMain() invalid turn phase code: " .. self.m_TurnPhaseCode)
     self.m_TurnPhaseCode = TURN_PHASE_CODES.ResetUnitState
     self:runTurn()
 
     return self
 end
 
-return ModelTurnManagerForCampaign
+return ModelTurnManagerForNative

@@ -203,8 +203,8 @@ function ViewNewCampaignSelector:setViewWarFieldPreviewer(view)
     return self
 end
 
-function ViewNewCampaignSelector:setViewCampaignConfigurator(view)
-    assert(self.m_ViewCampaignConfigurator == nil, "ViewNewCampaignSelector:setViewCampaignConfigurator() the view has been set.")
+function ViewNewCampaignSelector:setViewWarConfiguratorForNative(view)
+    assert(self.m_ViewCampaignConfigurator == nil, "ViewNewCampaignSelector:setViewWarConfiguratorForNative() the view has been set.")
     self.m_ViewCampaignConfigurator = view
     self:addChild(view, CAMPAIGN_CONFIGURATOR_Z_ORDER)
 

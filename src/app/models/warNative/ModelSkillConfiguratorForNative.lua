@@ -1,5 +1,5 @@
 
-local ModelSkillConfiguratorForCampaign = class("ModelSkillConfiguratorForCampaign")
+local ModelSkillConfiguratorForNative = class("ModelSkillConfiguratorForNative")
 
 local ActionCodeFunctions       = requireFW("src.app.utilities.ActionCodeFunctions")
 local AuxiliaryFunctions        = requireFW("src.app.utilities.AuxiliaryFunctions")
@@ -331,7 +331,7 @@ end
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
-function ModelSkillConfiguratorForCampaign:ctor()
+function ModelSkillConfiguratorForNative:ctor()
     initItemActivateActiveSkill( self)
     initItemCostListActiveSkill( self)
     initItemCostListPassiveSkill(self)
@@ -342,13 +342,13 @@ function ModelSkillConfiguratorForCampaign:ctor()
     return self
 end
 
-function ModelSkillConfiguratorForCampaign:setCallbackOnButtonBackTouched(callback)
+function ModelSkillConfiguratorForNative:setCallbackOnButtonBackTouched(callback)
     self.m_OnButtonBackTouched = callback
 
     return self
 end
 
-function ModelSkillConfiguratorForCampaign:onStartRunning(modelWar)
+function ModelSkillConfiguratorForNative:onStartRunning(modelWar)
     self.m_ModelWar              = modelWar
     self.m_ModelSkillDataManager = modelWar:getModelSkillDataManager()
     self.m_SkillDeclarationCost  = self.m_ModelSkillDataManager:getSkillDeclarationCost()
@@ -364,11 +364,11 @@ end
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
-function ModelSkillConfiguratorForCampaign:isEnabled()
+function ModelSkillConfiguratorForNative:isEnabled()
     return self.m_IsEnabled
 end
 
-function ModelSkillConfiguratorForCampaign:setEnabled(enabled)
+function ModelSkillConfiguratorForNative:setEnabled(enabled)
     self.m_IsEnabled = enabled
     if (enabled) then
         setStateMain(self)
@@ -381,17 +381,17 @@ function ModelSkillConfiguratorForCampaign:setEnabled(enabled)
     return self
 end
 
-function ModelSkillConfiguratorForCampaign:onButtonBackTouched()
+function ModelSkillConfiguratorForNative:onButtonBackTouched()
     local state = self.m_State
     if     (state == "stateMain")                    then self.m_OnButtonBackTouched()
     elseif (state == "stateActivateActiveSkill")     then setStateMain(self)
     elseif (state == "stateChooseActiveSkillLevel")  then setStateActivateActiveSkill(self)
     elseif (state == "stateChoosePassiveSkillLevel") then setStateResearchPassiveSkill(self)
     elseif (state == "stateResearchPassiveSkill")    then setStateMain(self)
-    else                                                  error("ModelSkillConfiguratorForCampaign:onButtonBackTouched() invalid state: " .. (state or ""))
+    else                                                  error("ModelSkillConfiguratorForNative:onButtonBackTouched() invalid state: " .. (state or ""))
     end
 
     return self
 end
 
-return ModelSkillConfiguratorForCampaign
+return ModelSkillConfiguratorForNative

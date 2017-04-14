@@ -1,5 +1,5 @@
 
-local ModelWarFieldForCampaign = requireFW("src.global.functions.class")("ModelWarFieldForCampaign")
+local ModelWarFieldForNative = requireFW("src.global.functions.class")("ModelWarFieldForNative")
 
 local SingletonGetters    = requireFW("src.app.utilities.SingletonGetters")
 local VisibilityFunctions = requireFW("src.app.utilities.VisibilityFunctions")
@@ -37,7 +37,7 @@ local function initActorFogMap(self, fogMapData)
 end
 
 local function initActorTileMap(self, tileMapData)
-    local modelTileMap  = Actor.createModel("warNative.ModelTileMapForCampaign", tileMapData, self.m_WarFieldFileName)
+    local modelTileMap  = Actor.createModel("warNative.ModelTileMapForNative", tileMapData, self.m_WarFieldFileName)
     self.m_ActorTileMap = Actor.createWithModelAndViewInstance(modelTileMap, Actor.createView("common.ViewTileMap"))
 end
 
@@ -47,7 +47,7 @@ local function initActorUnitMap(self, unitMapData)
 end
 
 local function initActorActionPlanner(self)
-    self.m_ActorActionPlanner = Actor.createWithModelAndViewName("warNative.ModelActionPlannerForCampaign", nil, "common.ViewActionPlanner")
+    self.m_ActorActionPlanner = Actor.createWithModelAndViewName("warNative.ModelActionPlannerForNative", nil, "common.ViewActionPlanner")
 end
 
 local function initActorMapCursor(self, param)
@@ -61,7 +61,7 @@ end
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
-function ModelWarFieldForCampaign:ctor(warFieldData)
+function ModelWarFieldForNative:ctor(warFieldData)
     self.m_WarFieldFileName = warFieldData.warFieldFileName
     initActorFogMap(       self, warFieldData.fogMap)
     initActorTileMap(      self, warFieldData.tileMap)
@@ -73,8 +73,8 @@ function ModelWarFieldForCampaign:ctor(warFieldData)
     return self
 end
 
-function ModelWarFieldForCampaign:initView()
-    assert(self.m_View, "ModelWarFieldForCampaign:initView() no view is attached to the owner actor of the model.")
+function ModelWarFieldForNative:initView()
+    assert(self.m_View, "ModelWarFieldForNative:initView() no view is attached to the owner actor of the model.")
     self.m_View:setViewTileMap(self.m_ActorTileMap      :getView())
         :setViewUnitMap(       self.m_ActorUnitMap      :getView())
         :setViewActionPlanner( self.m_ActorActionPlanner:getView())
@@ -94,7 +94,7 @@ end
 --------------------------------------------------------------------------------
 -- The functions for serialization.
 --------------------------------------------------------------------------------
-function ModelWarFieldForCampaign:toSerializableTable()
+function ModelWarFieldForNative:toSerializableTable()
     return {
         warFieldFileName = self.m_WarFieldFileName,
         fogMap           = self:getModelFogMap() :toSerializableTable(),
@@ -106,7 +106,7 @@ end
 --------------------------------------------------------------------------------
 -- The callback functions on start running/script events.
 --------------------------------------------------------------------------------
-function ModelWarFieldForCampaign:onStartRunning(modelWar)
+function ModelWarFieldForNative:onStartRunning(modelWar)
     self:getModelTileMap()      :onStartRunning(modelWar)
     self:getModelUnitMap()      :onStartRunning(modelWar)
     self:getModelFogMap()       :onStartRunning(modelWar)
@@ -128,7 +128,7 @@ function ModelWarFieldForCampaign:onStartRunning(modelWar)
     return self
 end
 
-function ModelWarFieldForCampaign:onEvent(event)
+function ModelWarFieldForNative:onEvent(event)
     local eventName = event.name
     if     (eventName == "EvtDragField")            then onEvtDragField(           self, event)
     elseif (eventName == "EvtZoomFieldWithScroll")  then onEvtZoomFieldWithScroll( self, event)
@@ -141,32 +141,32 @@ end
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
-function ModelWarFieldForCampaign:getWarFieldFileName()
+function ModelWarFieldForNative:getWarFieldFileName()
     return self.m_WarFieldFileName
 end
 
-function ModelWarFieldForCampaign:getModelActionPlanner()
+function ModelWarFieldForNative:getModelActionPlanner()
     return self.m_ActorActionPlanner:getModel()
 end
 
-function ModelWarFieldForCampaign:getModelFogMap()
+function ModelWarFieldForNative:getModelFogMap()
     return self.m_ActorFogMap:getModel()
 end
 
-function ModelWarFieldForCampaign:getModelUnitMap()
+function ModelWarFieldForNative:getModelUnitMap()
     return self.m_ActorUnitMap:getModel()
 end
 
-function ModelWarFieldForCampaign:getModelTileMap()
+function ModelWarFieldForNative:getModelTileMap()
     return self.m_ActorTileMap:getModel()
 end
 
-function ModelWarFieldForCampaign:getModelMapCursor()
+function ModelWarFieldForNative:getModelMapCursor()
     return self.m_ActorMapCursor:getModel()
 end
 
-function ModelWarFieldForCampaign:getModelGridEffect()
+function ModelWarFieldForNative:getModelGridEffect()
     return self.m_ActorGridEffect:getModel()
 end
 
-return ModelWarFieldForCampaign
+return ModelWarFieldForNative

@@ -25,8 +25,8 @@ end
 
 local function getActorCampaignConfigurator(self)
     if (not self.m_ActorCampaignConfigurator) then
-        local model = Actor.createModel("sceneMain.ModelCampaignConfigurator")
-        local view  = Actor.createView( "sceneMain.ViewCampaignConfigurator")
+        local model = Actor.createModel("sceneMain.ModelWarConfiguratorForNative")
+        local view  = Actor.createView( "sceneMain.ViewWarConfiguratorForNative")
 
         model:setEnabled(false)
             :setCallbackOnButtonBackTouched(function()
@@ -38,7 +38,7 @@ local function getActorCampaignConfigurator(self)
             end)
 
         self.m_ActorCampaignConfigurator = Actor.createWithModelAndViewInstance(model, view)
-        self.m_View:setViewCampaignConfigurator(view)
+        self.m_View:setViewWarConfiguratorForNative(view)
     end
 
     return self.m_ActorCampaignConfigurator
@@ -133,7 +133,7 @@ end
 
 function ModelNewCampaignSelector:onButtonNextTouched()
     getActorWarFieldPreviewer(self):getModel():setEnabled(false)
-    getActorCampaignConfigurator(self):getModel():resetWithCampaignConfiguration({warFieldFileName = self.m_WarFieldFileName})
+    getActorCampaignConfigurator(self):getModel():resetWithWarConfiguration({warFieldFileName = self.m_WarFieldFileName})
         :setEnabled(true)
 
     self.m_View:setMenuVisible(false)

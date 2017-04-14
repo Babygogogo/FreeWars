@@ -24,17 +24,17 @@ end
 --------------------------------------------------------------------------------
 -- The composition actors.
 --------------------------------------------------------------------------------
-local function getActorContinueCampaignSelector(self)
-    if (not self.m_ActorContinueCampaignSelector) then
-        local actor = Actor.createWithModelAndViewName("sceneMain.ModelContinueCampaignSelector", nil, "sceneMain.ViewContinueCampaignSelector")
+local function getActorContinueWarSelectorForNative(self)
+    if (not self.m_ActorContinueWarSelectorForNative) then
+        local actor = Actor.createWithModelAndViewName("sceneMain.ModelContinueWarSelectorForNative", nil, "sceneMain.ViewContinueCampaignSelector")
         actor:getModel():onStartRunning(self.m_ModelSceneMain)
             :setEnabled(false)
 
-        self.m_ActorContinueCampaignSelector = actor
+        self.m_ActorContinueWarSelectorForNative = actor
         self.m_View:setViewContinueCampaignSelector(actor:getView())
     end
 
-    return self.m_ActorContinueCampaignSelector
+    return self.m_ActorContinueWarSelectorForNative
 end
 
 local function getActorContinueWarSelector(self)
@@ -490,7 +490,7 @@ function ModelMainMenu:onButtonExitTouched()
 end
 
 function ModelMainMenu:getModelContinueCampaignSelector()
-    return getActorContinueCampaignSelector(self):getModel()
+    return getActorContinueWarSelectorForNative(self):getModel()
 end
 
 function ModelMainMenu:getModelContinueWarSelector()

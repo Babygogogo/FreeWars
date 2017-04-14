@@ -1,5 +1,5 @@
 
-local ModelTileForCampaign = requireFW("src.global.functions.class")("ModelTileForCampaign")
+local ModelTileForNative = requireFW("src.global.functions.class")("ModelTileForNative")
 
 local GameConstantFunctions = requireFW("src.app.utilities.GameConstantFunctions")
 local LocalizationFunctions = requireFW("src.app.utilities.LocalizationFunctions")
@@ -19,10 +19,10 @@ local function initWithTiledID(self, objectID, baseID)
 
     self.m_ObjectID = objectID or self.m_ObjectID
     self.m_BaseID   = baseID   or self.m_BaseID
-    assert(self.m_ObjectID and self.m_BaseID, "ModelTileForCampaign-initWithTiledID() failed to init self.m_ObjectID and/or self.m_BaseID.")
+    assert(self.m_ObjectID and self.m_BaseID, "ModelTileForNative-initWithTiledID() failed to init self.m_ObjectID and/or self.m_BaseID.")
 
     local template = GameConstantFunctions.getTemplateModelTileWithObjectAndBaseId(self.m_ObjectID, self.m_BaseID)
-    assert(template, "ModelTileForCampaign-initWithTiledID() failed to get the template model tile with param objectID and baseID.")
+    assert(template, "ModelTileForNative-initWithTiledID() failed to get the template model tile with param objectID and baseID.")
 
     if (self.m_Template ~= template) then
         self.m_Template = template
@@ -50,7 +50,7 @@ end
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
-function ModelTileForCampaign:ctor(param)
+function ModelTileForNative:ctor(param)
     self.m_PositionIndex = param.positionIndex
     if ((param.objectID) or (param.baseID)) then
         initWithTiledID(self, param.objectID, param.baseID)
@@ -64,9 +64,9 @@ function ModelTileForCampaign:ctor(param)
     return self
 end
 
-function ModelTileForCampaign:initView()
+function ModelTileForNative:initView()
     local view = self.m_View
-    assert(view, "ModelTileForCampaign:initView() no view is attached to the actor of the model.")
+    assert(view, "ModelTileForNative:initView() no view is attached to the actor of the model.")
 
     self:setViewPositionWithGridIndex()
         :updateView()
@@ -77,7 +77,7 @@ end
 --------------------------------------------------------------------------------
 -- The function for serialization.
 --------------------------------------------------------------------------------
-function ModelTileForCampaign:toSerializableTable()
+function ModelTileForNative:toSerializableTable()
     local t               = {}
     local componentsCount = 0
     for name, component in pairs(ComponentManager.getAllComponents(self)) do
@@ -105,7 +105,7 @@ end
 --------------------------------------------------------------------------------
 -- The public callback function on start running.
 --------------------------------------------------------------------------------
-function ModelTileForCampaign:onStartRunning(modelWar)
+function ModelTileForNative:onStartRunning(modelWar)
     self.m_ModelWar = modelWar
     ComponentManager.callMethodForAllComponents(self, "onStartRunning", modelWar)
 
@@ -115,7 +115,7 @@ end
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
-function ModelTileForCampaign:updateView()
+function ModelTileForNative:updateView()
     local modelWar = self.m_ModelWar
     if (not modelWar) then
         self.m_View:setViewObjectWithTiledId(self.m_ObjectID)
@@ -138,27 +138,27 @@ function ModelTileForCampaign:updateView()
     return self
 end
 
-function ModelTileForCampaign:getPositionIndex()
+function ModelTileForNative:getPositionIndex()
     return self.m_PositionIndex
 end
 
-function ModelTileForCampaign:getTiledId()
+function ModelTileForNative:getTiledId()
     return (self.m_ObjectID > 0) and (self.m_ObjectID) or (self.m_BaseID)
 end
 
-function ModelTileForCampaign:getObjectAndBaseId()
+function ModelTileForNative:getObjectAndBaseId()
     return self.m_ObjectID, self.m_BaseID
 end
 
-function ModelTileForCampaign:getPlayerIndex()
+function ModelTileForNative:getPlayerIndex()
     return GameConstantFunctions.getPlayerIndexWithTiledId(self:getTiledId())
 end
 
-function ModelTileForCampaign:getTileType()
+function ModelTileForNative:getTileType()
     return GameConstantFunctions.getTileTypeWithObjectAndBaseId(self:getObjectAndBaseId())
 end
 
-function ModelTileForCampaign:getTeamIndex()
+function ModelTileForNative:getTeamIndex()
     local playerIndex = self:getPlayerIndex()
     if (playerIndex == 0) then
         return nil
@@ -167,15 +167,15 @@ function ModelTileForCampaign:getTeamIndex()
     end
 end
 
-function ModelTileForCampaign:getTileTypeFullName()
+function ModelTileForNative:getTileTypeFullName()
     return LocalizationFunctions.getLocalizedText(116, self:getTileType())
 end
 
-function ModelTileForCampaign:getDescription()
+function ModelTileForNative:getDescription()
     return LocalizationFunctions.getLocalizedText(117, self:getTileType())
 end
 
-function ModelTileForCampaign:updateWithObjectAndBaseId(objectID, baseID)
+function ModelTileForNative:updateWithObjectAndBaseId(objectID, baseID)
     local gridIndex          = self:getGridIndex()
     baseID                   = baseID or self.m_BaseID
 
@@ -186,21 +186,21 @@ function ModelTileForCampaign:updateWithObjectAndBaseId(objectID, baseID)
     return self
 end
 
-function ModelTileForCampaign:destroyModelTileObject()
-    assert(self.m_ObjectID > 0, "ModelTileForCampaign:destroyModelTileObject() there's no tile object.")
+function ModelTileForNative:destroyModelTileObject()
+    assert(self.m_ObjectID > 0, "ModelTileForNative:destroyModelTileObject() there's no tile object.")
     self:updateWithObjectAndBaseId(0, self.m_BaseID)
 
     return self
 end
 
-function ModelTileForCampaign:destroyViewTileObject()
+function ModelTileForNative:destroyViewTileObject()
     if (self.m_View) then
         self.m_View:setViewObjectWithTiledId(0)
     end
 end
 
-function ModelTileForCampaign:updateWithPlayerIndex(playerIndex)
-    assert(self:getPlayerIndex() ~= playerIndex, "ModelTileForCampaign:updateWithPlayerIndex() the param playerIndex is the same as the one of self.")
+function ModelTileForNative:updateWithPlayerIndex(playerIndex)
+    assert(self:getPlayerIndex() ~= playerIndex, "ModelTileForNative:updateWithPlayerIndex() the param playerIndex is the same as the one of self.")
 
     local tileName = self:getTileType()
     if (tileName ~= "Headquarters") then
@@ -220,4 +220,4 @@ function ModelTileForCampaign:updateWithPlayerIndex(playerIndex)
     return self
 end
 
-return ModelTileForCampaign
+return ModelTileForNative

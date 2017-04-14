@@ -1,5 +1,5 @@
 
-local ModelCampaignConfigurator = class("ModelCampaignConfigurator")
+local ModelWarConfiguratorForNative = class("ModelWarConfiguratorForNative")
 
 local Actor                 = requireFW("src.global.actors.Actor")
 local ActorManager          = requireFW("src.global.actors.ActorManager")
@@ -7,7 +7,7 @@ local ActionCodeFunctions   = requireFW("src.app.utilities.ActionCodeFunctions")
 local AuxiliaryFunctions    = requireFW("src.app.utilities.AuxiliaryFunctions")
 local LocalizationFunctions = requireFW("src.app.utilities.LocalizationFunctions")
 local SingletonGetters      = requireFW("src.app.utilities.SingletonGetters")
-local WarCampaignManager    = requireFW("src.app.utilities.WarCampaignManager")
+local NativeWarManager      = requireFW("src.app.utilities.NativeWarManager")
 local WarFieldManager       = requireFW("src.app.utilities.WarFieldManager")
 local WebSocketManager      = requireFW("src.app.utilities.WebSocketManager")
 
@@ -30,7 +30,7 @@ local function generatePlayerColorText(playerIndex)
     elseif (playerIndex == 2) then return string.format("2 (%s)", getLocalizedText(34, "Blue"))
     elseif (playerIndex == 3) then return string.format("3 (%s)", getLocalizedText(34, "Yellow"))
     elseif (playerIndex == 4) then return string.format("4 (%s)", getLocalizedText(34, "Black"))
-    else                           error("ModelCampaignConfigurator-generatePlayerColorText() invalid playerIndex: " .. (playerIndex or ""))
+    else                           error("ModelWarConfiguratorForNative-generatePlayerColorText() invalid playerIndex: " .. (playerIndex or ""))
     end
 end
 
@@ -41,7 +41,7 @@ local function getPlayerIndexForWarConfiguration(campaignConfiguration)
         end
     end
 
-    error("ModelCampaignConfigurator-getPlayerIndexForWarConfiguration() failed to find the playerIndex.")
+    error("ModelWarConfiguratorForNative-getPlayerIndexForWarConfiguration() failed to find the playerIndex.")
 end
 
 --------------------------------------------------------------------------------
@@ -178,7 +178,7 @@ local function createItemsForStateMain(self)
         return {self.m_ItemPlaceHolder}
 
     else
-        error("ModelCampaignConfigurator-createItemsForStateMain() the mode of the configurator is invalid: " .. (mode or ""))
+        error("ModelWarConfiguratorForNative-createItemsForStateMain() the mode of the configurator is invalid: " .. (mode or ""))
     end
 end
 
@@ -210,7 +210,7 @@ end
 -- The functions for sending actions.
 --------------------------------------------------------------------------------
 local function createAndEnterCampaign(self)
-    local campaignData = WarCampaignManager.createInitialCampaignData({
+    local campaignData = NativeWarManager.createInitialCampaignData({
         attackModifier            = self.m_AttackModifier,
         energyGainModifier        = self.m_EnergyGainModifier,
         incomeModifier            = self.m_IncomeModifier,
@@ -234,7 +234,7 @@ local function createAndEnterCampaign(self)
 end
 
 local function loadAndRunCampaign(saveIndex)
-    local campaignData     = WarCampaignManager.loadCampaignData(saveIndex)
+    local campaignData     = NativeWarManager.loadCampaignData(saveIndex)
     local actorWarCampaign = Actor.createWithModelAndViewName("warNative.ModelWarNative", campaignData, "common.ViewSceneWar")
     ActorManager.setAndRunRootActor(actorWarCampaign, "FADE", 1)
 end
@@ -700,7 +700,7 @@ end
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
-function ModelCampaignConfigurator:ctor()
+function ModelWarConfiguratorForNative:ctor()
     initItemAdvancedSettings(      self)
     initItemAttackModifier(        self)
     initItemEnableActiveSkill(     self)
@@ -734,13 +734,13 @@ function ModelCampaignConfigurator:ctor()
     return self
 end
 
-function ModelCampaignConfigurator:setCallbackOnButtonBackTouched(callback)
+function ModelWarConfiguratorForNative:setCallbackOnButtonBackTouched(callback)
     self.m_OnButtonBackTouched = callback
 
     return self
 end
 
-function ModelCampaignConfigurator:setModeCreateCampaign()
+function ModelWarConfiguratorForNative:setModeCreateCampaign()
     self.m_Mode                           = "modeCreateCampaign"
     self.m_MenuTitleTextForMode           = getLocalizedText(1, "Campaign")
     self.m_CallbackOnButtonConfirmTouched = function()
@@ -756,7 +756,7 @@ function ModelCampaignConfigurator:setModeCreateCampaign()
     return self
 end
 
-function ModelCampaignConfigurator:setModeCreateFreeGame()
+function ModelWarConfiguratorForNative:setModeCreateFreeGame()
     self.m_Mode                           = "modeCreateFreeGame"
     self.m_MenuTitleTextForMode           = getLocalizedText(1, "Free Game")
     self.m_CallbackOnButtonConfirmTouched = function()
@@ -772,7 +772,7 @@ function ModelCampaignConfigurator:setModeCreateFreeGame()
     return self
 end
 
-function ModelCampaignConfigurator:setModeContinue()
+function ModelWarConfiguratorForNative:setModeContinue()
     self.m_Mode                           = "modeContinue"
     self.m_MenuTitleTextForMode           = getLocalizedText(1, "Load Game")
     self.m_CallbackOnButtonConfirmTouched = function()
@@ -783,7 +783,7 @@ function ModelCampaignConfigurator:setModeContinue()
     return self
 end
 
-function ModelCampaignConfigurator:onStartRunning(modelSceneMain)
+function ModelWarConfiguratorForNative:onStartRunning(modelSceneMain)
     self.m_ModelSceneMain = modelSceneMain
 
     return self
@@ -792,7 +792,7 @@ end
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
-function ModelCampaignConfigurator:resetWithCampaignConfiguration(campaignConfiguration)
+function ModelWarConfiguratorForNative:resetWithWarConfiguration(campaignConfiguration)
     self.m_CampaignConfiguration = campaignConfiguration
     local mode = self.m_Mode
     if (mode == "modeCreateCampaign") then
@@ -859,7 +859,7 @@ function ModelCampaignConfigurator:resetWithCampaignConfiguration(campaignConfig
         self.m_View:setButtonConfirmText(getLocalizedText(14, "ConfirmContinueWar"))
 
     else
-        error("ModelCampaignConfigurator:resetWithCampaignConfiguration() the mode of the configurator is invalid: " .. (mode or ""))
+        error("ModelWarConfiguratorForNative:resetWithWarConfiguration() the mode of the configurator is invalid: " .. (mode or ""))
     end
 
     setStateMain(self)
@@ -867,11 +867,11 @@ function ModelCampaignConfigurator:resetWithCampaignConfiguration(campaignConfig
     return self
 end
 
-function ModelCampaignConfigurator:isEnabled()
+function ModelWarConfiguratorForNative:isEnabled()
     return self.m_IsEnabled
 end
 
-function ModelCampaignConfigurator:setEnabled(enabled)
+function ModelWarConfiguratorForNative:setEnabled(enabled)
     self.m_IsEnabled = enabled
 
     if (self.m_View) then
@@ -881,7 +881,7 @@ function ModelCampaignConfigurator:setEnabled(enabled)
     return self
 end
 
-function ModelCampaignConfigurator:onButtonBackTouched()
+function ModelWarConfiguratorForNative:onButtonBackTouched()
     local state = self.m_State
     if     (state == "stateAdvancedSettings")       then setStateMain(self)
     elseif (state == "stateAttackModifier")         then setStateAdvancedSettings(self)
@@ -903,7 +903,7 @@ function ModelCampaignConfigurator:onButtonBackTouched()
     return self
 end
 
-function ModelCampaignConfigurator:onButtonConfirmTouched()
+function ModelWarConfiguratorForNative:onButtonConfirmTouched()
     if (self.m_CallbackOnButtonConfirmTouched) then
         self.m_CallbackOnButtonConfirmTouched()
     end
@@ -911,4 +911,4 @@ function ModelCampaignConfigurator:onButtonConfirmTouched()
     return self
 end
 
-return ModelCampaignConfigurator
+return ModelWarConfiguratorForNative
