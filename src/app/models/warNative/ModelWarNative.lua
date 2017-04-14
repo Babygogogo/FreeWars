@@ -111,6 +111,9 @@ function ModelWarNative:ctor(warData)
     self.m_SaveIndex                 = warData.saveIndex
     self.m_StartingEnergy            = warData.startingEnergy
     self.m_StartingFund              = warData.startingFund
+    self.m_TotalAttackDamage         = warData.totalAttackDamage or 0
+    self.m_TotalAttacksCount         = warData.totalAttacksCount or 0
+    self.m_TotalKillsCount           = warData.totalKillsCount   or 0
     self.m_VisionModifier            = warData.visionModifier
 
     initScriptEventDispatcher(self)
@@ -156,6 +159,9 @@ function ModelWarNative:toSerializableTable()
         saveIndex                 = self.m_SaveIndex,
         startingEnergy            = self.m_StartingEnergy,
         startingFund              = self.m_StartingFund,
+        totalAttackDamage         = self.m_TotalAttackDamage,
+        totalAttacksCount         = self.m_TotalAttacksCount,
+        totalKillsCount           = self.m_TotalKillsCount,
         visionModifier            = self.m_VisionModifier,
         players                   = self:getModelPlayerManager()   :toSerializableTable(),
         skillData                 = self:getModelSkillDataManager():toSerializableTable(),
@@ -272,6 +278,36 @@ end
 
 function ModelWarNative:getAttackModifier()
     return self.m_AttackModifier
+end
+
+function ModelWarNative:getTotalAttackDamage()
+    return self.m_TotalAttackDamage
+end
+
+function ModelWarNative:setTotalAttackDamage(damage)
+    self.m_TotalAttackDamage = damage
+
+    return self
+end
+
+function ModelWarNative:getTotalAttacksCount()
+    return self.m_TotalAttacksCount
+end
+
+function ModelWarNative:setTotalAttacksCount(count)
+    self.m_TotalAttacksCount = count
+
+    return self
+end
+
+function ModelWarNative:getTotalKillsCount()
+    return self.m_TotalKillsCount
+end
+
+function ModelWarNative:setTotalKillsCount(count)
+    self.m_TotalKillsCount = count
+
+    return self
 end
 
 function ModelWarNative:getEnergyGainModifier()

@@ -795,6 +795,11 @@
     attackModifier            29 :  integer
     visionModifier            30 :  integer
     saveIndex                 31 :  integer
+    isCampaign                32 :  boolean
+    totalAttacksCount         33 :  integer
+    totalAttackDamage         34 :  integer
+    totalKillsCount           35 :  integer
+
 }
 
 .WarIdForIndexing {

@@ -365,6 +365,15 @@ local function executeAttack(action, modelWar)
         Destroyers.destroyActorUnitOnMap(modelWar, attackerGridIndex, false)
     end
 
+    if ((attackTarget.getUnitType)                                                                       and
+        (modelPlayerManager:getPlayerIndexForHuman() == getModelTurnManager(modelWar):getPlayerIndex())) then
+        modelWar:setTotalAttacksCount(modelWar:getTotalAttacksCount() + 1)
+            :setTotalAttackDamage(modelWar:getTotalAttackDamage() + math.min(attackDamage, attackTarget:getCurrentHP()))
+        if (attackTarget:getCurrentHP() <= attackDamage) then
+            modelWar:setTotalKillsCount(modelWar:getTotalKillsCount() + 1)
+        end
+    end
+
     local targetNewHP = math.max(0, attackTarget:getCurrentHP() - attackDamage)
     local targetVision, plasmaGridIndexes
     attackTarget:setCurrentHP(targetNewHP)

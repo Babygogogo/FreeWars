@@ -179,9 +179,15 @@ local function getTextAndScoreForSpeed(self)
     local advancedSettings = WarFieldManager.getWarFieldData(warFieldFileName).advancedSettings or {}
     local targetTurnsCount = advancedSettings.targetTurnsCount or 15
     local currentTurnIndex = SingletonGetters.getModelTurnManager(modelWar):getTurnIndex()
-    local score            = (currentTurnIndex <= targetTurnsCount)                and
-        math.min(math.floor(200 - 100 * currentTurnIndex / targetTurnsCount), 150) or
-        math.max(math.floor(150 - 50  * currentTurnIndex / targetTurnsCount), 0)
+    local score            = (currentTurnIndex <= targetTurnsCount)                  and
+        (math.min(math.floor(200 - 100 * currentTurnIndex / targetTurnsCount), 150)) or
+        (math.max(math.floor(150 - 50  * currentTurnIndex / targetTurnsCount), 0))
+    --[[
+    速度分的评判参数是R=「实际通关天数/目标天数」，其中目标天数默认为15天，可以人工设定；
+    计算公式为：
+    （1）当R≤1时：速度分=min（200-Rx100，150）
+    （2）当R≥1时：速度分=max（150-Rx50，0）
+    ]]
 
     return string.format("%s: %d\n%s: %d        %s: %d",
         getLocalizedText(65, "ScoreForSpeed"),    score,
@@ -191,7 +197,29 @@ local function getTextAndScoreForSpeed(self)
 end
 
 local function getTextAndScoreForPower(self)
-    return "", 0
+    local modelWar          = self.m_ModelWar
+    local totalAttackDamage = modelWar:getTotalAttackDamage()
+    local totalAttacksCount = modelWar:getTotalAttacksCount()
+    local totalKillsCount   = modelWar:getTotalKillsCount()
+    local averageDamage     = math.floor(totalAttackDamage     / math.max(1, totalAttacksCount))
+    local averageKills      = math.floor(totalKillsCount * 100 / math.max(1, totalAttacksCount))
+    local reference         = averageDamage + averageKills
+    local score             = (reference >= 100) and
+        (math.min(reference,           150))     or
+        (math.max(reference * 2 - 100, 0))
+    --[[
+    力量分的评判参数是R=「平均伤害值+平均击杀率」，该两个数值均为0-100之间的自然数；
+    计算公式为：
+    （1）当R≤100时：力量分=max（Rx2-100，0）
+    （2）当R≥100时：力量分=min（R，150）
+    ]]
+
+    return string.format("%s: %d\n%s:%d      %s: %d%%      %s:%d%%",
+        getLocalizedText(65, "ScoreForPower"),         score,
+        getLocalizedText(65, "TotalAttacksCount"),     totalAttacksCount,
+        getLocalizedText(65, "AverageAttackDamage"),   averageDamage,
+        getLocalizedText(65, "AverageKillPercentage"), averageKills
+    ), score
 end
 
 local function getTextAndScoreForTechnique(self)
@@ -453,9 +481,9 @@ local function generateItemsForStateMain(self)
         self.m_ItemSkillInfo,
         self.m_ItemAuxiliaryCommands,
     }
-    if (self.m_ModelWar:isCampaign()) then
+    --if (self.m_ModelWar:isCampaign()) then
         items[#items + 1] = self.m_ItemScoreInfo
-    end
+    --end
     if (getModelTurnManager(self.m_ModelWar):getPlayerIndex() == self.m_PlayerIndexForHuman) then
         items[#items + 1] = self.m_ItemSaveGame
         items[#items + 1] = self.m_ItemLoadGame
