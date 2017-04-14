@@ -1,15 +1,15 @@
 
 local ModelWarNative = requireFW("src.global.functions.class")("ModelWarNative")
 
-local ActionCodeFunctions          = requireFW("src.app.utilities.ActionCodeFunctions")
-local ActionExecutorForWarCampaign = requireFW("src.app.utilities.actionExecutors.ActionExecutorForWarCampaign")
-local ActionTranslatorForCampaign  = requireFW("src.app.utilities.actionTranslators.ActionTranslatorForCampaign")
-local AudioManager                 = requireFW("src.app.utilities.AudioManager")
-local LocalizationFunctions        = requireFW("src.app.utilities.LocalizationFunctions")
-local SerializationFunctions       = requireFW("src.app.utilities.SerializationFunctions")
-local TableFunctions               = requireFW("src.app.utilities.TableFunctions")
-local Actor                        = requireFW("src.global.actors.Actor")
-local EventDispatcher              = requireFW("src.global.events.EventDispatcher")
+local ActionCodeFunctions        = requireFW("src.app.utilities.ActionCodeFunctions")
+local ActionExecutorForWarNative = requireFW("src.app.utilities.actionExecutors.ActionExecutorForWarNative")
+local ActionTranslatorForNative  = requireFW("src.app.utilities.actionTranslators.ActionTranslatorForNative")
+local AudioManager               = requireFW("src.app.utilities.AudioManager")
+local LocalizationFunctions      = requireFW("src.app.utilities.LocalizationFunctions")
+local SerializationFunctions     = requireFW("src.app.utilities.SerializationFunctions")
+local TableFunctions             = requireFW("src.app.utilities.TableFunctions")
+local Actor                      = requireFW("src.global.actors.Actor")
+local EventDispatcher            = requireFW("src.global.events.EventDispatcher")
 
 local assert, ipairs, next = assert, ipairs, next
 local coroutine, cc, os    = coroutine, cc, os
@@ -38,7 +38,7 @@ local function onWebSocketMessage(self, param)
     print(SerializationFunctions.toString(action))
     --]]
 
-    ActionExecutorForWarCampaign.execute(param.action, self)
+    ActionExecutorForWarNative.execute(param.action, self)
 end
 
 local function onWebSocketClose(self, param)
@@ -242,7 +242,7 @@ function ModelWarNative:translateAndExecuteAction(rawAction)
     rawAction.actionID = self.m_ActionID + 1
     rawAction.modelWar = self
 
-    ActionExecutorForWarCampaign.execute(ActionTranslatorForCampaign.translate(rawAction), self)
+    ActionExecutorForWarNative.execute(ActionTranslatorForNative.translate(rawAction), self)
 end
 
 function ModelWarNative:isExecutingAction()

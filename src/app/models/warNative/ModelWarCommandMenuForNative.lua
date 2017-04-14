@@ -726,13 +726,13 @@ local function initItemLoadGame(self)
                     modelConfirmBox:setEnabled(false)
                     self:setEnabled(false)
 
-                    local data = NativeWarManager.loadCampaignData(modelWar:getSaveIndex())
+                    local data = NativeWarManager.loadWarData(modelWar:getSaveIndex())
                     if (not data) then
                         SingletonGetters.getModelMessageIndicator(modelWar):showMessage(getLocalizedText(66, "FailLoadGame"))
                     else
                         SingletonGetters.getModelMessageIndicator(modelWar):showMessage(getLocalizedText(66, "SucceedLoadGame"))
-                        local actorWarCampaign = Actor.createWithModelAndViewName("warNative.ModelWarNative", data, "common.ViewSceneWar")
-                        ActorManager.setAndRunRootActor(actorWarCampaign, "FADE", 1)
+                        local actorWarNative = Actor.createWithModelAndViewName("warNative.ModelWarNative", data, "common.ViewSceneWar")
+                        ActorManager.setAndRunRootActor(actorWarNative, "FADE", 1)
                     end
                 end)
                 :setEnabled(true)
@@ -751,7 +751,7 @@ local function initItemSaveGame(self)
                     modelConfirmBox:setEnabled(false)
                     self:setEnabled(false)
 
-                    NativeWarManager.saveCampaignData(modelWar:toSerializableTable())
+                    NativeWarManager.saveWarData(modelWar:toSerializableTable())
                     SingletonGetters.getModelMessageIndicator(modelWar):showMessage(getLocalizedText(66, "SucceedSaveGame"))
                 end)
                 :setEnabled(true)

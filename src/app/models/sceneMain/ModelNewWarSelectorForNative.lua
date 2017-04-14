@@ -1,5 +1,5 @@
 
-local ModelNewCampaignSelector = class("ModelNewCampaignSelector")
+local ModelNewWarSelectorForNative = class("ModelNewWarSelectorForNative")
 
 local LocalizationFunctions = requireFW("src.app.utilities.LocalizationFunctions")
 local SingletonGetters      = requireFW("src.app.utilities.SingletonGetters")
@@ -23,8 +23,8 @@ local function getActorWarFieldPreviewer(self)
     return self.m_ActorWarFieldPreviewer
 end
 
-local function getActorCampaignConfigurator(self)
-    if (not self.m_ActorCampaignConfigurator) then
+local function getActorWarConfiguratorForNative(self)
+    if (not self.m_ActorWarConfiguratorForNative) then
         local model = Actor.createModel("sceneMain.ModelWarConfiguratorForNative")
         local view  = Actor.createView( "sceneMain.ViewWarConfiguratorForNative")
 
@@ -37,11 +37,11 @@ local function getActorCampaignConfigurator(self)
                     :setButtonNextVisible(false)
             end)
 
-        self.m_ActorCampaignConfigurator = Actor.createWithModelAndViewInstance(model, view)
+        self.m_ActorWarConfiguratorForNative = Actor.createWithModelAndViewInstance(model, view)
         self.m_View:setViewWarConfiguratorForNative(view)
     end
 
-    return self.m_ActorCampaignConfigurator
+    return self.m_ActorWarConfiguratorForNative
 end
 
 local function createWarFieldList(self, listName)
@@ -65,16 +65,16 @@ end
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
-function ModelNewCampaignSelector:ctor(param)
+function ModelNewWarSelectorForNative:ctor(param)
     return self
 end
 
 --------------------------------------------------------------------------------
 -- The callback function on start running.
 --------------------------------------------------------------------------------
-function ModelNewCampaignSelector:onStartRunning(modelSceneMain)
+function ModelNewWarSelectorForNative:onStartRunning(modelSceneMain)
     self.m_ModelSceneMain = modelSceneMain
-    getActorCampaignConfigurator(self):getModel():onStartRunning(modelSceneMain)
+    getActorWarConfiguratorForNative(self):getModel():onStartRunning(modelSceneMain)
 
     return self
 end
@@ -82,8 +82,8 @@ end
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
-function ModelNewCampaignSelector:setModeCampaign()
-    getActorCampaignConfigurator(self):getModel():setModeCreateCampaign()
+function ModelNewWarSelectorForNative:setModeCampaign()
+    getActorWarConfiguratorForNative(self):getModel():setModeCreateCampaign()
 
     if (self.m_View) then
         self.m_View:setMenuTitleText(getLocalizedText(1, "Campaign"))
@@ -94,8 +94,8 @@ function ModelNewCampaignSelector:setModeCampaign()
     return self
 end
 
-function ModelNewCampaignSelector:setModeFreeGame()
-    getActorCampaignConfigurator(self):getModel():setModeCreateFreeGame()
+function ModelNewWarSelectorForNative:setModeFreeGame()
+    getActorWarConfiguratorForNative(self):getModel():setModeCreateFreeGame()
 
     if (self.m_View) then
         self.m_View:setMenuTitleText(getLocalizedText(1, "Free Game"))
@@ -106,14 +106,14 @@ function ModelNewCampaignSelector:setModeFreeGame()
     return self
 end
 
-function ModelNewCampaignSelector:isEnabled()
+function ModelNewWarSelectorForNative:isEnabled()
     return self.m_IsEnabled
 end
 
-function ModelNewCampaignSelector:setEnabled(enabled)
+function ModelNewWarSelectorForNative:setEnabled(enabled)
     self.m_IsEnabled = enabled
     getActorWarFieldPreviewer(self):getModel():setEnabled(false)
-    getActorCampaignConfigurator(self):getModel():setEnabled(false)
+    getActorWarConfiguratorForNative(self):getModel():setEnabled(false)
 
     if (self.m_View) then
         self.m_View:setVisible(enabled)
@@ -124,16 +124,16 @@ function ModelNewCampaignSelector:setEnabled(enabled)
     return self
 end
 
-function ModelNewCampaignSelector:onButtonBackTouched()
+function ModelNewWarSelectorForNative:onButtonBackTouched()
     self:setEnabled(false)
     SingletonGetters.getModelMainMenu(self.m_ModelSceneMain):setMenuEnabled(true)
 
     return self
 end
 
-function ModelNewCampaignSelector:onButtonNextTouched()
+function ModelNewWarSelectorForNative:onButtonNextTouched()
     getActorWarFieldPreviewer(self):getModel():setEnabled(false)
-    getActorCampaignConfigurator(self):getModel():resetWithWarConfiguration({warFieldFileName = self.m_WarFieldFileName})
+    getActorWarConfiguratorForNative(self):getModel():resetWithWarConfiguration({warFieldFileName = self.m_WarFieldFileName})
         :setEnabled(true)
 
     self.m_View:setMenuVisible(false)
@@ -142,4 +142,4 @@ function ModelNewCampaignSelector:onButtonNextTouched()
     return self
 end
 
-return ModelNewCampaignSelector
+return ModelNewWarSelectorForNative

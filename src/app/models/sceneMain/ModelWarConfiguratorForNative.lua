@@ -34,8 +34,8 @@ local function generatePlayerColorText(playerIndex)
     end
 end
 
-local function getPlayerIndexForWarConfiguration(campaignConfiguration)
-    for playerIndex, player in pairs(campaignConfiguration.players) do
+local function getPlayerIndexForWarConfiguration(warConfiguration)
+    for playerIndex, player in pairs(warConfiguration.players) do
         if (player.account == "Player") then
             return playerIndex
         end
@@ -149,7 +149,7 @@ end
 local function generateOverviewText(self)
     return string.format("%s:\n\n%s:%s%s\n%s:%s%s (%s: %s)\n%s:%s%s\n\n%s:%s%d\n\n%s",
         getLocalizedText(14, "Overview"),
-        getLocalizedText(14, "WarFieldName"),      "         ",     WarFieldManager.getWarFieldName(self.m_CampaignConfiguration.warFieldFileName),
+        getLocalizedText(14, "WarFieldName"),      "         ",     WarFieldManager.getWarFieldName(self.m_WarConfiguration.warFieldFileName),
         getLocalizedText(14, "PlayerIndex"),       "         ",     generatePlayerColorText(self.m_PlayerIndex),
         getLocalizedText(14, "TeamIndex"),                          AuxiliaryFunctions.getTeamNameWithTeamIndex(self.m_TeamIndex),
         getLocalizedText(14, "FogOfWar"),          "         ",     getLocalizedText(14, (self.m_IsFogOfWarByDefault) and ("Yes") or ("No")),
@@ -185,11 +185,11 @@ end
 local setStateMain
 
 local function createItemsForStatePlayerIndex(self)
-    local campaignConfiguration = self.m_CampaignConfiguration
-    local players              = campaignConfiguration.players
+    local warConfiguration = self.m_WarConfiguration
+    local players              = warConfiguration.players
     local items                = {}
 
-    for playerIndex = 1, WarFieldManager.getPlayersCount(campaignConfiguration.warFieldFileName) do
+    for playerIndex = 1, WarFieldManager.getPlayersCount(warConfiguration.warFieldFileName) do
         if ((not players) or (not players[playerIndex])) then
             items[#items + 1] = {
                 playerIndex = playerIndex,
@@ -209,8 +209,8 @@ end
 --------------------------------------------------------------------------------
 -- The functions for sending actions.
 --------------------------------------------------------------------------------
-local function createAndEnterCampaign(self)
-    local campaignData = NativeWarManager.createInitialCampaignData({
+local function createAndEnterWar(self)
+    local warData = NativeWarManager.createInitialWarData({
         attackModifier            = self.m_AttackModifier,
         energyGainModifier        = self.m_EnergyGainModifier,
         incomeModifier            = self.m_IncomeModifier,
@@ -226,17 +226,17 @@ local function createAndEnterCampaign(self)
         startingFund              = self.m_StartingFund,
         teamIndex                 = self.m_TeamIndex,
         visionModifier            = self.m_VisionModifier,
-        warFieldFileName          = self.m_CampaignConfiguration.warFieldFileName,
+        warFieldFileName          = self.m_WarConfiguration.warFieldFileName,
     })
 
-    local actorWarCampaign = Actor.createWithModelAndViewName("warNative.ModelWarNative", campaignData, "common.ViewSceneWar")
-    ActorManager.setAndRunRootActor(actorWarCampaign, "FADE", 1)
+    local actorWarNative = Actor.createWithModelAndViewName("warNative.ModelWarNative", warData, "common.ViewSceneWar")
+    ActorManager.setAndRunRootActor(actorWarNative, "FADE", 1)
 end
 
-local function loadAndRunCampaign(saveIndex)
-    local campaignData     = NativeWarManager.loadCampaignData(saveIndex)
-    local actorWarCampaign = Actor.createWithModelAndViewName("warNative.ModelWarNative", campaignData, "common.ViewSceneWar")
-    ActorManager.setAndRunRootActor(actorWarCampaign, "FADE", 1)
+local function loadAndEnterWar(saveIndex)
+    local warData        = NativeWarManager.loadWarData(saveIndex)
+    local actorWarNative = Actor.createWithModelAndViewName("warNative.ModelWarNative", warData, "common.ViewSceneWar")
+    ActorManager.setAndRunRootActor(actorWarNative, "FADE", 1)
 end
 
 --------------------------------------------------------------------------------
@@ -748,7 +748,7 @@ function ModelWarConfiguratorForNative:setModeCreateCampaign()
         modelConfirmBox:setConfirmText(getLocalizedText(8, "NewWarConfirmation"))
             :setOnConfirmYes(function()
                 modelConfirmBox:setEnabled(false)
-                createAndEnterCampaign(self)
+                createAndEnterWar(self)
             end)
             :setEnabled(true)
     end
@@ -764,7 +764,7 @@ function ModelWarConfiguratorForNative:setModeCreateFreeGame()
         modelConfirmBox:setConfirmText(getLocalizedText(8, "NewWarConfirmation"))
             :setOnConfirmYes(function()
                 modelConfirmBox:setEnabled(false)
-                createAndEnterCampaign(self)
+                createAndEnterWar(self)
             end)
             :setEnabled(true)
     end
@@ -777,7 +777,7 @@ function ModelWarConfiguratorForNative:setModeContinue()
     self.m_MenuTitleTextForMode           = getLocalizedText(1, "Load Game")
     self.m_CallbackOnButtonConfirmTouched = function()
         SingletonGetters.getModelMessageIndicator(self.m_ModelSceneMain):showMessage(getLocalizedText(14, "RetrievingWarData"))
-        loadAndRunCampaign(self.m_CampaignConfiguration.saveIndex)
+        loadAndEnterWar(self.m_WarConfiguration.saveIndex)
     end
 
     return self
@@ -792,11 +792,11 @@ end
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
-function ModelWarConfiguratorForNative:resetWithWarConfiguration(campaignConfiguration)
-    self.m_CampaignConfiguration = campaignConfiguration
+function ModelWarConfiguratorForNative:resetWithWarConfiguration(warConfiguration)
+    self.m_WarConfiguration = warConfiguration
     local mode = self.m_Mode
     if (mode == "modeCreateCampaign") then
-        local advancedSettings = WarFieldManager.getWarFieldData(campaignConfiguration.warFieldFileName).advancedSettings or {}
+        local advancedSettings = WarFieldManager.getWarFieldData(warConfiguration.warFieldFileName).advancedSettings or {}
         self.m_AttackModifier            = advancedSettings.attackModifier              or 0
         self.m_EnergyGainModifier        = advancedSettings.energyGainModifier          or 100
         self.m_IncomeModifier            = advancedSettings.incomeModifier              or 100
@@ -840,21 +840,21 @@ function ModelWarConfiguratorForNative:resetWithWarConfiguration(campaignConfigu
         self.m_View:setButtonConfirmText(getLocalizedText(14, "ConfirmCreateWar"))
 
     elseif (mode == "modeContinue") then
-        self.m_AttackModifier            = campaignConfiguration.attackModifier
-        self.m_EnergyGainModifier        = campaignConfiguration.energyGainModifier
-        self.m_IncomeModifier            = campaignConfiguration.incomeModifier
-        self.m_IsActiveSkillEnabled      = campaignConfiguration.isActiveSkillEnabled
-        self.m_IsFogOfWarByDefault       = campaignConfiguration.isFogOfWarByDefault
-        self.m_IsPassiveSkillEnabled     = campaignConfiguration.isPassiveSkillEnabled
-        self.m_IsSkillDeclarationEnabled = campaignConfiguration.isSkillDeclarationEnabled
+        self.m_AttackModifier            = warConfiguration.attackModifier
+        self.m_EnergyGainModifier        = warConfiguration.energyGainModifier
+        self.m_IncomeModifier            = warConfiguration.incomeModifier
+        self.m_IsActiveSkillEnabled      = warConfiguration.isActiveSkillEnabled
+        self.m_IsFogOfWarByDefault       = warConfiguration.isFogOfWarByDefault
+        self.m_IsPassiveSkillEnabled     = warConfiguration.isPassiveSkillEnabled
+        self.m_IsSkillDeclarationEnabled = warConfiguration.isSkillDeclarationEnabled
         self.m_ItemsForStatePlayerIndex  = nil
-        self.m_MoveRangeModifier         = campaignConfiguration.moveRangeModifier
-        self.m_PlayerIndex               = getPlayerIndexForWarConfiguration(campaignConfiguration)
-        self.m_SaveIndex                 = campaignConfiguration.saveIndex
-        self.m_StartingEnergy            = campaignConfiguration.startingEnergy
-        self.m_StartingFund              = campaignConfiguration.startingFund
+        self.m_MoveRangeModifier         = warConfiguration.moveRangeModifier
+        self.m_PlayerIndex               = getPlayerIndexForWarConfiguration(warConfiguration)
+        self.m_SaveIndex                 = warConfiguration.saveIndex
+        self.m_StartingEnergy            = warConfiguration.startingEnergy
+        self.m_StartingFund              = warConfiguration.startingFund
         self.m_TeamIndex                 = 1
-        self.m_VisionModifier            = campaignConfiguration.visionModifier
+        self.m_VisionModifier            = warConfiguration.visionModifier
 
         self.m_View:setButtonConfirmText(getLocalizedText(14, "ConfirmContinueWar"))
 

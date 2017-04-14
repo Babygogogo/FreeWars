@@ -50,9 +50,9 @@ local function generatePlayersData(warFieldFileName, playerIndex, startingEnergy
     return data
 end
 
-local function generateCampaignConfiguration(campaignData)
+local function generateWarConfiguration(warData)
     local players = {}
-    for playerIndex, player in pairs(campaignData.players) do
+    for playerIndex, player in pairs(warData.players) do
         players[playerIndex] = {
             playerIndex = playerIndex,
             teamIndex   = player.teamIndex,
@@ -62,24 +62,24 @@ local function generateCampaignConfiguration(campaignData)
     end
 
     return {
-        attackModifier            = campaignData.attackModifier,
-        energyGainModifier        = campaignData.energyGainModifier,
-        incomeModifier            = campaignData.incomeModifier,
-        isActiveSkillEnabled      = campaignData.isActiveSkillEnabled,
-        isFogOfWarByDefault       = campaignData.isFogOfWarByDefault,
-        isPassiveSkillEnabled     = campaignData.isPassiveSkillEnabled,
-        isSkillDeclarationEnabled = campaignData.isSkillDeclarationEnabled,
-        moveRangeModifier         = campaignData.moveRangeModifier,
+        attackModifier            = warData.attackModifier,
+        energyGainModifier        = warData.energyGainModifier,
+        incomeModifier            = warData.incomeModifier,
+        isActiveSkillEnabled      = warData.isActiveSkillEnabled,
+        isFogOfWarByDefault       = warData.isFogOfWarByDefault,
+        isPassiveSkillEnabled     = warData.isPassiveSkillEnabled,
+        isSkillDeclarationEnabled = warData.isSkillDeclarationEnabled,
+        moveRangeModifier         = warData.moveRangeModifier,
         players                   = players,
-        saveIndex                 = campaignData.saveIndex,
-        startingEnergy            = campaignData.startingEnergy,
-        startingFund              = campaignData.startingFund,
-        visionModifier            = campaignData.visionModifier,
-        warFieldFileName          = campaignData.warField.warFieldFileName,
+        saveIndex                 = warData.saveIndex,
+        startingEnergy            = warData.startingEnergy,
+        startingFund              = warData.startingFund,
+        visionModifier            = warData.visionModifier,
+        warFieldFileName          = warData.warField.warFieldFileName,
     }
 end
 
-local function loadCampaignConfiguration(saveIndex)
+local function loadWarConfiguration(saveIndex)
     local filename = getConfigurationFilenameWithSaveIndex(saveIndex)
     local file     = io.open(filename, "rb")
     if (not file) then
@@ -96,7 +96,7 @@ local function loadCampaignConfiguration(saveIndex)
     end
 end
 
-local function saveCampaignConfiguration(configuration)
+local function saveWarConfiguration(configuration)
     local filename = getConfigurationFilenameWithSaveIndex(configuration.saveIndex)
     local file     = io.open(filename, "wb")
     if (not file) then
@@ -111,31 +111,31 @@ end
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
-function NativeWarManager.createInitialCampaignData(campaignConfiguration)
-    local warFieldFileName = campaignConfiguration.warFieldFileName
+function NativeWarManager.createInitialWarData(warConfiguration)
+    local warFieldFileName = warConfiguration.warFieldFileName
     return {
         actionID                  = 0,
-        attackModifier            = campaignConfiguration.attackModifier,
-        energyGainModifier        = campaignConfiguration.energyGainModifier,
-        incomeModifier            = campaignConfiguration.incomeModifier,
-        isActiveSkillEnabled      = campaignConfiguration.isActiveSkillEnabled,
-        isFogOfWarByDefault       = campaignConfiguration.isFogOfWarByDefault,
-        isPassiveSkillEnabled     = campaignConfiguration.isPassiveSkillEnabled,
-        isSkillDeclarationEnabled = campaignConfiguration.isSkillDeclarationEnabled,
+        attackModifier            = warConfiguration.attackModifier,
+        energyGainModifier        = warConfiguration.energyGainModifier,
+        incomeModifier            = warConfiguration.incomeModifier,
+        isActiveSkillEnabled      = warConfiguration.isActiveSkillEnabled,
+        isFogOfWarByDefault       = warConfiguration.isFogOfWarByDefault,
+        isPassiveSkillEnabled     = warConfiguration.isPassiveSkillEnabled,
+        isSkillDeclarationEnabled = warConfiguration.isSkillDeclarationEnabled,
         isWarEnded                = false,
-        moveRangeModifier         = campaignConfiguration.moveRangeModifier,
-        saveIndex                 = campaignConfiguration.saveIndex,
-        startingEnergy            = campaignConfiguration.startingEnergy,
-        startingFund              = campaignConfiguration.startingFund,
-        visionModifier            = campaignConfiguration.visionModifier,
+        moveRangeModifier         = warConfiguration.moveRangeModifier,
+        saveIndex                 = warConfiguration.saveIndex,
+        startingEnergy            = warConfiguration.startingEnergy,
+        startingFund              = warConfiguration.startingFund,
+        visionModifier            = warConfiguration.visionModifier,
 
-        players  = generatePlayersData(warFieldFileName, campaignConfiguration.playerIndex, campaignConfiguration.startingEnergy, campaignConfiguration.startingFund),
+        players  = generatePlayersData(warFieldFileName, warConfiguration.playerIndex, warConfiguration.startingEnergy, warConfiguration.startingFund),
         turn     = TableFunctions.clone(DEFAULT_TURN_DATA),
         warField = {warFieldFileName = warFieldFileName},
     }
 end
 
-function NativeWarManager.loadCampaignData(saveIndex)
+function NativeWarManager.loadWarData(saveIndex)
     local filename = getDataFilenameWithSaveIndex(saveIndex)
     local file     = io.open(filename, "rb")
     if (not file) then
@@ -152,24 +152,24 @@ function NativeWarManager.loadCampaignData(saveIndex)
     end
 end
 
-function NativeWarManager.saveCampaignData(campaignData)
-    saveCampaignConfiguration(generateCampaignConfiguration(campaignData))
+function NativeWarManager.saveWarData(warData)
+    saveWarConfiguration(generateWarConfiguration(warData))
 
-    local filename = getDataFilenameWithSaveIndex(campaignData.saveIndex)
+    local filename = getDataFilenameWithSaveIndex(warData.saveIndex)
     local file     = io.open(filename, "wb")
     if (not file) then
         cc.FileUtils:getInstance():createDirectory(WAR_DATA_PATH)
         file = io.open(filename, "wb")
     end
 
-    file:write(SerializationFunctions.encode("SceneWar", campaignData))
+    file:write(SerializationFunctions.encode("SceneWar", warData))
     file:close()
 end
 
 function NativeWarManager.getAllWarConfigurations()
     local configurations = {}
     for saveIndex = 1, 10 do
-        configurations[#configurations + 1] = loadCampaignConfiguration(saveIndex)
+        configurations[#configurations + 1] = loadWarConfiguration(saveIndex)
     end
 
     return configurations

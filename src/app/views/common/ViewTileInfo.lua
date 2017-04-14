@@ -232,11 +232,11 @@ local function updateDefenseInfoWithModelTile(self, tile)
 end
 
 local function updateCaptureInfoWithModelTile(self, tile)
-    local modelWar   = self.m_Model:getModelWar()
-    local isCampaign = SingletonGetters.isWarNative(modelWar)
+    local modelWar    = self.m_Model:getModelWar()
+    local isWarNative = SingletonGetters.isWarNative(modelWar)
 
     if (tile.getCurrentCapturePoint) then
-        local capturePoint = ((isCampaign) and (not isTileVisible(modelWar, tile:getGridIndex(), SingletonGetters.getModelPlayerManager(modelWar):getPlayerIndexForHuman()))) and
+        local capturePoint = ((isWarNative) and (not isTileVisible(modelWar, tile:getGridIndex(), SingletonGetters.getModelPlayerManager(modelWar):getPlayerIndexForHuman()))) and
             tile:getMaxCapturePoint()                                                                                                                                         or
             tile:getCurrentCapturePoint()
         self.m_CaptureIcon:setVisible(true)
@@ -244,7 +244,7 @@ local function updateCaptureInfoWithModelTile(self, tile)
             :setInt(capturePoint)
 
     elseif (tile.getCurrentBuildPoint) then
-        local buildPoint = ((isCampaign) and (not isTileVisible(modelWar, tile:getGridIndex(), SingletonGetters.getModelPlayerManager(modelWar):getPlayerIndexForHuman()))) and
+        local buildPoint = ((isWarNative) and (not isTileVisible(modelWar, tile:getGridIndex(), SingletonGetters.getModelPlayerManager(modelWar):getPlayerIndexForHuman()))) and
             tile:getMaxBuildPoint()                                                                                                                                         or
             tile:getCurrentBuildPoint()
 

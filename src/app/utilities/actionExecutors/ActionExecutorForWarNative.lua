@@ -1,5 +1,5 @@
 
-local ActionExecutorForWarCampaign = {}
+local ActionExecutorForWarNative = {}
 
 local ActionCodeFunctions    = requireFW("src.app.utilities.ActionCodeFunctions")
 local AuxiliaryFunctions     = requireFW("src.app.utilities.AuxiliaryFunctions")
@@ -95,7 +95,7 @@ local function produceActorUnit(modelWar, tiledID, unitID, gridIndex)
 end
 
 local function getAndSupplyAdjacentModelUnits(modelWar, supplierGridIndex, playerIndex)
-    assert(type(playerIndex) == "number", "ActionExecutorForWarCampaign-getAndSupplyAdjacentModelUnits() invalid playerIndex: " .. (playerIndex or ""))
+    assert(type(playerIndex) == "number", "ActionExecutorForWarNative-getAndSupplyAdjacentModelUnits() invalid playerIndex: " .. (playerIndex or ""))
 
     local modelUnitMap = getModelUnitMap(modelWar)
     local targets      = {}
@@ -1001,9 +1001,9 @@ end
 --------------------------------------------------------------------------------
 -- The public function.
 --------------------------------------------------------------------------------
-function ActionExecutorForWarCampaign.execute(action, modelWar)
+function ActionExecutorForWarNative.execute(action, modelWar)
     local actionCode = action.actionCode
-    assert(ActionCodeFunctions.getActionName(actionCode), "ActionExecutorForWarCampaign.executeReplayAction() invalid actionCode: " .. (actionCode or ""))
+    assert(ActionCodeFunctions.getActionName(actionCode), "ActionExecutorForWarNative.executeReplayAction() invalid actionCode: " .. (actionCode or ""))
 
     if     (actionCode == ACTION_CODES.ActionChat)                   then executeWebChat(               action, modelWar)
     elseif (actionCode == ACTION_CODES.ActionLogin)                  then executeWebLogin(              action, modelWar)
@@ -1032,7 +1032,7 @@ function ActionExecutorForWarCampaign.execute(action, modelWar)
     elseif (actionCode == ACTION_CODES.ActionWait)                   then executeWait(                  action, modelWar)
     end
 
-    return ActionExecutorForWarCampaign
+    return ActionExecutorForWarNative
 end
 
-return ActionExecutorForWarCampaign
+return ActionExecutorForWarNative

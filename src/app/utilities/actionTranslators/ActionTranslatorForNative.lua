@@ -1,5 +1,5 @@
 
-local ActionTranslatorForCampaign = {}
+local ActionTranslatorForNative = {}
 
 local Producible              = requireFW("src.app.components.Producible")
 local ActionCodeFunctions     = requireFW("src.app.utilities.ActionCodeFunctions")
@@ -304,15 +304,15 @@ local function translatePath(path, launchUnitID, modelWar)
     local isWithinMap        = GridIndexFunctions.isWithinMap
 
     if (not isWithinMap(beginningGridIndex, mapSize)) then
-        return nil, "ActionTranslatorForCampaign-translatePath() a node in the path is not within the map."
+        return nil, "ActionTranslatorForNative-translatePath() a node in the path is not within the map."
     elseif (not focusModelUnit) then
-        return nil, "ActionTranslatorForCampaign-translatePath() there is no unit on the starting grid of the path."
+        return nil, "ActionTranslatorForNative-translatePath() there is no unit on the starting grid of the path."
     elseif (focusModelUnit:getPlayerIndex() ~= playerIndexInTurn) then
-        return nil, "ActionTranslatorForCampaign-translatePath() the owner player of the moving unit is not in his turn."
+        return nil, "ActionTranslatorForNative-translatePath() the owner player of the moving unit is not in his turn."
     elseif (not focusModelUnit:isStateIdle()) then
-        return nil, "ActionTranslatorForCampaign-translatePath() the moving unit is not in idle state."
+        return nil, "ActionTranslatorForNative-translatePath() the moving unit is not in idle state."
     elseif (not modelTurnManager:isTurnPhaseMain()) then
-        return nil, "ActionTranslatorForCampaign-translatePath() the turn phase is not 'main'."
+        return nil, "ActionTranslatorForNative-translatePath() the turn phase is not 'main'."
     end
 
     local teamIndexInTurn      = getModelPlayerManager(modelWar):getModelPlayer(playerIndexInTurn):getTeamIndex()
@@ -325,17 +325,17 @@ local function translatePath(path, launchUnitID, modelWar)
     for i = 2, #rawPathNodes do
         local gridIndex = rawPathNodes[i]
         if (not GridIndexFunctions.isAdjacent(rawPathNodes[i - 1], gridIndex)) then
-            return nil, "ActionTranslatorForCampaign-translatePath() the path is invalid because some grids are not adjacent to previous ones."
+            return nil, "ActionTranslatorForNative-translatePath() the path is invalid because some grids are not adjacent to previous ones."
         elseif (isGridInPathNodes(gridIndex, translatedPathNodes)) then
-            return nil, "ActionTranslatorForCampaign-translatePath() some grids in the path are the same."
+            return nil, "ActionTranslatorForNative-translatePath() some grids in the path are the same."
         elseif (not isWithinMap(gridIndex, mapSize)) then
-            return nil, "ActionTranslatorForCampaign-translatePath() a node in the path is not within the map."
+            return nil, "ActionTranslatorForNative-translatePath() a node in the path is not within the map."
         end
 
         local existingModelUnit = modelUnitMap:getModelUnit(gridIndex)
         if ((existingModelUnit) and (existingModelUnit:getTeamIndex() ~= teamIndexInTurn)) then
             if (isUnitVisible(modelWar, gridIndex, existingModelUnit:getUnitType(), isModelUnitDiving(existingModelUnit), existingModelUnit:getPlayerIndex(), playerIndexInTurn)) then
-                return nil, "ActionTranslatorForCampaign-translatePath() the path is invalid because it is blocked by a visible enemy unit."
+                return nil, "ActionTranslatorForNative-translatePath() the path is invalid because it is blocked by a visible enemy unit."
             else
                 translatedPath.isBlocked = true
             end
@@ -343,12 +343,12 @@ local function translatePath(path, launchUnitID, modelWar)
 
         local fuelConsumption = modelTileMap:getModelTile(gridIndex):getMoveCostWithModelUnit(focusModelUnit)
         if (not fuelConsumption) then
-            return nil, "ActionTranslatorForCampaign-translatePath() the path is invalid because some tiles on it is impassable."
+            return nil, "ActionTranslatorForNative-translatePath() the path is invalid because some tiles on it is impassable."
         end
 
         totalFuelConsumption = totalFuelConsumption + fuelConsumption
         if (totalFuelConsumption > maxFuelConsumption) then
-            return nil, "ActionTranslatorForCampaign-translatePath() the path is invalid because the fuel consumption is too high."
+            return nil, "ActionTranslatorForNative-translatePath() the path is invalid because the fuel consumption is too high."
         end
 
         if (not translatedPath.isBlocked) then
@@ -634,9 +634,9 @@ end
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
-function ActionTranslatorForCampaign.translate(action)
+function ActionTranslatorForNative.translate(action)
     local actionCode = action.actionCode
-    assert(ActionCodeFunctions.getActionName(actionCode), "ActionTranslatorForCampaign.translate() invalid actionCode: " .. (actionCode or ""))
+    assert(ActionCodeFunctions.getActionName(actionCode), "ActionTranslatorForNative.translate() invalid actionCode: " .. (actionCode or ""))
 
     if     (actionCode == ACTION_CODES.ActionActivateSkill)          then return translateActivateSkill(         action)
     elseif (actionCode == ACTION_CODES.ActionAttack)                 then return translateAttack(                action)
@@ -661,4 +661,4 @@ function ActionTranslatorForCampaign.translate(action)
     end
 end
 
-return ActionTranslatorForCampaign
+return ActionTranslatorForNative
