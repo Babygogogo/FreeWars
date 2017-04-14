@@ -442,6 +442,14 @@ local function getScoreForActionJoinModelUnit(self, modelUnit, gridIndex)
     local targetModelUnit = self.m_ModelUnitMap:getModelUnit(gridIndex)
     if (targetModelUnit:isStateIdle()) then
         return -9999                                                                                                            -- ADJUSTABLE
+    elseif ((targetModelUnit.isCapturingModelTile) and (targetModelUnit:isCapturingModelTile())) then
+        local currentCapturePoint = self.m_ModelTileMap:getModelTile(gridIndex):getCurrentCapturePoint()
+        local newHP               = modelUnit:getNormalizedCurrentHP() + targetModelUnit:getNormalizedCurrentHP()
+        if (targetModelUnit:getCaptureAmount() >= currentCapturePoint) then
+            return (newHP > 10) and ((newHP - 10) * (-50)) or ((10 - newHP) * 5)                                                    -- ADJUSTABLE
+        else
+            return (math.min(10, newHP) >= currentCapturePoint) and (60) or (30)
+        end
     else
         local newHP = modelUnit:getNormalizedCurrentHP() + targetModelUnit:getNormalizedCurrentHP()
         return (newHP > 10) and ((newHP - 10) * (-50)) or ((10 - newHP) * 5)                                                    -- ADJUSTABLE
