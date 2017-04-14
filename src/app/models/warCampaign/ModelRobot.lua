@@ -831,8 +831,11 @@ local function getCandidateUnitsForPhase1(self)
     local units             = {}
     local playerIndexInTurn = self.m_ModelTurnManager:getPlayerIndex()
     self.m_ModelUnitMap:forEachModelUnitOnMap(function(modelUnit)
-        if ((modelUnit:getPlayerIndex() == playerIndexInTurn) and (modelUnit:isStateIdle()) and (modelUnit.isCapturingModelTile) and (modelUnit:isCapturingModelTile())) then
-            units[#units + 1] = modelUnit
+        if ((modelUnit:getPlayerIndex() == playerIndexInTurn) and (modelUnit:isStateIdle()) and (modelUnit.getAttackRangeMinMax)) then
+            local minRange, maxRange = modelUnit:getAttackRangeMinMax()
+            if (maxRange > 1) then
+                units[#units + 1] = modelUnit
+            end
         end
     end)
 
@@ -843,11 +846,8 @@ local function getCandidateUnitsForPhase2(self)
     local units             = {}
     local playerIndexInTurn = self.m_ModelTurnManager:getPlayerIndex()
     self.m_ModelUnitMap:forEachModelUnitOnMap(function(modelUnit)
-        if ((modelUnit:getPlayerIndex() == playerIndexInTurn) and (modelUnit:isStateIdle()) and (modelUnit.getAttackRangeMinMax)) then
-            local minRange, maxRange = modelUnit:getAttackRangeMinMax()
-            if (maxRange > 1) then
-                units[#units + 1] = modelUnit
-            end
+        if ((modelUnit:getPlayerIndex() == playerIndexInTurn) and (modelUnit:isStateIdle()) and (modelUnit.isCapturingModelTile) and (modelUnit:isCapturingModelTile())) then
+            units[#units + 1] = modelUnit
         end
     end)
 
@@ -930,29 +930,16 @@ end
 --------------------------------------------------------------------------------
 -- The phases.
 --------------------------------------------------------------------------------
--- Phase 1: move the infantries, meches and bikes that are capturing buildings.
+-- Phase 1: make the ranged units to attack enemies.
 local function getActionForPhase1(self)
     self.m_CandicateUnits = self.m_CandicateUnits or getCandidateUnitsForPhase1(self)
-    local candicateUnit   = popRandomCandidateUnit(self.m_ModelUnitMap, self.m_CandicateUnits)
-    if (not candicateUnit) then
-        self.m_CandicateUnits = nil
-        self.m_PhaseCode      = 2
-        return nil
-    end
-
-    return getActionForMaxScoreWithCandicateUnit(self, candicateUnit)
-end
-
--- Phase 2: make the ranged units to attack enemies.
-local function getActionForPhase2(self)
-    self.m_CandicateUnits = self.m_CandicateUnits or getCandidateUnitsForPhase2(self)
 
     local action
     while ((not action) or (action.actionCode ~= ACTION_CODES.ActionAttack)) do
         local candicateUnit = popRandomCandidateUnit(self.m_ModelUnitMap, self.m_CandicateUnits)
         if (not candicateUnit) then
             self.m_CandicateUnits = nil
-            self.m_PhaseCode      = 3
+            self.m_PhaseCode      = 2
             return nil
         end
 
@@ -960,6 +947,19 @@ local function getActionForPhase2(self)
     end
 
     return action
+end
+
+-- Phase 2: move the infantries, meches and bikes that are capturing buildings.
+local function getActionForPhase2(self)
+    self.m_CandicateUnits = self.m_CandicateUnits or getCandidateUnitsForPhase2(self)
+    local candicateUnit   = popRandomCandidateUnit(self.m_ModelUnitMap, self.m_CandicateUnits)
+    if (not candicateUnit) then
+        self.m_CandicateUnits = nil
+        self.m_PhaseCode      = 3
+        return nil
+    end
+
+    return getActionForMaxScoreWithCandicateUnit(self, candicateUnit)
 end
 
 -- Phase 3: move the other infantries, meches and bikes.
