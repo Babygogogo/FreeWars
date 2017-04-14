@@ -1,5 +1,5 @@
 
-local ModelWarCampaign = requireFW("src.global.functions.class")("ModelWarCampaign")
+local ModelWarNative = requireFW("src.global.functions.class")("ModelWarNative")
 
 local ActionCodeFunctions          = requireFW("src.app.utilities.ActionCodeFunctions")
 local ActionExecutorForWarCampaign = requireFW("src.app.utilities.actionExecutors.ActionExecutorForWarCampaign")
@@ -22,7 +22,7 @@ local TIME_INTERVAL_FOR_ACTIONS = 1
 -- The private callback function on web socket events.
 --------------------------------------------------------------------------------
 local function onWebSocketOpen(self, param)
-    print("ModelWarCampaign-onWebSocketOpen()")
+    print("ModelWarNative-onWebSocketOpen()")
     self:getModelMessageIndicator():showMessage(getLocalizedText(30, "ConnectionEstablished"))
 end
 
@@ -30,7 +30,7 @@ local function onWebSocketMessage(self, param)
     ---[[
     local action     = param.action
     local actionCode = action.actionCode
-    print(string.format("ModelWarCampaign-onWebSocketMessage() code: %d  name: %s  length: %d",
+    print(string.format("ModelWarNative-onWebSocketMessage() code: %d  name: %s  length: %d",
         actionCode,
         ActionCodeFunctions.getActionName(actionCode),
         string.len(param.message))
@@ -42,12 +42,12 @@ local function onWebSocketMessage(self, param)
 end
 
 local function onWebSocketClose(self, param)
-    print("ModelWarCampaign-onWebSocketClose()")
+    print("ModelWarNative-onWebSocketClose()")
     self:getModelMessageIndicator():showMessage(getLocalizedText(31))
 end
 
 local function onWebSocketError(self, param)
-    print("ModelWarCampaign-onWebSocketError()")
+    print("ModelWarNative-onWebSocketError()")
     self:getModelMessageIndicator():showMessage(getLocalizedText(32, param.error))
 end
 
@@ -78,25 +78,25 @@ local function initActorSkillDataManager(self, skillData)
 end
 
 local function initActorWarField(self, warFieldData)
-    self.m_ActorWarField = Actor.createWithModelAndViewName("warCampaign.ModelWarFieldForCampaign", warFieldData, "common.ViewWarField")
+    self.m_ActorWarField = Actor.createWithModelAndViewName("warNative.ModelWarFieldForCampaign", warFieldData, "common.ViewWarField")
 end
 
 local function initActorRobot(self)
-    self.m_ActorRobot = Actor.createWithModelAndViewName("warCampaign.ModelRobot")
+    self.m_ActorRobot = Actor.createWithModelAndViewName("warNative.ModelRobot")
 end
 
 local function initActorWarHud(self)
-    self.m_ActorWarHud = Actor.createWithModelAndViewName("warCampaign.ModelWarHudForCampaign", nil, "common.ViewWarHud")
+    self.m_ActorWarHud = Actor.createWithModelAndViewName("warNative.ModelWarHudForCampaign", nil, "common.ViewWarHud")
 end
 
 local function initActorTurnManager(self, turnData)
-    self.m_ActorTurnManager = Actor.createWithModelAndViewName("warCampaign.ModelTurnManagerForCampaign", turnData, "common.ViewTurnManager")
+    self.m_ActorTurnManager = Actor.createWithModelAndViewName("warNative.ModelTurnManagerForCampaign", turnData, "common.ViewTurnManager")
 end
 
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
-function ModelWarCampaign:ctor(campaignData)
+function ModelWarNative:ctor(campaignData)
     self.m_ActionID                  = campaignData.actionID
     self.m_AttackModifier            = campaignData.attackModifier
     self.m_EnergyGainModifier        = campaignData.energyGainModifier
@@ -104,6 +104,7 @@ function ModelWarCampaign:ctor(campaignData)
     self.m_IsActiveSkillEnabled      = campaignData.isActiveSkillEnabled
     self.m_IsFogOfWarByDefault       = campaignData.isFogOfWarByDefault
     self.m_IsPassiveSkillEnabled     = campaignData.isPassiveSkillEnabled
+    self.m_IsScoreGame               = campaignData.isScoreGame
     self.m_IsSkillDeclarationEnabled = campaignData.isSkillDeclarationEnabled
     self.m_IsWarEnded                = campaignData.isWarEnded
     self.m_MoveRangeModifier         = campaignData.moveRangeModifier
@@ -125,8 +126,8 @@ function ModelWarCampaign:ctor(campaignData)
     return self
 end
 
-function ModelWarCampaign:initView()
-    assert(self.m_View, "ModelWarCampaign:initView() no view is attached to the owner actor of the model.")
+function ModelWarNative:initView()
+    assert(self.m_View, "ModelWarNative:initView() no view is attached to the owner actor of the model.")
     self.m_View:setViewConfirmBox(self.m_ActorConfirmBox      :getView())
         :setViewWarField(         self.m_ActorWarField        :getView())
         :setViewWarHud(           self.m_ActorWarHud          :getView())
@@ -139,7 +140,7 @@ end
 --------------------------------------------------------------------------------
 -- The functions for serialization.
 --------------------------------------------------------------------------------
-function ModelWarCampaign:toSerializableTable()
+function ModelWarNative:toSerializableTable()
     return {
         actionID                  = self:getActionId(),
         attackModifier            = self.m_AttackModifier,
@@ -148,6 +149,7 @@ function ModelWarCampaign:toSerializableTable()
         isActiveSkillEnabled      = self.m_IsActiveSkillEnabled,
         isFogOfWarByDefault       = self.m_IsFogOfWarByDefault,
         isPassiveSkillEnabled     = self.m_IsPassiveSkillEnabled,
+        isScoreGame               = self.m_IsScoreGame,
         isSkillDeclarationEnabled = self.m_IsSkillDeclarationEnabled,
         isWarEnded                = self.m_IsWarEnded,
         moveRangeModifier         = self.m_MoveRangeModifier,
@@ -165,7 +167,7 @@ end
 --------------------------------------------------------------------------------
 -- The callback functions on start/stop running and script events.
 --------------------------------------------------------------------------------
-function ModelWarCampaign:onStartRunning()
+function ModelWarNative:onStartRunning()
     local modelTurnManager   = self:getModelTurnManager()
     local modelPlayerManager = self:getModelPlayerManager()
     modelPlayerManager     :onStartRunning(self)
@@ -206,11 +208,11 @@ function ModelWarCampaign:onStartRunning()
     return self
 end
 
-function ModelWarCampaign:onStopRunning()
+function ModelWarNative:onStopRunning()
     return self
 end
 
-function ModelWarCampaign:onWebSocketEvent(eventName, param)
+function ModelWarNative:onWebSocketEvent(eventName, param)
     if     (eventName == "open")    then onWebSocketOpen(   self, param)
     elseif (eventName == "message") then onWebSocketMessage(self, param)
     elseif (eventName == "close")   then onWebSocketClose(  self, param)
@@ -223,157 +225,161 @@ end
 --------------------------------------------------------------------------------
 -- The public functions/accessors.
 --------------------------------------------------------------------------------
-function ModelWarCampaign.isWarCampaign()
+function ModelWarNative.isWarNative()
     return true
 end
 
-function ModelWarCampaign.isWarOnline()
+function ModelWarNative.isWarOnline()
     return false
 end
 
-function ModelWarCampaign.isWarReplay()
+function ModelWarNative.isWarReplay()
     return false
 end
 
-function ModelWarCampaign:translateAndExecuteAction(rawAction)
-    assert(not self.m_IsExecutingAction, "ModelWarCampaign:translateAndExecuteAction() another action is being executed.")
+function ModelWarNative:translateAndExecuteAction(rawAction)
+    assert(not self.m_IsExecutingAction, "ModelWarNative:translateAndExecuteAction() another action is being executed.")
     rawAction.actionID = self.m_ActionID + 1
     rawAction.modelWar = self
 
     ActionExecutorForWarCampaign.execute(ActionTranslatorForCampaign.translate(rawAction), self)
 end
 
-function ModelWarCampaign:isExecutingAction()
+function ModelWarNative:isExecutingAction()
     return self.m_IsExecutingAction
 end
 
-function ModelWarCampaign:setExecutingAction(executing)
+function ModelWarNative:setExecutingAction(executing)
     assert(self.m_IsExecutingAction ~= executing)
     self.m_IsExecutingAction = executing
 
     return self
 end
 
-function ModelWarCampaign:getActionId()
+function ModelWarNative:getActionId()
     return self.m_ActionID
 end
 
-function ModelWarCampaign:setActionId(actionID)
+function ModelWarNative:setActionId(actionID)
     self.m_ActionID = actionID
 
     return self
 end
 
-function ModelWarCampaign:getSaveIndex()
+function ModelWarNative:getSaveIndex()
     return self.m_SaveIndex
 end
 
-function ModelWarCampaign:getAttackModifier()
+function ModelWarNative:getAttackModifier()
     return self.m_AttackModifier
 end
 
-function ModelWarCampaign:getEnergyGainModifier()
+function ModelWarNative:getEnergyGainModifier()
     return self.m_EnergyGainModifier
 end
 
-function ModelWarCampaign:isActiveSkillEnabled()
+function ModelWarNative:isActiveSkillEnabled()
     return self.m_IsActiveSkillEnabled
 end
 
-function ModelWarCampaign:isPassiveSkillEnabled()
+function ModelWarNative:isPassiveSkillEnabled()
     return self.m_IsPassiveSkillEnabled
 end
 
-function ModelWarCampaign:isSkillDeclarationEnabled()
+function ModelWarNative:isSkillDeclarationEnabled()
     return self.m_IsSkillDeclarationEnabled
 end
 
-function ModelWarCampaign:getIncomeModifier()
+function ModelWarNative:isScoreGame()
+    return self.m_IsScoreGame
+end
+
+function ModelWarNative:getIncomeModifier()
     return self.m_IncomeModifier
 end
 
-function ModelWarCampaign:isFogOfWarByDefault()
+function ModelWarNative:isFogOfWarByDefault()
     return self.m_IsFogOfWarByDefault
 end
 
-function ModelWarCampaign:getMoveRangeModifier()
+function ModelWarNative:getMoveRangeModifier()
     return self.m_MoveRangeModifier
 end
 
-function ModelWarCampaign:getStartingEnergy()
+function ModelWarNative:getStartingEnergy()
     return self.m_StartingEnergy
 end
 
-function ModelWarCampaign:getStartingFund()
+function ModelWarNative:getStartingFund()
     return self.m_StartingFund
 end
 
-function ModelWarCampaign:getVisionModifier()
+function ModelWarNative:getVisionModifier()
     return self.m_VisionModifier
 end
 
-function ModelWarCampaign:isEnded()
+function ModelWarNative:isEnded()
     return self.m_IsWarEnded
 end
 
-function ModelWarCampaign:setEnded(ended)
+function ModelWarNative:setEnded(ended)
     self.m_IsWarEnded = ended
 
     return self
 end
 
-function ModelWarCampaign:getModelConfirmBox()
+function ModelWarNative:getModelConfirmBox()
     return self.m_ActorConfirmBox:getModel()
 end
 
-function ModelWarCampaign:getModelMessageIndicator()
+function ModelWarNative:getModelMessageIndicator()
     return self.m_ActorMessageIndicator:getModel()
 end
 
-function ModelWarCampaign:getModelTurnManager()
+function ModelWarNative:getModelTurnManager()
     return self.m_ActorTurnManager:getModel()
 end
 
-function ModelWarCampaign:getModelPlayerManager()
+function ModelWarNative:getModelPlayerManager()
     return self.m_ActorPlayerManager:getModel()
 end
 
-function ModelWarCampaign:getModelRobot()
+function ModelWarNative:getModelRobot()
     return self.m_ActorRobot:getModel()
 end
 
-function ModelWarCampaign:getModelSkillDataManager()
+function ModelWarNative:getModelSkillDataManager()
     return self.m_ActorSkillDataManager:getModel()
 end
 
-function ModelWarCampaign:getModelWarField()
+function ModelWarNative:getModelWarField()
     return self.m_ActorWarField:getModel()
 end
 
-function ModelWarCampaign:getModelWarHud()
+function ModelWarNative:getModelWarHud()
     return self.m_ActorWarHud:getModel()
 end
 
-function ModelWarCampaign:getScriptEventDispatcher()
+function ModelWarNative:getScriptEventDispatcher()
     return self.m_ScriptEventDispatcher
 end
 
-function ModelWarCampaign:showEffectLose(callback)
+function ModelWarNative:showEffectLose(callback)
     self.m_View:showEffectLose(callback)
 
     return self
 end
 
-function ModelWarCampaign:showEffectSurrender(callback)
+function ModelWarNative:showEffectSurrender(callback)
     self.m_View:showEffectSurrender(callback)
 
     return self
 end
 
-function ModelWarCampaign:showEffectWin(callback)
+function ModelWarNative:showEffectWin(callback)
     self.m_View:showEffectWin(callback)
 
     return self
 end
 
-return ModelWarCampaign
+return ModelWarNative

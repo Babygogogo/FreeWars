@@ -519,7 +519,7 @@ end
 --------------------------------------------------------------------------------
 getActorSkillConfigurator = function(self)
     if (not self.m_ActorSkillConfigurator) then
-        local model = Actor.createModel("warCampaign.ModelSkillConfiguratorForCampaign")
+        local model = Actor.createModel("warNative.ModelSkillConfiguratorForCampaign")
         model:onStartRunning(self.m_ModelWar)
             :setCallbackOnButtonBackTouched(function()
                 model:setEnabled(false)
@@ -731,7 +731,7 @@ local function initItemLoadGame(self)
                         SingletonGetters.getModelMessageIndicator(modelWar):showMessage(getLocalizedText(66, "FailLoadGame"))
                     else
                         SingletonGetters.getModelMessageIndicator(modelWar):showMessage(getLocalizedText(66, "SucceedLoadGame"))
-                        local actorWarCampaign = Actor.createWithModelAndViewName("warCampaign.ModelWarCampaign", data, "common.ViewSceneWar")
+                        local actorWarCampaign = Actor.createWithModelAndViewName("warNative.ModelWarNative", data, "common.ViewSceneWar")
                         ActorManager.setAndRunRootActor(actorWarCampaign, "FADE", 1)
                     end
                 end)

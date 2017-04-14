@@ -37,7 +37,7 @@ local function initActorFogMap(self, fogMapData)
 end
 
 local function initActorTileMap(self, tileMapData)
-    local modelTileMap  = Actor.createModel("warCampaign.ModelTileMapForCampaign", tileMapData, self.m_WarFieldFileName)
+    local modelTileMap  = Actor.createModel("warNative.ModelTileMapForCampaign", tileMapData, self.m_WarFieldFileName)
     self.m_ActorTileMap = Actor.createWithModelAndViewInstance(modelTileMap, Actor.createView("common.ViewTileMap"))
 end
 
@@ -47,7 +47,7 @@ local function initActorUnitMap(self, unitMapData)
 end
 
 local function initActorActionPlanner(self)
-    self.m_ActorActionPlanner = Actor.createWithModelAndViewName("warCampaign.ModelActionPlannerForCampaign", nil, "common.ViewActionPlanner")
+    self.m_ActorActionPlanner = Actor.createWithModelAndViewName("warNative.ModelActionPlannerForCampaign", nil, "common.ViewActionPlanner")
 end
 
 local function initActorMapCursor(self, param)

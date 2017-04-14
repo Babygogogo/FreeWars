@@ -307,7 +307,7 @@ end
 --------------------------------------------------------------------------------
 -- The public functions/accessors.
 --------------------------------------------------------------------------------
-function ModelWarReplay.isWarCampaign()
+function ModelWarReplay.isWarNative()
     return false
 end
 

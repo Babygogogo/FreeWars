@@ -215,6 +215,7 @@ local function createAndEnterCampaign(self)
         energyGainModifier        = self.m_EnergyGainModifier,
         incomeModifier            = self.m_IncomeModifier,
         isActiveSkillEnabled      = self.m_IsActiveSkillEnabled,
+        isCampaign                = self.m_Mode == "modeCreateCampaign",
         isPassiveSkillEnabled     = self.m_IsPassiveSkillEnabled,
         isSkillDeclarationEnabled = self.m_IsSkillDeclarationEnabled,
         isFogOfWarByDefault       = self.m_IsFogOfWarByDefault,
@@ -228,13 +229,13 @@ local function createAndEnterCampaign(self)
         warFieldFileName          = self.m_CampaignConfiguration.warFieldFileName,
     })
 
-    local actorWarCampaign = Actor.createWithModelAndViewName("warCampaign.ModelWarCampaign", campaignData, "common.ViewSceneWar")
+    local actorWarCampaign = Actor.createWithModelAndViewName("warNative.ModelWarNative", campaignData, "common.ViewSceneWar")
     ActorManager.setAndRunRootActor(actorWarCampaign, "FADE", 1)
 end
 
 local function loadAndRunCampaign(saveIndex)
     local campaignData     = WarCampaignManager.loadCampaignData(saveIndex)
-    local actorWarCampaign = Actor.createWithModelAndViewName("warCampaign.ModelWarCampaign", campaignData, "common.ViewSceneWar")
+    local actorWarCampaign = Actor.createWithModelAndViewName("warNative.ModelWarNative", campaignData, "common.ViewSceneWar")
     ActorManager.setAndRunRootActor(actorWarCampaign, "FADE", 1)
 end
 

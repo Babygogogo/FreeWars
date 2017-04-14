@@ -335,7 +335,7 @@ end
 --------------------------------------------------------------------------------
 -- The public functions/accessors.
 --------------------------------------------------------------------------------
-function ModelWarOnline.isWarCampaign()
+function ModelWarOnline.isWarNative()
     return false
 end
 

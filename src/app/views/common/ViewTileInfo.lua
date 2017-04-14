@@ -212,7 +212,7 @@ local function updateTileIconWithModelTile(self, tile)
     local modelWar = self.m_Model:getModelWar()
     local tiledID  = tile:getTiledId()
     local tileType = tile:getTileType()
-    if ((SingletonGetters.isWarCampaign(modelWar))                                                                                     and
+    if ((SingletonGetters.isWarNative(modelWar))                                                                                     and
         (tile.getCurrentCapturePoint)                                                                                                  and
         (tileType ~= "Headquarters")                                                                                                   and
         (not isTileVisible(modelWar, tile:getGridIndex(), SingletonGetters.getModelPlayerManager(modelWar):getPlayerIndexForHuman()))) then
@@ -233,7 +233,7 @@ end
 
 local function updateCaptureInfoWithModelTile(self, tile)
     local modelWar   = self.m_Model:getModelWar()
-    local isCampaign = SingletonGetters.isWarCampaign(modelWar)
+    local isCampaign = SingletonGetters.isWarNative(modelWar)
 
     if (tile.getCurrentCapturePoint) then
         local capturePoint = ((isCampaign) and (not isTileVisible(modelWar, tile:getGridIndex(), SingletonGetters.getModelPlayerManager(modelWar):getPlayerIndexForHuman()))) and

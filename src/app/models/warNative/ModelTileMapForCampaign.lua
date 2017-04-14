@@ -44,7 +44,7 @@ local function createActorTilesMapWithWarFieldFileName(warFieldFileName)
                 baseID        = baseLayerData[idIndex],
                 GridIndexable = {x = x, y = y},
             }
-            map[x][y] = Actor.createWithModelAndViewName("warCampaign.ModelTileForCampaign", actorData, "common.ViewTile")
+            map[x][y] = Actor.createWithModelAndViewName("warNative.ModelTileForCampaign", actorData, "common.ViewTile")
         end
     end
 
