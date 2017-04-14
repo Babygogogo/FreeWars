@@ -3,7 +3,7 @@ local WarFieldManager = {}
 
 local WAR_FIELD_PATH           = "res.data.templateWarField."
 local WAR_FIELD_FILENAME_LISTS = requireFW(WAR_FIELD_PATH .. "WarFieldFilenameLists")
-local IS_SERVER                = require("src.app.utilities.GameConstantFunctions").isServer()
+local IS_SERVER                = requireFW("src.app.utilities.GameConstantFunctions").isServer()
 
 local string, pairs, ipairs, require, assert = string, pairs, ipairs, require, assert
 local math                                   = math
