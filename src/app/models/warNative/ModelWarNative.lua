@@ -23,15 +23,6 @@ local TIME_INTERVAL_FOR_ACTIONS = 1
 -- The score calculators.
 --------------------------------------------------------------------------------
 local function getScoreForPower(self)
-    local advancedSettings = WarFieldManager.getWarFieldData(self:getModelWarField():getWarFieldFileName()).advancedSettings or {}
-    local targetTurnsCount = advancedSettings.targetTurnsCount or 15
-    local currentTurnIndex = self:getModelTurnManager():getTurnIndex()
-    return (currentTurnIndex <= targetTurnsCount)                                    and
-        (math.min(math.floor(200 - 100 * currentTurnIndex / targetTurnsCount), 150)) or
-        (math.max(math.floor(150 - 50  * currentTurnIndex / targetTurnsCount), 0))
-end
-
-local function getScoreForSpeed(self)
     local totalAttackDamage = self:getTotalAttackDamage()
     local totalAttacksCount = self:getTotalAttacksCount()
     local totalKillsCount   = self:getTotalKillsCount()
@@ -41,6 +32,15 @@ local function getScoreForSpeed(self)
     return (reference >= 100)                and
         (math.min(reference,           150)) or
         (math.max(reference * 2 - 100, 0))
+end
+
+local function getScoreForSpeed(self)
+    local advancedSettings = WarFieldManager.getWarFieldData(self:getModelWarField():getWarFieldFileName()).advancedSettings or {}
+    local targetTurnsCount = advancedSettings.targetTurnsCount or 15
+    local currentTurnIndex = self:getModelTurnManager():getTurnIndex()
+    return (currentTurnIndex <= targetTurnsCount)                                    and
+        (math.min(math.floor(200 - 100 * currentTurnIndex / targetTurnsCount), 150)) or
+        (math.max(math.floor(150 - 50  * currentTurnIndex / targetTurnsCount), 0))
 end
 
 local function getScoreForTechnique(self)
