@@ -814,7 +814,7 @@
 }
 
 .ScoresForCampaign {
-    list 0 : SingleScoreForCampaign(warFieldFileName)
+    list 0 : *SingleScoreForCampaign(warFieldFileName)
 }
 
 .SingleGameRecordForPlayerProfile {
