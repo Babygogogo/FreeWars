@@ -938,6 +938,16 @@ end
 --------------------------------------------------------------------------------
 -- The phases.
 --------------------------------------------------------------------------------
+-- Phase 0: begin turn.
+local function getActionForPhase0(self)
+    if (not self.m_ModelTurnManager:isTurnPhaseRequestToBegin()) then
+        return nil
+    else
+        self.m_PhaseCode = 1
+        return {actionCode = ACTION_CODES.ActionBeginTurn,}
+    end
+end
+
 -- Phase 1: make the ranged units to attack enemies.
 local function getActionForPhase1(self)
     self.m_CandicateUnits = self.m_CandicateUnits or getCandidateUnitsForPhase1(self)
@@ -1136,11 +1146,12 @@ end
 --------------------------------------------------------------------------------
 function ModelRobot:getNextAction()
     local modelTurnManager = self.m_ModelTurnManager
-    assert((modelTurnManager:getPlayerIndex() ~= self.m_PlayerIndexForHuman) and (modelTurnManager:isTurnPhaseMain()))
+    assert(modelTurnManager:getPlayerIndex() ~= self.m_PlayerIndexForHuman)
 
-    self.m_PhaseCode      = self.m_PhaseCode or 1
+    self.m_PhaseCode      = self.m_PhaseCode or 0
     self.m_UnitValueRatio = calculateUnitValueRatio(self)
     local action
+    if ((not action) and (self.m_PhaseCode == 0))  then action = getActionForPhase0( self) end
     if ((not action) and (self.m_PhaseCode == 1))  then action = getActionForPhase1( self) end
     if ((not action) and (self.m_PhaseCode == 2))  then action = getActionForPhase2( self) end
     if ((not action) and (self.m_PhaseCode == 3))  then action = getActionForPhase3( self) end

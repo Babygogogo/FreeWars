@@ -204,9 +204,11 @@ function ModelWarNative:onStartRunning()
 
     self.m_View:scheduleUpdateWithPriorityLua(function(dt)
         if ((not self:isExecutingAction()) and (not self:isEnded())) then
-            if (modelTurnManager:isTurnPhaseRequestToBegin()) then
-                self:translateAndExecuteAction({actionCode = ACTION_CODE_BEGIN_TURN})
-            elseif (modelTurnManager:getPlayerIndex() ~= self.m_PlayerIndexForHuman) then
+            if (modelTurnManager:getPlayerIndex() == self.m_PlayerIndexForHuman) then
+                if (modelTurnManager:isTurnPhaseRequestToBegin()) then
+                    self:translateAndExecuteAction({actionCode = ACTION_CODE_BEGIN_TURN})
+                end
+            else
                 self.m_ThreadForRobot = (self.m_ThreadForRobot) or (coroutine.create(function()
                     return self:getModelRobot():getNextAction()
                 end))

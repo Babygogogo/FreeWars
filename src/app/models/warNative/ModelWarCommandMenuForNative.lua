@@ -214,7 +214,7 @@ local function getTextAndScoreForPower(self)
     （2）当R≥100时：力量分=min（R，150）
     ]]
 
-    return string.format("%s: %d\n%s:%d      %s: %d%%      %s:%d%%",
+    return string.format("%s: %d\n%s: %d      %s: %d%%      %s:%d%%",
         getLocalizedText(65, "ScoreForPower"),         score,
         getLocalizedText(65, "TotalAttacksCount"),     totalAttacksCount,
         getLocalizedText(65, "AverageAttackDamage"),   averageDamage,
