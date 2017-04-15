@@ -186,8 +186,8 @@ function NativeWarManager.getAllWarConfigurations()
     return configurations
 end
 
-function NativeWarManager.setCampaignScore(warFieldFileName, score)
-    s_ScoresForCampaign[warFieldFileName] = score
+function NativeWarManager.updateCampaignScore(warFieldFileName, score)
+    s_ScoresForCampaign[warFieldFileName] = math.max(score, s_ScoresForCampaign[warFieldFileName] or 0)
     saveScoresForCampaign(s_ScoresForCampaign)
 
     return NativeWarManager
