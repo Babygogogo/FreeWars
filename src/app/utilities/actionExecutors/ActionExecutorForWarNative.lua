@@ -194,8 +194,16 @@ local function getEnergyModifierWithTargetAndDamage(target, damage, energyGainMo
     return math.floor((target:getNormalizedCurrentHP() - math.ceil(math.max(0, target:getCurrentHP() - (damage or 0)) / 10)) * energyGainModifier)
 end
 
-local function getLostValueWithTargetAndDamage(target, damage)
-    return math.floor((target:getNormalizedCurrentHP() - math.ceil(math.max(0, target:getCurrentHP() - (damage or 0)) / 10)) * target:getProductionCost() / 10)
+local function getLostValueWithModelUnitAndDamage(modelUnitMap, modelUnit, damage)
+    local newNormalizedHP  = math.ceil(math.max(0, modelUnit:getCurrentHP() - (damage or 0)) / 10)
+    local value            = modelUnit:getProductionCost() * (modelUnit:getNormalizedCurrentHP() - newNormalizedHP) / 10
+    if (newNormalizedHP == 0) then
+        for _, loadedModelUnit in pairs(modelUnitMap:getLoadedModelUnitsWithLoader(modelUnit, true) or {}) do
+            value = value + loadedModelUnit:getProductionCost() * loadedModelUnit:getNormalizedCurrentHP() / 10
+        end
+    end
+
+    return value
 end
 
 local function getAdjacentPlasmaGridIndexes(gridIndex, modelTileMap)
@@ -369,12 +377,12 @@ local function executeAttack(action, modelWar)
         if (targetPlayerIndex == modelPlayerManager:getPlayerIndexForHuman()) then
             modelWar:setTotalLostUnitValueForPlayer(
                 modelWar:getTotalLostUnitValueForPlayer() +
-                getLostValueWithTargetAndDamage(attackTarget, attackDamage)
+                getLostValueWithModelUnitAndDamage(modelUnitMap, attackTarget, attackDamage)
             )
         else
             modelWar:setTotalLostUnitValueForPlayer(
                 modelWar:getTotalLostUnitValueForPlayer() +
-                getLostValueWithTargetAndDamage(attacker, counterDamage)
+                getLostValueWithModelUnitAndDamage(modelUnitMap, attacker, counterDamage)
             )
         end
 
@@ -391,7 +399,7 @@ local function executeAttack(action, modelWar)
     if ((attackTarget.getUnitType)                                                                       and
         (modelPlayerManager:getPlayerIndexForHuman() == getModelTurnManager(modelWar):getPlayerIndex())) then
         modelWar:setTotalAttacksCount(modelWar:getTotalAttacksCount() + 1)
-            :setTotalAttackDamage(modelWar:getTotalAttackDamage() + math.min(attackDamage, attackTarget:getCurrentHP()))
+            :setTotalAttackDamage(modelWar:getTotalAttackDamage() + attackDamage)
         if (attackTarget:getCurrentHP() <= attackDamage) then
             modelWar:setTotalKillsCount(modelWar:getTotalKillsCount() + 1)
         end
@@ -624,10 +632,11 @@ end
 local function executeDestroyOwnedModelUnit(action, modelWar)
     modelWar:setExecutingAction(true)
 
-    local gridIndex = action.gridIndex
-    local modelUnit = getModelUnitMap(modelWar):getModelUnit(gridIndex)
+    local gridIndex    = action.gridIndex
+    local modelUnitMap = getModelUnitMap(modelWar)
+    local modelUnit    = modelUnitMap:getModelUnit(gridIndex)
     getModelFogMap(modelWar):updateMapForPathsWithModelUnitAndPath(modelUnit, {gridIndex})
-    modelWar:setTotalLostUnitValueForPlayer(modelWar:getTotalLostUnitValueForPlayer() + math.floor(modelUnit:getProductionCost() * modelUnit:getNormalizedCurrentHP() / 10))
+    modelWar:setTotalLostUnitValueForPlayer(modelWar:getTotalLostUnitValueForPlayer() + getLostValueWithModelUnitAndDamage(modelUnitMap, modelUnit, 100))
     Destroyers.destroyActorUnitOnMap(modelWar, gridIndex, true)
 
     getModelGridEffect(modelWar):showAnimationExplosion(gridIndex)

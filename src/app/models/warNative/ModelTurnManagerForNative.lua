@@ -106,6 +106,15 @@ local function updateTileAndUnitMapOnVisibilityChanged(self)
         :dispatchEvent({name = "EvtModelUnitMapUpdated"})
 end
 
+local function getLostUnitValueOnDestroy(modelUnitMap, modelUnit)
+    local value = modelUnit:getProductionCost() * modelUnit:getNormalizedCurrentHP() / 10
+    for _, loadedModelUnit in pairs(modelUnitMap:getLoadedModelUnitsWithLoader(modelUnit, true) or {}) do
+        value = value + loadedModelUnit:getProductionCost() * loadedModelUnit:getNormalizedCurrentHP() / 10
+    end
+
+    return math.floor(value)
+end
+
 --------------------------------------------------------------------------------
 -- The functions that runs each turn phase.
 --------------------------------------------------------------------------------
@@ -155,7 +164,7 @@ local function runTurnPhaseConsumeUnitFuel(self)
                         if (shouldUpdateFogMap) then
                             modelFogMap:updateMapForPathsWithModelUnitAndPath(modelUnit, {gridIndex})
                         end
-                        modelWar:setTotalLostUnitValueForPlayer(modelWar:getTotalLostUnitValueForPlayer() + math.floor(modelUnit:getProductionCost() * modelUnit:getNormalizedCurrentHP() / 10))
+                        modelWar:setTotalLostUnitValueForPlayer(modelWar:getTotalLostUnitValueForPlayer() + getLostUnitValueOnDestroy(modelUnitMap, modelUnit))
                         Destroyers.destroyActorUnitOnMap(modelWar, gridIndex, true)
                         dispatcher:dispatchEvent({
                             name      = "EvtDestroyViewUnit",
