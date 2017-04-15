@@ -8,15 +8,50 @@ local AudioManager               = requireFW("src.app.utilities.AudioManager")
 local LocalizationFunctions      = requireFW("src.app.utilities.LocalizationFunctions")
 local SerializationFunctions     = requireFW("src.app.utilities.SerializationFunctions")
 local TableFunctions             = requireFW("src.app.utilities.TableFunctions")
+local WarFieldManager            = requireFW("src.app.utilities.WarFieldManager")
 local Actor                      = requireFW("src.global.actors.Actor")
 local EventDispatcher            = requireFW("src.global.events.EventDispatcher")
 
-local assert, ipairs, next = assert, ipairs, next
-local coroutine, cc, os    = coroutine, cc, os
-local getLocalizedText     = LocalizationFunctions.getLocalizedText
+local assert, ipairs, next    = assert, ipairs, next
+local coroutine, cc, math, os = coroutine, cc, math, os
+local getLocalizedText        = LocalizationFunctions.getLocalizedText
 
 local ACTION_CODE_BEGIN_TURN    = ActionCodeFunctions.getActionCode("ActionBeginTurn")
 local TIME_INTERVAL_FOR_ACTIONS = 1
+
+--------------------------------------------------------------------------------
+-- The score calculators.
+--------------------------------------------------------------------------------
+local function getScoreForPower(self)
+    local advancedSettings = WarFieldManager.getWarFieldData(self:getModelWarField():getWarFieldFileName()).advancedSettings or {}
+    local targetTurnsCount = advancedSettings.targetTurnsCount or 15
+    local currentTurnIndex = self:getModelTurnManager():getTurnIndex()
+    return (currentTurnIndex <= targetTurnsCount)                                    and
+        (math.min(math.floor(200 - 100 * currentTurnIndex / targetTurnsCount), 150)) or
+        (math.max(math.floor(150 - 50  * currentTurnIndex / targetTurnsCount), 0))
+end
+
+local function getScoreForSpeed(self)
+    local totalAttackDamage = self:getTotalAttackDamage()
+    local totalAttacksCount = self:getTotalAttacksCount()
+    local totalKillsCount   = self:getTotalKillsCount()
+    local averageDamage     = math.floor(totalAttackDamage     / math.max(1, totalAttacksCount))
+    local averageKills      = math.floor(totalKillsCount * 100 / math.max(1, totalAttacksCount))
+    local reference         = averageDamage + averageKills
+    return (reference >= 100)                and
+        (math.min(reference,           150)) or
+        (math.max(reference * 2 - 100, 0))
+end
+
+local function getScoreForTechnique(self)
+    local builtValueForAi     = self:getTotalBuiltUnitValueForAi()
+    local builtValueForPlayer = self:getTotalBuiltUnitValueForPlayer()
+    local lostValueForPlayer  = self:getTotalLostUnitValueForPlayer()
+    local reference           = math.sqrt(builtValueForAi) / (math.max(1, math.sqrt(builtValueForPlayer) + math.sqrt(lostValueForPlayer)))
+    return (reference >= 0.8)                              and
+        (math.floor(math.min(reference * 62.5 + 50, 150))) or
+        (math.floor(math.max(reference * 125,       0)))
+end
 
 --------------------------------------------------------------------------------
 -- The private callback function on web socket events.
@@ -464,7 +499,15 @@ function ModelWarNative:showEffectSurrender(callback)
 end
 
 function ModelWarNative:showEffectWin(callback)
-    self.m_View:showEffectWin(callback)
+    if (not self.m_IsCampaign) then
+        self.m_View:showEffectWin(callback)
+    else
+        self.m_View:showEffectWinWithScore(callback,
+            getScoreForSpeed(    self),
+            getScoreForPower(    self),
+            getScoreForTechnique(self)
+        )
+    end
 
     return self
 end
