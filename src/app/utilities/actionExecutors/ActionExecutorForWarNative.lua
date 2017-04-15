@@ -8,6 +8,7 @@ local GameConstantFunctions  = requireFW("src.app.utilities.GameConstantFunction
 local GridIndexFunctions     = requireFW("src.app.utilities.GridIndexFunctions")
 local InstantSkillExecutor   = requireFW("src.app.utilities.InstantSkillExecutor")
 local LocalizationFunctions  = requireFW("src.app.utilities.LocalizationFunctions")
+local NativeWarManager       = requireFW("src.app.utilities.NativeWarManager")
 local SerializationFunctions = requireFW("src.app.utilities.SerializationFunctions")
 local SingletonGetters       = requireFW("src.app.utilities.SingletonGetters")
 local SkillModifierFunctions = requireFW("src.app.utilities.SkillModifierFunctions")
@@ -28,6 +29,7 @@ local getModelPlayerManager         = SingletonGetters.getModelPlayerManager
 local getModelTileMap               = SingletonGetters.getModelTileMap
 local getModelTurnManager           = SingletonGetters.getModelTurnManager
 local getModelUnitMap               = SingletonGetters.getModelUnitMap
+local getModelWarField              = SingletonGetters.getModelWarField
 local getScriptEventDispatcher      = SingletonGetters.getScriptEventDispatcher
 local isUnitVisible                 = VisibilityFunctions.isUnitOnMapVisibleToPlayerIndex
 local supplyWithAmmoAndFuel         = SupplyFunctions.supplyWithAmmoAndFuel
@@ -470,8 +472,13 @@ local function executeAttack(action, modelWar)
         updateTileAndUnitMapOnVisibilityChanged(modelWar)
 
         if (modelWar:isEnded()) then
-            if (isHumanLost) then modelWar:showEffectLose(     callbackOnWarEndedForClient)
-            else                  modelWar:showEffectWin(      callbackOnWarEndedForClient)
+            if (isHumanLost) then
+                modelWar:showEffectLose(callbackOnWarEndedForClient)
+            else
+                if (modelWar:isCampaign()) then
+                    NativeWarManager.setCampaignScore(getModelWarField(modelWar):getWarFieldFileName(), modelWar:getCampaignScore())
+                end
+                modelWar:showEffectWin(callbackOnWarEndedForClient)
             end
         elseif (lostPlayerIndex == modelTurnManager:getPlayerIndex()) then
             modelTurnManager:endTurnPhaseMain()
@@ -504,6 +511,9 @@ local function executeBeginTurn(action, modelWar)
             elseif (lostPlayerIndex == modelPlayerManager:getPlayerIndexForHuman()) then
                 modelWar:showEffectLose(callbackOnWarEndedForClient)
             else
+                if (modelWar:isCampaign()) then
+                    NativeWarManager.setCampaignScore(getModelWarField(modelWar):getWarFieldFileName(), modelWar:getCampaignScore())
+                end
                 modelWar:showEffectWin(callbackOnWarEndedForClient)
             end
 
@@ -606,6 +616,9 @@ local function executeCaptureModelTile(action, modelWar)
                 if (isHumanLost) then
                     modelWar:showEffectLose(callbackOnWarEndedForClient)
                 else
+                    if (modelWar:isCampaign()) then
+                        NativeWarManager.setCampaignScore(getModelWarField(modelWar):getWarFieldFileName(), modelWar:getCampaignScore())
+                    end
                     modelWar:showEffectWin(callbackOnWarEndedForClient)
                 end
             end
@@ -1012,6 +1025,9 @@ local function executeSurrender(action, modelWar)
     elseif (isHumanLost) then
         modelWar:showEffectLose(callbackOnWarEndedForClient)
     else
+        if (modelWar:isCampaign()) then
+            NativeWarManager.setCampaignScore(getModelWarField(modelWar):getWarFieldFileName(), modelWar:getCampaignScore())
+        end
         modelWar:showEffectWin(callbackOnWarEndedForClient)
     end
 

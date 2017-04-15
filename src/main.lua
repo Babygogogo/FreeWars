@@ -51,6 +51,7 @@ local function main()
     requireFW("src.app.utilities.GameConstantFunctions") .init()
     requireFW("src.app.utilities.SerializationFunctions").init()
     requireFW("src.app.utilities.WarFieldManager")       .init()
+    requireFW("src.app.utilities.NativeWarManager")      .init()
 
     math.randomseed(os.time())
 

@@ -3,6 +3,8 @@ local ViewNewWarSelectorForNative = class("ViewNewWarSelectorForNative", cc.Node
 
 local LocalizationFunctions = requireFW("src.app.utilities.LocalizationFunctions")
 
+local getLocalizedText = LocalizationFunctions.getLocalizedText
+
 local WAR_CONFIGURATOR_Z_ORDER    = 1
 local MENU_TITLE_Z_ORDER          = 1
 local MENU_LIST_VIEW_Z_ORDER      = 1
@@ -50,11 +52,15 @@ local ITEM_FONT_COLOR         = {r = 255, g = 255, b = 255}
 local ITEM_FONT_OUTLINE_COLOR = {r = 0, g = 0, b = 0}
 local ITEM_FONT_OUTLINE_WIDTH = 2
 
+local CAMPAIGN_SCORE_FONT_SIZE     = 15
+local CAMPAIGN_SCORE_FONT_COLOR    = {r = 96,  g = 224, b = 88}
+local CAMPAIGN_SCORE_OUTLINE_WIDTH = 1
+
 --------------------------------------------------------------------------------
 -- The util functions.
 --------------------------------------------------------------------------------
-local function createViewMenuItem(item)
-    local label = cc.Label:createWithTTF(item.name, ITEM_FONT_NAME, ITEM_FONT_SIZE)
+local function createLabelWarFieldName(name)
+    local label = cc.Label:createWithTTF(name, ITEM_FONT_NAME, ITEM_FONT_SIZE)
     label:ignoreAnchorPointForPosition(true)
 
         :setDimensions(ITEM_WIDTH, ITEM_HEIGHT)
@@ -64,6 +70,28 @@ local function createViewMenuItem(item)
         :setTextColor(ITEM_FONT_COLOR)
         :enableOutline(ITEM_FONT_OUTLINE_COLOR, ITEM_FONT_OUTLINE_WIDTH)
 
+    return label
+end
+
+local function createLabelCampaignScore(score)
+    local label = cc.Label:createWithTTF(
+        string.format("%s: %d", getLocalizedText(65, "HighScore"), score),
+        ITEM_FONT_NAME,
+        CAMPAIGN_SCORE_FONT_SIZE
+    )
+    label:ignoreAnchorPointForPosition(true)
+
+        :setDimensions(ITEM_WIDTH, ITEM_HEIGHT)
+        :setHorizontalAlignment(cc.TEXT_ALIGNMENT_RIGHT)
+        :setVerticalAlignment(cc.VERTICAL_TEXT_ALIGNMENT_TOP)
+
+        :setTextColor(CAMPAIGN_SCORE_FONT_COLOR)
+        :enableOutline(ITEM_FONT_OUTLINE_COLOR, CAMPAIGN_SCORE_OUTLINE_WIDTH)
+
+    return label
+end
+
+local function createViewMenuItem(item)
     local view = ccui.Button:create()
     view:loadTextureNormal("c03_t06_s01_f01.png", ccui.TextureResType.plistType)
 
@@ -78,7 +106,12 @@ local function createViewMenuItem(item)
                 item.callback()
             end
         end)
-    view:getRendererNormal():addChild(label)
+
+    local rendererNormal = view:getRendererNormal()
+    rendererNormal:addChild(createLabelWarFieldName(item.name))
+    if (item.campaignScore) then
+        rendererNormal:addChild(createLabelCampaignScore(item.campaignScore))
+    end
 
     return view
 end
@@ -109,7 +142,7 @@ local function initMenuListView(self)
 end
 
 local function initMenuTitle(self)
-    local title = cc.Label:createWithTTF(LocalizationFunctions.getLocalizedText(1, "NewGame"), ITEM_FONT_NAME, MENU_TITLE_FONT_SIZE)
+    local title = cc.Label:createWithTTF(getLocalizedText(1, "NewGame"), ITEM_FONT_NAME, MENU_TITLE_FONT_SIZE)
     title:ignoreAnchorPointForPosition(true)
         :setPosition(MENU_TITLE_POS_X, MENU_TITLE_POS_Y)
 
@@ -137,7 +170,7 @@ local function initButtonBack(self)
         :setTitleFontName(ITEM_FONT_NAME)
         :setTitleFontSize(ITEM_FONT_SIZE)
         :setTitleColor({r = 240, g = 80, b = 56})
-        :setTitleText(LocalizationFunctions.getLocalizedText(1, "Back"))
+        :setTitleText(getLocalizedText(1, "Back"))
 
         :addTouchEventListener(function(sender, eventType)
             if ((eventType == ccui.TouchEventType.ended) and (self.m_Model)) then
@@ -168,7 +201,7 @@ local function initButtonNext(self)
         :setTitleFontName(ITEM_FONT_NAME)
         :setTitleFontSize(BUTTON_NEXT_FONT_SIZE)
         :setTitleColor(ITEM_FONT_COLOR)
-        :setTitleText(LocalizationFunctions.getLocalizedText(33))
+        :setTitleText(getLocalizedText(33))
 
         :addTouchEventListener(function(sender, eventType)
             if ((eventType == ccui.TouchEventType.ended) and (self.m_Model)) then

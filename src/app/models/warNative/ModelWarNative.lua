@@ -416,6 +416,10 @@ function ModelWarNative:isCampaign()
     return self.m_IsCampaign
 end
 
+function ModelWarNative:getCampaignScore()
+    return getScoreForSpeed(self) + getScoreForPower(self) + getScoreForTechnique(self)
+end
+
 function ModelWarNative:getIncomeModifier()
     return self.m_IncomeModifier
 end

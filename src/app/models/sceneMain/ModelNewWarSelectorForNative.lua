@@ -2,6 +2,7 @@
 local ModelNewWarSelectorForNative = class("ModelNewWarSelectorForNative")
 
 local LocalizationFunctions = requireFW("src.app.utilities.LocalizationFunctions")
+local NativeWarManager      = requireFW("src.app.utilities.NativeWarManager")
 local SingletonGetters      = requireFW("src.app.utilities.SingletonGetters")
 local WarFieldManager       = requireFW("src.app.utilities.WarFieldManager")
 local Actor                 = requireFW("src.global.actors.Actor")
@@ -48,8 +49,9 @@ local function createWarFieldList(self, listName)
     local list = {}
     for _, warFieldFileName in ipairs(WarFieldManager.getWarFieldFilenameList(listName)) do
         list[#list + 1] = {
-            name     = WarFieldManager.getWarFieldName(warFieldFileName),
-            callback = function()
+            name          = WarFieldManager.getWarFieldName(warFieldFileName),
+            campaignScore = (listName == "Campaign") and (NativeWarManager.getCampaignScore(warFieldFileName)) or (nil),
+            callback      = function()
                 self.m_WarFieldFileName = warFieldFileName
                 getActorWarFieldPreviewer(self):getModel():setWarField(warFieldFileName)
                     :setEnabled(true)

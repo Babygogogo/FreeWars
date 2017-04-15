@@ -808,6 +808,15 @@
     warID 0 : integer
 }
 
+.SingleScoreForCampaign {
+    warFieldFileName 0 : string
+    score            1 : integer
+}
+
+.ScoresForCampaign {
+    list 0 : SingleScoreForCampaign(warFieldFileName)
+}
+
 .SingleGameRecordForPlayerProfile {
     rankScore 0 : integer
     win       1 : integer
