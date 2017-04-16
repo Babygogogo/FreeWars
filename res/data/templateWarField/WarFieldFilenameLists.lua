@@ -6,6 +6,7 @@ return {
         "PVE_HuanChongDai",
         "PVE_MengHuChuShan",
         "PVE_ShenHanZhiHai",
+        "PVE_WangPaiKongJun",
         "PVE_WeiWenTuMing",
     },
 

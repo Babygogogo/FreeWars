@@ -215,12 +215,17 @@ local function isUnitThreatened(self, robotUnit, gridIndex, minDamage)
     local unitType            = robotUnit:getUnitType()
     local mapSize             = modelUnitMap:getMapSize()
     local isThreatened        = false
+    local isRobotUnitInfantry = GameConstantFunctions.isTypeInCategory(unitType, "InfantryUnits")
     local passableGridIndex
     if ((not GridIndexFunctions.isEqual(robotUnit:getGridIndex(), gridIndex)) and (not isModelUnitLoaded(self, robotUnit))) then
         passableGridIndex = robotUnit:getGridIndex()
     end
 
     modelUnitMap:forEachModelUnitOnMap(function(attacker)
+        if ((isRobotUnitInfantry) and (not GameConstantFunctions.isTypeInCategory(attacker:getUnitType(), "InfantryUnits"))) then
+            return
+        end
+
         if ((not isThreatened) and (attacker:getPlayerIndex() == playerIndexForHuman) and (attacker.getBaseDamage) and (attacker:getBaseDamage(unitType))) then
             local minRange, maxRange = attacker:getAttackRangeMinMax()
             if (not attacker:canAttackAfterMove()) then
