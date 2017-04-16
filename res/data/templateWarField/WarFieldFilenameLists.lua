@@ -2,6 +2,7 @@ return {
     Campaign = {
         "PVE_YiDongYuJinGong",
         "PVE_JianZhuWu",
+        "PVE_BaoChiWeiXiao",
         "PVE_DuMuQiao",
         "PVE_HuanChongDai",
         "PVE_MengHuChuShan",
