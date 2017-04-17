@@ -102,6 +102,7 @@ local function calculateUnitValueRatio(self)
 end
 
 local function getReachableArea(self, modelUnit, passableGridIndex, blockedGridIndex)
+    coroutine.yield()
     local modelUnitMap = self.m_ModelUnitMap
     local modelTileMap = self.m_ModelTileMap
     local mapSize      = modelUnitMap:getMapSize()

@@ -50,7 +50,7 @@ local function createWarFieldList(self, listName)
     for _, warFieldFileName in ipairs(WarFieldManager.getWarFieldFilenameList(listName)) do
         list[#list + 1] = {
             name          = WarFieldManager.getWarFieldName(warFieldFileName),
-            campaignScore = (listName == "Campaign") and (NativeWarManager.getCampaignScore(warFieldFileName)) or (nil),
+            campaignScore = (listName == "Campaign") and (NativeWarManager.getCampaignHighScore(warFieldFileName)) or (nil),
             callback      = function()
                 self.m_WarFieldFileName = warFieldFileName
                 getActorWarFieldPreviewer(self):getModel():setWarField(warFieldFileName)

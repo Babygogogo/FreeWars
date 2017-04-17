@@ -476,7 +476,7 @@ local function executeAttack(action, modelWar)
                 modelWar:showEffectLose(callbackOnWarEndedForClient)
             else
                 if (modelWar:isCampaign()) then
-                    NativeWarManager.updateCampaignScore(getModelWarField(modelWar):getWarFieldFileName(), modelWar:getCampaignScore())
+                    NativeWarManager.updateCampaignHighScore(getModelWarField(modelWar):getWarFieldFileName(), modelWar:getTotalScoreForCampaign())
                 end
                 modelWar:showEffectWin(callbackOnWarEndedForClient)
             end
@@ -512,7 +512,7 @@ local function executeBeginTurn(action, modelWar)
                 modelWar:showEffectLose(callbackOnWarEndedForClient)
             else
                 if (modelWar:isCampaign()) then
-                    NativeWarManager.updateCampaignScore(getModelWarField(modelWar):getWarFieldFileName(), modelWar:getCampaignScore())
+                    NativeWarManager.updateCampaignHighScore(getModelWarField(modelWar):getWarFieldFileName(), modelWar:getTotalScoreForCampaign())
                 end
                 modelWar:showEffectWin(callbackOnWarEndedForClient)
             end
@@ -617,7 +617,7 @@ local function executeCaptureModelTile(action, modelWar)
                     modelWar:showEffectLose(callbackOnWarEndedForClient)
                 else
                     if (modelWar:isCampaign()) then
-                        NativeWarManager.updateCampaignScore(getModelWarField(modelWar):getWarFieldFileName(), modelWar:getCampaignScore())
+                        NativeWarManager.updateCampaignHighScore(getModelWarField(modelWar):getWarFieldFileName(), modelWar:getTotalScoreForCampaign())
                     end
                     modelWar:showEffectWin(callbackOnWarEndedForClient)
                 end
@@ -1026,7 +1026,7 @@ local function executeSurrender(action, modelWar)
         modelWar:showEffectLose(callbackOnWarEndedForClient)
     else
         if (modelWar:isCampaign()) then
-            NativeWarManager.updateCampaignScore(getModelWarField(modelWar):getWarFieldFileName(), modelWar:getCampaignScore())
+            NativeWarManager.updateCampaignHighScore(getModelWarField(modelWar):getWarFieldFileName(), modelWar:getTotalScoreForCampaign())
         end
         modelWar:showEffectWin(callbackOnWarEndedForClient)
     end

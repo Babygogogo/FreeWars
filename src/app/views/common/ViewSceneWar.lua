@@ -108,9 +108,10 @@ local function createEndWarEffectLabel(text)
     return label
 end
 
-local function createLabelForEffectWinWithScore(scoreForSpeed, scoreForPower, scoreForTechnique)
-    local text = string.format("%s\n%s: %d\n%s: %d    %s: %d    %s: %d",
+local function createLabelForEffectWinWithScore(scoreForSpeed, scoreForPower, scoreForTechnique, turnIndex)
+    local text = string.format("%s\n%s: %d      %s: %d\n%s: %d    %s: %d    %s: %d",
         getLocalizedText(73, "Win"), getLocalizedText(65, "TotalScore"), scoreForSpeed + scoreForPower + scoreForTechnique,
+        getLocalizedText(65, "TurnIndex"),         turnIndex,
         getLocalizedText(65, "ScoreForSpeed"),     scoreForSpeed,
         getLocalizedText(65, "ScoreForPower"),     scoreForPower,
         getLocalizedText(65, "ScoreForTechnique"), scoreForTechnique
@@ -164,13 +165,13 @@ local function createEndWarEffect(text, callback)
     return effect
 end
 
-local function createEffectWinWithScore(callback, scoreForSpeed, scoreForPower, scoreForTechnique)
+local function createEffectWinWithScore(callback, scoreForSpeed, scoreForPower, scoreForTechnique, turnIndex)
     local effect = cc.Node:create()
     effect:ignoreAnchorPointForPosition(true)
         :setPosition(END_WAR_EFFECT_START_X, END_WAR_EFFECT_START_Y)
 
     local background    = createBackgroundForEffectWinWithScore()
-    local label         = createLabelForEffectWinWithScore(scoreForSpeed, scoreForPower, scoreForTechnique)
+    local label         = createLabelForEffectWinWithScore(scoreForSpeed, scoreForPower, scoreForTechnique, turnIndex)
     local touchListener = createEndWarEffectTouchListener(effect)
 
     effect.m_Callback = callback
@@ -271,10 +272,10 @@ function ViewSceneWar:showEffectWin(callback)
     return self
 end
 
-function ViewSceneWar:showEffectWinWithScore(callback, scoreForSpeed, scoreForPower, scoreForTechnique)
-    local effect = createEffectWinWithScore(callback, scoreForSpeed, scoreForPower, scoreForTechnique)
+function ViewSceneWar:showEffectWinWithScore(callback, scoreForSpeed, scoreForPower, scoreForTechnique, turnIndex)
+    local effect = createEffectWinWithScore(callback, scoreForSpeed, scoreForPower, scoreForTechnique, turnIndex)
     self:addChild(effect, END_WAR_EFFECT_Z_ORDER)
-    effect:runAction(createEndWarEffectMoveInAction(effect, 10))
+    effect:runAction(createEndWarEffectMoveInAction(effect, 15))
 
     return self
 end

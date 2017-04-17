@@ -178,72 +178,37 @@ local function getTextAndScoreForSpeed(self)
     local warFieldFileName = SingletonGetters.getModelWarField(modelWar):getWarFieldFileName()
     local advancedSettings = WarFieldManager.getWarFieldData(warFieldFileName).advancedSettings or {}
     local targetTurnsCount = advancedSettings.targetTurnsCount or 15
-    local currentTurnIndex = SingletonGetters.getModelTurnManager(modelWar):getTurnIndex()
-    local score            = (currentTurnIndex <= targetTurnsCount)                  and
-        (math.min(math.floor(200 - 100 * currentTurnIndex / targetTurnsCount), 150)) or
-        (math.max(math.floor(150 - 50  * currentTurnIndex / targetTurnsCount), 0))
-    --[[
-    速度分的评判参数是R=「实际通关天数/目标天数」，其中目标天数默认为15天，可以人工设定；
-    计算公式为：
-    （1）当R≤1时：速度分=min（200-Rx100，150）
-    （2）当R≥1时：速度分=max（150-Rx50，0）
-    ]]
+    local score            = modelWar:getScoreForSpeed()
 
     return string.format("%s: %d\n%s: %d        %s: %d",
         getLocalizedText(65, "ScoreForSpeed"),    score,
         getLocalizedText(65, "TargetTurnsCount"), targetTurnsCount,
-        getLocalizedText(65, "CurrentTurnIndex"), currentTurnIndex
+        getLocalizedText(65, "CurrentTurnIndex"), SingletonGetters.getModelTurnManager(modelWar):getTurnIndex()
     ), score
 end
 
 local function getTextAndScoreForPower(self)
     local modelWar          = self.m_ModelWar
-    local totalAttackDamage = modelWar:getTotalAttackDamage()
     local totalAttacksCount = modelWar:getTotalAttacksCount()
-    local totalKillsCount   = modelWar:getTotalKillsCount()
-    local averageDamage     = math.floor(totalAttackDamage     / math.max(1, totalAttacksCount))
-    local averageKills      = math.floor(totalKillsCount * 100 / math.max(1, totalAttacksCount))
-    local reference         = averageDamage + averageKills
-    local score             = (reference >= 100) and
-        (math.min(reference,           150))     or
-        (math.max(reference * 2 - 100, 0))
-    --[[
-    力量分的评判参数是R=「平均伤害值+平均击杀率」，该两个数值均为0-100之间的自然数；
-    计算公式为：
-    （1）当R≤100时：力量分=max（Rx2-100，0）
-    （2）当R≥100时：力量分=min（R，150）
-    ]]
+    local score             = modelWar:getScoreForPower()
 
     return string.format("%s: %d\n%s: %d      %s: %d%%      %s:%d%%",
         getLocalizedText(65, "ScoreForPower"),         score,
         getLocalizedText(65, "TotalAttacksCount"),     totalAttacksCount,
-        getLocalizedText(65, "AverageAttackDamage"),   averageDamage,
-        getLocalizedText(65, "AverageKillPercentage"), averageKills
+        getLocalizedText(65, "AverageAttackDamage"),   math.floor(modelWar:getTotalAttackDamage()     / math.max(1, totalAttacksCount)),
+        getLocalizedText(65, "AverageKillPercentage"), math.floor(modelWar:getTotalKillsCount() * 100 / math.max(1, totalAttacksCount))
     ), score
 end
 
 local function getTextAndScoreForTechnique(self)
-    local modelWar            = self.m_ModelWar
-    local builtValueForAi     = modelWar:getTotalBuiltUnitValueForAi()
-    local builtValueForPlayer = modelWar:getTotalBuiltUnitValueForPlayer()
-    local lostValueForPlayer  = modelWar:getTotalLostUnitValueForPlayer()
-    local reference           = math.sqrt(builtValueForAi) / (math.max(1, math.sqrt(builtValueForPlayer) + math.sqrt(lostValueForPlayer)))
-    local score               = (reference >= 0.8)         and
-        (math.floor(math.min(reference * 62.5 + 50, 150))) or
-        (math.floor(math.max(reference * 125,       0)))
-    --[[
-    技术（Technique）
-    技术分的评判参数是R=「sqrt（敌总单位价值）/[sqrt（我总单位价值）+sqrt（我损失单位价值）]」
-    计算公式为：
-    （1）当R≤0.8时：技术分=max（Rx125，0）
-    （2）当R≥0.8时：技术分=min（Rx62.5+50，150）
-    ]]
+    local modelWar = self.m_ModelWar
+    local score    = modelWar:getScoreForTechnique()
 
     return string.format("%s: %d\n%s: %d      %s: %d      %s: %d",
         getLocalizedText(65, "ScoreForTechnique"),       score,
-        getLocalizedText(65, "TotalUnitValueForAI"),     builtValueForAi,
-        getLocalizedText(65, "TotalUnitValueForPlayer"), builtValueForPlayer,
-        getLocalizedText(65, "LostUnitValueForPlayer"),  lostValueForPlayer
+        getLocalizedText(65, "TotalUnitValueForAI"),     modelWar:getTotalBuiltUnitValueForAi(),
+        getLocalizedText(65, "TotalUnitValueForPlayer"), modelWar:getTotalBuiltUnitValueForPlayer(),
+        getLocalizedText(65, "LostUnitValueForPlayer"),  modelWar:getTotalLostUnitValueForPlayer()
     ), score
 end
 

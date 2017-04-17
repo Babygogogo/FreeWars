@@ -186,7 +186,7 @@ function NativeWarManager.getAllWarConfigurations()
     return configurations
 end
 
-function NativeWarManager.updateCampaignScore(warFieldFileName, score)
+function NativeWarManager.updateCampaignHighScore(warFieldFileName, score)
     if (s_ScoresForCampaign[warFieldFileName]) then
         s_ScoresForCampaign[warFieldFileName].score = math.max(s_ScoresForCampaign[warFieldFileName].score, score)
     else
@@ -200,7 +200,7 @@ function NativeWarManager.updateCampaignScore(warFieldFileName, score)
     return NativeWarManager
 end
 
-function NativeWarManager.getCampaignScore(warFieldFileName)
+function NativeWarManager.getCampaignHighScore(warFieldFileName)
     if (not s_ScoresForCampaign[warFieldFileName]) then
         return nil
     else

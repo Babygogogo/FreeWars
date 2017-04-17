@@ -20,40 +20,6 @@ local ACTION_CODE_BEGIN_TURN    = ActionCodeFunctions.getActionCode("ActionBegin
 local TIME_INTERVAL_FOR_ACTIONS = 1
 
 --------------------------------------------------------------------------------
--- The score calculators.
---------------------------------------------------------------------------------
-local function getScoreForPower(self)
-    local totalAttackDamage = self:getTotalAttackDamage()
-    local totalAttacksCount = self:getTotalAttacksCount()
-    local totalKillsCount   = self:getTotalKillsCount()
-    local averageDamage     = math.floor(totalAttackDamage     / math.max(1, totalAttacksCount))
-    local averageKills      = math.floor(totalKillsCount * 100 / math.max(1, totalAttacksCount))
-    local reference         = averageDamage + averageKills
-    return (reference >= 100)                and
-        (math.min(reference,           150)) or
-        (math.max(reference * 2 - 100, 0))
-end
-
-local function getScoreForSpeed(self)
-    local advancedSettings = WarFieldManager.getWarFieldData(self:getModelWarField():getWarFieldFileName()).advancedSettings or {}
-    local targetTurnsCount = advancedSettings.targetTurnsCount or 15
-    local currentTurnIndex = self:getModelTurnManager():getTurnIndex()
-    return (currentTurnIndex <= targetTurnsCount)                                    and
-        (math.min(math.floor(200 - 100 * currentTurnIndex / targetTurnsCount), 150)) or
-        (math.max(math.floor(150 - 50  * currentTurnIndex / targetTurnsCount), 0))
-end
-
-local function getScoreForTechnique(self)
-    local builtValueForAi     = self:getTotalBuiltUnitValueForAi()
-    local builtValueForPlayer = self:getTotalBuiltUnitValueForPlayer()
-    local lostValueForPlayer  = self:getTotalLostUnitValueForPlayer()
-    local reference           = math.sqrt(builtValueForAi) / (math.max(1, math.sqrt(builtValueForPlayer) + math.sqrt(lostValueForPlayer)))
-    return (reference >= 0.8)                              and
-        (math.floor(math.min(reference * 62.5 + 50, 150))) or
-        (math.floor(math.max(reference * 125,       0)))
-end
-
---------------------------------------------------------------------------------
 -- The private callback function on web socket events.
 --------------------------------------------------------------------------------
 local function onWebSocketOpen(self, param)
@@ -62,7 +28,7 @@ local function onWebSocketOpen(self, param)
 end
 
 local function onWebSocketMessage(self, param)
-    ---[[
+    --[[
     local action     = param.action
     local actionCode = action.actionCode
     print(string.format("ModelWarNative-onWebSocketMessage() code: %d  name: %s  length: %d",
@@ -73,7 +39,14 @@ local function onWebSocketMessage(self, param)
     print(SerializationFunctions.toString(action))
     --]]
 
-    ActionExecutorForWarNative.execute(param.action, self)
+    local actionCode = param.action.actionCode
+    if ((actionCode == ACTION_CODES.ActionChat)      or
+        (actionCode == ACTION_CODES.ActionLogin)     or
+        (actionCode == ACTION_CODES.ActionLogout)    or
+        (actionCode == ACTION_CODES.ActionMessage)   or
+        (actionCode == ACTION_CODES.ActionRegister)) then
+        ActionExecutorForWarNative.execute(param.action, self)
+    end
 end
 
 local function onWebSocketClose(self, param)
@@ -416,8 +389,58 @@ function ModelWarNative:isCampaign()
     return self.m_IsCampaign
 end
 
-function ModelWarNative:getCampaignScore()
-    return getScoreForSpeed(self) + getScoreForPower(self) + getScoreForTechnique(self)
+function ModelWarNative:getTotalScoreForCampaign()
+    return self:getScoreForSpeed() + self:getScoreForPower() + self:getScoreForTechnique()
+end
+
+function ModelWarNative:getScoreForPower()
+    --[[
+    力量分的评判参数是R=「平均伤害值+平均击杀率」，该两个数值均为0-100之间的自然数；
+    计算公式为：
+    （1）当R≤100时：力量分=max（Rx2-100，0）
+    （2）当R≥100时：力量分=min（R，150）
+    ]]
+    local totalAttackDamage = self:getTotalAttackDamage()
+    local totalAttacksCount = self:getTotalAttacksCount()
+    local totalKillsCount   = self:getTotalKillsCount()
+    local averageDamage     = math.floor(totalAttackDamage     / math.max(1, totalAttacksCount))
+    local averageKills      = math.floor(totalKillsCount * 100 / math.max(1, totalAttacksCount))
+    local reference         = averageDamage + averageKills
+    return (reference >= 100)                and
+        (math.min(reference,           150)) or
+        (math.max(reference * 2 - 100, 0))
+end
+
+function ModelWarNative:getScoreForSpeed()
+    --[[
+    速度分的评判参数是R=「实际通关天数/目标天数」，其中目标天数默认为15天，可以人工设定；
+    计算公式为：
+    （1）当R≤1时：速度分=min（200-Rx100，150）
+    （2）当R≥1时：速度分=max（150-Rx50，0）
+    ]]
+    local advancedSettings = WarFieldManager.getWarFieldData(self:getModelWarField():getWarFieldFileName()).advancedSettings or {}
+    local targetTurnsCount = advancedSettings.targetTurnsCount or 15
+    local currentTurnIndex = self:getModelTurnManager():getTurnIndex()
+    return (currentTurnIndex <= targetTurnsCount)                                    and
+        (math.min(math.floor(200 - 100 * currentTurnIndex / targetTurnsCount), 150)) or
+        (math.max(math.floor(150 - 50  * currentTurnIndex / targetTurnsCount), 0))
+end
+
+function ModelWarNative:getScoreForTechnique()
+    --[[
+    技术（Technique）
+    技术分的评判参数是R=「sqrt（敌总单位价值）/[sqrt（我总单位价值）+sqrt（我损失单位价值）]」
+    计算公式为：
+    （1）当R≤0.8时：技术分=max（Rx125，0）
+    （2）当R≥0.8时：技术分=min（Rx62.5+50，150）
+    ]]
+    local builtValueForAi     = self:getTotalBuiltUnitValueForAi()
+    local builtValueForPlayer = self:getTotalBuiltUnitValueForPlayer()
+    local lostValueForPlayer  = self:getTotalLostUnitValueForPlayer()
+    local reference           = math.sqrt(builtValueForAi) / (math.max(1, math.sqrt(builtValueForPlayer) + math.sqrt(lostValueForPlayer)))
+    return (reference >= 0.8)                              and
+        (math.floor(math.min(reference * 62.5 + 50, 150))) or
+        (math.floor(math.max(reference * 125,       0)))
 end
 
 function ModelWarNative:getIncomeModifier()
@@ -507,9 +530,10 @@ function ModelWarNative:showEffectWin(callback)
         self.m_View:showEffectWin(callback)
     else
         self.m_View:showEffectWinWithScore(callback,
-            getScoreForSpeed(    self),
-            getScoreForPower(    self),
-            getScoreForTechnique(self)
+            self:getScoreForSpeed(),
+            self:getScoreForPower(),
+            self:getScoreForTechnique(),
+            self:getModelTurnManager():getTurnIndex()
         )
     end
 
