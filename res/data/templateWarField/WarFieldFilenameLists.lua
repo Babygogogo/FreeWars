@@ -5,10 +5,13 @@ return {
         "PVE_BaoChiWeiXiao",
         "PVE_DuMuQiao",
         "PVE_HuanChongDai",
+        "PVE_HuiXingZhen",
         "PVE_MengHuChuShan",
         "PVE_ShenHanZhiHai",
         "PVE_WangPaiKongJun",
         "PVE_WeiWenTuMing",
+        "PVE_WuDaoKou",
+        "PVE_YongChuangAnGeLuo",
     },
 
     MultiPlayerGame = {

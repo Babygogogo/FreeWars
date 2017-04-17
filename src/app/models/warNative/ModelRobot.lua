@@ -207,25 +207,20 @@ local function getPossibleDamageInPlayerTurn(self, robotUnit, gridIndex, minBase
     return damage
 end
 
-local function isUnitThreatened(self, robotUnit, gridIndex, minDamage)
-    minDamage                 = math.min(minDamage or 50, robotUnit:getCurrentHP())
+local function isUnitThreatened(self, robotUnit, gridIndex)
     local modelWar            = self.m_ModelWar
     local playerIndexForHuman = self.m_PlayerIndexForHuman
     local modelUnitMap        = self.m_ModelUnitMap
     local unitType            = robotUnit:getUnitType()
     local mapSize             = modelUnitMap:getMapSize()
+    local minDamage           = (GameConstantFunctions.isTypeInCategory(unitType, "InfantryUnits")) and (robotUnit:getCurrentHP()) or (math.min(robotUnit:getCurrentHP(), 50))
     local isThreatened        = false
-    local isRobotUnitInfantry = GameConstantFunctions.isTypeInCategory(unitType, "InfantryUnits")
     local passableGridIndex
     if ((not GridIndexFunctions.isEqual(robotUnit:getGridIndex(), gridIndex)) and (not isModelUnitLoaded(self, robotUnit))) then
         passableGridIndex = robotUnit:getGridIndex()
     end
 
     modelUnitMap:forEachModelUnitOnMap(function(attacker)
-        if ((isRobotUnitInfantry) and (not GameConstantFunctions.isTypeInCategory(attacker:getUnitType(), "InfantryUnits"))) then
-            return
-        end
-
         if ((not isThreatened) and (attacker:getPlayerIndex() == playerIndexForHuman) and (attacker.getBaseDamage) and (attacker:getBaseDamage(unitType))) then
             local minRange, maxRange = attacker:getAttackRangeMinMax()
             if (not attacker:canAttackAfterMove()) then
@@ -417,7 +412,7 @@ local function getScoreForActionCaptureModelTile(self, modelUnit, gridIndex)
     if (captureAmount >= currentCapturePoint) then
         return 10000                                                                                                            -- ADJUSTABLE
     elseif (captureAmount < currentCapturePoint / 3) then
-        return 0                                                                                                                -- ADJUSTABLE
+        return 1                                                                                                                -- ADJUSTABLE
     else
         local tileValue = 0
         local tileType  = modelTile:getTileType()
