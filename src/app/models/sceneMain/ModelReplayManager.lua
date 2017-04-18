@@ -199,6 +199,7 @@ local function createMenuItemsForDownload(self, list)
     return items
 end
 
+local setStateLoadReplay
 local function createMenuItemsForPlayback(self)
     local items = {}
     for warID, replayConfiguration in pairs(self.m_ReplayList) do
@@ -211,15 +212,19 @@ local function createMenuItemsForPlayback(self)
                 getActorWarFieldPreviewer(self):getModel():setWarField(warFieldFileName)
                     :setPlayerNicknames(getPlayerNicknames(replayConfiguration))
                     :setEnabled(true)
-                if (self.m_View) then
-                    self.m_View:setButtonConfirmVisible(true)
-                end
+
+                self.m_View:setButtonConfirmVisible(true)
 
                 self.m_OnButtonConfirmTouched = function()
-                    local modelWarReplay = Actor.createModel("warReplay.ModelWarReplay", loadDecodedReplayData(warID))
-                    modelWarReplay:initWarDataForEachTurn()
-
-                    ActorManager.setAndRunRootActor(Actor.createWithModelAndViewInstance(modelWarReplay, Actor.createView("common.ViewSceneWar")), "FADE", 1)
+                    setStateLoadReplay(self)
+                    self.m_View:runAction(cc.Sequence:create(
+                        cc.DelayTime:create(0.02),
+                        cc.CallFunc:create(function()
+                            local modelWarReplay = Actor.createModel("warReplay.ModelWarReplay", loadDecodedReplayData(warID))
+                            modelWarReplay:initWarDataForEachTurn()
+                            ActorManager.setAndRunRootActor(Actor.createWithModelAndViewInstance(modelWarReplay, Actor.createView("common.ViewSceneWar")), "FADE", 1)
+                        end)
+                    ))
                 end
             end,
         }
@@ -277,6 +282,13 @@ local function setStateDownload(self)
             :removeAllMenuItems()
         getActorWarFieldPreviewer(self):getModel():setEnabled(false)
     end
+end
+
+setStateLoadReplay = function(self)
+    self.m_State = "stateLoadReplay"
+
+    SingletonGetters.getModelMessageIndicator(self.m_ModelSceneMain):showPersistentMessage(getLocalizedText(10, "LoadingReplay"))
+    self.m_View:disableButtonConfirmForSecs(999)
 end
 
 local function setStateMain(self)
@@ -446,6 +458,8 @@ function ModelReplayManager:onButtonBackTouched()
         setStateMain(self)
     elseif (state == "statePlayback") then
         setStateMain(self)
+    elseif (state == "stateLoadReplay") then
+        -- do nothing.
     else
         error("ModelReplayManager:onButtonBackTouched() the current state is invalid: " .. state)
     end

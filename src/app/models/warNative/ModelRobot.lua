@@ -297,6 +297,14 @@ local function getBetterScoreAndAction(oldScore, oldAction, newScore, newAction)
     end
 end
 
+local function canUnitWaitOnGrid(self, modelUnit, gridIndex)
+    if (GridIndexFunctions.isEqual(modelUnit:getGridIndex(), gridIndex)) then
+        return not isModelUnitLoaded(self, modelUnit)
+    else
+        return self.m_ModelUnitMap:getModelUnit(gridIndex) == nil
+    end
+end
+
 --------------------------------------------------------------------------------
 -- The score calculators.
 --------------------------------------------------------------------------------
@@ -554,12 +562,6 @@ local function getScoreAndActionAttack(self, modelUnit, gridIndex, pathNodes)
         return nil, nil
     end
 
-    local modelUnitMap      = self.m_ModelUnitMap
-    local existingModelUnit = modelUnitMap:getModelUnit(gridIndex)
-    if ((existingModelUnit) and (existingModelUnit ~= modelUnit)) then
-        return nil, nil
-    end
-
     local modelWar           = self.m_ModelWar
     local launchUnitID       = (isModelUnitLoaded(self, modelUnit)) and (modelUnit:getUnitId()) or (nil)
     local minRange, maxRange = modelUnit:getAttackRangeMinMax()
@@ -583,61 +585,34 @@ local function getScoreAndActionCaptureModelTile(self, modelUnit, gridIndex, pat
     local modelTile = self.m_ModelTileMap:getModelTile(gridIndex)
     if ((not modelUnit.canCaptureModelTile) or (not modelUnit:canCaptureModelTile(modelTile))) then
         return nil, nil
+    else
+        return getScoreForActionCaptureModelTile(self, modelUnit, gridIndex), {
+            actionCode   = ACTION_CODES.ActionCaptureModelTile,
+            path         = {pathNodes = pathNodes},
+            launchUnitID = (isModelUnitLoaded(self, modelUnit)) and (modelUnit:getUnitId()) or (nil),
+        }
     end
-
-    local existingModelUnit = self.m_ModelUnitMap:getModelUnit(gridIndex)
-    if ((existingModelUnit) and (existingModelUnit ~= modelUnit)) then
-        return nil, nil
-    end
-
-    return getScoreForActionCaptureModelTile(self, modelUnit, gridIndex), {
-        actionCode   = ACTION_CODES.ActionCaptureModelTile,
-        path         = {pathNodes = pathNodes},
-        launchUnitID = (isModelUnitLoaded(self, modelUnit)) and (modelUnit:getUnitId()) or (nil),
-    }
 end
 
 local function getScoreAndActionDive(self, modelUnit, gridIndex, pathNodes)
     if ((not modelUnit.canDive) or (not modelUnit:canDive())) then
         return nil, nil
-    end
-
-    local launchUnitID = (isModelUnitLoaded(self, modelUnit)) and (modelUnit:getUnitId()) or (nil)
-    if (GridIndexFunctions.isEqual(modelUnit:getGridIndex(), gridIndex)) then
-        if (launchUnitID) then
-            return nil, nil
-        else
-            return getScoreForActionDive(self, modelUnit, gridIndex), {
-                actionCode   = ACTION_CODES.ActionDive,
-                path         = {pathNodes = pathNodes},
-                launchUnitID = launchUnitID,
-            }
-        end
     else
-        if (self.m_ModelUnitMap:getModelUnit(gridIndex)) then
-            return nil, nil
-        else
-            return getScoreForActionDive(self, modelUnit, gridIndex), {
-                actionCode   = ACTION_CODES.ActionDive,
-                path         = {pathNodes = pathNodes},
-                launchUnitID = launchUnitID,
-            }
-        end
+        return getScoreForActionDive(self, modelUnit, gridIndex), {
+            actionCode   = ACTION_CODES.ActionDive,
+            path         = {pathNodes = pathNodes},
+            launchUnitID = (isModelUnitLoaded(self, modelUnit)) and (modelUnit:getUnitId()) or (nil),
+        }
     end
 end
 
 local function getScoreAndActionLaunchSilo(self, modelUnit, gridIndex, pathNodes)
-    local modelUnitMap      = self.m_ModelUnitMap
-    local existingModelUnit = modelUnitMap:getModelUnit(gridIndex)
-    if ((existingModelUnit) and (existingModelUnit ~= modelUnit)) then
-        return nil, nil
-    end
-
     local tileType = self.m_ModelTileMap:getModelTile(gridIndex):getTileType()
     if ((not modelUnit.canLaunchSiloOnTileType) or (not modelUnit:canLaunchSiloOnTileType(tileType))) then
         return nil, nil
     end
 
+    local modelUnitMap = self.m_ModelUnitMap
     local unitValueMap = {}
     for x = 1, self.m_MapWidth do
         unitValueMap[x] = {}
@@ -672,29 +647,12 @@ end
 local function getScoreAndActionSurface(self, modelUnit, gridIndex, pathNodes)
     if ((not modelUnit.canSurface) or (not modelUnit:canSurface())) then
         return nil, nil
-    end
-
-    local launchUnitID = (isModelUnitLoaded(self, modelUnit)) and (modelUnit:getUnitId()) or (nil)
-    if (GridIndexFunctions.isEqual(modelUnit:getGridIndex(), gridIndex)) then
-        if (launchUnitID) then
-            return nil, nil
-        else
-            return getScoreForActionSurface(self, modelUnit, gridIndex), {
-                actionCode   = ACTION_CODES.ActionSurface,
-                path         = {pathNodes = pathNodes},
-                launchUnitID = launchUnitID,
-            }
-        end
     else
-        if (self.m_ModelUnitMap:getModelUnit(gridIndex)) then
-            return nil, nil
-        else
-            return getScoreForActionSurface(self, modelUnit, gridIndex), {
-                actionCode   = ACTION_CODES.ActionSurface,
-                path         = {pathNodes = pathNodes},
-                launchUnitID = launchUnitID,
-            }
-        end
+        return getScoreForActionSurface(self, modelUnit, gridIndex), {
+            actionCode   = ACTION_CODES.ActionSurface,
+            path         = {pathNodes = pathNodes},
+            launchUnitID = (isModelUnitLoaded(self, modelUnit)) and (modelUnit:getUnitId()) or (nil),
+        }
     end
 end
 
@@ -735,28 +693,11 @@ local function getScoreAndActionLoadModelUnit(self, modelUnit, gridIndex, pathNo
 end
 
 local function getScoreAndActionWait(self, modelUnit, gridIndex, pathNodes)
-    local launchUnitID = (isModelUnitLoaded(self, modelUnit)) and (modelUnit:getUnitId()) or (nil)
-    if (GridIndexFunctions.isEqual(modelUnit:getGridIndex(), gridIndex)) then
-        if (launchUnitID) then
-            return nil, nil
-        else
-            return getScoreForActionWait(self, modelUnit, gridIndex), {
-                actionCode   = ACTION_CODES.ActionWait,
-                path         = {pathNodes = pathNodes},
-                launchUnitID = launchUnitID,
-            }
-        end
-    else
-        if (self.m_ModelUnitMap:getModelUnit(gridIndex)) then
-            return nil, nil
-        else
-            return getScoreForActionWait(self, modelUnit, gridIndex), {
-                actionCode   = ACTION_CODES.ActionWait,
-                path         = {pathNodes = pathNodes},
-                launchUnitID = launchUnitID,
-            }
-        end
-    end
+    return getScoreForActionWait(self, modelUnit, gridIndex), {
+        actionCode   = ACTION_CODES.ActionWait,
+        path         = {pathNodes = pathNodes},
+        launchUnitID = (isModelUnitLoaded(self, modelUnit)) and (modelUnit:getUnitId()) or (nil),
+    }
 end
 
 local function getMaxScoreAndAction(self, modelUnit, gridIndex, pathNodes)
@@ -768,6 +709,10 @@ local function getMaxScoreAndAction(self, modelUnit, gridIndex, pathNodes)
     local scoreForActionJoinModelUnit, actionJoinModelUnit = getScoreAndActionJoinModelUnit(self, modelUnit, gridIndex, pathNodes)
     if (actionJoinModelUnit) then
         return scoreForActionJoinModelUnit, actionJoinModelUnit
+    end
+
+    if (not canUnitWaitOnGrid(self, modelUnit, gridIndex)) then
+        return nil, nil
     end
 
     local maxScore, actionForMaxScore
