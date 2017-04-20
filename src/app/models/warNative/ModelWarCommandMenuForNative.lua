@@ -118,11 +118,10 @@ end
 local function getMapInfo(self)
     local modelWar = self.m_ModelWar
     local textList = {
-        string.format("%s\n%s: %d      %s: %d      %s: %d",
+        string.format("%s\n%s: %s      %s: %d",
             generateMapTitle(SingletonGetters.getModelWarField(modelWar):getWarFieldFileName()),
-            getLocalizedText(14, "SaveIndex"),         modelWar:getSaveIndex(),
-            getLocalizedText(65, "TurnIndex"),         getModelTurnManager(modelWar):getTurnIndex(),
-            getLocalizedText(65, "ActionID"),          getActionId(modelWar)
+            getLocalizedText(14, "PreviousSaveIndex"), modelWar:getSaveIndex() or "--",
+            getLocalizedText(65, "TurnIndex"),         getModelTurnManager(modelWar):getTurnIndex()
         ),
         string.format("%s: %d%%      %s: %d%%\n%s: %d%%      %s: %d      %s: %d",
             getLocalizedText(14, "IncomeModifier"),     modelWar:getIncomeModifier(),
@@ -461,6 +460,46 @@ local function generateItemsForStateAuxiliaryCommands(self)
     return items
 end
 
+local function generateItemsForStateLoadGame(self)
+    local items = {}
+    for _, warConfiguration in pairs(NativeWarManager.getAllWarConfigurations()) do
+        local saveIndex = warConfiguration.saveIndex
+        items[#items + 1] = {
+            leftIndicatorText = "" .. saveIndex,
+            name              = WarFieldManager.getWarFieldName(warConfiguration.warFieldFileName),
+            callback          = function()
+                local modelWar        = self.m_ModelWar
+                local modelConfirmBox = SingletonGetters.getModelConfirmBox(modelWar)
+                modelConfirmBox:setConfirmText(getLocalizedText(66, "ConfirmationLoadGame"))
+                    :setOnConfirmYes(function()
+                        modelConfirmBox:setEnabled(false)
+                        self:setEnabled(false)
+
+                        local data = NativeWarManager.loadWarData(saveIndex)
+                        if (not data) then
+                            SingletonGetters.getModelMessageIndicator(modelWar):showMessage(getLocalizedText(66, "FailLoadGame"))
+                        else
+                            SingletonGetters.getModelMessageIndicator(modelWar):showMessage(getLocalizedText(66, "SucceedLoadGame"))
+                            local actorWarNative = Actor.createWithModelAndViewName("warNative.ModelWarNative", data, "common.ViewSceneWar")
+                            ActorManager.setAndRunRootActor(actorWarNative, "FADE", 1)
+                        end
+                    end)
+                    :setEnabled(true)
+            end,
+        }
+    end
+
+    if (#items == 0) then
+        items[#items + 1] = {
+            name     = string.format("(%s)", getLocalizedText(14, "NoData")),
+            callback = function()
+            end,
+        }
+    end
+
+    return items
+end
+
 local function generateItemsForStateMain(self)
     local items = {
         self.m_ItemBackToMainScene,
@@ -474,6 +513,36 @@ local function generateItemsForStateMain(self)
         items[#items + 1] = self.m_ItemSaveGame
         items[#items + 1] = self.m_ItemLoadGame
         items[#items + 1] = self.m_ItemEndTurn
+    end
+
+    return items
+end
+
+local function generateItemsForStateSaveGame(self)
+    local items                     = {}
+    local existingWarConfigurations = NativeWarManager.getAllWarConfigurations()
+    for saveIndex = 1, 10 do
+        local warConfiguration = NativeWarManager.getWarConfiguration(saveIndex)
+        items[saveIndex] = {
+            leftIndicatorText = "" .. saveIndex,
+            name              = (warConfiguration) and
+                (WarFieldManager.getWarFieldName(warConfiguration.warFieldFileName)) or
+                (string.format("(%s)", getLocalizedText(14, "NoData"))),
+            callback          = function()
+                local modelWar        = self.m_ModelWar
+                local modelConfirmBox = SingletonGetters.getModelConfirmBox(modelWar)
+                modelConfirmBox:setConfirmText(getLocalizedText(66, "ConfirmationSaveGame"))
+                    :setOnConfirmYes(function()
+                        modelWar:setSaveIndex(saveIndex)
+                        modelConfirmBox:setEnabled(false)
+                        self:setEnabled(false)
+
+                        NativeWarManager.saveWarData(modelWar:toSerializableTable())
+                        SingletonGetters.getModelMessageIndicator(modelWar):showMessage(getLocalizedText(66, "SucceedSaveGame"))
+                    end)
+                    :setEnabled(true)
+            end,
+        }
     end
 
     return items
@@ -508,7 +577,8 @@ end
 --------------------------------------------------------------------------------
 local function setStateAuxiliaryCommands(self)
     self.m_State = "stateAuxiliaryCommands"
-    self.m_View:setItems(generateItemsForStateAuxiliaryCommands(self))
+    self.m_View:setMenuTitleText(getLocalizedText(65, "AuxiliaryCommands"))
+        :setItems(generateItemsForStateAuxiliaryCommands(self))
 end
 
 local function setStateDisabled(self)
@@ -520,13 +590,14 @@ end
 
 local function setStateHelp(self)
     self.m_State = "stateHelp"
-    self.m_View:setItems({
-        self.m_ItemGameFlow,
-        self.m_ItemWarControl,
-        self.m_ItemEssentialConcept,
-        self.m_ItemSkillSystem,
-        self.m_ItemAbout,
-    })
+    self.m_View:setMenuTitleText(getLocalizedText(65, "Help"))
+        :setItems({
+            self.m_ItemGameFlow,
+            self.m_ItemWarControl,
+            self.m_ItemEssentialConcept,
+            self.m_ItemSkillSystem,
+            self.m_ItemAbout,
+        })
 end
 
 local function setStateHiddenWithHideUI(self)
@@ -536,12 +607,20 @@ local function setStateHiddenWithHideUI(self)
     dispatchEvtWarCommandMenuUpdated(self)
 end
 
+local function setStateLoadGame(self)
+    self.m_State = "stateLoadGame"
+
+    self.m_View:setMenuTitleText(getLocalizedText(65, "Load Game"))
+        :setItems(generateItemsForStateLoadGame(self))
+end
+
 local getActorSkillConfigurator
 local function setStateMain(self)
     self.m_State = "stateMain"
     getActorSkillConfigurator(self):getModel():setEnabled(false)
 
-    self.m_View:setItems(generateItemsForStateMain(self))
+    self.m_View:setMenuTitleText(getLocalizedText(65, "WarMenu"))
+        :setItems(generateItemsForStateMain(self))
         :setMenuVisible(true)
         :setOverviewString(generateTextWarInfo(self))
         :setOverviewVisible(true)
@@ -550,10 +629,17 @@ local function setStateMain(self)
     dispatchEvtWarCommandMenuUpdated(self)
 end
 
+local function setStateSaveGame(self)
+    self.m_State = "stateSaveGame"
+
+    self.m_View:setMenuTitleText(getLocalizedText(65, "Save Game"))
+        :setItems(generateItemsForStateSaveGame(self))
+end
+
 local function setStateUnitPropertyList(self)
     self.m_State = "stateUnitPropertyList"
 
-    self.m_View:setItems(self.m_ItemsUnitProperties)
+    self.m_View:setItems(self.m_ItemsForStateUnitPropertyList)
 end
 
 --------------------------------------------------------------------------------
@@ -778,23 +864,7 @@ local function initItemLoadGame(self)
     self.m_ItemLoadGame = {
         name     = getLocalizedText(65, "Load Game"),
         callback = function()
-            local modelWar        = self.m_ModelWar
-            local modelConfirmBox = SingletonGetters.getModelConfirmBox(modelWar)
-            modelConfirmBox:setConfirmText(getLocalizedText(66, "ConfirmationLoadGame"))
-                :setOnConfirmYes(function()
-                    modelConfirmBox:setEnabled(false)
-                    self:setEnabled(false)
-
-                    local data = NativeWarManager.loadWarData(modelWar:getSaveIndex())
-                    if (not data) then
-                        SingletonGetters.getModelMessageIndicator(modelWar):showMessage(getLocalizedText(66, "FailLoadGame"))
-                    else
-                        SingletonGetters.getModelMessageIndicator(modelWar):showMessage(getLocalizedText(66, "SucceedLoadGame"))
-                        local actorWarNative = Actor.createWithModelAndViewName("warNative.ModelWarNative", data, "common.ViewSceneWar")
-                        ActorManager.setAndRunRootActor(actorWarNative, "FADE", 1)
-                    end
-                end)
-                :setEnabled(true)
+            setStateLoadGame(self)
         end,
     }
 end
@@ -803,17 +873,7 @@ local function initItemSaveGame(self)
     self.m_ItemSaveGame = {
         name     = getLocalizedText(65, "Save Game"),
         callback = function()
-            local modelWar        = self.m_ModelWar
-            local modelConfirmBox = SingletonGetters.getModelConfirmBox(modelWar)
-            modelConfirmBox:setConfirmText(getLocalizedText(66, "ConfirmationSaveGame"))
-                :setOnConfirmYes(function()
-                    modelConfirmBox:setEnabled(false)
-                    self:setEnabled(false)
-
-                    NativeWarManager.saveWarData(modelWar:toSerializableTable())
-                    SingletonGetters.getModelMessageIndicator(modelWar):showMessage(getLocalizedText(66, "SucceedSaveGame"))
-                end)
-                :setEnabled(true)
+            setStateSaveGame(self)
         end,
     }
 end
@@ -867,23 +927,6 @@ local function initItemUnitPropertyList(self)
     }
 
     self.m_ItemUnitPropertyList = item
-end
-
-local function initItemsUnitProperties(self)
-    local items    = {}
-    local allUnits = GameConstantFunctions.getCategory("AllUnits")
-    for _, unitType in ipairs(allUnits) do
-        items[#items + 1] = {
-            name     = getLocalizedText(113, unitType),
-            callback = function()
-                if (self.m_View) then
-                    self.m_View:setOverviewString(createUnitPropertyText(unitType))
-                end
-            end,
-        }
-    end
-
-    self.m_ItemsUnitProperties = items
 end
 
 local function initItemBackToMainScene(self)
@@ -953,6 +996,23 @@ local function initItemWarControl(self)
     self.m_ItemWarControl = item
 end
 
+local function initItemsForStateUnitPropertyList(self)
+    local items    = {}
+    local allUnits = GameConstantFunctions.getCategory("AllUnits")
+    for _, unitType in ipairs(allUnits) do
+        items[#items + 1] = {
+            name     = getLocalizedText(113, unitType),
+            callback = function()
+                if (self.m_View) then
+                    self.m_View:setOverviewString(createUnitPropertyText(unitType))
+                end
+            end,
+        }
+    end
+
+    self.m_ItemsForStateUnitPropertyList = items
+end
+
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
@@ -978,10 +1038,11 @@ function ModelWarCommandMenuForNative:ctor(param)
     initItemSetMessageIndicator(self)
     initItemSetMusic(           self)
     initItemSurrender(          self)
-    initItemsUnitProperties(    self)
     initItemTileInfo(           self)
     initItemUnitPropertyList(   self)
     initItemWarControl(         self)
+
+    initItemsForStateUnitPropertyList(self)
 
     return self
 end
@@ -1036,7 +1097,9 @@ function ModelWarCommandMenuForNative:onButtonBackTouched()
     local state = self.m_State
     if     (state == "stateAuxiliaryCommands") then setStateMain(             self)
     elseif (state == "stateHelp")              then setStateAuxiliaryCommands(self)
+    elseif (state == "stateLoadGame")          then setStateMain(             self)
     elseif (state == "stateMain")              then setStateDisabled(         self)
+    elseif (state == "stateSaveGame")          then setStateMain(             self)
     elseif (state == "stateUnitPropertyList")  then setStateAuxiliaryCommands(self)
     else                                       error("ModelWarCommandMenuForNative:onButtonBackTouched() the state is invalid: " .. (state or ""))
     end

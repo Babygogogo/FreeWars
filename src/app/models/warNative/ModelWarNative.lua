@@ -305,6 +305,12 @@ function ModelWarNative:getSaveIndex()
     return self.m_SaveIndex
 end
 
+function ModelWarNative:setSaveIndex(saveIndex)
+    self.m_SaveIndex = saveIndex
+
+    return self
+end
+
 function ModelWarNative:getAttackModifier()
     return self.m_AttackModifier
 end

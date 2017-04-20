@@ -147,13 +147,12 @@ local function generateTextForAdvancedSettings(self)
 end
 
 local function generateOverviewText(self)
-    return string.format("%s:\n\n%s:%s%s\n%s:%s%s (%s: %s)\n%s:%s%s\n\n%s:%s%d\n\n%s",
+    return string.format("%s:\n\n%s:%s%s\n%s:%s%s (%s: %s)\n%s:%s%s\n\n%s",
         getLocalizedText(14, "Overview"),
         getLocalizedText(14, "WarFieldName"),      "         ",     WarFieldManager.getWarFieldName(self.m_WarConfiguration.warFieldFileName),
         getLocalizedText(14, "PlayerIndex"),       "         ",     generatePlayerColorText(self.m_PlayerIndex),
         getLocalizedText(14, "TeamIndex"),                          AuxiliaryFunctions.getTeamNameWithTeamIndex(self.m_TeamIndex),
         getLocalizedText(14, "FogOfWar"),          "         ",     getLocalizedText(14, (self.m_IsFogOfWarByDefault) and ("Yes") or ("No")),
-        getLocalizedText(14, "SaveIndex"),         "         ",     self.m_SaveIndex,
         generateTextForAdvancedSettings(self)
     )
 end
@@ -164,13 +163,12 @@ end
 local function createItemsForStateMain(self)
     local mode = self.m_Mode
     if (mode == "modeCreateCampaign") then
-        return {self.m_ItemSaveIndex}
+        return {self.m_ItemPlaceHolder}
 
     elseif (mode == "modeCreateFreeGame") then
         return {
             self.m_ItemPlayerIndex,
             self.m_ItemFogOfWar,
-            self.m_ItemSaveIndex,
             self.m_ItemAdvancedSettings,
         }
 
@@ -221,7 +219,6 @@ local function createAndEnterWar(self)
         isFogOfWarByDefault       = self.m_IsFogOfWarByDefault,
         moveRangeModifier         = self.m_MoveRangeModifier,
         playerIndex               = self.m_PlayerIndex,
-        saveIndex                 = self.m_SaveIndex,
         startingEnergy            = self.m_StartingEnergy,
         startingFund              = self.m_StartingFund,
         teamIndex                 = self.m_TeamIndex,
@@ -254,13 +251,6 @@ local function setStateAttackModifier(self)
     self.m_View:setMenuTitleText(getLocalizedText(14, "AttackModifier"))
         :setItems(self.m_ItemsForStateAttackModifier)
         :setOverviewText(getLocalizedText(35, "HelpForAttackModifier"))
-end
-
-local function setStateSaveIndex(self)
-    self.m_State = "stateSaveIndex"
-    self.m_View:setMenuTitleText(getLocalizedText(14, "Save Index"))
-        :setItems(self.m_ItemsForStateSaveIndex)
-        :setOverviewText(getLocalizedText(35, "HelpForSaveIndex"))
 end
 
 local function setStateEnableActiveSkill(self)
@@ -364,15 +354,6 @@ local function initItemAttackModifier(self)
         name     = getLocalizedText(14, "AttackModifier"),
         callback = function()
             setStateAttackModifier(self)
-        end,
-    }
-end
-
-local function initItemSaveIndex(self)
-    self.m_ItemSaveIndex = {
-        name     = getLocalizedText(14, "Save Index"),
-        callback = function()
-            setStateSaveIndex(self)
         end,
     }
 end
@@ -512,21 +493,6 @@ local function initItemsForStateAttackModifier(self)
     end
 
     self.m_ItemsForStateAttackModifier = items
-end
-
-local function initItemsForStateSaveIndex(self)
-    local items = {}
-    for index = 1, 10 do
-        items[#items + 1] = {
-            name    = "" .. index,
-            callback = function()
-                self.m_SaveIndex = index
-                setStateMain(self)
-            end,
-        }
-    end
-
-    self.m_ItemsForStateSaveIndex = items
 end
 
 local function initItemsForStateEnableActiveSkill(self)
@@ -712,7 +678,6 @@ function ModelWarConfiguratorForNative:ctor()
     initItemMoveRangeModifier(     self)
     initItemPlayerIndex(           self)
     initItemPlaceHolder(           self)
-    initItemSaveIndex(             self)
     initItemStartingEnergy(        self)
     initItemStartingFund(          self)
     initItemVisionModifier(        self)
@@ -726,7 +691,6 @@ function ModelWarConfiguratorForNative:ctor()
     initItemsForStateFogOfWar(              self)
     initItemsForStateIncomeModifier(        self)
     initItemsForStateMoveRangeModifier(     self)
-    initItemsForStateSaveIndex(             self)
     initItemsForStateStartingEnergy(        self)
     initItemsForStateStartingFund(          self)
     initItemsForStateVisionModifier(        self)
@@ -807,7 +771,6 @@ function ModelWarConfiguratorForNative:resetWithWarConfiguration(warConfiguratio
         self.m_ItemsForStatePlayerIndex  = nil
         self.m_MoveRangeModifier         = advancedSettings.moveRangeModifier           or 0
         self.m_PlayerIndex               = advancedSettings.playerIndex                 or 1
-        self.m_SaveIndex                 = 1
         self.m_StartingEnergy            = advancedSettings.startingEnergy              or 0
         self.m_StartingFund              = advancedSettings.startingFund                or 0
         self.m_TeamIndex                 = 1
@@ -831,7 +794,6 @@ function ModelWarConfiguratorForNative:resetWithWarConfiguration(warConfiguratio
         self.m_ItemsForStatePlayerIndex  = createItemsForStatePlayerIndex(self)
         self.m_MoveRangeModifier         = 0
         self.m_PlayerIndex               = 1
-        self.m_SaveIndex                 = 1
         self.m_StartingEnergy            = 0
         self.m_StartingFund              = 0
         self.m_TeamIndex                 = 1
@@ -850,7 +812,6 @@ function ModelWarConfiguratorForNative:resetWithWarConfiguration(warConfiguratio
         self.m_ItemsForStatePlayerIndex  = nil
         self.m_MoveRangeModifier         = warConfiguration.moveRangeModifier
         self.m_PlayerIndex               = getPlayerIndexForWarConfiguration(warConfiguration)
-        self.m_SaveIndex                 = warConfiguration.saveIndex
         self.m_StartingEnergy            = warConfiguration.startingEnergy
         self.m_StartingFund              = warConfiguration.startingFund
         self.m_TeamIndex                 = 1
@@ -893,7 +854,6 @@ function ModelWarConfiguratorForNative:onButtonBackTouched()
     elseif (state == "stateIncomeModifier")         then setStateAdvancedSettings(self)
     elseif (state == "stateMoveRangeModifier")      then setStateAdvancedSettings(self)
     elseif (state == "statePlayerIndex")            then setStateMain(self)
-    elseif (state == "stateSaveIndex")              then setStateMain(self)
     elseif (state == "stateStartingEnergy")         then setStateAdvancedSettings(self)
     elseif (state == "stateStartingFund")           then setStateAdvancedSettings(self)
     elseif (state == "stateVisionModifier")         then setStateAdvancedSettings(self)

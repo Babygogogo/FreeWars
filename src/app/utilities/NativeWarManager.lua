@@ -177,6 +177,10 @@ function NativeWarManager.saveWarData(warData)
     return NativeWarManager
 end
 
+function NativeWarManager.getWarConfiguration(saveIndex)
+    return loadWarConfiguration(saveIndex)
+end
+
 function NativeWarManager.getAllWarConfigurations()
     local configurations = {}
     for saveIndex = 1, 10 do

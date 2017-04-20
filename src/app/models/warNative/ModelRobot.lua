@@ -23,7 +23,7 @@ local PRODUCTION_CANDIDATES = {                                                 
         Mech       = 0,
         Bike       = 1200,
         Recon      = 0,
-        Flare      = -9999999,
+        Flare      = nil,
         AntiAir    = 500,
         Tank       = 2000,
         MediumTank = 1800,
@@ -31,22 +31,22 @@ local PRODUCTION_CANDIDATES = {                                                 
         Artillery  = 1400,
         AntiTank   = 1000,
         Rockets    = 600,
-        Missiles   = -9999999,
-        Rig        = -9999999,
+        Missiles   = nil,
+        Rig        = nil,
     },
     Airport = {
         Fighter         = 600,
         Bomber          = 600,
         Duster          = 1200,
         BattleCopter    = 1800,
-        TransportCopter = -9999999,
+        TransportCopter = nil,
     },
     Seaport = {
         Battleship = 600,
-        Carrier    = -9999999,
+        Carrier    = nil,
         Submarine  = 800,
         Cruiser    = 900,
-        Lander     = -9999999,
+        Lander     = nil,
         Gunboat    = 1000,
     }
 }
@@ -214,7 +214,7 @@ local function isUnitThreatened(self, robotUnit, gridIndex)
     local modelUnitMap        = self.m_ModelUnitMap
     local unitType            = robotUnit:getUnitType()
     local mapSize             = modelUnitMap:getMapSize()
-    local minDamage           = (GameConstantFunctions.isTypeInCategory(unitType, "InfantryUnits")) and (robotUnit:getCurrentHP()) or (math.min(robotUnit:getCurrentHP(), 50))
+    local minDamage           = (GameConstantFunctions.isTypeInCategory(unitType, "InfantryUnits")) and (robotUnit:getCurrentHP()) or (math.min(robotUnit:getCurrentHP(), 55))
     local isUnitDiving        = (robotUnit.isDiving) and (robotUnit:isDiving())
     local isThreatened        = false
     local passableGridIndex
