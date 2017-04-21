@@ -27,20 +27,19 @@ local ACTION_CODE_RUN_SCENE_WAR                  = ActionCodeFunctions.getAction
 --------------------------------------------------------------------------------
 -- The util functions.
 --------------------------------------------------------------------------------
-local function getPlayerNicknames(warConfiguration, currentTime)
-    local playersCount = WarFieldManager.getPlayersCount(warConfiguration.warFieldFileName)
-    local players      = warConfiguration.players
-    local names        = {}
-
-    for i = 1, playersCount do
-        names[i] = string.format("%s (%s: %s)", players[i].account, getLocalizedText(14, "TeamIndex"), AuxiliaryFunctions.getTeamNameWithTeamIndex(players[i].teamIndex))
+local function generateLeftLabelText(warConfiguration, currentTime)
+    local players  = warConfiguration.players
+    local textList = {getLocalizedText(48, "Players")}
+    for i = 1, WarFieldManager.getPlayersCount(warConfiguration.warFieldFileName) do
+        local text = string.format("%d. %s (%s: %s)", i, players[i].account, getLocalizedText(14, "TeamIndex"), AuxiliaryFunctions.getTeamNameWithTeamIndex(players[i].teamIndex))
         if (i == warConfiguration.playerIndexInTurn) then
-            names[i] = names[i] .. string.format("(%s: %s)", getLocalizedText(34, "BootCountdown"),
+            text = text .. string.format("(%s: %s)", getLocalizedText(34, "BootCountdown"),
                 AuxiliaryFunctions.formatTimeInterval(warConfiguration.intervalUntilBoot - currentTime + warConfiguration.enterTurnTime))
         end
+        textList[#textList + 1] = text
     end
 
-    return names, playersCount
+    return table.concat(textList, "\n")
 end
 
 --------------------------------------------------------------------------------
@@ -93,7 +92,7 @@ local function createOngoingWarList(self, warConfigurations)
             isInTurn     = (warConfiguration.players[playerIndexInTurn].account == playerAccountLoggedIn),
             callback     = function()
                 getActorWarFieldPreviewer(self):getModel():setWarField(warFieldFileName)
-                    :setPlayerNicknames(getPlayerNicknames(warConfiguration, os.time()))
+                    :setLeftLabelText(generateLeftLabelText(warConfiguration, os.time()))
                     :setEnabled(true)
                 self.m_View:setButtonNextVisible(true)
 

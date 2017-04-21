@@ -690,6 +690,7 @@
     warID               0 :  integer
     warFieldFileName    1 :  string
     players             2 : *PlayerInfo
+    actionsCount        3 :  integer
 }
 
 .ReplayListForClient {

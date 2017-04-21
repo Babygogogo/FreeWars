@@ -17,16 +17,18 @@ local ACTION_CODE_GET_JOINABLE_WAR_CONFIGURATIONS = ActionCodeFunctions.getActio
 --------------------------------------------------------------------------------
 -- The util functions.
 --------------------------------------------------------------------------------
-local function getPlayerNicknames(warConfiguration)
-    local players = warConfiguration.players
-    local names   = {}
+local function generateLeftLabelText(warConfiguration)
+    local players  = warConfiguration.players
+    local textList = {getLocalizedText(48, "Players")}
     for i = 1, WarFieldManager.getPlayersCount(warConfiguration.warFieldFileName) do
         if (players[i]) then
-            names[i] = string.format("%s (%s: %s)", players[i].account, getLocalizedText(14, "TeamIndex"), AuxiliaryFunctions.getTeamNameWithTeamIndex(players[i].teamIndex))
+            textList[#textList + 1] = string.format("%d. %s (%s: %s)", i, players[i].account, getLocalizedText(14, "TeamIndex"), AuxiliaryFunctions.getTeamNameWithTeamIndex(players[i].teamIndex))
+        else
+            textList[#textList + 1] = string.format("%d. %s", i, getLocalizedText(48, "Empty"))
         end
     end
 
-    return names
+    return table.concat(textList, "\n")
 end
 
 --------------------------------------------------------------------------------
@@ -77,7 +79,7 @@ local function createJoinableWarList(self, list)
 
             callback     = function()
                 getActorWarFieldPreviewer(self):getModel():setWarField(warFieldFileName)
-                    :setPlayerNicknames(getPlayerNicknames(warConfiguration))
+                    :setLeftLabelText(generateLeftLabelText(warConfiguration))
                     :setEnabled(true)
                 if (self.m_View) then
                     self.m_View:setButtonNextVisible(true)

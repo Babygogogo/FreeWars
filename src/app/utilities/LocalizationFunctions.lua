@@ -917,7 +917,8 @@ local s_Texts = {
     },
     [14] = {
         [1] = function(textType)
-            if     (textType == "Advanced Settings")            then return "高 级 设 置"
+            if     (textType == "ActionsCount")                 then return "行动数"
+            elseif (textType == "Advanced Settings")            then return "高 级 设 置"
             elseif (textType == "AttackModifier")               then return "攻击力加成"
             elseif (textType == "ConfirmContinueWar")           then return "进 入 战 局"
             elseif (textType == "ConfirmCreateWar")             then return "确 认 新 建 战 局"
@@ -974,7 +975,8 @@ local s_Texts = {
             end
         end,
         [2] = function(textType)
-            if     (textType == "Advanced Settings")            then return "Advanced"
+            if     (textType == "ActionsCount")                 then return "Actions"
+            elseif (textType == "Advanced Settings")            then return "Advanced"
             elseif (textType == "AttackModifier")               then return "AttackModifier"
             elseif (textType == "ConfirmContinueWar")           then return "Confirm"
             elseif (textType == "ConfirmCreateWar")             then return "Confirm"

@@ -91,7 +91,7 @@ local function initClippingNode(self)
     self:addChild(clippingNode, CLIPPING_NODE_Z_ORDER)
 end
 
-local function initLabelAuthorName(self)
+local function initRightLabel(self)
     local label = cc.Label:createWithTTF("", AUTHOR_NAME_LABEL_FONT_NAME, AUTHOR_NAME_LABEL_FONT_SIZE)
     label:ignoreAnchorPointForPosition(true)
         :setPosition(AUTHOR_NAME_LABEL_POS_X, AUTHOR_NAME_LABEL_POS_Y)
@@ -102,11 +102,11 @@ local function initLabelAuthorName(self)
         :setHorizontalAlignment(cc.TEXT_ALIGNMENT_RIGHT)
         :setVerticalAlignment(cc.VERTICAL_TEXT_ALIGNMENT_TOP)
 
-    self.m_LabelAuthorName = label
+    self.m_RightLabel = label
     self:addChild(label, AUTHOR_NAME_LABEL_Z_ORDER)
 end
 
-local function initLabelNicknames(self)
+local function initLeftLabel(self)
     local label = cc.Label:createWithTTF("", LABEL_NICKNAMES_FONT_NAME, LABEL_NICKNAMES_FONT_SIZE)
     label:ignoreAnchorPointForPosition(true)
         :setPosition(LABEL_NICKNAMES_POS_X, LABEL_NICKNAMES_POS_Y)
@@ -117,7 +117,7 @@ local function initLabelNicknames(self)
         :setHorizontalAlignment(cc.TEXT_ALIGNMENT_LEFT)
         :setVerticalAlignment(cc.VERTICAL_TEXT_ALIGNMENT_TOP)
 
-    self.m_LabelNicknames = label
+    self.m_LeftLabel = label
     self:addChild(label, LABEL_NICKNAMES_Z_ORDER)
 end
 
@@ -141,8 +141,8 @@ end
 function ViewWarFieldPreviewer:ctor(param)
     initBackground(     self)
     initClippingNode(   self)
-    initLabelAuthorName(self)
-    initLabelNicknames( self)
+    initRightLabel(     self)
+    initLeftLabel(      self)
     initLabelRandom(    self)
 
     self:ignoreAnchorPointForPosition(true)
@@ -176,8 +176,8 @@ function ViewWarFieldPreviewer:setViewTilesAndUnits(viewTiles, viewUnits, mapSiz
     return self
 end
 
-function ViewWarFieldPreviewer:setAuthorName(name)
-    self.m_LabelAuthorName:setString(getLocalizedText(48, "Author") .. name)
+function ViewWarFieldPreviewer:setRightLabelText(text)
+    self.m_RightLabel:setString(text)
         :stopAllActions()
         :setOpacity(255)
         :runAction(cc.Sequence:create(
@@ -194,13 +194,8 @@ function ViewWarFieldPreviewer:setPlayersCount(playersCount)
     return self
 end
 
-function ViewWarFieldPreviewer:setPlayerNicknames(names)
-    local text = getLocalizedText(48, "Players")
-    for i = 1, self.m_PlayersCount do
-        text = string.format("%s\n%d. %s", text, i, names[i] or getLocalizedText(48, "Empty"))
-    end
-
-    self.m_LabelNicknames:setString(text)
+function ViewWarFieldPreviewer:setLeftLabelText(text)
+    self.m_LeftLabel:setString(text)
         :stopAllActions()
         :setOpacity(255)
         :runAction(cc.Sequence:create(

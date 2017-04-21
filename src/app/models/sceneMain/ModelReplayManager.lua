@@ -94,18 +94,23 @@ local function generateReplayConfiguration(warData)
     }
 end
 
-local function getPlayerNicknames(replayConfiguration)
-    local names   = {}
-    local players = replayConfiguration.players
+local function generateLeftLabelText(replayConfiguration)
+    local players  = replayConfiguration.players
+    local textList = {getLocalizedText(48, "Players")}
     for i = 1, WarFieldManager.getPlayersCount(replayConfiguration.warFieldFileName) do
-        names[i] = string.format("%s (%s: %s)",
+        textList[#textList + 1] = string.format("%d. %s (%s: %s)",
+            i,
             players[i].account,
             getLocalizedText(14, "TeamIndex"),
             AuxiliaryFunctions.getTeamNameWithTeamIndex((players[i].teamIndex) or (i))
         )
     end
 
-    return names
+    if (replayConfiguration.actionsCount) then
+        textList[#textList + 1] = string.format("%s: %d", getLocalizedText(14, "ActionsCount"), replayConfiguration.actionsCount)
+    end
+
+    return table.concat(textList, "\n")
 end
 
 local function getActorWarFieldPreviewer(self)
@@ -131,7 +136,7 @@ local function createMenuItemsForDelete(self)
             warID    = warID,
             callback = function()
                 getActorWarFieldPreviewer(self):getModel():setWarField(warFieldFileName)
-                    :setPlayerNicknames(getPlayerNicknames(replayConfiguration))
+                    :setLeftLabelText(generateLeftLabelText(replayConfiguration))
                     :setEnabled(true)
                 if (self.m_View) then
                     self.m_View:setButtonConfirmVisible(true)
@@ -170,7 +175,7 @@ local function createMenuItemsForDownload(self, list)
 
                 callback = function()
                     getActorWarFieldPreviewer(self):getModel():setWarField(warFieldFileName)
-                        :setPlayerNicknames(getPlayerNicknames(replayConfiguration))
+                        :setLeftLabelText(generateLeftLabelText(replayConfiguration))
                         :setEnabled(true)
                     if (self.m_View) then
                         self.m_View:setButtonConfirmVisible(true)
@@ -210,7 +215,7 @@ local function createMenuItemsForPlayback(self)
 
             callback = function()
                 getActorWarFieldPreviewer(self):getModel():setWarField(warFieldFileName)
-                    :setPlayerNicknames(getPlayerNicknames(replayConfiguration))
+                    :setLeftLabelText(generateLeftLabelText(replayConfiguration))
                     :setEnabled(true)
 
                 self.m_View:setButtonConfirmVisible(true)

@@ -18,7 +18,7 @@ local ACTION_CODES         = ActionCodeFunctions.getFullList()
 local UNIT_MAX_HP          = GameConstantFunctions.getUnitMaxHP()
 local IS_SERVER            = GameConstantFunctions.isServer()
 local PlayerProfileManager = (    IS_SERVER) and (requireFW("src.app.utilities.PlayerProfileManager")) or (nil)
-local SceneWarManager      = (    IS_SERVER) and (requireFW("src.app.utilities.SceneWarManager"))      or (nil)
+local OnlineWarManager     = (    IS_SERVER) and (requireFW("src.app.utilities.OnlineWarManager"))      or (nil)
 local WebSocketManager     = (not IS_SERVER) and (requireFW("src.app.utilities.WebSocketManager"))     or (nil)
 local ActorManager         = (not IS_SERVER) and (requireFW("src.global.actors.ActorManager"))         or (nil)
 
@@ -339,7 +339,7 @@ end
 local function executeChat(action, modelWarOnline)
     SingletonGetters.getModelChatManager(modelWarOnline):updateWithChatMessage(action.channelID, action.senderPlayerIndex, action.chatText)
     if (IS_SERVER) then
-        SceneWarManager.updateWithModelWarOnline(modelWarOnline)
+        OnlineWarManager.updateWithModelWarOnline(modelWarOnline)
     end
 end
 
@@ -436,7 +436,7 @@ local function executeActivateSkill(action, modelWarOnline)
 
     if (IS_SERVER) then
         modelWarOnline:setExecutingAction(false)
-        SceneWarManager.updateWithModelWarOnline(modelWarOnline)
+        OnlineWarManager.updateWithModelWarOnline(modelWarOnline)
 
     else
         cleanupOnReceivingResponseFromServer(modelWarOnline)
@@ -561,7 +561,7 @@ local function executeAttack(action, modelWarOnline)
         end
 
         modelWarOnline:setExecutingAction(false)
-        SceneWarManager.updateWithModelWarOnline(modelWarOnline)
+        OnlineWarManager.updateWithModelWarOnline(modelWarOnline)
 
     else
         cleanupOnReceivingResponseFromServer(modelWarOnline)
@@ -650,7 +650,7 @@ local function executeBeginTurn(action, modelWarOnline)
         end
 
         modelWarOnline:setExecutingAction(false)
-        SceneWarManager.updateWithModelWarOnline(modelWarOnline)
+        OnlineWarManager.updateWithModelWarOnline(modelWarOnline)
 
     else
         cleanupOnReceivingResponseFromServer(modelWarOnline)
@@ -728,7 +728,7 @@ local function executeBuildModelTile(action, modelWarOnline)
 
     if (IS_SERVER) then
         modelWarOnline:setExecutingAction(false)
-        SceneWarManager.updateWithModelWarOnline(modelWarOnline)
+        OnlineWarManager.updateWithModelWarOnline(modelWarOnline)
 
     else
         cleanupOnReceivingResponseFromServer(modelWarOnline)
@@ -799,7 +799,7 @@ local function executeCaptureModelTile(action, modelWarOnline)
         end
 
         modelWarOnline:setExecutingAction(false)
-        SceneWarManager.updateWithModelWarOnline(modelWarOnline)
+        OnlineWarManager.updateWithModelWarOnline(modelWarOnline)
 
     else
         cleanupOnReceivingResponseFromServer(modelWarOnline)
@@ -856,7 +856,7 @@ local function executeDeclareSkill(action, modelWarOnline)
 
     if (IS_SERVER) then
         modelWarOnline:setExecutingAction(false)
-        SceneWarManager.updateWithModelWarOnline(modelWarOnline)
+        OnlineWarManager.updateWithModelWarOnline(modelWarOnline)
 
     else
         cleanupOnReceivingResponseFromServer(modelWarOnline)
@@ -890,7 +890,7 @@ local function executeDestroyOwnedModelUnit(action, modelWarOnline)
 
     if (IS_SERVER) then
         modelWarOnline:setExecutingAction(false)
-        SceneWarManager.updateWithModelWarOnline(modelWarOnline)
+        OnlineWarManager.updateWithModelWarOnline(modelWarOnline)
 
     else
         cleanupOnReceivingResponseFromServer(modelWarOnline)
@@ -928,7 +928,7 @@ local function executeDive(action, modelWarOnline)
 
     if (IS_SERVER) then
         modelWarOnline:setExecutingAction(false)
-        SceneWarManager.updateWithModelWarOnline(modelWarOnline)
+        OnlineWarManager.updateWithModelWarOnline(modelWarOnline)
 
     else
         cleanupOnReceivingResponseFromServer(modelWarOnline)
@@ -995,7 +995,7 @@ local function executeDropModelUnit(action, modelWarOnline)
 
     if (IS_SERVER) then
         modelWarOnline:setExecutingAction(false)
-        SceneWarManager.updateWithModelWarOnline(modelWarOnline)
+        OnlineWarManager.updateWithModelWarOnline(modelWarOnline)
 
     else
         cleanupOnReceivingResponseFromServer(modelWarOnline)
@@ -1041,7 +1041,7 @@ local function executeEndTurn(action, modelWarOnline)
     if (IS_SERVER) then
         getModelTurnManager(modelWarOnline):endTurnPhaseMain()
         modelWarOnline:setExecutingAction(false)
-        SceneWarManager.updateWithModelWarOnline(modelWarOnline)
+        OnlineWarManager.updateWithModelWarOnline(modelWarOnline)
 
     else
         cleanupOnReceivingResponseFromServer(modelWarOnline)
@@ -1115,7 +1115,7 @@ local function executeJoinModelUnit(action, modelWarOnline)
 
     if (IS_SERVER) then
         modelWarOnline:setExecutingAction(false)
-        SceneWarManager.updateWithModelWarOnline(modelWarOnline)
+        OnlineWarManager.updateWithModelWarOnline(modelWarOnline)
 
     else
         cleanupOnReceivingResponseFromServer(modelWarOnline)
@@ -1155,7 +1155,7 @@ local function executeLaunchFlare(action, modelWarOnline)
 
     if (IS_SERVER) then
         modelWarOnline:setExecutingAction(false)
-        SceneWarManager.updateWithModelWarOnline(modelWarOnline)
+        OnlineWarManager.updateWithModelWarOnline(modelWarOnline)
 
     else
         cleanupOnReceivingResponseFromServer(modelWarOnline)
@@ -1208,7 +1208,7 @@ local function executeLaunchSilo(action, modelWarOnline)
 
     if (IS_SERVER) then
         modelWarOnline:setExecutingAction(false)
-        SceneWarManager.updateWithModelWarOnline(modelWarOnline)
+        OnlineWarManager.updateWithModelWarOnline(modelWarOnline)
 
     else
         cleanupOnReceivingResponseFromServer(modelWarOnline)
@@ -1254,7 +1254,7 @@ local function executeLoadModelUnit(action, modelWarOnline)
 
     if (IS_SERVER) then
         modelWarOnline:setExecutingAction(false)
-        SceneWarManager.updateWithModelWarOnline(modelWarOnline)
+        OnlineWarManager.updateWithModelWarOnline(modelWarOnline)
 
     else
         cleanupOnReceivingResponseFromServer(modelWarOnline)
@@ -1299,7 +1299,7 @@ local function executeProduceModelUnitOnTile(action, modelWarOnline)
 
     if (IS_SERVER) then
         modelWarOnline:setExecutingAction(false)
-        SceneWarManager.updateWithModelWarOnline(modelWarOnline)
+        OnlineWarManager.updateWithModelWarOnline(modelWarOnline)
 
     else
         cleanupOnReceivingResponseFromServer(modelWarOnline)
@@ -1334,7 +1334,7 @@ local function executeProduceModelUnitOnUnit(action, modelWarOnline)
 
     if (IS_SERVER) then
         modelWarOnline:setExecutingAction(false)
-        SceneWarManager.updateWithModelWarOnline(modelWarOnline)
+        OnlineWarManager.updateWithModelWarOnline(modelWarOnline)
 
     else
         cleanupOnReceivingResponseFromServer(modelWarOnline)
@@ -1365,7 +1365,7 @@ local function executeSupplyModelUnit(action, modelWarOnline)
 
     if (IS_SERVER) then
         modelWarOnline:setExecutingAction(false)
-        SceneWarManager.updateWithModelWarOnline(modelWarOnline)
+        OnlineWarManager.updateWithModelWarOnline(modelWarOnline)
 
     else
         cleanupOnReceivingResponseFromServer(modelWarOnline)
@@ -1402,7 +1402,7 @@ local function executeSurface(action, modelWarOnline)
 
     if (IS_SERVER) then
         modelWarOnline:setExecutingAction(false)
-        SceneWarManager.updateWithModelWarOnline(modelWarOnline)
+        OnlineWarManager.updateWithModelWarOnline(modelWarOnline)
 
     else
         cleanupOnReceivingResponseFromServer(modelWarOnline)
@@ -1446,7 +1446,7 @@ local function executeSurrender(action, modelWarOnline)
 
         modelWarOnline:setExecutingAction(false)
         PlayerProfileManager.updateProfilesWithModelWarOnline(modelWarOnline)
-        SceneWarManager.updateWithModelWarOnline(modelWarOnline)
+        OnlineWarManager.updateWithModelWarOnline(modelWarOnline)
 
     else
         cleanupOnReceivingResponseFromServer(modelWarOnline)
@@ -1495,7 +1495,7 @@ local function executeVoteForDraw(action, modelWarOnline)
         if (modelWarOnline:isEnded()) then
             PlayerProfileManager.updateProfilesWithModelWarOnline(modelWarOnline)
         end
-        SceneWarManager.updateWithModelWarOnline(modelWarOnline)
+        OnlineWarManager.updateWithModelWarOnline(modelWarOnline)
 
     else
         cleanupOnReceivingResponseFromServer(modelWarOnline)
@@ -1532,7 +1532,7 @@ local function executeWait(action, modelWarOnline)
 
     if (IS_SERVER) then
         modelWarOnline:setExecutingAction(false)
-        SceneWarManager.updateWithModelWarOnline(modelWarOnline)
+        OnlineWarManager.updateWithModelWarOnline(modelWarOnline)
 
     else
         cleanupOnReceivingResponseFromServer(modelWarOnline)
