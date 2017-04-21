@@ -1,5 +1,5 @@
 
-local ActionExecutorForWarCampaign = {}
+local ActionExecutorForWarNative = {}
 
 local ActionCodeFunctions    = requireFW("src.app.utilities.ActionCodeFunctions")
 local AuxiliaryFunctions     = requireFW("src.app.utilities.AuxiliaryFunctions")
@@ -8,6 +8,7 @@ local GameConstantFunctions  = requireFW("src.app.utilities.GameConstantFunction
 local GridIndexFunctions     = requireFW("src.app.utilities.GridIndexFunctions")
 local InstantSkillExecutor   = requireFW("src.app.utilities.InstantSkillExecutor")
 local LocalizationFunctions  = requireFW("src.app.utilities.LocalizationFunctions")
+local NativeWarManager       = requireFW("src.app.utilities.NativeWarManager")
 local SerializationFunctions = requireFW("src.app.utilities.SerializationFunctions")
 local SingletonGetters       = requireFW("src.app.utilities.SingletonGetters")
 local SkillModifierFunctions = requireFW("src.app.utilities.SkillModifierFunctions")
@@ -28,6 +29,7 @@ local getModelPlayerManager         = SingletonGetters.getModelPlayerManager
 local getModelTileMap               = SingletonGetters.getModelTileMap
 local getModelTurnManager           = SingletonGetters.getModelTurnManager
 local getModelUnitMap               = SingletonGetters.getModelUnitMap
+local getModelWarField              = SingletonGetters.getModelWarField
 local getScriptEventDispatcher      = SingletonGetters.getScriptEventDispatcher
 local isUnitVisible                 = VisibilityFunctions.isUnitOnMapVisibleToPlayerIndex
 local supplyWithAmmoAndFuel         = SupplyFunctions.supplyWithAmmoAndFuel
@@ -68,6 +70,13 @@ end
 local function updateFundWithCost(modelWar, playerIndex, cost)
     local modelPlayer = getModelPlayerManager(modelWar):getModelPlayer(playerIndex)
     modelPlayer:setFund(modelPlayer:getFund() - cost)
+
+    if (playerIndex == getModelPlayerManager(modelWar):getPlayerIndexForHuman()) then
+        modelWar:setTotalBuiltUnitValueForPlayer(modelWar:getTotalBuiltUnitValueForPlayer() + cost)
+    else
+        modelWar:setTotalBuiltUnitValueForAi(modelWar:getTotalBuiltUnitValueForAi() + cost)
+    end
+
     dispatchEvtModelPlayerUpdated(modelWar, playerIndex)
 end
 
@@ -95,7 +104,7 @@ local function produceActorUnit(modelWar, tiledID, unitID, gridIndex)
 end
 
 local function getAndSupplyAdjacentModelUnits(modelWar, supplierGridIndex, playerIndex)
-    assert(type(playerIndex) == "number", "ActionExecutorForWarCampaign-getAndSupplyAdjacentModelUnits() invalid playerIndex: " .. (playerIndex or ""))
+    assert(type(playerIndex) == "number", "ActionExecutorForWarNative-getAndSupplyAdjacentModelUnits() invalid playerIndex: " .. (playerIndex or ""))
 
     local modelUnitMap = getModelUnitMap(modelWar)
     local targets      = {}
@@ -185,6 +194,18 @@ end
 
 local function getEnergyModifierWithTargetAndDamage(target, damage, energyGainModifier)
     return math.floor((target:getNormalizedCurrentHP() - math.ceil(math.max(0, target:getCurrentHP() - (damage or 0)) / 10)) * energyGainModifier)
+end
+
+local function getLostValueWithModelUnitAndDamage(modelUnitMap, modelUnit, damage)
+    local newNormalizedHP  = math.ceil(math.max(0, modelUnit:getCurrentHP() - (damage or 0)) / 10)
+    local value            = modelUnit:getProductionCost() * (modelUnit:getNormalizedCurrentHP() - newNormalizedHP) / 10
+    if (newNormalizedHP == 0) then
+        for _, loadedModelUnit in pairs(modelUnitMap:getLoadedModelUnitsWithLoader(modelUnit, true) or {}) do
+            value = value + loadedModelUnit:getProductionCost() * loadedModelUnit:getNormalizedCurrentHP() / 10
+        end
+    end
+
+    return value
 end
 
 local function getAdjacentPlasmaGridIndexes(gridIndex, modelTileMap)
@@ -355,6 +376,18 @@ local function executeAttack(action, modelWar)
             targetModelPlayer  :setEnergy(targetModelPlayer:getEnergy()   + attackEnergy + counterEnergy)
         end
 
+        if (targetPlayerIndex == modelPlayerManager:getPlayerIndexForHuman()) then
+            modelWar:setTotalLostUnitValueForPlayer(
+                modelWar:getTotalLostUnitValueForPlayer() +
+                getLostValueWithModelUnitAndDamage(modelUnitMap, attackTarget, attackDamage)
+            )
+        else
+            modelWar:setTotalLostUnitValueForPlayer(
+                modelWar:getTotalLostUnitValueForPlayer() +
+                getLostValueWithModelUnitAndDamage(modelUnitMap, attacker, counterDamage)
+            )
+        end
+
         dispatchEvtModelPlayerUpdated(modelWar, attackerPlayerIndex)
     end
 
@@ -363,6 +396,15 @@ local function executeAttack(action, modelWar)
     if (attackerNewHP == 0) then
         attackTarget:setCurrentPromotion(math.min(attackTarget:getMaxPromotion(), attackTarget:getCurrentPromotion() + 1))
         Destroyers.destroyActorUnitOnMap(modelWar, attackerGridIndex, false)
+    end
+
+    if ((attackTarget.getUnitType)                                                                       and
+        (modelPlayerManager:getPlayerIndexForHuman() == getModelTurnManager(modelWar):getPlayerIndex())) then
+        modelWar:setTotalAttacksCount(modelWar:getTotalAttacksCount() + 1)
+            :setTotalAttackDamage(modelWar:getTotalAttackDamage() + attackDamage)
+        if (attackTarget:getCurrentHP() <= attackDamage) then
+            modelWar:setTotalKillsCount(modelWar:getTotalKillsCount() + 1)
+        end
     end
 
     local targetNewHP = math.max(0, attackTarget:getCurrentHP() - attackDamage)
@@ -430,8 +472,13 @@ local function executeAttack(action, modelWar)
         updateTileAndUnitMapOnVisibilityChanged(modelWar)
 
         if (modelWar:isEnded()) then
-            if (isHumanLost) then modelWar:showEffectLose(     callbackOnWarEndedForClient)
-            else                  modelWar:showEffectWin(      callbackOnWarEndedForClient)
+            if (isHumanLost) then
+                modelWar:showEffectLose(callbackOnWarEndedForClient)
+            else
+                if (modelWar:isCampaign()) then
+                    NativeWarManager.updateCampaignHighScore(getModelWarField(modelWar):getWarFieldFileName(), modelWar:getTotalScoreForCampaign())
+                end
+                modelWar:showEffectWin(callbackOnWarEndedForClient)
             end
         elseif (lostPlayerIndex == modelTurnManager:getPlayerIndex()) then
             modelTurnManager:endTurnPhaseMain()
@@ -464,6 +511,9 @@ local function executeBeginTurn(action, modelWar)
             elseif (lostPlayerIndex == modelPlayerManager:getPlayerIndexForHuman()) then
                 modelWar:showEffectLose(callbackOnWarEndedForClient)
             else
+                if (modelWar:isCampaign()) then
+                    NativeWarManager.updateCampaignHighScore(getModelWarField(modelWar):getWarFieldFileName(), modelWar:getTotalScoreForCampaign())
+                end
                 modelWar:showEffectWin(callbackOnWarEndedForClient)
             end
 
@@ -566,6 +616,9 @@ local function executeCaptureModelTile(action, modelWar)
                 if (isHumanLost) then
                     modelWar:showEffectLose(callbackOnWarEndedForClient)
                 else
+                    if (modelWar:isCampaign()) then
+                        NativeWarManager.updateCampaignHighScore(getModelWarField(modelWar):getWarFieldFileName(), modelWar:getTotalScoreForCampaign())
+                    end
                     modelWar:showEffectWin(callbackOnWarEndedForClient)
                 end
             end
@@ -592,8 +645,11 @@ end
 local function executeDestroyOwnedModelUnit(action, modelWar)
     modelWar:setExecutingAction(true)
 
-    local gridIndex = action.gridIndex
-    getModelFogMap(modelWar):updateMapForPathsWithModelUnitAndPath(getModelUnitMap(modelWar):getModelUnit(gridIndex), {gridIndex})
+    local gridIndex    = action.gridIndex
+    local modelUnitMap = getModelUnitMap(modelWar)
+    local modelUnit    = modelUnitMap:getModelUnit(gridIndex)
+    getModelFogMap(modelWar):updateMapForPathsWithModelUnitAndPath(modelUnit, {gridIndex})
+    modelWar:setTotalLostUnitValueForPlayer(modelWar:getTotalLostUnitValueForPlayer() + getLostValueWithModelUnitAndDamage(modelUnitMap, modelUnit, 100))
     Destroyers.destroyActorUnitOnMap(modelWar, gridIndex, true)
 
     getModelGridEffect(modelWar):showAnimationExplosion(gridIndex)
@@ -969,6 +1025,9 @@ local function executeSurrender(action, modelWar)
     elseif (isHumanLost) then
         modelWar:showEffectLose(callbackOnWarEndedForClient)
     else
+        if (modelWar:isCampaign()) then
+            NativeWarManager.updateCampaignHighScore(getModelWarField(modelWar):getWarFieldFileName(), modelWar:getTotalScoreForCampaign())
+        end
         modelWar:showEffectWin(callbackOnWarEndedForClient)
     end
 
@@ -1001,9 +1060,9 @@ end
 --------------------------------------------------------------------------------
 -- The public function.
 --------------------------------------------------------------------------------
-function ActionExecutorForWarCampaign.execute(action, modelWar)
+function ActionExecutorForWarNative.execute(action, modelWar)
     local actionCode = action.actionCode
-    assert(ActionCodeFunctions.getActionName(actionCode), "ActionExecutorForWarCampaign.executeReplayAction() invalid actionCode: " .. (actionCode or ""))
+    assert(ActionCodeFunctions.getActionName(actionCode), "ActionExecutorForWarNative.executeReplayAction() invalid actionCode: " .. (actionCode or ""))
 
     if     (actionCode == ACTION_CODES.ActionChat)                   then executeWebChat(               action, modelWar)
     elseif (actionCode == ACTION_CODES.ActionLogin)                  then executeWebLogin(              action, modelWar)
@@ -1032,7 +1091,7 @@ function ActionExecutorForWarCampaign.execute(action, modelWar)
     elseif (actionCode == ACTION_CODES.ActionWait)                   then executeWait(                  action, modelWar)
     end
 
-    return ActionExecutorForWarCampaign
+    return ActionExecutorForWarNative
 end
 
-return ActionExecutorForWarCampaign
+return ActionExecutorForWarNative

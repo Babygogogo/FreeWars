@@ -1,14 +1,15 @@
 
-local ViewNewCampaignSelector = class("ViewNewCampaignSelector", cc.Node)
+local ViewContinueWarSelectorForNative = class("ViewContinueWarSelectorForNative", cc.Node)
 
+local AuxiliaryFunctions    = requireFW("src.app.utilities.AuxiliaryFunctions")
 local LocalizationFunctions = requireFW("src.app.utilities.LocalizationFunctions")
 
-local CAMPAIGN_CONFIGURATOR_Z_ORDER    = 1
+local WAR_CONFIGURATOR_Z_ORDER    = 1
 local MENU_TITLE_Z_ORDER          = 1
 local MENU_LIST_VIEW_Z_ORDER      = 1
 local BUTTON_BACK_Z_ORDER         = 1
-local BUTTON_NEXT_Z_ORDER         = 1
 local WAR_FIELD_PREVIEWER_Z_ORDER = 1
+local BUTTON_NEXT_Z_ORDER         = 1
 local MENU_BACKGROUND_Z_ORDER     = 0
 
 local MENU_BACKGROUND_WIDTH     = 250
@@ -35,11 +36,10 @@ local MENU_LIST_VIEW_POS_X        = MENU_BACKGROUND_POS_X
 local MENU_LIST_VIEW_POS_Y        = BUTTON_BACK_POS_Y + BUTTON_BACK_HEIGHT
 local MENU_LIST_VIEW_ITEMS_MARGIN = 10
 
-local BUTTON_NEXT_WIDTH     = display.width - MENU_BACKGROUND_WIDTH - 90
-local BUTTON_NEXT_HEIGHT    = 60
-local BUTTON_NEXT_POS_X     = display.width - BUTTON_NEXT_WIDTH - 30
-local BUTTON_NEXT_POS_Y     = MENU_BACKGROUND_POS_Y
-local BUTTON_NEXT_FONT_SIZE = 30
+local BUTTON_NEXT_WIDTH  = display.width - MENU_BACKGROUND_WIDTH - 90
+local BUTTON_NEXT_HEIGHT = 60
+local BUTTON_NEXT_POS_X  = display.width - BUTTON_NEXT_WIDTH - 30
+local BUTTON_NEXT_POS_Y  = MENU_BACKGROUND_POS_Y
 
 local ITEM_WIDTH              = 230
 local ITEM_HEIGHT             = 50
@@ -50,11 +50,47 @@ local ITEM_FONT_COLOR         = {r = 255, g = 255, b = 255}
 local ITEM_FONT_OUTLINE_COLOR = {r = 0, g = 0, b = 0}
 local ITEM_FONT_OUTLINE_WIDTH = 2
 
+local WAR_NAME_INDICATOR_FONT_SIZE     = 15
+local WAR_NAME_INDICATOR_FONT_COLOR    = {r = 240, g = 80, b = 56}
+local WAR_NAME_INDICATOR_OUTLINE_WIDTH = 1
+
+local IN_TURN_INDICATOR_FONT_SIZE     = 15
+local IN_TURN_INDICATOR_FONT_COLOR    = {r = 96,  g = 224, b = 88}
+local IN_TURN_INDICATOR_OUTLINE_WIDTH = 1
+
 --------------------------------------------------------------------------------
 -- The util functions.
 --------------------------------------------------------------------------------
-local function createViewMenuItem(item)
-    local label = cc.Label:createWithTTF(item.name, ITEM_FONT_NAME, ITEM_FONT_SIZE)
+local function createSaveIndexIndicator(saveIndex)
+    local indicator = cc.Label:createWithTTF("" .. saveIndex, ITEM_FONT_NAME, WAR_NAME_INDICATOR_FONT_SIZE)
+    indicator:ignoreAnchorPointForPosition(true)
+
+        :setDimensions(ITEM_WIDTH, ITEM_HEIGHT)
+        :setHorizontalAlignment(cc.TEXT_ALIGNMENT_LEFT)
+        :setVerticalAlignment(cc.VERTICAL_TEXT_ALIGNMENT_TOP)
+
+        :setTextColor(WAR_NAME_INDICATOR_FONT_COLOR)
+        :enableOutline(ITEM_FONT_OUTLINE_COLOR, WAR_NAME_INDICATOR_OUTLINE_WIDTH)
+
+    return indicator
+end
+
+local function createIsInTurnIndicator()
+    local indicator = cc.Label:createWithTTF(LocalizationFunctions.getLocalizedText(49), ITEM_FONT_NAME, IN_TURN_INDICATOR_FONT_SIZE)
+    indicator:ignoreAnchorPointForPosition(true)
+
+        :setDimensions(ITEM_WIDTH, ITEM_HEIGHT)
+        :setHorizontalAlignment(cc.TEXT_ALIGNMENT_RIGHT)
+        :setVerticalAlignment(cc.VERTICAL_TEXT_ALIGNMENT_TOP)
+
+        :setTextColor(IN_TURN_INDICATOR_FONT_COLOR)
+        :enableOutline(ITEM_FONT_OUTLINE_COLOR, IN_TURN_INDICATOR_OUTLINE_WIDTH)
+
+    return indicator
+end
+
+local function createWarFieldNameIndicator(name)
+    local label = cc.Label:createWithTTF(name, ITEM_FONT_NAME, ITEM_FONT_SIZE)
     label:ignoreAnchorPointForPosition(true)
 
         :setDimensions(ITEM_WIDTH, ITEM_HEIGHT)
@@ -64,6 +100,10 @@ local function createViewMenuItem(item)
         :setTextColor(ITEM_FONT_COLOR)
         :enableOutline(ITEM_FONT_OUTLINE_COLOR, ITEM_FONT_OUTLINE_WIDTH)
 
+    return label
+end
+
+local function createViewMenuItem(item)
     local view = ccui.Button:create()
     view:loadTextureNormal("c03_t06_s01_f01.png", ccui.TextureResType.plistType)
 
@@ -78,7 +118,10 @@ local function createViewMenuItem(item)
                 item.callback()
             end
         end)
-    view:getRendererNormal():addChild(label)
+
+    local backgroundRenderer = view:getRendererNormal()
+    backgroundRenderer:addChild(createWarFieldNameIndicator(item.warFieldName))
+        :addChild(createSaveIndexIndicator(item.saveIndex))
 
     return view
 end
@@ -99,17 +142,19 @@ end
 
 local function initMenuListView(self)
     local listView = ccui.ListView:create()
-    listView:setPosition(MENU_LIST_VIEW_POS_X, MENU_LIST_VIEW_POS_Y)
+    listView:ignoreAnchorPointForPosition(true)
+        :setPosition(MENU_LIST_VIEW_POS_X, MENU_LIST_VIEW_POS_Y)
         :setContentSize(MENU_LIST_VIEW_WIDTH, MENU_LIST_VIEW_HEIGHT)
+
         :setItemsMargin(MENU_LIST_VIEW_ITEMS_MARGIN)
         :setGravity(ccui.ListViewGravity.centerHorizontal)
 
     self.m_MenuListView = listView
-    self:addChild(listView, MENU_LIST_VIEW_Z_ORDER)
+    self:addChild(listView)
 end
 
 local function initMenuTitle(self)
-    local title = cc.Label:createWithTTF(LocalizationFunctions.getLocalizedText(1, "NewGame"), ITEM_FONT_NAME, MENU_TITLE_FONT_SIZE)
+    local title = cc.Label:createWithTTF(LocalizationFunctions.getLocalizedText(1, "Load Game"), ITEM_FONT_NAME, MENU_TITLE_FONT_SIZE)
     title:ignoreAnchorPointForPosition(true)
         :setPosition(MENU_TITLE_POS_X, MENU_TITLE_POS_Y)
 
@@ -166,9 +211,11 @@ local function initButtonNext(self)
         :setPosition(BUTTON_NEXT_POS_X, BUTTON_NEXT_POS_Y)
 
         :setTitleFontName(ITEM_FONT_NAME)
-        :setTitleFontSize(BUTTON_NEXT_FONT_SIZE)
+        :setTitleFontSize(ITEM_FONT_SIZE)
         :setTitleColor(ITEM_FONT_COLOR)
         :setTitleText(LocalizationFunctions.getLocalizedText(33))
+
+        :setVisible(false)
 
         :addTouchEventListener(function(sender, eventType)
             if ((eventType == ccui.TouchEventType.ended) and (self.m_Model)) then
@@ -185,7 +232,7 @@ end
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
-function ViewNewCampaignSelector:ctor(param)
+function ViewContinueWarSelectorForNative:ctor(param)
     initMenuBackground(self)
     initMenuListView(  self)
     initMenuTitle(     self)
@@ -195,18 +242,18 @@ function ViewNewCampaignSelector:ctor(param)
     return self
 end
 
-function ViewNewCampaignSelector:setViewWarFieldPreviewer(view)
-    assert(self.m_ViewWarFieldPreviewer == nil, "ViewNewCampaignSelector:setViewWarFieldPreviewer() the view has been set.")
+function ViewContinueWarSelectorForNative:setViewWarFieldPreviewer(view)
+    assert(self.m_ViewWarFieldPreviewer == nil, "ViewContinueWarSelectorForNative:setViewWarFieldPreviewer() the view has been set.")
     self.m_ViewWarFieldPreviewer = view
     self:addChild(view, WAR_FIELD_PREVIEWER_Z_ORDER)
 
     return self
 end
 
-function ViewNewCampaignSelector:setViewCampaignConfigurator(view)
-    assert(self.m_ViewCampaignConfigurator == nil, "ViewNewCampaignSelector:setViewCampaignConfigurator() the view has been set.")
-    self.m_ViewCampaignConfigurator = view
-    self:addChild(view, CAMPAIGN_CONFIGURATOR_Z_ORDER)
+function ViewContinueWarSelectorForNative:setViewWarConfiguratorForNative(view)
+    assert(self.m_ViewWarConfiguratorForNative == nil, "ViewContinueWarSelectorForNative:setViewWarConfiguratorForNative() the view has been set.")
+    self.m_ViewWarConfiguratorForNative = view
+    self:addChild(view, WAR_CONFIGURATOR_Z_ORDER)
 
     return self
 end
@@ -214,19 +261,13 @@ end
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
-function ViewNewCampaignSelector:setMenuTitleText(text)
-    self.m_MenuTitle:setString(text)
-
-    return self
-end
-
-function ViewNewCampaignSelector:removeAllItems()
+function ViewContinueWarSelectorForNative:removeAllItems()
     self.m_MenuListView:removeAllItems()
 
     return self
 end
 
-function ViewNewCampaignSelector:showListWarField(list)
+function ViewContinueWarSelectorForNative:showWarList(list)
     for _, listItem in ipairs(list) do
         self.m_MenuListView:pushBackCustomItem(createViewMenuItem(listItem))
     end
@@ -236,19 +277,19 @@ function ViewNewCampaignSelector:showListWarField(list)
     return self
 end
 
-function ViewNewCampaignSelector:createAndPushBackItem(item)
+function ViewContinueWarSelectorForNative:createAndPushBackItem(item)
     self.m_MenuListView:pushBackCustomItem(createViewMenuItem(item))
 
     return self
 end
 
-function ViewNewCampaignSelector:setButtonNextVisible(visible)
+function ViewContinueWarSelectorForNative:setButtonNextVisible(visible)
     self.m_ButtonNext:setVisible(visible)
 
     return self
 end
 
-function ViewNewCampaignSelector:setMenuVisible(visible)
+function ViewContinueWarSelectorForNative:setMenuVisible(visible)
     self.m_MenuBackground:setVisible(visible)
     self.m_ButtonBack:setVisible(visible)
     self.m_MenuListView:setVisible(visible)
@@ -258,4 +299,4 @@ function ViewNewCampaignSelector:setMenuVisible(visible)
     return self
 end
 
-return ViewNewCampaignSelector
+return ViewContinueWarSelectorForNative

@@ -4,9 +4,11 @@ local ModelWarFieldPreviewer = class("ModelWarFieldPreviewer")
 local AnimationLoader       = requireFW("src.app.utilities.AnimationLoader")
 local GameConstantFunctions = requireFW("src.app.utilities.GameConstantFunctions")
 local GridIndexFunctions    = requireFW("src.app.utilities.GridIndexFunctions")
+local LocalizationFunctions = requireFW("src.app.utilities.LocalizationFunctions")
 local WarFieldManager       = requireFW("src.app.utilities.WarFieldManager")
 
-local cc = cc
+local cc               = cc
+local getLocalizedText = LocalizationFunctions.getLocalizedText
 
 --------------------------------------------------------------------------------
 -- The composition elements.
@@ -92,14 +94,14 @@ function ModelWarFieldPreviewer:setWarField(warFieldFileName)
 
         self.m_View:setIsRandomWarField(isRandom)
             :setPlayersCount(WarFieldManager.getPlayersCount(      warFieldFileName))
-            :setAuthorName(  WarFieldManager.getWarFieldAuthorName(warFieldFileName))
+            :setRightLabelText(getLocalizedText(48, "Author") .. WarFieldManager.getWarFieldAuthorName(warFieldFileName))
     end
 
     return self
 end
 
-function ModelWarFieldPreviewer:setPlayerNicknames(names)
-    self.m_View:setPlayerNicknames(names)
+function ModelWarFieldPreviewer:setLeftLabelText(text)
+    self.m_View:setLeftLabelText(text)
 
     return self
 end

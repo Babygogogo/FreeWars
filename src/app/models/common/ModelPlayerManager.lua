@@ -66,7 +66,7 @@ function ModelPlayerManager:onStartRunning(modelWar)
     end)
 
     if (not IS_SERVER) then
-        if (SingletonGetters.isWarCampaign(modelWar)) then
+        if (SingletonGetters.isWarNative(modelWar)) then
             self.m_ModelPlayerForHuman, self.m_PlayerIndexForHuman = self:getModelPlayerWithAccount("Player")
         elseif (SingletonGetters.isWarOnline(modelWar)) then
             self.m_ModelPlayerLoggedIn, self.m_PlayerIndexLoggedIn = self:getModelPlayerWithAccount(WebSocketManager.getLoggedInAccountAndPassword())

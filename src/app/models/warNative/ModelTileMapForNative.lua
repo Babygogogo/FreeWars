@@ -1,5 +1,5 @@
 
-local ModelTileMapForCampaign = requireFW("src.global.functions.class")("ModelTileMapForCampaign")
+local ModelTileMapForNative = requireFW("src.global.functions.class")("ModelTileMapForNative")
 
 local GameConstantFunctions  = requireFW("src.app.utilities.GameConstantFunctions")
 local SerializationFunctions = requireFW("src.app.utilities.SerializationFunctions")
@@ -44,7 +44,7 @@ local function createActorTilesMapWithWarFieldFileName(warFieldFileName)
                 baseID        = baseLayerData[idIndex],
                 GridIndexable = {x = x, y = y},
             }
-            map[x][y] = Actor.createWithModelAndViewName("warCampaign.ModelTileForCampaign", actorData, "common.ViewTile")
+            map[x][y] = Actor.createWithModelAndViewName("warNative.ModelTileForNative", actorData, "common.ViewTile")
         end
     end
 
@@ -86,7 +86,7 @@ end
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
-function ModelTileMapForCampaign:ctor(param, warFieldFileName)
+function ModelTileMapForNative:ctor(param, warFieldFileName)
     if (self.m_ActorTilesMap) then
         resetActorTilesMap(self.m_ActorTilesMap, self.m_MapSize, warFieldFileName)
         updateActorTilesMapWithTilesData(self.m_ActorTilesMap, self.m_MapSize.height, param.tiles)
@@ -101,9 +101,9 @@ function ModelTileMapForCampaign:ctor(param, warFieldFileName)
     return self
 end
 
-function ModelTileMapForCampaign:initView()
+function ModelTileMapForNative:initView()
     local view = self.m_View
-    assert(view, "ModelTileMapForCampaign:initView() no view is attached to the owner actor of the model.")
+    assert(view, "ModelTileMapForNative:initView() no view is attached to the owner actor of the model.")
     view:removeAllChildren()
 
     local mapSize = self:getMapSize()
@@ -119,7 +119,7 @@ end
 --------------------------------------------------------------------------------
 -- The function for serialization.
 --------------------------------------------------------------------------------
-function ModelTileMapForCampaign:toSerializableTable()
+function ModelTileMapForNative:toSerializableTable()
     local tiles = {}
     self:forEachModelTile(function(modelTile)
         tiles[modelTile:getPositionIndex()] = modelTile:toSerializableTable()
@@ -131,7 +131,7 @@ end
 --------------------------------------------------------------------------------
 -- The callback functions on start running/script events.
 --------------------------------------------------------------------------------
-function ModelTileMapForCampaign:onStartRunning(modelWar)
+function ModelTileMapForNative:onStartRunning(modelWar)
     self.m_ModelWar = modelWar
     self:forEachModelTile(function(modelTile)
         modelTile:onStartRunning(modelWar)
@@ -140,7 +140,7 @@ function ModelTileMapForCampaign:onStartRunning(modelWar)
     return self
 end
 
-function ModelTileMapForCampaign:updateOnModelFogMapStartedRunning()
+function ModelTileMapForNative:updateOnModelFogMapStartedRunning()
     local playerIndex = SingletonGetters.getModelPlayerManager(self.m_ModelWar):getPlayerIndexForHuman()
     self:forEachModelTile(function(modelTile)
         modelTile:updateView()
@@ -152,20 +152,20 @@ end
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
-function ModelTileMapForCampaign:getMapSize()
+function ModelTileMapForNative:getMapSize()
     return self.m_MapSize
 end
 
-function ModelTileMapForCampaign:getModelTile(gridIndex)
+function ModelTileMapForNative:getModelTile(gridIndex)
     return self.m_ActorTilesMap[gridIndex.x][gridIndex.y]:getModel()
 end
 
-function ModelTileMapForCampaign:getModelTileWithPositionIndex(positionIndex)
+function ModelTileMapForNative:getModelTileWithPositionIndex(positionIndex)
     local x, y = getXYWithPositionIndex(positionIndex, self:getMapSize().height)
     return self.m_ActorTilesMap[x][y]:getModel()
 end
 
-function ModelTileMapForCampaign:forEachModelTile(func)
+function ModelTileMapForNative:forEachModelTile(func)
     local mapSize = self:getMapSize()
     for x = 1, mapSize.width do
         for y = 1, mapSize.height do
@@ -176,4 +176,4 @@ function ModelTileMapForCampaign:forEachModelTile(func)
     return self
 end
 
-return ModelTileMapForCampaign
+return ModelTileMapForNative

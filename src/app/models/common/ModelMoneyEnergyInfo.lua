@@ -88,7 +88,7 @@ function ModelMoneyEnergyInfo:onStartRunning(modelWar)
 
     if (self.m_IsWarReplay) then
         self.m_ModelReplayController = SingletonGetters.getModelReplayController(modelWar)
-    elseif (SingletonGetters.isWarCampaign(modelWar)) then
+    elseif (SingletonGetters.isWarNative(modelWar)) then
         self.m_PlayerIndexForPlayer = self.m_ModelPlayerManager:getPlayerIndexForHuman()
     else
         self.m_ModelChatManager     = SingletonGetters.getModelChatManager(   modelWar)

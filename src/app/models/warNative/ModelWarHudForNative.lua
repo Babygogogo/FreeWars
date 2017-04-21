@@ -1,5 +1,5 @@
 
-local ModelWarHudForCampaign = class("ModelWarHudForCampaign")
+local ModelWarHudForNative = class("ModelWarHudForNative")
 
 local Actor = requireFW("src.global.actors.Actor")
 
@@ -7,7 +7,7 @@ local Actor = requireFW("src.global.actors.Actor")
 -- The composition actors.
 --------------------------------------------------------------------------------
 local function initActorWarCommandMenu(self)
-    self.m_ActorWarCommandMenu = Actor.createWithModelAndViewName("warCampaign.ModelWarCommandMenuForCampaign", nil, "common.ViewWarCommandMenu")
+    self.m_ActorWarCommandMenu = Actor.createWithModelAndViewName("warNative.ModelWarCommandMenuForNative", nil, "common.ViewWarCommandMenu")
 end
 
 local function initActorMoneyEnergyInfo(self)
@@ -47,7 +47,7 @@ end
 --------------------------------------------------------------------------------
 -- The contructor and initializers.
 --------------------------------------------------------------------------------
-function ModelWarHudForCampaign:ctor()
+function ModelWarHudForNative:ctor()
     initActorWarCommandMenu( self)
     initActorMoneyEnergyInfo(self)
     initActorActionMenu(     self)
@@ -60,9 +60,9 @@ function ModelWarHudForCampaign:ctor()
     return self
 end
 
-function ModelWarHudForCampaign:initView()
+function ModelWarHudForNative:initView()
     local view = self.m_View
-    assert(view, "ModelWarHudForCampaign:initView() no view is attached to the actor of the model.")
+    assert(view, "ModelWarHudForNative:initView() no view is attached to the actor of the model.")
 
     view:setViewActionMenu(     self.m_ActorActionMenu:     getView())
         :setViewBattleInfo(     self.m_ActorBattleInfo:     getView())
@@ -79,7 +79,7 @@ end
 --------------------------------------------------------------------------------
 -- The public callback function on start running.
 --------------------------------------------------------------------------------
-function ModelWarHudForCampaign:onStartRunning(modelWar)
+function ModelWarHudForNative:onStartRunning(modelWar)
     self.m_ActorActionMenu     :getModel():onStartRunning(modelWar)
     self.m_ActorBattleInfo     :getModel():onStartRunning(modelWar)
     self.m_ActorMoneyEnergyInfo:getModel():onStartRunning(modelWar)
@@ -94,8 +94,8 @@ end
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
-function ModelWarHudForCampaign:getModelWarCommandMenu()
+function ModelWarHudForNative:getModelWarCommandMenu()
     return self.m_ActorWarCommandMenu:getModel()
 end
 
-return ModelWarHudForCampaign
+return ModelWarHudForNative

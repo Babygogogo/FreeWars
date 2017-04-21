@@ -1,19 +1,11 @@
 
---[[--------------------------------------------------------------------------------
--- ModelContinueCampaignSelector是主场景中的“已参战、未结束的战局”的列表。
---
--- 主要职责和使用场景举例：
---   构造并显示上述战局列表
---
---]]--------------------------------------------------------------------------------
-
-local ModelContinueCampaignSelector = class("ModelContinueCampaignSelector")
+local ModelContinueWarSelectorForNative = class("ModelContinueWarSelectorForNative")
 
 local ActionCodeFunctions   = requireFW("src.app.utilities.ActionCodeFunctions")
 local AuxiliaryFunctions    = requireFW("src.app.utilities.AuxiliaryFunctions")
 local LocalizationFunctions = requireFW("src.app.utilities.LocalizationFunctions")
+local NativeWarManager      = requireFW("src.app.utilities.NativeWarManager")
 local SingletonGetters      = requireFW("src.app.utilities.SingletonGetters")
-local WarCampaignManager    = requireFW("src.app.utilities.WarCampaignManager")
 local WarFieldManager       = requireFW("src.app.utilities.WarFieldManager")
 local Actor                 = requireFW("src.global.actors.Actor")
 local ActorManager          = requireFW("src.global.actors.ActorManager")
@@ -27,14 +19,14 @@ local ACTION_CODE_RUN_SCENE_WAR                  = ActionCodeFunctions.getAction
 --------------------------------------------------------------------------------
 -- The util functions.
 --------------------------------------------------------------------------------
-local function getPlayerNicknames(campaignConfiguration, currentTime)
-    local players = campaignConfiguration.players
-    local names   = {}
-    for i = 1, WarFieldManager.getPlayersCount(campaignConfiguration.warFieldFileName) do
-        names[i] = string.format("%s (%s: %s)", players[i].account, getLocalizedText(14, "TeamIndex"), AuxiliaryFunctions.getTeamNameWithTeamIndex(players[i].teamIndex))
+local function generateLeftLabelText(warConfiguration)
+    local players  = warConfiguration.players
+    local textList = {getLocalizedText(48, "Players")}
+    for i = 1, WarFieldManager.getPlayersCount(warConfiguration.warFieldFileName) do
+        textList[#textList + 1] = string.format("%d. %s (%s: %s)", i, players[i].account, getLocalizedText(14, "TeamIndex"), AuxiliaryFunctions.getTeamNameWithTeamIndex(players[i].teamIndex))
     end
 
-    return names
+    return table.concat(textList, "\n")
 end
 
 --------------------------------------------------------------------------------
@@ -51,10 +43,10 @@ local function getActorWarFieldPreviewer(self)
     return self.m_ActorWarFieldPreviewer
 end
 
-local function getActorCampaignConfigurator(self)
-    if (not self.m_ActorCampaignConfigurator) then
-        local model = Actor.createModel("sceneMain.ModelCampaignConfigurator")
-        local view  = Actor.createView( "sceneMain.ViewCampaignConfigurator")
+local function getActorWarConfiguratorForNative(self)
+    if (not self.m_ActorWarConfiguratorForNative) then
+        local model = Actor.createModel("sceneMain.ModelWarConfiguratorForNative")
+        local view  = Actor.createView( "sceneMain.ViewWarConfiguratorForNative")
 
         model:setModeContinue()
             :setEnabled(false)
@@ -66,29 +58,29 @@ local function getActorCampaignConfigurator(self)
                     :setButtonNextVisible(false)
             end)
 
-        self.m_ActorCampaignConfigurator = Actor.createWithModelAndViewInstance(model, view)
-        self.m_View:setViewCampaignConfigurator(view)
+        self.m_ActorWarConfiguratorForNative = Actor.createWithModelAndViewInstance(model, view)
+        self.m_View:setViewWarConfiguratorForNative(view)
     end
 
-    return self.m_ActorCampaignConfigurator
+    return self.m_ActorWarConfiguratorForNative
 end
 
-local function createCampaignList(self, campaignConfigurations)
+local function createWarList(self, warConfigurations)
     local warList = {}
-    for _, campaignConfiguration in pairs(campaignConfigurations) do
-        local warFieldFileName  = campaignConfiguration.warFieldFileName
+    for _, warConfiguration in pairs(warConfigurations) do
+        local warFieldFileName  = warConfiguration.warFieldFileName
         warList[#warList + 1] = {
-            saveIndex    = campaignConfiguration.saveIndex,
+            saveIndex    = warConfiguration.saveIndex,
             warFieldName = WarFieldManager.getWarFieldName(warFieldFileName),
             callback     = function()
                 getActorWarFieldPreviewer(self):getModel():setWarField(warFieldFileName)
-                    :setPlayerNicknames(getPlayerNicknames(campaignConfiguration))
+                    :setLeftLabelText(generateLeftLabelText(warConfiguration))
                     :setEnabled(true)
                 self.m_View:setButtonNextVisible(true)
 
                 self.m_OnButtonNextTouched = function()
                     getActorWarFieldPreviewer(self):getModel():setEnabled(false)
-                    getActorCampaignConfigurator(self):getModel():resetWithCampaignConfiguration(campaignConfiguration)
+                    getActorWarConfiguratorForNative(self):getModel():resetWithWarConfiguration(warConfiguration)
                         :setEnabled(true)
 
                     self.m_View:setMenuVisible(false)
@@ -104,28 +96,28 @@ end
 local function resetMenuItems(self)
     self.m_View:removeAllItems()
 
-    local campaignConfigurations = WarCampaignManager.getAllCampaignConfigurations()
-    local campaignList           = createCampaignList(self, campaignConfigurations)
-    if (#campaignList == 0) then
+    local warConfigurations = NativeWarManager.getAllWarConfigurations()
+    local warList           = createWarList(self, warConfigurations)
+    if (#warList == 0) then
         SingletonGetters.getModelMessageIndicator(self.m_ModelSceneMain):showMessage(getLocalizedText(8, "NoContinuableWar"))
     else
-        self.m_View:showWarList(campaignList)
+        self.m_View:showWarList(warList)
     end
 end
 
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
-function ModelContinueCampaignSelector:ctor(param)
+function ModelContinueWarSelectorForNative:ctor(param)
     return self
 end
 
 --------------------------------------------------------------------------------
 -- The callback function on start running.
 --------------------------------------------------------------------------------
-function ModelContinueCampaignSelector:onStartRunning(modelSceneMain)
+function ModelContinueWarSelectorForNative:onStartRunning(modelSceneMain)
     self.m_ModelSceneMain = modelSceneMain
-    getActorCampaignConfigurator(self):getModel():onStartRunning(modelSceneMain)
+    getActorWarConfiguratorForNative(self):getModel():onStartRunning(modelSceneMain)
 
     return self
 end
@@ -133,7 +125,7 @@ end
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
-function ModelContinueCampaignSelector:setEnabled(enabled)
+function ModelContinueWarSelectorForNative:setEnabled(enabled)
     self.m_IsEnabled = enabled
 
     if (self.m_View) then
@@ -147,14 +139,14 @@ function ModelContinueCampaignSelector:setEnabled(enabled)
     end
 
     getActorWarFieldPreviewer(self):getModel():setEnabled(false)
-    getActorCampaignConfigurator(self):getModel():setEnabled(false)
+    getActorWarConfiguratorForNative(self):getModel():setEnabled(false)
 
     return self
 end
 
-function ModelContinueCampaignSelector:updateWithOngoingWarConfigurations(campaignConfigurations)
+function ModelContinueWarSelectorForNative:updateWithOngoingWarConfigurations(warConfigurations)
     if (self.m_IsEnabled) then
-        local warList = createCampaignList(self, campaignConfigurations)
+        local warList = createWarList(self, warConfigurations)
         if (#warList == 0) then
             SingletonGetters.getModelMessageIndicator(self.m_ModelSceneMain):showMessage(getLocalizedText(8, "NoContinuableWar"))
         else
@@ -165,17 +157,17 @@ function ModelContinueCampaignSelector:updateWithOngoingWarConfigurations(campai
     return self
 end
 
-function ModelContinueCampaignSelector:onButtonBackTouched()
+function ModelContinueWarSelectorForNative:onButtonBackTouched()
     self:setEnabled(false)
     SingletonGetters.getModelMainMenu(self.m_ModelSceneMain):setMenuEnabled(true)
 
     return self
 end
 
-function ModelContinueCampaignSelector:onButtonNextTouched()
+function ModelContinueWarSelectorForNative:onButtonNextTouched()
     self.m_OnButtonNextTouched()
 
     return self
 end
 
-return ModelContinueCampaignSelector
+return ModelContinueWarSelectorForNative

@@ -114,7 +114,7 @@ function ModelUnitInfo:onStartRunning(modelWar)
     self.m_ModelUnitMap        = SingletonGetters.getModelUnitMap(       modelWar)
     self.m_ModelWarCommandMenu = SingletonGetters.getModelWarCommandMenu(modelWar)
 
-    if (SingletonGetters.isWarCampaign(modelWar)) then
+    if (SingletonGetters.isWarNative(modelWar)) then
         self.m_PlayerIndexForPlayer = self.m_ModelPlayerManager:getPlayerIndexForHuman()
     elseif (SingletonGetters.isWarOnline(modelWar)) then
         self.m_PlayerIndexForPlayer = SingletonGetters.getPlayerIndexLoggedIn(modelWar)

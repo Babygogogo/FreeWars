@@ -61,9 +61,27 @@ local ITEM_FONT_COLOR         = {r = 255, g = 255, b = 255}
 local ITEM_FONT_OUTLINE_COLOR = {r = 0,   g = 0,   b = 0}
 local ITEM_FONT_OUTLINE_WIDTH = 2
 
+local LEFT_INDICATOR_FONT_SIZE     = 15
+local LEFT_INDICATOR_FONT_COLOR    = {r = 240, g = 80, b = 56}
+local LEFT_INDICATOR_OUTLINE_WIDTH = 1
+
 --------------------------------------------------------------------------------
 -- The util functions.
 --------------------------------------------------------------------------------
+local function createLeftIndicator(text)
+    local indicator = cc.Label:createWithTTF(text, ITEM_FONT_NAME, LEFT_INDICATOR_FONT_SIZE)
+    indicator:ignoreAnchorPointForPosition(true)
+
+        :setDimensions(ITEM_WIDTH, ITEM_HEIGHT)
+        :setHorizontalAlignment(cc.TEXT_ALIGNMENT_LEFT)
+        :setVerticalAlignment(cc.VERTICAL_TEXT_ALIGNMENT_TOP)
+
+        :setTextColor(LEFT_INDICATOR_FONT_COLOR)
+        :enableOutline(ITEM_FONT_OUTLINE_COLOR, LEFT_INDICATOR_OUTLINE_WIDTH)
+
+    return indicator
+end
+
 local function createViewItem(item)
     local label = cc.Label:createWithTTF(item.name, ITEM_FONT_NAME, ITEM_FONT_SIZE)
     label:ignoreAnchorPointForPosition(true)
@@ -92,8 +110,12 @@ local function createViewItem(item)
             end
         end)
 
-    view:getRendererNormal():setCascadeColorEnabled(true)
+    local rendererNormal = view:getRendererNormal()
+    rendererNormal:setCascadeColorEnabled(true)
         :addChild(label)
+    if (item.leftIndicatorText) then
+        rendererNormal:addChild(createLeftIndicator(item.leftIndicatorText))
+    end
 
     if (item.isAvailable == false) then
         view:setColor(ITEM_DISABLED_COLOR)
@@ -274,6 +296,12 @@ function ViewWarCommandMenu:setMenuVisible(visible)
     self.m_MenuListView  :setVisible(visible)
     self.m_MenuTitle     :setVisible(visible)
     self.m_ButtonBack    :setVisible(visible)
+
+    return self
+end
+
+function ViewWarCommandMenu:setMenuTitleText(text)
+    self.m_MenuTitle:setString(text)
 
     return self
 end

@@ -24,17 +24,17 @@ end
 --------------------------------------------------------------------------------
 -- The composition actors.
 --------------------------------------------------------------------------------
-local function getActorContinueCampaignSelector(self)
-    if (not self.m_ActorContinueCampaignSelector) then
-        local actor = Actor.createWithModelAndViewName("sceneMain.ModelContinueCampaignSelector", nil, "sceneMain.ViewContinueCampaignSelector")
+local function getActorContinueWarSelectorForNative(self)
+    if (not self.m_ActorContinueWarSelectorForNative) then
+        local actor = Actor.createWithModelAndViewName("sceneMain.ModelContinueWarSelectorForNative", nil, "sceneMain.ViewContinueWarSelectorForNative")
         actor:getModel():onStartRunning(self.m_ModelSceneMain)
             :setEnabled(false)
 
-        self.m_ActorContinueCampaignSelector = actor
-        self.m_View:setViewContinueCampaignSelector(actor:getView())
+        self.m_ActorContinueWarSelectorForNative = actor
+        self.m_View:setViewContinueWarSelectorForNative(actor:getView())
     end
 
-    return self.m_ActorContinueCampaignSelector
+    return self.m_ActorContinueWarSelectorForNative
 end
 
 local function getActorContinueWarSelector(self)
@@ -76,17 +76,17 @@ local function getActorJoinWarSelector(self)
     return self.m_ActorJoinWarSelector
 end
 
-local function getActorNewCampaignSelector(self)
-    if (not self.m_ActorNewCampaignSelector) then
-        local actor = Actor.createWithModelAndViewName("sceneMain.ModelNewCampaignSelector", nil, "sceneMain.ViewNewCampaignSelector")
+local function getActorNewWarSelectorForNative(self)
+    if (not self.m_ActorNewWarSelectorForNative) then
+        local actor = Actor.createWithModelAndViewName("sceneMain.ModelNewWarSelectorForNative", nil, "sceneMain.ViewNewWarSelectorForNative")
         actor:getModel():onStartRunning(self.m_ModelSceneMain)
             :setEnabled(false)
 
-        self.m_ActorNewCampaignSelector = actor
-        self.m_View:setViewNewCampaignSelector(actor:getView())
+        self.m_ActorNewWarSelectorForNative = actor
+        self.m_View:setViewNewWarSelectorForNative(actor:getView())
     end
 
-    return self.m_ActorNewCampaignSelector
+    return self.m_ActorNewWarSelectorForNative
 end
 
 local function getActorNewWarCreator(self)
@@ -234,7 +234,7 @@ local function initItemSingleCampaign(self)
         name     = getLocalizedText(1, "Campaign"),
         callback = function()
             self:setMenuEnabled(false)
-            self:getModelNewCampaignSelector()
+            self:getModelNewWarSelectorForNative()
                 :setModeCampaign()
                 :setEnabled(true)
         end
@@ -373,7 +373,7 @@ local function initItemSingleLoadGame(self)
         name     = getLocalizedText(1, "Load Game"),
         callback = function()
             self:setMenuEnabled(false)
-                :getModelContinueCampaignSelector():setEnabled(true)
+                :getModelContinueWarSelectorForNative():setEnabled(true)
         end
     }
 end
@@ -383,7 +383,7 @@ local function initItemSingleFreeGame(self)
         name     = getLocalizedText(1, "Free Game"),
         callback = function()
             self:setMenuEnabled(false)
-            self:getModelNewCampaignSelector()
+            self:getModelNewWarSelectorForNative()
                 :setModeFreeGame()
                 :setEnabled(true)
         end,
@@ -489,8 +489,8 @@ function ModelMainMenu:onButtonExitTouched()
     return self
 end
 
-function ModelMainMenu:getModelContinueCampaignSelector()
-    return getActorContinueCampaignSelector(self):getModel()
+function ModelMainMenu:getModelContinueWarSelectorForNative()
+    return getActorContinueWarSelectorForNative(self):getModel()
 end
 
 function ModelMainMenu:getModelContinueWarSelector()
@@ -513,8 +513,8 @@ function ModelMainMenu:getModelLoginPanel()
     return getActorLoginPanel(self):getModel()
 end
 
-function ModelMainMenu:getModelNewCampaignSelector()
-    return getActorNewCampaignSelector(self):getModel()
+function ModelMainMenu:getModelNewWarSelectorForNative()
+    return getActorNewWarSelectorForNative(self):getModel()
 end
 
 function ModelMainMenu:getModelNewWarCreator()

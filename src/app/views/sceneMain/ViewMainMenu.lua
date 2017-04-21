@@ -163,9 +163,9 @@ function ViewMainMenu:ctor(param)
     return self
 end
 
-function ViewMainMenu:setViewContinueCampaignSelector(view)
-    assert(self.m_ViewContinueCampaignSelector == nil, "ViewMainMenu:setViewContinueCampaignSelector() the view has been set already.")
-    self.m_ViewContinueCampaignSelector = view
+function ViewMainMenu:setViewContinueWarSelectorForNative(view)
+    assert(self.m_ViewContinueWarSelectorForNative == nil, "ViewMainMenu:setViewContinueWarSelectorForNative() the view has been set already.")
+    self.m_ViewContinueWarSelectorForNative = view
     self:addChild(view, CONTINUE_GAME_SELECTOR_Z_ORDER)
 
     return self
@@ -195,9 +195,9 @@ function ViewMainMenu:setViewJoinWarSelector(view)
     return self
 end
 
-function ViewMainMenu:setViewNewCampaignSelector(view)
-    assert(self.m_ViewNewCampaignSelector == nil, "ViewMainMenu:setViewNewCampaignSelector() the view has been set already.")
-    self.m_ViewNewCampaignSelector = view
+function ViewMainMenu:setViewNewWarSelectorForNative(view)
+    assert(self.m_ViewNewWarSelectorForNative == nil, "ViewMainMenu:setViewNewWarSelectorForNative() the view has been set already.")
+    self.m_ViewNewWarSelectorForNative = view
     self:addChild(view, NEW_GAME_CREATOR_Z_ORDER)
 
     return self

@@ -6,6 +6,10 @@ return {
   width = 12,
   height = 9,
 
+  advancedSettings = {
+    targetTurnsCount = 9,
+  },
+
   layers = {
     {
       type = "tilelayer",

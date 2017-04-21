@@ -2,11 +2,18 @@ return {
     Campaign = {
         "PVE_YiDongYuJinGong",
         "PVE_JianZhuWu",
+        "PVE_BaoChiWeiXiao",
+        "PVE_DieLianHua",
         "PVE_DuMuQiao",
+        "PVE_ELuoSiFangKuai",
         "PVE_HuanChongDai",
+        "PVE_HuiXingZhen",
         "PVE_MengHuChuShan",
         "PVE_ShenHanZhiHai",
+        "PVE_WangPaiKongJun",
         "PVE_WeiWenTuMing",
+        "PVE_WuDaoKou",
+        "PVE_YongChuangAnGeLuo",
     },
 
     MultiPlayerGame = {

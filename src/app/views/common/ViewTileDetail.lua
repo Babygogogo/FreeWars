@@ -219,7 +219,7 @@ local function updateCaptureInfoWithModelTile(self, tile)
         self.m_CaptureLabel:setString(LocalizationFunctions.getLocalizedText(107))
     else
         local modelWar     = self.m_Model:getModelWar()
-        local capturePoint = ((SingletonGetters.isWarCampaign(modelWar)) and (not isTileVisible(modelWar, tile:getGridIndex(), SingletonGetters.getModelPlayerManager(modelWar):getPlayerIndexForHuman()))) and
+        local capturePoint = ((SingletonGetters.isWarNative(modelWar)) and (not isTileVisible(modelWar, tile:getGridIndex(), SingletonGetters.getModelPlayerManager(modelWar):getPlayerIndexForHuman()))) and
             tile:getMaxCapturePoint()                                                                                                                                                                       or
             tile:getCurrentCapturePoint()
         self.m_CaptureLabel:setString(LocalizationFunctions.getLocalizedText(106, capturePoint, tile:getMaxCapturePoint()))

@@ -690,6 +690,7 @@
     warID               0 :  integer
     warFieldFileName    1 :  string
     players             2 : *PlayerInfo
+    actionsCount        3 :  integer
 }
 
 .ReplayListForClient {
@@ -764,41 +765,57 @@
         expiringTurnIndexForWeather   3 : integer
     }
 
-    warID                      0 :  integer
-    actionID                   1 :  integer
-    isWarEnded                 3 :  boolean
-    isRandomWarField           4 :  boolean
-    isFogOfWarByDefault        5 :  boolean
-    isTotalReplay              6 :  boolean
-    warPassword                7 :  string
-    executedActions            8 : *ActionGeneric
-    players                    9 : *SinglePlayerData(playerIndex)
-    turn                      10 :  TurnData
-    warField                  11 :  WarFieldData
-    weather                   12 :  WeatherData
-    remainingVotesForDraw     13 :  integer
-    isRankMatch               14 :  boolean
-    maxDiffScore              15 :  integer
-    createdTime               16 :  integer
-    intervalUntilBoot         17 :  integer
-    enterTurnTime             18 :  integer
-    energyGainModifier        19 :  integer
-    isPassiveSkillEnabled     20 :  boolean
-    isActiveSkillEnabled      21 :  boolean
-    incomeModifier            22 :  integer
-    startingEnergy            23 :  integer
-    startingFund              24 :  integer
-    chatData                  25 :  ChatData
-    isSkillDeclarationEnabled 26 :  boolean
-    skillData                 27 :  SkillData
-    moveRangeModifier         28 :  integer
-    attackModifier            29 :  integer
-    visionModifier            30 :  integer
-    saveIndex                 31 :  integer
+    warID                         0 :  integer
+    actionID                      1 :  integer
+    isWarEnded                    3 :  boolean
+    isRandomWarField              4 :  boolean
+    isFogOfWarByDefault           5 :  boolean
+    isTotalReplay                 6 :  boolean
+    warPassword                   7 :  string
+    executedActions               8 : *ActionGeneric
+    players                       9 : *SinglePlayerData(playerIndex)
+    turn                         10 :  TurnData
+    warField                     11 :  WarFieldData
+    weather                      12 :  WeatherData
+    remainingVotesForDraw        13 :  integer
+    isRankMatch                  14 :  boolean
+    maxDiffScore                 15 :  integer
+    createdTime                  16 :  integer
+    intervalUntilBoot            17 :  integer
+    enterTurnTime                18 :  integer
+    energyGainModifier           19 :  integer
+    isPassiveSkillEnabled        20 :  boolean
+    isActiveSkillEnabled         21 :  boolean
+    incomeModifier               22 :  integer
+    startingEnergy               23 :  integer
+    startingFund                 24 :  integer
+    chatData                     25 :  ChatData
+    isSkillDeclarationEnabled    26 :  boolean
+    skillData                    27 :  SkillData
+    moveRangeModifier            28 :  integer
+    attackModifier               29 :  integer
+    visionModifier               30 :  integer
+    saveIndex                    31 :  integer
+    isCampaign                   32 :  boolean
+    totalAttacksCount            33 :  integer
+    totalAttackDamage            34 :  integer
+    totalKillsCount              35 :  integer
+    totalBuiltUnitValueForAI     36 :  integer
+    totalBuiltUnitValueForPlayer 37 :  integer
+    totalLostUnitValueForPlayer  38 :  integer
 }
 
 .WarIdForIndexing {
     warID 0 : integer
+}
+
+.SingleScoreForCampaign {
+    warFieldFileName 0 : string
+    score            1 : integer
+}
+
+.ScoresForCampaign {
+    list 0 : *SingleScoreForCampaign(warFieldFileName)
 }
 
 .SingleGameRecordForPlayerProfile {

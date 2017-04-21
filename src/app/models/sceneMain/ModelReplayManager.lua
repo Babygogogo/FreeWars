@@ -88,24 +88,30 @@ local function generateReplayConfiguration(warData)
     end
 
     return {
+        actionsCount     = #warData.executedActions,
+        players          = players,
         warID            = warData.warID,
         warFieldFileName = warData.warField.warFieldFileName,
-        players          = players,
     }
 end
 
-local function getPlayerNicknames(replayConfiguration)
-    local names   = {}
-    local players = replayConfiguration.players
+local function generateLeftLabelText(replayConfiguration)
+    local players  = replayConfiguration.players
+    local textList = {getLocalizedText(48, "Players")}
     for i = 1, WarFieldManager.getPlayersCount(replayConfiguration.warFieldFileName) do
-        names[i] = string.format("%s (%s: %s)",
+        textList[#textList + 1] = string.format("%d. %s (%s: %s)",
+            i,
             players[i].account,
             getLocalizedText(14, "TeamIndex"),
             AuxiliaryFunctions.getTeamNameWithTeamIndex((players[i].teamIndex) or (i))
         )
     end
 
-    return names
+    if (replayConfiguration.actionsCount) then
+        textList[#textList + 1] = string.format("%s: %d", getLocalizedText(14, "ActionsCount"), replayConfiguration.actionsCount)
+    end
+
+    return table.concat(textList, "\n")
 end
 
 local function getActorWarFieldPreviewer(self)
@@ -127,11 +133,12 @@ local function createMenuItemsForDelete(self)
     for warID, replayConfiguration in pairs(self.m_ReplayList) do
         local warFieldFileName = replayConfiguration.warFieldFileName
         items[#items + 1] = {
-            name     = WarFieldManager.getWarFieldName(warFieldFileName),
-            warID    = warID,
-            callback = function()
+            name         = WarFieldManager.getWarFieldName(warFieldFileName),
+            warID        = warID,
+            actionsCount = replayConfiguration.actionsCount,
+            callback     = function()
                 getActorWarFieldPreviewer(self):getModel():setWarField(warFieldFileName)
-                    :setPlayerNicknames(getPlayerNicknames(replayConfiguration))
+                    :setLeftLabelText(generateLeftLabelText(replayConfiguration))
                     :setEnabled(true)
                 if (self.m_View) then
                     self.m_View:setButtonConfirmVisible(true)
@@ -165,12 +172,12 @@ local function createMenuItemsForDownload(self, list)
         local warFieldFileName = replayConfiguration.warFieldFileName
         if (not self.m_ReplayList[warID]) then
             items[#items + 1] = {
-                name     = WarFieldManager.getWarFieldName(warFieldFileName),
-                warID    = warID,
-
-                callback = function()
+                name         = WarFieldManager.getWarFieldName(warFieldFileName),
+                warID        = warID,
+                actionsCount = replayConfiguration.actionsCount,
+                callback     = function()
                     getActorWarFieldPreviewer(self):getModel():setWarField(warFieldFileName)
-                        :setPlayerNicknames(getPlayerNicknames(replayConfiguration))
+                        :setLeftLabelText(generateLeftLabelText(replayConfiguration))
                         :setEnabled(true)
                     if (self.m_View) then
                         self.m_View:setButtonConfirmVisible(true)
@@ -199,27 +206,32 @@ local function createMenuItemsForDownload(self, list)
     return items
 end
 
+local setStateLoadReplay
 local function createMenuItemsForPlayback(self)
     local items = {}
     for warID, replayConfiguration in pairs(self.m_ReplayList) do
         local warFieldFileName = replayConfiguration.warFieldFileName
         items[#items + 1] = {
-            name     = WarFieldManager.getWarFieldName(warFieldFileName),
-            warID    = warID,
-
-            callback = function()
+            name         = WarFieldManager.getWarFieldName(warFieldFileName),
+            warID        = warID,
+            actionsCount = replayConfiguration.actionsCount,
+            callback     = function()
                 getActorWarFieldPreviewer(self):getModel():setWarField(warFieldFileName)
-                    :setPlayerNicknames(getPlayerNicknames(replayConfiguration))
+                    :setLeftLabelText(generateLeftLabelText(replayConfiguration))
                     :setEnabled(true)
-                if (self.m_View) then
-                    self.m_View:setButtonConfirmVisible(true)
-                end
+
+                self.m_View:setButtonConfirmVisible(true)
 
                 self.m_OnButtonConfirmTouched = function()
-                    local modelWarReplay = Actor.createModel("warReplay.ModelWarReplay", loadDecodedReplayData(warID))
-                    modelWarReplay:initWarDataForEachTurn()
-
-                    ActorManager.setAndRunRootActor(Actor.createWithModelAndViewInstance(modelWarReplay, Actor.createView("common.ViewSceneWar")), "FADE", 1)
+                    setStateLoadReplay(self)
+                    self.m_View:runAction(cc.Sequence:create(
+                        cc.DelayTime:create(0.02),
+                        cc.CallFunc:create(function()
+                            local modelWarReplay = Actor.createModel("warReplay.ModelWarReplay", loadDecodedReplayData(warID))
+                            modelWarReplay:initWarDataForEachTurn()
+                            ActorManager.setAndRunRootActor(Actor.createWithModelAndViewInstance(modelWarReplay, Actor.createView("common.ViewSceneWar")), "FADE", 1)
+                        end)
+                    ))
                 end
             end,
         }
@@ -277,6 +289,13 @@ local function setStateDownload(self)
             :removeAllMenuItems()
         getActorWarFieldPreviewer(self):getModel():setEnabled(false)
     end
+end
+
+setStateLoadReplay = function(self)
+    self.m_State = "stateLoadReplay"
+
+    SingletonGetters.getModelMessageIndicator(self.m_ModelSceneMain):showPersistentMessage(getLocalizedText(10, "LoadingReplay"))
+    self.m_View:disableButtonConfirmForSecs(999)
 end
 
 local function setStateMain(self)
@@ -446,6 +465,8 @@ function ModelReplayManager:onButtonBackTouched()
         setStateMain(self)
     elseif (state == "statePlayback") then
         setStateMain(self)
+    elseif (state == "stateLoadReplay") then
+        -- do nothing.
     else
         error("ModelReplayManager:onButtonBackTouched() the current state is invalid: " .. state)
     end
