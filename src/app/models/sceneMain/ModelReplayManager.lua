@@ -88,9 +88,10 @@ local function generateReplayConfiguration(warData)
     end
 
     return {
+        actionsCount     = #warData.executedActions,
+        players          = players,
         warID            = warData.warID,
         warFieldFileName = warData.warField.warFieldFileName,
-        players          = players,
     }
 end
 
@@ -132,9 +133,10 @@ local function createMenuItemsForDelete(self)
     for warID, replayConfiguration in pairs(self.m_ReplayList) do
         local warFieldFileName = replayConfiguration.warFieldFileName
         items[#items + 1] = {
-            name     = WarFieldManager.getWarFieldName(warFieldFileName),
-            warID    = warID,
-            callback = function()
+            name         = WarFieldManager.getWarFieldName(warFieldFileName),
+            warID        = warID,
+            actionsCount = replayConfiguration.actionsCount,
+            callback     = function()
                 getActorWarFieldPreviewer(self):getModel():setWarField(warFieldFileName)
                     :setLeftLabelText(generateLeftLabelText(replayConfiguration))
                     :setEnabled(true)
@@ -170,10 +172,10 @@ local function createMenuItemsForDownload(self, list)
         local warFieldFileName = replayConfiguration.warFieldFileName
         if (not self.m_ReplayList[warID]) then
             items[#items + 1] = {
-                name     = WarFieldManager.getWarFieldName(warFieldFileName),
-                warID    = warID,
-
-                callback = function()
+                name         = WarFieldManager.getWarFieldName(warFieldFileName),
+                warID        = warID,
+                actionsCount = replayConfiguration.actionsCount,
+                callback     = function()
                     getActorWarFieldPreviewer(self):getModel():setWarField(warFieldFileName)
                         :setLeftLabelText(generateLeftLabelText(replayConfiguration))
                         :setEnabled(true)
@@ -210,10 +212,10 @@ local function createMenuItemsForPlayback(self)
     for warID, replayConfiguration in pairs(self.m_ReplayList) do
         local warFieldFileName = replayConfiguration.warFieldFileName
         items[#items + 1] = {
-            name     = WarFieldManager.getWarFieldName(warFieldFileName),
-            warID    = warID,
-
-            callback = function()
+            name         = WarFieldManager.getWarFieldName(warFieldFileName),
+            warID        = warID,
+            actionsCount = replayConfiguration.actionsCount,
+            callback     = function()
                 getActorWarFieldPreviewer(self):getModel():setWarField(warFieldFileName)
                     :setLeftLabelText(generateLeftLabelText(replayConfiguration))
                     :setEnabled(true)

@@ -76,6 +76,10 @@ local WAR_NAME_INDICATOR_FONT_SIZE     = 15
 local WAR_NAME_INDICATOR_FONT_COLOR    = {r = 240, g = 80, b = 56}
 local WAR_NAME_INDICATOR_OUTLINE_WIDTH = 1
 
+local ACTIONS_COUNT_FONT_SIZE     = 15
+local ACTIONS_COUNT_FONT_COLOR    = {r = 96,  g = 224, b = 88}
+local ACTIONS_COUNT_OUTLINE_WIDTH = 1
+
 local BUTTON_COLOR_ENABLED  = {r = 255, g = 255, b = 255}
 local BUTTON_COLOR_DISABLED = {r = 160, g = 160, b = 160}
 
@@ -89,6 +93,24 @@ local function setButtonEnabled(button, enabled)
     else
         button:setColor(BUTTON_COLOR_DISABLED)
     end
+end
+
+local function createActionsCountIndicator(actionsCount)
+    local label = cc.Label:createWithTTF(
+        string.format("%s: %d", getLocalizedText(14, "ActionsCount"), actionsCount),
+        ITEM_FONT_NAME,
+        ACTIONS_COUNT_FONT_SIZE
+    )
+    label:ignoreAnchorPointForPosition(true)
+
+        :setDimensions(ITEM_WIDTH, ITEM_HEIGHT)
+        :setHorizontalAlignment(cc.TEXT_ALIGNMENT_RIGHT)
+        :setVerticalAlignment(cc.VERTICAL_TEXT_ALIGNMENT_TOP)
+
+        :setTextColor(ACTIONS_COUNT_FONT_COLOR)
+        :enableOutline(ITEM_FONT_OUTLINE_COLOR, ACTIONS_COUNT_OUTLINE_WIDTH)
+
+    return label
 end
 
 local function createWarNameIndicator(warID)
@@ -132,10 +154,14 @@ local function createViewMenuItem(item)
         end)
 
     view:setCascadeColorEnabled(true)
-        :getRendererNormal():addChild(label)
+    local rendererNormal = view:getRendererNormal()
+    rendererNormal:addChild(label)
 
     if (item.warID) then
-        view:getRendererNormal():addChild(createWarNameIndicator(item.warID))
+        rendererNormal:addChild(createWarNameIndicator(item.warID))
+    end
+    if (item.actionsCount) then
+        rendererNormal:addChild(createActionsCountIndicator(item.actionsCount))
     end
 
     return view
