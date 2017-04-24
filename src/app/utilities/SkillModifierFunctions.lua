@@ -14,9 +14,7 @@ local function getSkillModifierWithSkillData(modelSkillDataManager, skillData, i
     end
 end
 
-local function getAttackModifierForSkillGroup(modelSkillGroup,
-    attacker, attackerGridIndex, target, targetGridIndex, modelWar)
-
+local function getAttackModifierForSkillGroup(modelSkillGroup)
     local modelSkillDataManager = modelSkillGroup:getModelSkillDataManager()
     local modifier              = 0
     local isActiveSkill         = modelSkillGroup.isSkillGroupActive
@@ -30,9 +28,7 @@ local function getAttackModifierForSkillGroup(modelSkillGroup,
     return modifier
 end
 
-local function getDefenseModifierForSkillGroup(modelSkillGroup,
-    attacker, attackerGridIndex, target, targetGridIndex, modelWar)
-
+local function getDefenseModifierForSkillGroup(modelSkillGroup)
     local modelSkillDataManager = modelSkillGroup:getModelSkillDataManager()
     local modifier              = 0
     local isActiveSkill         = modelSkillGroup.isSkillGroupActive
@@ -46,7 +42,7 @@ local function getDefenseModifierForSkillGroup(modelSkillGroup,
     return modifier
 end
 
-local function getMoveRangeModifierForSkillGroup(modelSkillGroup, modelUnit)
+local function getMoveRangeModifierForSkillGroup(modelSkillGroup)
     local modelSkillDataManager = modelSkillGroup:getModelSkillDataManager()
     local modifier              = 0
     local isActiveSkill         = modelSkillGroup.isSkillGroupActive
@@ -105,37 +101,27 @@ end
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
-function SkillModifierFunctions.getAttackModifier(attacker, attackerGridIndex, target, targetGridIndex, modelWar)
-    local configuration = modelWar:getModelPlayerManager():getModelPlayer(attacker:getPlayerIndex()):getModelSkillConfiguration()
-    return getAttackModifierForSkillGroup(configuration:getModelSkillGroupPassive(),
-            attacker, attackerGridIndex, target, targetGridIndex, modelWar) +
-        getAttackModifierForSkillGroup(configuration:getModelSkillGroupActive(),
-            attacker, attackerGridIndex, target, targetGridIndex, modelWar)
+function SkillModifierFunctions.getAttackModifierForSkillConfiguration(configuration)
+    return getAttackModifierForSkillGroup(configuration:getModelSkillGroupPassive()) + getAttackModifierForSkillGroup(configuration:getModelSkillGroupActive())
 end
 
-function SkillModifierFunctions.getDefenseModifier(attacker, attackerGridIndex, target, targetGridIndex, modelWar)
-    local configuration = modelWar:getModelPlayerManager():getModelPlayer(target:getPlayerIndex()):getModelSkillConfiguration()
-    return getDefenseModifierForSkillGroup(configuration:getModelSkillGroupPassive(),
-            attacker, attackerGridIndex, target, targetGridIndex, modelWar) +
-        getDefenseModifierForSkillGroup(configuration:getModelSkillGroupActive(),
-            attacker, attackerGridIndex, target, targetGridIndex, modelWar)
+function SkillModifierFunctions.getDefenseModifierForSkillConfiguration(configuration)
+    return getDefenseModifierForSkillGroup(configuration:getModelSkillGroupPassive()) + getDefenseModifierForSkillGroup(configuration:getModelSkillGroupActive())
 end
 
-function SkillModifierFunctions.getMoveRangeModifier(configuration, modelUnit)
-    return getMoveRangeModifierForSkillGroup(configuration:getModelSkillGroupPassive(), modelUnit) +
-        getMoveRangeModifierForSkillGroup(configuration:getModelSkillGroupActive(), modelUnit)
+function SkillModifierFunctions.getMoveRangeModifierForSkillConfiguration(configuration)
+    return getMoveRangeModifierForSkillGroup(configuration:getModelSkillGroupPassive()) + getMoveRangeModifierForSkillGroup(configuration:getModelSkillGroupActive())
 end
 
-function SkillModifierFunctions.getAttackRangeModifier(configuration)
-    return getAttackRangeModifierForSkillGroup(configuration:getModelSkillGroupPassive()) +
-        getAttackRangeModifierForSkillGroup(configuration:getModelSkillGroupActive())
+function SkillModifierFunctions.getAttackRangeModifierForSkillConfiguration(configuration)
+    return getAttackRangeModifierForSkillGroup(configuration:getModelSkillGroupPassive()) + getAttackRangeModifierForSkillGroup(configuration:getModelSkillGroupActive())
 end
 
-function SkillModifierFunctions.getIncomeModifier(configuration)
+function SkillModifierFunctions.getIncomeModifierForSkillConfiguration(configuration)
     return getIncomeModifierForSkillGroup(configuration:getModelSkillGroupPassive())
 end
 
-function SkillModifierFunctions.getRepairAmountModifier(configuration)
+function SkillModifierFunctions.getRepairAmountModifierForSkillConfiguration(configuration)
     return getRepairAmountModifierForSkillGroup(configuration:getModelSkillGroupPassive())
 end
 

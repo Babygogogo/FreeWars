@@ -305,6 +305,39 @@ local function canUnitWaitOnGrid(self, modelUnit, gridIndex)
     end
 end
 
+local function getModelTilesCount(self, tileType, playerIndex)
+    local count = 0
+    self.m_ModelTileMap:forEachModelTile(function(modelTile)
+        if ((modelTile:getTileType() == tileType) and (modelTile:getPlayerIndex() == playerIndex)) then
+            count = count + 1
+        end
+    end)
+
+    return count
+end
+
+local function createDamageMap(self, target)
+    local map = {}
+    for x = 1, self.m_MapWidth do
+        map[x] = {}
+    end
+
+    local modelUnitMap                 = self.m_ModelUnitMap
+    getModelTilesCount(self, "CommandTower", self.m_PlayerIndexForHuman)
+    local defenseBonusFromCommandTower = getModelTilesCount(self, "CommandTower", target:getPlayerIndex())
+
+    modelUnitMap:forEachModelUnitOnMap(function(modelUnit)
+        if (modelUnit:getPlayerIndex() == self.m_PlayerIndexForHuman) then
+        end
+    end)
+        for y = 1, self.m_MapHeight do
+            local gridIndex = {x = x, y = y}
+            local attacker
+        end
+
+    return map
+end
+
 --------------------------------------------------------------------------------
 -- The score calculators.
 --------------------------------------------------------------------------------

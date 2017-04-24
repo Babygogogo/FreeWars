@@ -56,7 +56,7 @@ function IncomeProvider:getIncomeAmount()
         return math.floor(baseAmount)
     else
         local modelSkillConfiguration = SingletonGetters.getModelPlayerManager(modelWar):getModelPlayer(playerIndex):getModelSkillConfiguration()
-        local modifier                = SkillModifierFunctions.getIncomeModifier(modelSkillConfiguration)
+        local modifier                = SkillModifierFunctions.getIncomeModifierForSkillConfiguration(modelSkillConfiguration)
         return math.floor(baseAmount * (100 + modifier) / 100)
     end
 end

@@ -150,7 +150,7 @@ local function generateRepairDataOnBeginTurn(modelWar)
     local modelPlayer               = getModelPlayerManager(modelWar):getModelPlayer(getModelTurnManager(modelWar):getPlayerIndex())
     local skillConfiguration        = modelPlayer:getModelSkillConfiguration()
     local fund                      = modelPlayer:getFund() + getIncomeOnBeginTurn(modelWar)
-    local maxNormalizedRepairAmount = GameConstantFunctions.getBaseNormalizedRepairAmount() + SkillModifierFunctions.getRepairAmountModifier(skillConfiguration)
+    local maxNormalizedRepairAmount = GameConstantFunctions.getBaseNormalizedRepairAmount() + SkillModifierFunctions.getRepairAmountModifierForSkillConfiguration(skillConfiguration)
     local costModifier              = 1 -- + SkillModifierFunctions.getRepairCostModifier(skillConfiguration) / 100
 
     local onMapData, loadedData
