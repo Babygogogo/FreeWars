@@ -273,6 +273,7 @@ local function getBaseDamageAndNormalizedHpAndFuel(self, attacker, target)
         if ((not attacker:canAttackAfterMove()) or (not loader:hasLoadUnitId(attacker:getUnitId())) or (not loader:canLaunchModelUnit())) then
             return nil, attacker:getNormalizedCurrentHP(), attacker:getCurrentFuel()
         elseif (loader:canRepairLoadedModelUnit()) then
+            local modelSkillConfiguration = self.m_ModelPlayerManager:getModelPlayer(attacker:getPlayerIndex()):getModelSkillConfiguration()
             return attacker:getBaseDamage(target:getUnitType(), true),
                 math.min(10, attacker:getNormalizedCurrentHP() + 2 + SkillModifierFunctions.getRepairAmountModifierForSkillConfiguration(modelSkillConfiguration)),
                 attacker:getMaxFuel()
@@ -344,6 +345,7 @@ local function createDamageMap(self, target, isDiving)
     modelUnitMap:forEachModelUnitOnMap(func)
         :forEachModelUnitLoaded(func)
 
+    --[[
     print(target:getUnitType())
     for y = self.m_MapHeight, 1, -1 do
         local temp = {}
@@ -354,6 +356,7 @@ local function createDamageMap(self, target, isDiving)
     end
 
     return map
+    ]]
 end
 
 --------------------------------------------------------------------------------
