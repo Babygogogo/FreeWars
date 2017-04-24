@@ -17,6 +17,7 @@ local DamageCalculator       = requireFW("src.app.utilities.DamageCalculator")
 local GridIndexFunctions     = requireFW("src.app.utilities.GridIndexFunctions")
 local ReachableAreaFunctions = requireFW("src.app.utilities.ReachableAreaFunctions")
 
+local math        = math
 local pairs       = pairs
 local isWithinMap = GridIndexFunctions.isWithinMap
 
@@ -80,12 +81,12 @@ function AttackableGridListFunctions.createList(modelWar, pathNodes, launchUnitI
     )
 end
 
-function AttackableGridListFunctions.createAttackableArea(attackerGridIndex, modelTileMap, modelUnitMap, existingArea)
-    local attacker            = modelUnitMap:getModelUnit(attackerGridIndex)
+function AttackableGridListFunctions.createAttackableArea(attacker, modelTileMap, modelUnitMap, existingArea, passableGridIndex, moveRange)
+    local attackerGridIndex   = attacker:getGridIndex()
     local attackerTeamIndex   = attacker:getTeamIndex()
     local mapSize             = modelTileMap:getMapSize()
     local minRange, maxRange  = attacker:getAttackRangeMinMax()
-    existingArea              = existingArea or {}
+    existingArea              = (existingArea) or ({})
 
     if (not attacker:canAttackAfterMove()) then
         updateAttackableArea(existingArea, mapSize, attackerGridIndex.x, attackerGridIndex.y, minRange, maxRange)
@@ -93,10 +94,12 @@ function AttackableGridListFunctions.createAttackableArea(attackerGridIndex, mod
     else
         local reachableArea = ReachableAreaFunctions.createArea(
             attackerGridIndex,
-            math.min(attacker:getMoveRange(), attacker:getCurrentFuel()),
+            (moveRange) or (math.min(attacker:getMoveRange(), attacker:getCurrentFuel())),
             function(gridIndex)
                 if (not isWithinMap(gridIndex, mapSize)) then
                     return nil
+                elseif ((passableGridIndex) and (GridIndexFunctions.isEqual(passableGridIndex, gridIndex))) then
+                    return modelTileMap:getModelTile(gridIndex):getMoveCostWithModelUnit(attacker)
                 else
                     local existingModelUnit = modelUnitMap:getModelUnit(gridIndex)
                     if ((existingModelUnit) and (existingModelUnit:getTeamIndex() ~= attackerTeamIndex)) then

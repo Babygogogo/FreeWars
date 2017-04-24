@@ -1,23 +1,27 @@
 
 local ModelRobot = requireFW("src.global.functions.class")("ModelRobot")
 
-local ActionCodeFunctions    = requireFW("src.app.utilities.ActionCodeFunctions")
-local DamageCalculator       = requireFW("src.app.utilities.DamageCalculator")
-local GameConstantFunctions  = requireFW("src.app.utilities.GameConstantFunctions")
-local GridIndexFunctions     = requireFW("src.app.utilities.GridIndexFunctions")
-local MovePathFunctions      = requireFW("src.app.utilities.MovePathFunctions")
-local ReachableAreaFunctions = requireFW("src.app.utilities.ReachableAreaFunctions")
-local SerializationFunctions = requireFW("src.app.utilities.SerializationFunctions")
-local SingletonGetters       = requireFW("src.app.utilities.SingletonGetters")
-local TableFunctions         = requireFW("src.app.utilities.TableFunctions")
-local Actor                  = requireFW("src.global.actors.Actor")
+local ActionCodeFunctions         = requireFW("src.app.utilities.ActionCodeFunctions")
+local AttackableGridListFunctions = requireFW("src.app.utilities.AttackableGridListFunctions")
+local DamageCalculator            = requireFW("src.app.utilities.DamageCalculator")
+local GameConstantFunctions       = requireFW("src.app.utilities.GameConstantFunctions")
+local GridIndexFunctions          = requireFW("src.app.utilities.GridIndexFunctions")
+local MovePathFunctions           = requireFW("src.app.utilities.MovePathFunctions")
+local ReachableAreaFunctions      = requireFW("src.app.utilities.ReachableAreaFunctions")
+local SerializationFunctions      = requireFW("src.app.utilities.SerializationFunctions")
+local SingletonGetters            = requireFW("src.app.utilities.SingletonGetters")
+local SkillModifierFunctions      = requireFW("src.app.utilities.SkillModifierFunctions")
+local TableFunctions              = requireFW("src.app.utilities.TableFunctions")
+local Actor                       = requireFW("src.global.actors.Actor")
 
-local assert, pairs          = assert, pairs
+local assert, pairs, type    = assert, pairs, type
 local coroutine, math, table = coroutine, math, table
 
-local ACTION_CODES          = ActionCodeFunctions.getFullList()
-local SEARCH_PATH_LENGTH    = 10
-local PRODUCTION_CANDIDATES = {                                                                                             -- ADJUSTABLE
+local ACTION_CODES                = ActionCodeFunctions.getFullList()
+local COMMAND_TOWER_ATTACK_BONUS  = GameConstantFunctions.getCommandTowerAttackBonus()
+local COMMAND_TOWER_DEFENSE_BONUS = GameConstantFunctions.getCommandTowerDefenseBonus()
+local SEARCH_PATH_LENGTH          = 10
+local PRODUCTION_CANDIDATES       = {                                                                                           -- ADJUSTABLE
     Factory = {
         Infantry   = 1500,
         Mech       = 0,
@@ -208,83 +212,6 @@ local function getPossibleDamageInPlayerTurn(self, robotUnit, gridIndex, minBase
     return damage
 end
 
-local function isUnitThreatened(self, robotUnit, gridIndex)
-    local modelWar            = self.m_ModelWar
-    local playerIndexForHuman = self.m_PlayerIndexForHuman
-    local modelUnitMap        = self.m_ModelUnitMap
-    local unitType            = robotUnit:getUnitType()
-    local mapSize             = modelUnitMap:getMapSize()
-    local minDamage           = (GameConstantFunctions.isTypeInCategory(unitType, "InfantryUnits")) and (robotUnit:getCurrentHP()) or (math.min(robotUnit:getCurrentHP(), 55))
-    local isUnitDiving        = (robotUnit.isDiving) and (robotUnit:isDiving())
-    local isThreatened        = false
-    local passableGridIndex
-    if ((not GridIndexFunctions.isEqual(robotUnit:getGridIndex(), gridIndex)) and (not isModelUnitLoaded(self, robotUnit))) then
-        passableGridIndex = robotUnit:getGridIndex()
-    end
-
-    modelUnitMap:forEachModelUnitOnMap(function(attacker)
-        if (isUnitDiving) then
-            local attackerType = attacker:getUnitType()
-            if ((attackerType ~= "Submarine") and (attackerType ~= "Cruiser")) then
-                return
-            end
-        end
-
-        if ((not isThreatened)                                                                                                                                 and
-            (attacker:getPlayerIndex() == playerIndexForHuman)                                                                                                 and
-            (attacker.getBaseDamage)                                                                                                                           and
-            (attacker:getBaseDamage(unitType))                                                                                                                 and
-            (DamageCalculator.getAttackDamage(attacker, attacker:getGridIndex(), attacker:getCurrentHP(), robotUnit, gridIndex, modelWar, true) >= minDamage)) then
-
-            local minRange, maxRange = attacker:getAttackRangeMinMax()
-            if (not attacker:canAttackAfterMove()) then
-                local attackerGridIndex = attacker:getGridIndex()
-                local distance          = GridIndexFunctions.getDistance(attackerGridIndex, gridIndex)
-                if ((distance <= maxRange) and (distance >= minRange)) then
-                    isThreatened = true
-                end
-
-            elseif (maxRange + math.min(attacker:getMoveRange(), attacker:getCurrentFuel()) >= GridIndexFunctions.getDistance(attacker:getGridIndex(), gridIndex)) then
-                local reachableArea = getReachableArea(self, attacker, passableGridIndex, gridIndex)
-                for _, gridIndexWithinAttackRange in pairs(GridIndexFunctions.getGridsWithinDistance(gridIndex, minRange, maxRange, mapSize)) do
-                    local x, y = gridIndexWithinAttackRange.x, gridIndexWithinAttackRange.y
-                    if ((reachableArea[x]) and (reachableArea[x][y])) then
-                        isThreatened = true
-                        break
-                    end
-                end
-            end
-        end
-    end)
-
-    if (not isUnitDiving) then
-        modelUnitMap:forEachModelUnitLoaded(function(attacker)
-            local loader = modelUnitMap:getModelUnit(attacker:getGridIndex())
-            if ((not isThreatened)                                                                                                                                and
-                (attacker:getPlayerIndex() == playerIndexForHuman)                                                                                                and
-                (attacker.getBaseDamage)                                                                                                                          and
-                (attacker:getBaseDamage(unitType))                                                                                                                and
-                (attacker:canAttackAfterMove())                                                                                                                   and
-                (loader:hasLoadUnitId(attacker:getUnitId()))                                                                                                      and
-                (loader:canLaunchModelUnit()))                                                                                                                    and
-                (DamageCalculator.getAttackDamage(attacker, attacker:getGridIndex(), attacker:getCurrentHP(), robotUnit, gridIndex, modelWar, true) >= minDamage) then
-
-                local minRange, maxRange = attacker:getAttackRangeMinMax()
-                local reachableArea      = getReachableArea(self, attacker, passableGridIndex, gridIndex)
-                for _, gridIndexWithinAttackRange in pairs(GridIndexFunctions.getGridsWithinDistance(gridIndex, minRange, maxRange, mapSize)) do
-                    local x, y = gridIndexWithinAttackRange.x, gridIndexWithinAttackRange.y
-                    if ((reachableArea[x]) and (reachableArea[x][y])) then
-                        isThreatened = true
-                        break
-                    end
-                end
-            end
-        end)
-    end
-
-    return isThreatened
-end
-
 local function getBetterScoreAndAction(oldScore, oldAction, newScore, newAction)
     if (not newScore) then
         return oldScore, oldAction
@@ -305,6 +232,9 @@ local function canUnitWaitOnGrid(self, modelUnit, gridIndex)
     end
 end
 
+--------------------------------------------------------------------------------
+-- The damage map generator.
+--------------------------------------------------------------------------------
 local function getModelTilesCount(self, tileType, playerIndex)
     local count = 0
     self.m_ModelTileMap:forEachModelTile(function(modelTile)
@@ -316,24 +246,112 @@ local function getModelTilesCount(self, tileType, playerIndex)
     return count
 end
 
-local function createDamageMap(self, target)
+local function getAttackBonusForPlayerIndex(self, attackerPlayerIndex)
+    return self.m_ModelWar:getAttackModifier()
+        + getModelTilesCount(self, "CommandTower", attackerPlayerIndex) * COMMAND_TOWER_ATTACK_BONUS
+        + SkillModifierFunctions.getAttackModifierForSkillConfiguration(self.m_ModelPlayerManager:getModelPlayer(attackerPlayerIndex):getModelSkillConfiguration())
+end
+
+local function getDefenseBonusForTarget(self, target)
+    local playerIndex = target:getPlayerIndex()
+    return ((target.getPromotionDefenseBonus) and (target:getPromotionDefenseBonus()) or (0))
+        + getModelTilesCount(self, "CommandTower", playerIndex) * COMMAND_TOWER_DEFENSE_BONUS
+        + SkillModifierFunctions.getDefenseModifierForSkillConfiguration(self.m_ModelPlayerManager:getModelPlayer(playerIndex):getModelSkillConfiguration())
+end
+
+local function getDefenseMultiplierWithBonus(bonus)
+    if (bonus >= 0) then
+        return 1 / (1 + bonus / 100)
+    else
+        return 1 - bonus / 100
+    end
+end
+
+local function getBaseDamageAndNormalizedHpAndFuel(self, attacker, target)
+    if (isModelUnitLoaded(self, attacker)) then
+        local loader = self.m_ModelUnitMap:getModelUnit(attacker:getGridIndex())
+        if ((not attacker:canAttackAfterMove()) or (not loader:hasLoadUnitId(attacker:getUnitId())) or (not loader:canLaunchModelUnit())) then
+            return nil, attacker:getNormalizedCurrentHP(), attacker:getCurrentFuel()
+        elseif (loader:canRepairLoadedModelUnit()) then
+            return attacker:getBaseDamage(target:getUnitType(), true),
+                math.min(10, attacker:getNormalizedCurrentHP() + 2 + SkillModifierFunctions.getRepairAmountModifierForSkillConfiguration(modelSkillConfiguration)),
+                attacker:getMaxFuel()
+        else
+            local isSupplied = loader:canSupplyLoadedModelUnit()
+            return attacker:getBaseDamage(target:getUnitType(), isSupplied),
+                attacker:getNormalizedCurrentHP(),
+                (isSupplied) and (target:getMaxFuel()) or (target:getCurrentFuel())
+        end
+    else
+        local modelTile = self.m_ModelTileMap:getModelTile(attacker:getGridIndex())
+        if ((not modelTile.canRepairTarget) or (not modelTile:canRepairTarget(attacker))) then
+            return attacker:getBaseDamage(target:getUnitType()),
+                attacker:getNormalizedCurrentHP(),
+                attacker:getCurrentFuel()
+        else
+            local modelSkillConfiguration = self.m_ModelPlayerManager:getModelPlayer(attacker:getPlayerIndex()):getModelSkillConfiguration()
+            return attacker:getBaseDamage(target:getUnitType(), true),
+                math.min(10, attacker:getNormalizedCurrentHP() + 2 + SkillModifierFunctions.getRepairAmountModifierForSkillConfiguration(modelSkillConfiguration)),
+                attacker:getMaxFuel()
+        end
+    end
+end
+
+local function createDamageMap(self, target, isDiving)
     local map = {}
     for x = 1, self.m_MapWidth do
         map[x] = {}
     end
 
-    local modelUnitMap                 = self.m_ModelUnitMap
-    getModelTilesCount(self, "CommandTower", self.m_PlayerIndexForHuman)
-    local defenseBonusFromCommandTower = getModelTilesCount(self, "CommandTower", target:getPlayerIndex())
+    local modelTileMap          = self.m_ModelTileMap
+    local modelUnitMap          = self.m_ModelUnitMap
+    local attackBonusForHuman   = getAttackBonusForPlayerIndex(self, self.m_PlayerIndexForHuman)
+    local defenseBonusForTarget = getDefenseBonusForTarget(self, target)
+    local func                  = function(attacker)
+        if ((attacker:getPlayerIndex() ~= self.m_PlayerIndexForHuman) or (not attacker.getAttackRangeMinMax)) then
+            return
+        end
+        if ((isDiving) and (attacker:getUnitType() ~= "Submarine") and (attacker:getUnitType() ~= "Cruiser")) then
+            return
+        end
+        local baseDamage, normalizedHP, fuel = getBaseDamageAndNormalizedHpAndFuel(self, attacker, target)
+        if (not baseDamage) then
+            return
+        end
 
-    modelUnitMap:forEachModelUnitOnMap(function(modelUnit)
-        if (modelUnit:getPlayerIndex() == self.m_PlayerIndexForHuman) then
+        coroutine.yield()
+        local attackableArea = AttackableGridListFunctions.createAttackableArea(attacker, self.m_ModelTileMap, modelUnitMap, nil, targetGridIndex, math.min(attacker:getMoveRange(), fuel))
+        local attackBonus    = attackBonusForHuman + ((attacker.getPromotionAttackBonus) and (attacker:getPromotionAttackBonus()) or (0))
+        for x in pairs(attackableArea) do
+            local column = attackableArea[x]
+            for y in pairs(column) do
+                local targetTile          = modelTileMap:getModelTile({x = x, y = y})
+                local defenseBonusForTile = (targetTile.getDefenseBonusAmount)                                      and
+                    (targetTile:getDefenseBonusAmount(target:getUnitType()) * target:getNormalizedCurrentHP() / 10) or
+                    (0)
+                local damage              = math.floor(
+                    (baseDamage * math.max(1 + attackBonus / 100, 0) + math.random(0, 10))
+                    * normalizedHP
+                    * getDefenseMultiplierWithBonus(defenseBonusForTarget + defenseBonusForTile)
+                    / 10
+                )
+
+                map[x][y] = math.max(map[x][y] or 0, damage)
+            end
         end
-    end)
-        for y = 1, self.m_MapHeight do
-            local gridIndex = {x = x, y = y}
-            local attacker
+    end
+
+    modelUnitMap:forEachModelUnitOnMap(func)
+        :forEachModelUnitLoaded(func)
+
+    print(target:getUnitType())
+    for y = self.m_MapHeight, 1, -1 do
+        local temp = {}
+        for x = 1, self.m_MapWidth do
+            temp[x] = map[x][y] or 0
         end
+        print(unpack(temp))
+    end
 
     return map
 end
@@ -341,12 +359,16 @@ end
 --------------------------------------------------------------------------------
 -- The score calculators.
 --------------------------------------------------------------------------------
-local function getScoreForPosition(self, modelUnit, gridIndex)
-    local score = 0
-    if (isUnitThreatened(self, modelUnit, gridIndex)) then
-        score = -math.min(modelUnit:getCurrentHP(), 50) * (2 + modelUnit:getProductionCost() / 1000) / (math.max(1, self.m_UnitValueRatio) ^ 2) -- ADJUSTABLE
-    end
+local function getScoreForThreat(self, modelUnit, gridIndex, damageMap)
+    local hp     = modelUnit:getCurrentHP()
+    local damage = math.min(damageMap[gridIndex.x][gridIndex.y] or 0, hp)
+    return ((damage >= 55) or (damage >= hp))                                                             and
+        (-damage * (2 + modelUnit:getProductionCost() / 1000) / (math.max(1, self.m_UnitValueRatio) ^ 2)) or                    -- ADJUSTABLE
+        (0)
+end
 
+local function getScoreForPosition(self, modelUnit, gridIndex, damageMap)
+    local score     = getScoreForThreat(self, modelUnit, gridIndex, damageMap)
     local modelTile = self.m_ModelTileMap:getModelTile(gridIndex)
     if ((modelTile.canRepairTarget) and (modelTile:canRepairTarget(modelUnit))) then
         score = score + (10 - modelUnit:getNormalizedCurrentHP()) * 15                                                          -- ADJUSTABLE
@@ -759,18 +781,28 @@ local function getMaxScoreAndAction(self, modelUnit, gridIndex, pathNodes)
     return maxScore, actionForMaxScore
 end
 
-local function getActionForMaxScoreWithCandicateUnit(self, candicateUnit)
+local function getActionForMaxScoreWithCandicateUnit(self, candidateUnit)
+    local reachableArea       = getReachableArea(self, candidateUnit)
+    local damageMapForSurface = createDamageMap(self, candidateUnit, false)
+    local damageMapForDive    = (candidateUnit.isDiving) and (createDamageMap(self, candidateUnit, true)) or (nil)
     local maxScore, actionForMaxScore
-    local reachableArea = getReachableArea(self, candicateUnit)
+
     for x = 1, self.m_MapWidth do
         if (reachableArea[x]) then
             for y = 1, self.m_MapHeight do
                 if (reachableArea[x][y]) then
                     local gridIndex              = {x = x, y = y}
                     local pathNodes              = MovePathFunctions.createShortestPath(gridIndex, reachableArea)
-                    local scoreForAction, action = getMaxScoreAndAction(self, candicateUnit, gridIndex, pathNodes)
+                    local scoreForAction, action = getMaxScoreAndAction(self, candidateUnit, gridIndex, pathNodes)
                     if (scoreForAction) then
-                        local totalScore = scoreForAction + getScoreForPosition(self, candicateUnit, gridIndex)
+                        local totalScore
+                        if ((action.actionCode == ACTION_CODES.ActionDive)                                                                   or
+                            ((candidateUnit.isDiving) and (candidateUnit:isDiving() and (action.actionCode ~= ACTION_CODES.ActionSurface)))) then
+                            totalScore = scoreForAction + getScoreForPosition(self, candidateUnit, gridIndex, damageMapForDive)
+                        else
+                            totalScore = scoreForAction + getScoreForPosition(self, candidateUnit, gridIndex, damageMapForSurface)
+                        end
+
                         maxScore, actionForMaxScore = getBetterScoreAndAction(maxScore, actionForMaxScore, totalScore, action)
                         coroutine.yield()
                     end
@@ -949,18 +981,18 @@ end
 
 -- Phase 1: make the ranged units to attack enemies.
 local function getActionForPhase1(self)
-    self.m_CandicateUnits = self.m_CandicateUnits or getCandidateUnitsForPhase1(self)
+    self.m_CandidateUnits = self.m_CandidateUnits or getCandidateUnitsForPhase1(self)
 
     local action
     while ((not action) or (action.actionCode ~= ACTION_CODES.ActionAttack)) do
-        local candicateUnit = popRandomCandidateUnit(self.m_ModelUnitMap, self.m_CandicateUnits)
-        if (not candicateUnit) then
-            self.m_CandicateUnits = nil
+        local candidateUnit = popRandomCandidateUnit(self.m_ModelUnitMap, self.m_CandidateUnits)
+        if (not candidateUnit) then
+            self.m_CandidateUnits = nil
             self.m_PhaseCode      = 2
             return nil
         end
 
-        action = getActionForMaxScoreWithCandicateUnit(self, candicateUnit)
+        action = getActionForMaxScoreWithCandicateUnit(self, candidateUnit)
     end
 
     return action
@@ -968,80 +1000,80 @@ end
 
 -- Phase 2: move the infantries, meches and bikes that are capturing buildings.
 local function getActionForPhase2(self)
-    self.m_CandicateUnits = self.m_CandicateUnits or getCandidateUnitsForPhase2(self)
-    local candicateUnit   = popRandomCandidateUnit(self.m_ModelUnitMap, self.m_CandicateUnits)
-    if (not candicateUnit) then
-        self.m_CandicateUnits = nil
+    self.m_CandidateUnits = self.m_CandidateUnits or getCandidateUnitsForPhase2(self)
+    local candidateUnit   = popRandomCandidateUnit(self.m_ModelUnitMap, self.m_CandidateUnits)
+    if (not candidateUnit) then
+        self.m_CandidateUnits = nil
         self.m_PhaseCode      = 3
         return nil
     end
 
-    return getActionForMaxScoreWithCandicateUnit(self, candicateUnit)
+    return getActionForMaxScoreWithCandicateUnit(self, candidateUnit)
 end
 
 -- Phase 3: move the other infantries, meches and bikes.
 local function getActionForPhase3(self)
-    self.m_CandicateUnits = self.m_CandicateUnits or getCandidateUnitsForPhase3(self)
-    local candicateUnit   = popRandomCandidateUnit(self.m_ModelUnitMap, self.m_CandicateUnits)
-    if (not candicateUnit) then
-        self.m_CandicateUnits = nil
+    self.m_CandidateUnits = self.m_CandidateUnits or getCandidateUnitsForPhase3(self)
+    local candidateUnit   = popRandomCandidateUnit(self.m_ModelUnitMap, self.m_CandidateUnits)
+    if (not candidateUnit) then
+        self.m_CandidateUnits = nil
         self.m_PhaseCode      = 4
         return nil
     end
 
-    return getActionForMaxScoreWithCandicateUnit(self, candicateUnit)
+    return getActionForMaxScoreWithCandicateUnit(self, candidateUnit)
 end
 
 -- Phase 4: move the air combat units.
 local function getActionForPhase4(self)
-    self.m_CandicateUnits = self.m_CandicateUnits or getCandidateUnitsForPhase4(self)
-    local candicateUnit   = popRandomCandidateUnit(self.m_ModelUnitMap, self.m_CandicateUnits)
-    if (not candicateUnit) then
-        self.m_CandicateUnits = nil
+    self.m_CandidateUnits = self.m_CandidateUnits or getCandidateUnitsForPhase4(self)
+    local candidateUnit   = popRandomCandidateUnit(self.m_ModelUnitMap, self.m_CandidateUnits)
+    if (not candidateUnit) then
+        self.m_CandidateUnits = nil
         self.m_PhaseCode      = 5
         return nil
     end
 
-    return getActionForMaxScoreWithCandicateUnit(self, candicateUnit)
+    return getActionForMaxScoreWithCandicateUnit(self, candidateUnit)
 end
 
 -- Phase 5: move the remaining direct units.
 local function getActionForPhase5(self)
-    self.m_CandicateUnits = self.m_CandicateUnits or getCandidateUnitsForPhase5(self)
-    local candicateUnit   = popRandomCandidateUnit(self.m_ModelUnitMap, self.m_CandicateUnits)
-    if (not candicateUnit) then
-        self.m_CandicateUnits = nil
+    self.m_CandidateUnits = self.m_CandidateUnits or getCandidateUnitsForPhase5(self)
+    local candidateUnit   = popRandomCandidateUnit(self.m_ModelUnitMap, self.m_CandidateUnits)
+    if (not candidateUnit) then
+        self.m_CandidateUnits = nil
         self.m_PhaseCode      = 6
         return nil
     end
 
-    return getActionForMaxScoreWithCandicateUnit(self, candicateUnit)
+    return getActionForMaxScoreWithCandicateUnit(self, candidateUnit)
 end
 
 -- Phase 6: move the other units except the remaining ranged units.
 local function getActionForPhase6(self)
-    self.m_CandicateUnits = self.m_CandicateUnits or getCandidateUnitsForPhase6(self)
-    local candicateUnit   = popRandomCandidateUnit(self.m_ModelUnitMap, self.m_CandicateUnits)
-    if (not candicateUnit) then
-        self.m_CandicateUnits = nil
+    self.m_CandidateUnits = self.m_CandidateUnits or getCandidateUnitsForPhase6(self)
+    local candidateUnit   = popRandomCandidateUnit(self.m_ModelUnitMap, self.m_CandidateUnits)
+    if (not candidateUnit) then
+        self.m_CandidateUnits = nil
         self.m_PhaseCode      = 7
         return nil
     end
 
-    return getActionForMaxScoreWithCandicateUnit(self, candicateUnit)
+    return getActionForMaxScoreWithCandicateUnit(self, candidateUnit)
 end
 
 -- Phase 7: move the remaining units.
 local function getActionForPhase7(self)
-    self.m_CandicateUnits = self.m_CandicateUnits or getCandidateUntisForPhase7(self)
-    local candicateUnit   = popRandomCandidateUnit(self.m_ModelUnitMap, self.m_CandicateUnits)
-    if (not candicateUnit) then
-        self.m_CandicateUnits = nil
+    self.m_CandidateUnits = self.m_CandidateUnits or getCandidateUntisForPhase7(self)
+    local candidateUnit   = popRandomCandidateUnit(self.m_ModelUnitMap, self.m_CandidateUnits)
+    if (not candidateUnit) then
+        self.m_CandidateUnits = nil
         self.m_PhaseCode      = 8
         return nil
     end
 
-    return getActionForMaxScoreWithCandicateUnit(self, candicateUnit)
+    return getActionForMaxScoreWithCandicateUnit(self, candidateUnit)
 end
 
 -- Phase 8: spend energy on passive skills.
