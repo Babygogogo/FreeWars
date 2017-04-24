@@ -354,24 +354,56 @@ local function createDamageMap(self, target, isDiving)
         end
         print(unpack(temp))
     end
+    ]]
 
     return map
-    ]]
+end
+
+--------------------------------------------------------------------------------
+-- The generator for score map for distance to the nearest capturable tile.
+--------------------------------------------------------------------------------
+local function createScoreMapForDistance(self, modelUnit)
+    coroutine.yield()
+    local modelTileMap          = self.m_ModelTileMap
+    local nearestCapturableTile = ReachableAreaFunctions.findNearestCapturableTile(modelTileMap, modelUnit)
+    if (not nearestCapturableTile) then
+        return nil
+    end
+
+    coroutine.yield()
+    local distanceMap, maxDistance = ReachableAreaFunctions.createDistanceMap(modelTileMap, modelUnit, nearestCapturableTile:getGridIndex())
+    local scoreForUnreachableGrid  = -20 * (maxDistance + 1)                                                                    -- ADJUSTABLE
+    for x = 1, self.m_MapWidth do
+        for y = 1, self.m_MapHeight do
+            distanceMap[x][y] = (distanceMap[x][y]) and (distanceMap[x][y] * -20) or (scoreForUnreachableGrid)                  -- ADJUSTABLE
+        end
+    end
+
+    return distanceMap
 end
 
 --------------------------------------------------------------------------------
 -- The score calculators.
 --------------------------------------------------------------------------------
 local function getScoreForThreat(self, modelUnit, gridIndex, damageMap)
-    local hp     = modelUnit:getCurrentHP()
-    local damage = math.min(damageMap[gridIndex.x][gridIndex.y] or 0, hp)
-    return ((damage >= 55) or (damage >= hp))                                                             and
+    local hp           = modelUnit:getCurrentHP()
+    local damage       = math.min(damageMap[gridIndex.x][gridIndex.y] or 0, hp)
+    local isThreatened = (damage >= hp)
+    if (not GameConstantFunctions.isTypeInCategory(modelUnit:getUnitType(), "InfantryUnits")) then
+        isThreatened = (isThreatened) or (damage >= 55)
+    end
+
+    return (isThreatened)                                                                                 and
         (-damage * (2 + modelUnit:getProductionCost() / 1000) / (math.max(1, self.m_UnitValueRatio) ^ 2)) or                    -- ADJUSTABLE
         (0)
 end
 
-local function getScoreForPosition(self, modelUnit, gridIndex, damageMap)
-    local score     = getScoreForThreat(self, modelUnit, gridIndex, damageMap)
+local function getScoreForPosition(self, modelUnit, gridIndex, damageMap, scoreMapForDistance)
+    local score = getScoreForThreat(self, modelUnit, gridIndex, damageMap)
+    if (scoreMapForDistance) then
+        score = score + scoreMapForDistance[gridIndex.x][gridIndex.y]
+    end
+
     local modelTile = self.m_ModelTileMap:getModelTile(gridIndex)
     if ((modelTile.canRepairTarget) and (modelTile:canRepairTarget(modelUnit))) then
         score = score + (10 - modelUnit:getNormalizedCurrentHP()) * 15                                                          -- ADJUSTABLE
@@ -392,39 +424,6 @@ local function getScoreForPosition(self, modelUnit, gridIndex, damageMap)
         elseif (tileType == "Airport") then score = score + (-200)                                                              -- ADJUSTABLE
         elseif (tileType == "Seaport") then score = score + (-150)                                                              -- ADJUSTABLE
         end
-    end
-
-    local reachableArea = getReachableAreaOnCandicateGridIndex(self, modelUnit, gridIndex)
-    local minDistanceToEnemyTiles
-    self.m_ModelTileMap:forEachModelTile(function(modelTileOnMap)
-        local x, y = modelTileOnMap:getGridIndex().x, modelTileOnMap:getGridIndex().y
-        if ((reachableArea[x])                            and
-            (reachableArea[x][y])                         and
-            (modelTileOnMap.getCurrentCapturePoint)       and
-            (modelTileOnMap:getTeamIndex() ~= teamIndex)) then
-            local distance = reachableArea[x][y].totalMoveCost
-            local tileType = modelTileOnMap:getTileType()
-            if ((tileType == "Factory") or (tileType == "Airport") or (tileType == "Seaport") or (tileType == "CommandTower")) then
-                distance = distance / 2                                                                                         -- ADJUSTABLE
-            end
-            if (modelTileOnMap:getPlayerIndex() == 0) then
-                distance = distance / 2
-            end
-            if (modelTileOnMap:getCurrentCapturePoint() < 20) then
-                distance = distance * 2                                                                                         -- ADJUSTABLE
-            end
-
-            if (not minDistanceToEnemyTiles) then
-                minDistanceToEnemyTiles = distance
-            else
-                minDistanceToEnemyTiles = math.min(minDistanceToEnemyTiles, distance)
-            end
-        end
-    end)
-    if (minDistanceToEnemyTiles) then
-        score = score + (minDistanceToEnemyTiles) * (-20)                                                                       -- ADJUSTABLE
-    else
-        score = score + (math.max(SEARCH_PATH_LENGTH, modelUnit:getMoveRange()) + 1) * (-20 * 2)                                -- ADJUSTABLE
     end
 
     local distanceToEnemyUnits, enemyUnitsCount = 0, 0
@@ -788,6 +787,7 @@ local function getActionForMaxScoreWithCandicateUnit(self, candidateUnit)
     local reachableArea       = getReachableArea(self, candidateUnit)
     local damageMapForSurface = createDamageMap(self, candidateUnit, false)
     local damageMapForDive    = (candidateUnit.isDiving) and (createDamageMap(self, candidateUnit, true)) or (nil)
+    local scoreMapForDistance = createScoreMapForDistance(self, candidateUnit)
     local maxScore, actionForMaxScore
 
     for x = 1, self.m_MapWidth do
@@ -801,9 +801,9 @@ local function getActionForMaxScoreWithCandicateUnit(self, candidateUnit)
                         local totalScore
                         if ((action.actionCode == ACTION_CODES.ActionDive)                                                                   or
                             ((candidateUnit.isDiving) and (candidateUnit:isDiving() and (action.actionCode ~= ACTION_CODES.ActionSurface)))) then
-                            totalScore = scoreForAction + getScoreForPosition(self, candidateUnit, gridIndex, damageMapForDive)
+                            totalScore = scoreForAction + getScoreForPosition(self, candidateUnit, gridIndex, damageMapForDive, scoreMapForDistance)
                         else
-                            totalScore = scoreForAction + getScoreForPosition(self, candidateUnit, gridIndex, damageMapForSurface)
+                            totalScore = scoreForAction + getScoreForPosition(self, candidateUnit, gridIndex, damageMapForSurface, scoreMapForDistance)
                         end
 
                         maxScore, actionForMaxScore = getBetterScoreAndAction(maxScore, actionForMaxScore, totalScore, action)
