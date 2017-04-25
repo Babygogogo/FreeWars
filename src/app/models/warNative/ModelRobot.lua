@@ -132,22 +132,6 @@ local function getReachableArea(self, modelUnit, passableGridIndex, blockedGridI
     )
 end
 
-local function getReachableAreaOnCandicateGridIndex(self, modelUnit, candicateGridIndex)
-    local modelTileMap = self.m_ModelTileMap
-    local mapSize      = modelTileMap:getMapSize()
-    return ReachableAreaFunctions.createArea(
-        candicateGridIndex,
-        math.max(SEARCH_PATH_LENGTH, modelUnit:getMoveRange()),
-        function(gridIndex)
-            if (not GridIndexFunctions.isWithinMap(gridIndex, mapSize)) then
-                return nil
-            else
-                return modelTileMap:getModelTile(gridIndex):getMoveCostWithModelUnit(modelUnit)
-            end
-        end
-    )
-end
-
 local function getPossibleDamageInPlayerTurn(self, robotUnit, gridIndex, minBaseDamage)
     minBaseDamage             = minBaseDamage or 0
     local modelWar            = self.m_ModelWar
@@ -794,10 +778,13 @@ local function getActionForMaxScoreWithCandicateUnit(self, candidateUnit)
         if (reachableArea[x]) then
             for y = 1, self.m_MapHeight do
                 if (reachableArea[x][y]) then
+                    coroutine.yield()
                     local gridIndex              = {x = x, y = y}
                     local pathNodes              = MovePathFunctions.createShortestPath(gridIndex, reachableArea)
                     local scoreForAction, action = getMaxScoreAndAction(self, candidateUnit, gridIndex, pathNodes)
+
                     if (scoreForAction) then
+                        coroutine.yield()
                         local totalScore
                         if ((action.actionCode == ACTION_CODES.ActionDive)                                                                   or
                             ((candidateUnit.isDiving) and (candidateUnit:isDiving() and (action.actionCode ~= ACTION_CODES.ActionSurface)))) then
@@ -807,7 +794,6 @@ local function getActionForMaxScoreWithCandicateUnit(self, candidateUnit)
                         end
 
                         maxScore, actionForMaxScore = getBetterScoreAndAction(maxScore, actionForMaxScore, totalScore, action)
-                        coroutine.yield()
                     end
                 end
             end

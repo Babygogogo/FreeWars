@@ -136,7 +136,7 @@ end
 -- The composition elements.
 --------------------------------------------------------------------------------
 local function initBackground(self)
-    local background = cc.Scale9Sprite:createWithSpriteFrameName("c03_t01_s01_f01.png", BACKGROUND_CAPINSETS)
+    local background = cc.Scale9Sprite:createWithSpriteFrameName("c03_t01_s02_f01.png", BACKGROUND_CAPINSETS)
     background:ignoreAnchorPointForPosition(true)
         :setPosition(BACKGROUND_POS_X, BACKGROUND_POS_Y)
         :setContentSize(BACKGROUND_WIDTH, BACKGROUND_HEIGHT)

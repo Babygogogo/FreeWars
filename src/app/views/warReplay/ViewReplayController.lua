@@ -53,7 +53,7 @@ end
 --------------------------------------------------------------------------------
 local function createButton(posX, posY, spriteFrameName)
     local button = ccui.Button:create()
-    button:loadTextureNormal("c03_t01_s01_f01.png", ccui.TextureResType.plistType)
+    button:loadTextureNormal("c03_t01_s02_f01.png", ccui.TextureResType.plistType)
         :ignoreAnchorPointForPosition(true)
         :setPosition(posX, posY)
 

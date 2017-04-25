@@ -256,7 +256,7 @@ end
 -- The composition elements.
 --------------------------------------------------------------------------------
 local function initMenuBackground(self)
-    local background = cc.Scale9Sprite:createWithSpriteFrameName("c03_t01_s01_f01.png", MENU_BACKGROUND_CAPINSETS)
+    local background = cc.Scale9Sprite:createWithSpriteFrameName("c03_t01_s02_f01.png", MENU_BACKGROUND_CAPINSETS)
     resetBackground(background, 1)
 
     self.m_MenuBackground = background

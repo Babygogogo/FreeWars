@@ -15,7 +15,7 @@ local MENU_LIST_VIEW_Z_ORDER      = 1
 local WAR_FIELD_PREVIEWER_Z_ORDER = 1
 local MENU_BACKGROUND_Z_ORDER     = 0
 
-local BACKGROUND_NAME      = "c03_t01_s01_f01.png"
+local BACKGROUND_NAME      = "c03_t01_s02_f01.png"
 local BACKGROUND_CAPINSETS = {x = 4, y = 6, width = 1, height = 1}
 local BACKGROUND_OPACITY   = 180
 
@@ -264,7 +264,7 @@ end
 
 local function initButtonConfirm(self)
     local button = ccui.Button:create()
-    button:loadTextureNormal("c03_t01_s01_f01.png", ccui.TextureResType.plistType)
+    button:loadTextureNormal("c03_t01_s02_f01.png", ccui.TextureResType.plistType)
 
         :setScale9Enabled(true)
         :setCapInsets(BACKGROUND_CAPINSETS)

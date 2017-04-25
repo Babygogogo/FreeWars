@@ -7,15 +7,28 @@
             <key>c04_t01_s01_f01.png</key>
             <dict>
                 <key>frame</key>
-                <string>{{2,2},{960,768}}</string>
+                <string>{{2,724},{960,720}}</string>
                 <key>offset</key>
                 <string>{0,0}</string>
                 <key>rotated</key>
                 <false/>
                 <key>sourceColorRect</key>
-                <string>{{0,0},{960,768}}</string>
+                <string>{{0,0},{960,720}}</string>
                 <key>sourceSize</key>
-                <string>{960,768}</string>
+                <string>{960,720}</string>
+            </dict>
+            <key>c04_t01_s02_f01.png</key>
+            <dict>
+                <key>frame</key>
+                <string>{{2,2},{960,720}}</string>
+                <key>offset</key>
+                <string>{0,0}</string>
+                <key>rotated</key>
+                <false/>
+                <key>sourceColorRect</key>
+                <string>{{0,0},{960,720}}</string>
+                <key>sourceSize</key>
+                <string>{960,720}</string>
             </dict>
         </dict>
         <key>metadata</key>
@@ -25,9 +38,9 @@
             <key>realTextureFileName</key>
             <string>FreeWarsTextureGallery.pvr.ccz</string>
             <key>size</key>
-            <string>{1024,1024}</string>
+            <string>{1024,2048}</string>
             <key>smartupdate</key>
-            <string>$TexturePacker:SmartUpdate:097fd6e35be093d844c0ff7e57d62a42:6c2b3397ea6b58c984ebebaa3bbd3ac8:468b28e6ab821a8ff3fd69520a318fdb$</string>
+            <string>$TexturePacker:SmartUpdate:fa692a2b63ba82f4b8ad2d59791fd795:2aa75e356ec72fad984f0cfe2d1d0043:468b28e6ab821a8ff3fd69520a318fdb$</string>
             <key>textureFileName</key>
             <string>FreeWarsTextureGallery.pvr.ccz</string>
         </dict>
