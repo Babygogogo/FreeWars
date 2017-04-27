@@ -1061,7 +1061,7 @@ local function getActionForPhase8(self)
     local availableSkillIds = {}
     for skillID, energyCost in pairs(self.m_PassiveSkillData) do
         if (energy >= energyCost) then
-            if (skillID ~= 11) then
+            if ((skillID ~= 11) and (skillID ~= 12)) then
                 availableSkillIds[#availableSkillIds + 1] = skillID
             end
         end

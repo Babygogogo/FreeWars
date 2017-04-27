@@ -5,11 +5,11 @@ SkillData.skillDeclarationCost = 2500
 
 SkillData.categories = {
     ["SkillsActive"] = {
-        1, 2, 3, 4, 5, 6, 7, 9, 10,
+        1, 2, 3, 4, 5, 6, 7, 9, 10, 12,
     },
 
     ["SkillsPassive"] = {
-        1, 2, 5, 6, 8, 11,
+        1, 2, 5, 6, 8, 11, 12,
     },
 }
 
@@ -185,6 +185,24 @@ SkillData.skills = {
             [5] = {modifierPassive = 5, pointsPassive = 25000, modifierActive = nil, pointsActive = nil},
         },
     },
+
+    -- Modify the capture speed for infantry units.
+    [12] = {
+        minLevelPassive    = 1,
+        maxLevelPassive    = 6,
+        minLevelActive     = 1,
+        maxLevelActive     = 1,
+        maxModifierPassive = 90,
+        modifierUnit       = "%",
+        levels             = {
+            [1] = {modifierPassive = 15, pointsPassive = 5000, modifierActive = 2000, pointsActive = 20000},
+            [2] = {modifierPassive = 30, pointsPassive = 10000, modifierActive = nil, pointsActive = nil},
+            [3] = {modifierPassive = 45, pointsPassive = 15000, modifierActive = nil, pointsActive = nil},
+            [4] = {modifierPassive = 60, pointsPassive = 20000, modifierActive = nil, pointsActive = nil},
+            [5] = {modifierPassive = 75, pointsPassive = 25000, modifierActive = nil, pointsActive = nil},
+            [6] = {modifierPassive = 90, pointsPassive = 30000, modifierActive = nil, pointsActive = nil},
+        },
+    }
 }
 
 return SkillData

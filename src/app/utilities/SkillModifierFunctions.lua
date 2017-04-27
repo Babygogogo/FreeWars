@@ -98,6 +98,20 @@ local function getRepairAmountModifierForSkillGroup(modelSkillGroup)
     return modifier
 end
 
+local function getCaptureAmountModifierForSkillGroup(modelSkillGroup)
+    local modelSkillDataManager = modelSkillGroup:getModelSkillDataManager()
+    local modifier              = 0
+    local isActiveSkill         = modelSkillGroup.isSkillGroupActive
+    for _, skill in ipairs(modelSkillGroup:getAllSkills()) do
+        local skillID = skill.id
+        if (skillID == 12) then
+            modifier = modifier + getSkillModifierWithSkillData(modelSkillDataManager, skill, isActiveSkill)
+        end
+    end
+
+    return modifier
+end
+
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
@@ -123,6 +137,10 @@ end
 
 function SkillModifierFunctions.getRepairAmountModifierForSkillConfiguration(configuration)
     return getRepairAmountModifierForSkillGroup(configuration:getModelSkillGroupPassive())
+end
+
+function SkillModifierFunctions.getCaptureAmountModifierForSkillConfiguration(configuration)
+    return getCaptureAmountModifierForSkillGroup(configuration:getModelSkillGroupPassive()) + getCaptureAmountModifierForSkillGroup(configuration:getModelSkillGroupActive())
 end
 
 return SkillModifierFunctions
