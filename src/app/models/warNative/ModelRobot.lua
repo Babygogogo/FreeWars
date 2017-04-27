@@ -106,7 +106,6 @@ local function calculateUnitValueRatio(self)
 end
 
 local function getReachableArea(self, modelUnit, passableGridIndex, blockedGridIndex)
-    coroutine.yield()
     local modelUnitMap = self.m_ModelUnitMap
     local modelTileMap = self.m_ModelTileMap
     local mapSize      = modelUnitMap:getMapSize()
@@ -128,7 +127,8 @@ local function getReachableArea(self, modelUnit, passableGridIndex, blockedGridI
                     return modelTileMap:getModelTile(gridIndex):getMoveCostWithModelUnit(modelUnit)
                 end
             end
-        end
+        end,
+        true
     )
 end
 
@@ -304,8 +304,7 @@ local function createDamageMap(self, target, isDiving)
             return
         end
 
-        coroutine.yield()
-        local attackableArea = AttackableGridListFunctions.createAttackableArea(attacker, self.m_ModelTileMap, modelUnitMap, nil, targetGridIndex, math.min(attacker:getMoveRange(), fuel))
+        local attackableArea = AttackableGridListFunctions.createAttackableArea(attacker, self.m_ModelTileMap, modelUnitMap, nil, targetGridIndex, math.min(attacker:getMoveRange(), fuel), true)
         local attackBonus    = attackBonusForHuman + ((attacker.getPromotionAttackBonus) and (attacker:getPromotionAttackBonus()) or (0))
         for x in pairs(attackableArea) do
             local column = attackableArea[x]
@@ -347,15 +346,13 @@ end
 -- The generator for score map for distance to the nearest capturable tile.
 --------------------------------------------------------------------------------
 local function createScoreMapForDistance(self, modelUnit)
-    coroutine.yield()
     local modelTileMap          = self.m_ModelTileMap
-    local nearestCapturableTile = ReachableAreaFunctions.findNearestCapturableTile(modelTileMap, modelUnit)
+    local nearestCapturableTile = ReachableAreaFunctions.findNearestCapturableTile(modelTileMap, modelUnit, true)
     if (not nearestCapturableTile) then
         return nil
     end
 
-    coroutine.yield()
-    local distanceMap, maxDistance = ReachableAreaFunctions.createDistanceMap(modelTileMap, modelUnit, nearestCapturableTile:getGridIndex())
+    local distanceMap, maxDistance = ReachableAreaFunctions.createDistanceMap(modelTileMap, modelUnit, nearestCapturableTile:getGridIndex(), true)
     local scoreForUnreachableGrid  = -20 * (maxDistance + 1)                                                                    -- ADJUSTABLE
     for x = 1, self.m_MapWidth do
         for y = 1, self.m_MapHeight do
@@ -766,7 +763,6 @@ local function getActionForMaxScoreWithCandicateUnit(self, candidateUnit)
         if (reachableArea[x]) then
             for y = 1, self.m_MapHeight do
                 if (reachableArea[x][y]) then
-                    coroutine.yield()
                     local gridIndex              = {x = x, y = y}
                     local pathNodes              = MovePathFunctions.createShortestPath(gridIndex, reachableArea)
                     local scoreForAction, action = getMaxScoreAndAction(self, candidateUnit, gridIndex, pathNodes)

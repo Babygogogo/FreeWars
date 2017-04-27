@@ -17,9 +17,9 @@ local DamageCalculator       = requireFW("src.app.utilities.DamageCalculator")
 local GridIndexFunctions     = requireFW("src.app.utilities.GridIndexFunctions")
 local ReachableAreaFunctions = requireFW("src.app.utilities.ReachableAreaFunctions")
 
-local math        = math
-local pairs       = pairs
-local isWithinMap = GridIndexFunctions.isWithinMap
+local coroutine, math = coroutine, math
+local pairs           = pairs
+local isWithinMap     = GridIndexFunctions.isWithinMap
 
 --------------------------------------------------------------------------------
 -- The util functions.
@@ -81,7 +81,7 @@ function AttackableGridListFunctions.createList(modelWar, pathNodes, launchUnitI
     )
 end
 
-function AttackableGridListFunctions.createAttackableArea(attacker, modelTileMap, modelUnitMap, existingArea, passableGridIndex, moveRange)
+function AttackableGridListFunctions.createAttackableArea(attacker, modelTileMap, modelUnitMap, existingArea, passableGridIndex, moveRange, shouldYield)
     local attackerGridIndex   = attacker:getGridIndex()
     local attackerTeamIndex   = attacker:getTeamIndex()
     local mapSize             = modelTileMap:getMapSize()
@@ -108,11 +108,16 @@ function AttackableGridListFunctions.createAttackableArea(attacker, modelTileMap
                         return modelTileMap:getModelTile(gridIndex):getMoveCostWithModelUnit(attacker)
                     end
                 end
-            end
+            end,
+            shouldYield
         )
         local originX, originY = attackerGridIndex.x, attackerGridIndex.y
         for x, column in pairs(reachableArea) do
             if (type(column) == "table") then
+                if (shouldYield) then
+                    coroutine.yield()
+                end
+
                 for y, _ in pairs(column) do
                     updateAttackableArea(existingArea, mapSize, x, y, minRange, maxRange)
                 end

@@ -15,7 +15,8 @@ local ReachableAreaFunctions = {}
 
 local GridIndexFunctions = requireFW("src.app.utilities.GridIndexFunctions")
 
-local pairs = pairs
+local coroutine = coroutine
+local pairs     = pairs
 
 --------------------------------------------------------------------------------
 -- The util functions.
@@ -83,12 +84,16 @@ function ReachableAreaFunctions.getAreaNode(area, gridIndex)
     end
 end
 
-function ReachableAreaFunctions.createArea(origin, maxMoveCost, moveCostGetter)
+function ReachableAreaFunctions.createArea(origin, maxMoveCost, moveCostGetter, shouldYield)
     local area, availableGridList = {}, {}
     updateAvailableGridList(availableGridList, 0, origin, nil, 0)
 
     local listIndex = 1
     while (listIndex <= #availableGridList) do
+        if (shouldYield) then
+            coroutine.yield()
+        end
+
         local listNode         = reorderListWithMinMoveCost(availableGridList, listIndex)
         local currentGridIndex = listNode.gridIndex
         local totalMoveCost    = listNode.totalMoveCost
@@ -108,7 +113,7 @@ function ReachableAreaFunctions.createArea(origin, maxMoveCost, moveCostGetter)
     return area
 end
 
-function ReachableAreaFunctions.findNearestCapturableTile(modelTileMap, modelUnit)
+function ReachableAreaFunctions.findNearestCapturableTile(modelTileMap, modelUnit, shouldYield)
     local area, availableGridList = {}, {}
     updateAvailableGridList(availableGridList, 0, modelUnit:getGridIndex(), nil, 0)
 
@@ -116,6 +121,10 @@ function ReachableAreaFunctions.findNearestCapturableTile(modelTileMap, modelUni
     local mapSize   = modelTileMap:getMapSize()
     local listIndex = 1
     while (listIndex <= #availableGridList) do
+        if (shouldYield) then
+            coroutine.yield()
+        end
+
         local listNode         = reorderListWithMinMoveCost(availableGridList, listIndex)
         local currentGridIndex = listNode.gridIndex
         local totalMoveCost    = listNode.totalMoveCost
@@ -138,13 +147,17 @@ function ReachableAreaFunctions.findNearestCapturableTile(modelTileMap, modelUni
     return nil
 end
 
-function ReachableAreaFunctions.createDistanceMap(modelTileMap, modelUnit, distination)
+function ReachableAreaFunctions.createDistanceMap(modelTileMap, modelUnit, distination, shouldYield)
     local area, availableGridList = {}, {}
     updateAvailableGridList(availableGridList, 0, distination, nil, 0)
 
     local mapSize   = modelTileMap:getMapSize()
     local listIndex = 1
     while (listIndex <= #availableGridList) do
+        if (shouldYield) then
+            coroutine.yield()
+        end
+
         local listNode         = reorderListWithMinMoveCost(availableGridList, listIndex)
         local currentGridIndex = listNode.gridIndex
         local totalMoveCost    = listNode.totalMoveCost

@@ -7,6 +7,7 @@ return {
   height = 14,
 
   advancedSettings = {
+    playerIndex      = 3,
     targetTurnsCount = 25,
   },
 
