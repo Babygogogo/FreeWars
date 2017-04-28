@@ -14,7 +14,7 @@ local MENU_BACKGROUND_WIDTH        = 250
 local MENU_BACKGROUND_HEIGHT       = display.height - 60
 local MENU_BACKGROUND_POS_X        = 30
 local MENU_BACKGROUND_POS_Y        = 30
-local MENU_BACKGROUND_TEXTURE_NAME = "c03_t01_s01_f01.png"
+local MENU_BACKGROUND_TEXTURE_NAME = "c03_t01_s02_f01.png"
 local MENU_BACKGROUND_CAPINSETS    = {x = 4, y = 6, width = 1, height = 1}
 
 local MENU_TITLE_WIDTH      = MENU_BACKGROUND_WIDTH

@@ -47,11 +47,8 @@ local getLocalizedText = LocalizationFunctions.getLocalizedText
 -- The composition elements.
 --------------------------------------------------------------------------------
 local function initSceneBackground(self)
-    local background = cc.LayerGradient:create(
-        {r = 0,   g = 0,   b = 0},
-        {r = 96,  g = 224, b = 88}, -- green
-        {x = -1,  y = 1}
-    )
+    local background = cc.Sprite:createWithSpriteFrameName("c04_t01_s02_f01.png")
+    background:move(display.center)
 
     self.m_Background = background
     self:addChild(background, BACKGROUND_Z_ORDER)
@@ -74,7 +71,7 @@ local function createEndWarEffectMoveInAction(effect, durationForStay)
 end
 
 local function createEndWarEffectBackground()
-    local background = cc.Scale9Sprite:createWithSpriteFrameName("c03_t01_s01_f01.png", {x = 4, y = 6, width = 1, height = 1})
+    local background = cc.Scale9Sprite:createWithSpriteFrameName("c03_t01_s02_f01.png", {x = 4, y = 6, width = 1, height = 1})
     background:ignoreAnchorPointForPosition(true)
         :setContentSize(END_WAR_EFFECT_WIDTH, END_WAR_EFFECT_HEIGHT)
 
@@ -84,7 +81,7 @@ local function createEndWarEffectBackground()
 end
 
 local function createBackgroundForEffectWinWithScore()
-    local background = cc.Scale9Sprite:createWithSpriteFrameName("c03_t01_s01_f01.png", {x = 4, y = 6, width = 1, height = 1})
+    local background = cc.Scale9Sprite:createWithSpriteFrameName("c03_t01_s02_f01.png", {x = 4, y = 6, width = 1, height = 1})
     background:ignoreAnchorPointForPosition(true)
         :setContentSize(EFFECT_WIN_WITH_SCORE_WIDTH, EFFECT_WIN_WITH_SCORE_HEIGHT)
 

@@ -15,12 +15,46 @@ local ReachableAreaFunctions = {}
 
 local GridIndexFunctions = requireFW("src.app.utilities.GridIndexFunctions")
 
-local function pushBackToAvailableGridList(list, gridIndex, prevGridIndex, totalMoveCost)
-    list[#list + 1] = {
+local coroutine = coroutine
+local pairs     = pairs
+
+--------------------------------------------------------------------------------
+-- The util functions.
+--------------------------------------------------------------------------------
+local function updateAvailableGridList(list, listIndex, gridIndex, prevGridIndex, totalMoveCost)
+    local newNode = {
         gridIndex     = GridIndexFunctions.clone(gridIndex),
-        prevGridIndex = (prevGridIndex) and (GridIndexFunctions.clone(prevGridIndex)) or nil,
+        prevGridIndex = (prevGridIndex) and (GridIndexFunctions.clone(prevGridIndex)) or (nil),
         totalMoveCost = totalMoveCost,
     }
+
+    local length = #list
+    for i = listIndex + 1, length do
+        if (GridIndexFunctions.isEqual(list[i].gridIndex, gridIndex)) then
+            if (list[i].totalMoveCost > totalMoveCost) then
+                list[i] = newNode
+            end
+            return
+        end
+    end
+    list[length + 1] = newNode
+end
+
+local function reorderListWithMinMoveCost(list, startingIndex)
+    local indexForMinMoveCost = startingIndex
+    local minMoveCost         = list[indexForMinMoveCost].totalMoveCost
+    for i = startingIndex + 1, #list do
+        if (list[i].totalMoveCost < minMoveCost) then
+            indexForMinMoveCost = i
+            minMoveCost         = list[i].totalMoveCost
+        end
+    end
+
+    if (indexForMinMoveCost ~= startingIndex) then
+        list[indexForMinMoveCost], list[startingIndex] = list[startingIndex], list[indexForMinMoveCost]
+    end
+
+    return list[startingIndex]
 end
 
 local function updateArea(area, gridIndex, prevGridIndex, totalMoveCost)
@@ -50,21 +84,25 @@ function ReachableAreaFunctions.getAreaNode(area, gridIndex)
     end
 end
 
-function ReachableAreaFunctions.createArea(origin, maxMoveCost, moveCostGetter)
+function ReachableAreaFunctions.createArea(origin, maxMoveCost, moveCostGetter, shouldYield)
     local area, availableGridList = {}, {}
-    pushBackToAvailableGridList(availableGridList, origin, nil, 0)
+    updateAvailableGridList(availableGridList, 0, origin, nil, 0)
 
     local listIndex = 1
     while (listIndex <= #availableGridList) do
-        local listNode         = availableGridList[listIndex]
+        if (shouldYield) then
+            coroutine.yield()
+        end
+
+        local listNode         = reorderListWithMinMoveCost(availableGridList, listIndex)
         local currentGridIndex = listNode.gridIndex
         local totalMoveCost    = listNode.totalMoveCost
 
         if (updateArea(area, currentGridIndex, listNode.prevGridIndex, totalMoveCost)) then
-            for _, nextGridIndex in ipairs(GridIndexFunctions.getAdjacentGrids(currentGridIndex)) do
+            for _, nextGridIndex in pairs(GridIndexFunctions.getAdjacentGrids(currentGridIndex)) do
                 local nextMoveCost = moveCostGetter(nextGridIndex)
                 if ((nextMoveCost) and (nextMoveCost + totalMoveCost <= maxMoveCost)) then
-                    pushBackToAvailableGridList(availableGridList, nextGridIndex, currentGridIndex, nextMoveCost + totalMoveCost)
+                    updateAvailableGridList(availableGridList, listIndex, nextGridIndex, currentGridIndex, nextMoveCost + totalMoveCost)
                 end
             end
         end
@@ -73,6 +111,81 @@ function ReachableAreaFunctions.createArea(origin, maxMoveCost, moveCostGetter)
     end
 
     return area
+end
+
+function ReachableAreaFunctions.findNearestCapturableTile(modelTileMap, modelUnit, shouldYield)
+    local area, availableGridList = {}, {}
+    updateAvailableGridList(availableGridList, 0, modelUnit:getGridIndex(), nil, 0)
+
+    local teamIndex = modelUnit:getTeamIndex()
+    local mapSize   = modelTileMap:getMapSize()
+    local listIndex = 1
+    while (listIndex <= #availableGridList) do
+        if (shouldYield) then
+            coroutine.yield()
+        end
+
+        local listNode         = reorderListWithMinMoveCost(availableGridList, listIndex)
+        local currentGridIndex = listNode.gridIndex
+        local totalMoveCost    = listNode.totalMoveCost
+        local modelTile        = modelTileMap:getModelTile(currentGridIndex)
+
+        if ((modelTile.getCurrentCapturePoint) and (modelTile:getTeamIndex() ~= teamIndex)) then
+            return modelTile
+        elseif (updateArea(area, currentGridIndex, nil, totalMoveCost)) then
+            for _, nextGridIndex in pairs(GridIndexFunctions.getAdjacentGrids(currentGridIndex, mapSize)) do
+                local nextMoveCost = modelTileMap:getModelTile(nextGridIndex):getMoveCostWithModelUnit(modelUnit)
+                if (nextMoveCost) then
+                    updateAvailableGridList(availableGridList, listIndex, nextGridIndex, nil, totalMoveCost + nextMoveCost)
+                end
+            end
+        end
+
+        listIndex = listIndex + 1
+    end
+
+    return nil
+end
+
+function ReachableAreaFunctions.createDistanceMap(modelTileMap, modelUnit, distination, shouldYield)
+    local area, availableGridList = {}, {}
+    updateAvailableGridList(availableGridList, 0, distination, nil, 0)
+
+    local mapSize   = modelTileMap:getMapSize()
+    local listIndex = 1
+    while (listIndex <= #availableGridList) do
+        if (shouldYield) then
+            coroutine.yield()
+        end
+
+        local listNode         = reorderListWithMinMoveCost(availableGridList, listIndex)
+        local currentGridIndex = listNode.gridIndex
+        local totalMoveCost    = listNode.totalMoveCost
+
+        if (updateArea(area, currentGridIndex, nil, totalMoveCost)) then
+            local nextMoveCost = modelTileMap:getModelTile(currentGridIndex):getMoveCostWithModelUnit(modelUnit)
+            if (nextMoveCost) then
+                for _, nextGridIndex in pairs(GridIndexFunctions.getAdjacentGrids(currentGridIndex, mapSize)) do
+                    updateAvailableGridList(availableGridList, listIndex, nextGridIndex, nil, totalMoveCost + nextMoveCost)
+                end
+            end
+        end
+
+        listIndex = listIndex + 1
+    end
+
+    local maxDistance = 0
+    for x = 1, mapSize.width do
+        area[x] = area[x] or {}
+        for y = 1, mapSize.height do
+            if (area[x][y]) then
+                area[x][y] = area[x][y].totalMoveCost
+                maxDistance = math.max(maxDistance, area[x][y])
+            end
+        end
+    end
+
+    return area, maxDistance
 end
 
 return ReachableAreaFunctions

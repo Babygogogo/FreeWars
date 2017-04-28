@@ -16,6 +16,7 @@ local assert, ipairs, next    = assert, ipairs, next
 local coroutine, cc, math, os = coroutine, cc, math, os
 local getLocalizedText        = LocalizationFunctions.getLocalizedText
 
+local ACTION_CODES              = ActionCodeFunctions.getFullList()
 local ACTION_CODE_BEGIN_TURN    = ActionCodeFunctions.getActionCode("ActionBeginTurn")
 local TIME_INTERVAL_FOR_ACTIONS = 1
 

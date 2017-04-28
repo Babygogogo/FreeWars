@@ -105,7 +105,7 @@ local function initGreyMask(self)
 end
 
 local function initBackground(self)
-    local background = cc.Scale9Sprite:createWithSpriteFrameName("c03_t01_s01_f01.png", {x = 4, y = 6, width = 1, height = 1})
+    local background = cc.Scale9Sprite:createWithSpriteFrameName("c03_t01_s02_f01.png", {x = 4, y = 6, width = 1, height = 1})
     background:ignoreAnchorPointForPosition(true)
         :setPosition(BACKGROUND_POS_X, BACKGROUND_POS_Y)
 

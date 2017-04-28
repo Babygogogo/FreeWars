@@ -163,12 +163,14 @@ function AttackDoer:getSecondaryWeaponStrongList()
     return self.m_Template.secondaryWeapon.strong
 end
 
-function AttackDoer:getBaseDamage(defenseType)
-    return self:getPrimaryWeaponBaseDamage(defenseType) or getSecondaryWeaponBaseDamage(self, defenseType)
+function AttackDoer:getBaseDamage(defenseType, ignoreAmmo)
+    return self:getPrimaryWeaponBaseDamage(defenseType, ignoreAmmo) or getSecondaryWeaponBaseDamage(self, defenseType)
 end
 
-function AttackDoer:getPrimaryWeaponBaseDamage(defenseType)
-    if (self:hasPrimaryWeapon() and self:getPrimaryWeaponCurrentAmmo() > 0) then
+function AttackDoer:getPrimaryWeaponBaseDamage(defenseType, ignoreAmmo)
+    if (not self:hasPrimaryWeapon()) then
+        return nil
+    elseif ((ignoreAmmo) or (self:getPrimaryWeaponCurrentAmmo() > 0)) then
         return self.m_Template.primaryWeapon.baseDamage[defenseType]
     else
         return nil
@@ -183,7 +185,7 @@ function AttackDoer:getAttackRangeMinMax()
     else
         local modelPlayer = SingletonGetters.getModelPlayerManager(self.m_ModelWar):getModelPlayer(self.m_Owner:getPlayerIndex())
         return minRange,
-            math.max(minRange, maxRange + SkillModifierFunctions.getAttackRangeModifier(modelPlayer:getModelSkillConfiguration()))
+            math.max(minRange, maxRange + SkillModifierFunctions.getAttackRangeModifierForSkillConfiguration(modelPlayer:getModelSkillConfiguration()))
     end
 end
 

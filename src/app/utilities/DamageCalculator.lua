@@ -33,7 +33,7 @@ local function getLuckValue(playerIndex, modelWar)
     return math.random(0, 10)
 end
 
-local function getAttackBonusMultiplier(attacker, attackerGridIndex, target, targetGridIndex, modelWar)
+local function getAttackBonusMultiplier(attacker, modelWar)
     local modelTileMap = modelWar:getModelWarField():getModelTileMap()
     local playerIndex  = attacker:getPlayerIndex()
     local bonus        = modelWar:getAttackModifier()
@@ -46,7 +46,7 @@ local function getAttackBonusMultiplier(attacker, attackerGridIndex, target, tar
         end
     end)
 
-    bonus = bonus + SkillModifierFunctions.getAttackModifier(attacker, attackerGridIndex, target, targetGridIndex, modelWar)
+    bonus = bonus + SkillModifierFunctions.getAttackModifierForSkillConfiguration(modelWar:getModelPlayerManager():getModelPlayer(playerIndex):getModelSkillConfiguration())
 
     return math.max(1 + bonus / 100, 0)
 end
@@ -56,12 +56,12 @@ local function getDefenseBonusMultiplier(attacker, attackerGridIndex, target, ta
         return 1
     end
 
-    local targetTile = modelWar:getModelWarField():getModelTileMap():getModelTile(targetGridIndex)
-    local bonus      = 0
+    local targetTile  = modelWar:getModelWarField():getModelTileMap():getModelTile(targetGridIndex)
+    local playerIndex = target:getPlayerIndex()
+    local bonus       = 0
 
     modelWar:getModelWarField():getModelTileMap():forEachModelTile(function(modelTile)
-        if ((modelTile:getPlayerIndex() == target:getPlayerIndex()) and
-            (modelTile:getTileType() == "CommandTower"))            then
+        if ((modelTile:getPlayerIndex() == playerIndex) and (modelTile:getTileType() == "CommandTower")) then
             bonus = bonus + COMMAND_TOWER_DEFENSE_BONUS
         end
     end)
@@ -72,7 +72,7 @@ local function getDefenseBonusMultiplier(attacker, attackerGridIndex, target, ta
         (target:getPromotionDefenseBonus())            or
         (0))
 
-    bonus = bonus + SkillModifierFunctions.getDefenseModifier(attacker, attackerGridIndex, target, targetGridIndex, modelWar)
+    bonus = bonus + SkillModifierFunctions.getDefenseModifierForSkillConfiguration(modelWar:getModelPlayerManager():getModelPlayer(playerIndex):getModelSkillConfiguration())
 
     if (bonus >= 0) then
         return 1 / (1 + bonus / 100)
@@ -144,7 +144,7 @@ function DamageCalculator.getAttackDamage(attacker, attackerGridIndex, attackerH
             (0)
 
         return math.floor(
-            (baseAttackDamage * getAttackBonusMultiplier(attacker, attackerGridIndex, target, targetGridIndex, modelWar) + luckValue)
+            (baseAttackDamage * getAttackBonusMultiplier(attacker, modelWar) + luckValue)
             * (getNormalizedHP(attackerHP) / 10)
             * getDefenseBonusMultiplier(attacker, attackerGridIndex, target, targetGridIndex, modelWar)
         )

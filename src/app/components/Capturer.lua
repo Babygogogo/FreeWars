@@ -12,8 +12,13 @@
 
 local Capturer = requireFW("src.global.functions.class")("Capturer")
 
+local AuxiliaryFunctions     = requireFW("src.app.utilities.AuxiliaryFunctions")
 local SingletonGetters       = requireFW("src.app.utilities.SingletonGetters")
 local SkillModifierFunctions = requireFW("src.app.utilities.SkillModifierFunctions")
+
+local getCaptureAmountModifierForSkillConfiguration = SkillModifierFunctions.getCaptureAmountModifierForSkillConfiguration
+local getModelPlayerManager                         = SingletonGetters.getModelPlayerManager
+local round                                         = AuxiliaryFunctions.round
 
 Capturer.EXPORTED_METHODS = {
     "isCapturingModelTile",
@@ -21,13 +26,6 @@ Capturer.EXPORTED_METHODS = {
     "canCaptureModelTile",
     "getCaptureAmount",
 }
-
---------------------------------------------------------------------------------
--- The util functions.
---------------------------------------------------------------------------------
-local function round(num)
-    return math.floor(num + 0.5)
-end
 
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
@@ -81,11 +79,13 @@ end
 
 function Capturer:canCaptureModelTile(modelTile)
     return (modelTile.getCurrentCapturePoint) and
-        (not SingletonGetters.getModelPlayerManager(self.m_ModelWar):isSameTeamIndex(self.m_Owner:getPlayerIndex(), modelTile:getPlayerIndex()))
+        (not getModelPlayerManager(self.m_ModelWar):isSameTeamIndex(self.m_Owner:getPlayerIndex(), modelTile:getPlayerIndex()))
 end
 
 function Capturer:getCaptureAmount()
-    return self.m_Owner:getNormalizedCurrentHP()
+    local modelPlayer = getModelPlayerManager(self.m_ModelWar):getModelPlayer(self.m_Owner:getPlayerIndex())
+    local modifier    = getCaptureAmountModifierForSkillConfiguration(modelPlayer:getModelSkillConfiguration())
+    return round(self.m_Owner:getNormalizedCurrentHP() * (100 + modifier) / 100)
 end
 
 return Capturer

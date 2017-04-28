@@ -10,6 +10,7 @@ local WarFieldManager           = requireFW("src.app.utilities.WarFieldManager")
 local Actor                     = requireFW("src.global.actors.Actor")
 
 local string, table    = string, table
+local pairs            = pairs
 local getLocalizedText = LocalizationFunctions.getLocalizedText
 
 local ACTION_CODE_ACTIVATE_SKILL = ActionCodeFunctions.getActionCode("ActionActivateSkill")
@@ -44,18 +45,20 @@ local function generateSkillInfoText(self)
 end
 
 local function generateSkillDetailText(self, skillID, isActiveSkill)
-    local textList = {
-        string.format("%s: %s\n%s / %s / %s",
-            getLocalizedText(5, skillID), getLocalizedText(23, skillID),
-            getLocalizedText(22, "Level"), getLocalizedText(22, "EnergyCost"), getLocalizedText(22, "Modifier")
-        ),
-    }
+    local skillData    = self.m_ModelSkillDataManager:getSkillData(skillID)
+    local modifierUnit = skillData.modifierUnit
+    local textList     = {string.format("%s: %s", getLocalizedText(5, skillID), getLocalizedText(23, skillID))}
+    if (skillData.maxModifierPassive) then
+        textList[#textList + 1] = string.format("%s: %d%s", getLocalizedText(22, "MaxModifierPassive"), skillData.maxModifierPassive, modifierUnit)
+    end
+    textList[#textList + 1] = string.format("%s / %s / %s", getLocalizedText(22, "Level"), getLocalizedText(22, "EnergyCost"), getLocalizedText(22, "Modifier"))
 
-    local skillData         = self.m_ModelSkillDataManager:getSkillData(skillID)
-    local modifierUnit      = skillData.modifierUnit
     local pointsFieldName   = (isActiveSkill) and ("pointsActive")   or ("pointsPassive")
     local modifierFieldName = (isActiveSkill) and ("modifierActive") or ("modifierPassive")
-    for level, levelData in ipairs(skillData.levels) do
+    local minLevel          = (isActiveSkill) and (skillData.minLevelActive) or (skillData.minLevelPassive)
+    local maxLevel          = (isActiveSkill) and (skillData.maxLevelActive) or (skillData.maxLevelPassive)
+    for level = minLevel, maxLevel do
+        local levelData = skillData.levels[level]
         textList[#textList + 1] = string.format("%d        %d        %s",
             level, levelData[pointsFieldName], (levelData[modifierFieldName]) and ("" .. levelData[modifierFieldName] .. modifierUnit) or ("--" .. modifierUnit)
         )
@@ -76,6 +79,26 @@ local function generateActivateSkillConfirmationText(self, skillID, skillLevel, 
         getLocalizedText(5, skillID), getLocalizedText(22, "Level"), skillLevel,
         getLocalizedText(22, "EnergyCost"), energyCost, getLocalizedText(22, "Modifier"), (modifier) and ("" .. modifier .. modifierUnit) or ("--" .. modifierUnit)
     )
+end
+
+local function doesSkillExceedLimit(skillData, modelSkillConfiguration, skillID, skillLevel)
+    local maxModifier = skillData.maxModifierPassive
+    if (not maxModifier) then
+        return false
+    end
+
+    local currentModifier = skillData.levels[skillLevel].modifierPassive
+    for _, skill in pairs(modelSkillConfiguration:getModelSkillGroupPassive():getAllSkills()) do
+        if (skill.id == skillID) then
+            currentModifier = currentModifier + skill.modifier
+        end
+    end
+    for _, skill in pairs(modelSkillConfiguration:getModelSkillGroupResearching():getAllSkills()) do
+        if (skill.id == skillID) then
+            currentModifier = currentModifier + skill.modifier
+        end
+    end
+    return currentModifier > maxModifier
 end
 
 --------------------------------------------------------------------------------
@@ -123,6 +146,9 @@ local function generateItemsSkillLevels(self, skillID, isActiveSkill)
     local hasAvailableItem = false
     for level = minLevel, maxLevel do
         local isAvailable = skillData.levels[level][pointsFieldName] <= energy
+        if ((isAvailable) and (not isActiveSkill) and (doesSkillExceedLimit(skillData, self.m_ModelPlayerForHuman:getModelSkillConfiguration(), skillID, level))) then
+            isAvailable = false
+        end
         hasAvailableItem  = hasAvailableItem or isAvailable
 
         items[#items + 1] = {

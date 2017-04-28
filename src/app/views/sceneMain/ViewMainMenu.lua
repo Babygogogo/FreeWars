@@ -86,7 +86,7 @@ end
 -- The composition elements.
 --------------------------------------------------------------------------------
 local function initMenuBackground(self)
-    local background = cc.Scale9Sprite:createWithSpriteFrameName("c03_t01_s01_f01.png", {x = 4, y = 6, width = 1, height = 1})
+    local background = cc.Scale9Sprite:createWithSpriteFrameName("c03_t01_s02_f01.png", {x = 4, y = 6, width = 1, height = 1})
     background:ignoreAnchorPointForPosition(true)
         :setPosition(MENU_BACKGROUND_POS_X, MENU_BACKGROUND_POS_Y)
         :setContentSize(MENU_BACKGROUND_WIDTH, MENU_BACKGROUND_HEIGHT)

@@ -62,7 +62,7 @@ local FONT_OUTLINE_WIDTH = 2
 local ITEM_FONT_SIZE     = 25
 local OVERVIEW_FONT_SIZE = 18
 
-local BACKGROUND_NAME      = "c03_t01_s01_f01.png"
+local BACKGROUND_NAME      = "c03_t01_s02_f01.png"
 local BACKGROUND_OPACITY   = 180
 local BACKGROUND_CAPINSETS = {x = 4, y = 6, width = 1, height = 1}
 
@@ -113,7 +113,7 @@ end
 -- The composition elements.
 --------------------------------------------------------------------------------
 local function initMenuBackground(self)
-    local background = cc.Scale9Sprite:createWithSpriteFrameName("c03_t01_s01_f01.png", MENU_BACKGROUND_CAPINSETS)
+    local background = cc.Scale9Sprite:createWithSpriteFrameName("c03_t01_s02_f01.png", MENU_BACKGROUND_CAPINSETS)
     background:ignoreAnchorPointForPosition(true)
         :setPosition(MENU_BACKGROUND_POS_X, MENU_BACKGROUND_POS_Y)
         :setContentSize(MENU_BACKGROUND_WIDTH, MENU_BACKGROUND_HEIGHT)
@@ -211,7 +211,7 @@ end
 
 local function initButtonConfirm(self)
     local button = ccui.Button:create()
-    button:loadTextureNormal("c03_t01_s01_f01.png", ccui.TextureResType.plistType)
+    button:loadTextureNormal("c03_t01_s02_f01.png", ccui.TextureResType.plistType)
 
         :setScale9Enabled(true)
         :setCapInsets(MENU_BACKGROUND_CAPINSETS)

@@ -733,7 +733,7 @@ setStatePreviewingAttackableArea = function(self, gridIndex)
     end
 
     self.m_PreviewAttackModelUnits[#self.m_PreviewAttackModelUnits + 1] = modelUnit
-    self.m_PreviewAttackableArea = AttackableGridListFunctions.createAttackableArea(gridIndex, getModelTileMap(self.m_ModelWar), getModelUnitMap(self.m_ModelWar), self.m_PreviewAttackableArea)
+    self.m_PreviewAttackableArea = AttackableGridListFunctions.createAttackableArea(modelUnit, getModelTileMap(self.m_ModelWar), getModelUnitMap(self.m_ModelWar), self.m_PreviewAttackableArea)
 
     if (self.m_View) then
         self.m_View:setPreviewAttackableArea(self.m_PreviewAttackableArea)

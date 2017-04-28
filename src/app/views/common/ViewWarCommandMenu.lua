@@ -12,7 +12,7 @@ local OVERVIEW_SCROLLVIEW_Z_ORDER = 1
 local OVERVIEW_BACKGROUND_Z_ORDER = 0
 local MENU_BACKGROUND_Z_ORDER     = 0
 
-local BACKGROUND_NAME      = "c03_t01_s01_f01.png"
+local BACKGROUND_NAME      = "c03_t01_s02_f01.png"
 local BACKGROUND_OPACITY   = 180
 local BACKGROUND_CAPINSETS = {x = 4, y = 6, width = 1, height = 1}
 

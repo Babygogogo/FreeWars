@@ -591,6 +591,8 @@ local s_Texts = {
             elseif (skillID == 9)  then return "增加我方资金，数量为我军当前收入的"
             elseif (skillID == 10) then return "对方能量值"
             elseif (skillID == 11) then return "我方建筑及部队的维修量"
+            elseif (skillID == 12) then return "我方步兵系的占领速度（四舍五入）"
+            elseif (skillID == 13) then return "我方能量值获取速度（四舍五入）"
             else                        return "未知4:" .. (skillID or "")
             end
         end,
@@ -611,6 +613,8 @@ local s_Texts = {
             elseif (skillID == 9)  then return "我军资金"
             elseif (skillID == 10) then return "敌军能量值"
             elseif (skillID == 11) then return "我军维修量"
+            elseif (skillID == 12) then return "占领速度"
+            elseif (skillID == 13) then return "能量增速"
             else                        return "未知5:" .. (skillID or "")
             end
         end,
@@ -1077,6 +1081,7 @@ local s_Texts = {
             elseif (textType == "HelpForActiveSkill")        then return s_LongText6_1
             elseif (textType == "HelpForPassiveSkill")       then return s_LongText7_1
             elseif (textType == "Level")                     then return "等级"
+            elseif (textType == "MaxModifierPassive")        then return "日常增幅上限"
             elseif (textType == "Modifier")                  then return "增幅"
             elseif (textType == "No")                        then return "否"
             elseif (textType == "NoAvailableOption")         then return "无可用选项"
@@ -1101,6 +1106,7 @@ local s_Texts = {
             elseif (textType == "HelpForActiveSkill")        then return s_LongText6_2
             elseif (textType == "HelpForPassiveSkill")       then return s_LongText7_2
             elseif (textType == "Level")                     then return "Level"
+            elseif (textType == "MaxModifierPassive")        then return "Max Passive Modifier"
             elseif (textType == "Modifier")                  then return "Modifier"
             elseif (textType == "No")                        then return "No"
             elseif (textType == "NoAvailableOption")         then return "No Options"
@@ -1124,6 +1130,8 @@ local s_Texts = {
             elseif (skillID == 9)  then return "以我军当前收入的某个百分比，增加我军资金。"
             elseif (skillID == 10) then return "减少所有对手的能量值，但最少剩余0。"
             elseif (skillID == 11) then return "增加我方建筑及部队的维修量。"
+            elseif (skillID == 12) then return "增加我方步兵系的占领速度（四舍五入）。"
+            elseif (skillID == 13) then return "增加我方的能量获取速度（四舍五入）。"
             else                        return "未知23:" .. (skillID or "")
             end
         end,

@@ -64,7 +64,7 @@ local function createBeginTurnEffectMoveInAction(effect)
 end
 
 local function createBeginTurnEffectBackground()
-    local background = cc.Scale9Sprite:createWithSpriteFrameName("c03_t01_s01_f01.png", {x = 4, y = 6, width = 1, height = 1})
+    local background = cc.Scale9Sprite:createWithSpriteFrameName("c03_t01_s02_f01.png", {x = 4, y = 6, width = 1, height = 1})
     background:ignoreAnchorPointForPosition(true)
         :setContentSize(BEGIN_TURN_EFFECT_WIDTH, BEGIN_TURN_EFFECT_HEIGHT)
         :setOpacity(200)
