@@ -9,7 +9,7 @@ SkillData.categories = {
     },
 
     ["SkillsPassive"] = {
-        1, 2, 5, 6, 8, 11, 12,
+        1, 2, 5, 6, 8, 11, 12, 13,
     },
 }
 
@@ -203,7 +203,24 @@ SkillData.skills = {
             [5] = {modifierPassive = 75, pointsPassive = 25000, modifierActive = nil, pointsActive = nil},
             [6] = {modifierPassive = 90, pointsPassive = 30000, modifierActive = nil, pointsActive = nil},
         },
-    }
+    },
+
+    -- Modify the speed for getting energy.
+    [13] = {
+        minLevelPassive    = 1,
+        maxLevelPassive    = 5,
+        minLevelActive     = nil,
+        maxLevelActive     = nil,
+        maxModifierPassive = nil,
+        modifierUnit       = "%",
+        levels             = {
+            [1] = {modifierPassive = 15, pointsPassive = 5000, modifierActive = nil, pointsActive = nil},
+            [2] = {modifierPassive = 30, pointsPassive = 10000, modifierActive = nil, pointsActive = nil},
+            [3] = {modifierPassive = 45, pointsPassive = 15000, modifierActive = nil, pointsActive = nil},
+            [4] = {modifierPassive = 60, pointsPassive = 20000, modifierActive = nil, pointsActive = nil},
+            [5] = {modifierPassive = 75, pointsPassive = 25000, modifierActive = nil, pointsActive = nil},
+        },
+    },
 }
 
 return SkillData

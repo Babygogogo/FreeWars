@@ -112,6 +112,20 @@ local function getCaptureAmountModifierForSkillGroup(modelSkillGroup)
     return modifier
 end
 
+local function getEnergyGainModifierForSkillGroup(modelSkillGroup)
+    local modelSkillDataManager = modelSkillGroup:getModelSkillDataManager()
+    local modifier              = 0
+    local isActiveSkill         = modelSkillGroup.isSkillGroupActive
+    for _, skill in ipairs(modelSkillGroup:getAllSkills()) do
+        local skillID = skill.id
+        if (skillID == 13) then
+            modifier = modifier + getSkillModifierWithSkillData(modelSkillDataManager, skill, isActiveSkill)
+        end
+    end
+
+    return modifier
+end
+
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
@@ -141,6 +155,10 @@ end
 
 function SkillModifierFunctions.getCaptureAmountModifierForSkillConfiguration(configuration)
     return getCaptureAmountModifierForSkillGroup(configuration:getModelSkillGroupPassive()) + getCaptureAmountModifierForSkillGroup(configuration:getModelSkillGroupActive())
+end
+
+function SkillModifierFunctions.getEnergyGainModifierForSkillConfiguration(configuration)
+    return getEnergyGainModifierForSkillGroup(configuration:getModelSkillGroupPassive())
 end
 
 return SkillModifierFunctions

@@ -370,10 +370,12 @@ local function executeAttack(action, modelWar)
         local counterEnergy       = getEnergyModifierWithTargetAndDamage(attacker,     counterDamage, energyGainModifier)
 
         if (not attackerModelPlayer:isActivatingSkill()) then
-            attackerModelPlayer:setEnergy(attackerModelPlayer:getEnergy() + attackEnergy + counterEnergy)
+            local modifierForSkill = SkillModifierFunctions.getEnergyGainModifierForSkillConfiguration(attackerModelPlayer:getModelSkillConfiguration())
+            attackerModelPlayer:setEnergy(attackerModelPlayer:getEnergy() + AuxiliaryFunctions.round((attackEnergy + counterEnergy) * (100 + modifierForSkill) / 100))
         end
         if (not targetModelPlayer:isActivatingSkill()) then
-            targetModelPlayer  :setEnergy(targetModelPlayer:getEnergy()   + attackEnergy + counterEnergy)
+            local modifierForSkill = SkillModifierFunctions.getEnergyGainModifierForSkillConfiguration(targetModelPlayer:getModelSkillConfiguration())
+            targetModelPlayer:setEnergy(targetModelPlayer:getEnergy() + AuxiliaryFunctions.round((attackEnergy + counterEnergy) * (100 + modifierForSkill) / 100))
         end
 
         if (targetPlayerIndex == modelPlayerManager:getPlayerIndexForHuman()) then

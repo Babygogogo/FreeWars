@@ -2,6 +2,7 @@
 local ActionExecutorForWarOnline = {}
 
 local ActionCodeFunctions    = requireFW("src.app.utilities.ActionCodeFunctions")
+local AuxiliaryFunctions     = requireFW("src.app.utilities.AuxiliaryFunctions")
 local Destroyers             = requireFW("src.app.utilities.Destroyers")
 local GameConstantFunctions  = requireFW("src.app.utilities.GameConstantFunctions")
 local GridIndexFunctions     = requireFW("src.app.utilities.GridIndexFunctions")
@@ -496,10 +497,12 @@ local function executeAttack(action, modelWarOnline)
         local counterEnergy       = getEnergyModifierWithTargetAndDamage(attacker,     counterDamage, energyGainModifier)
 
         if (not attackerModelPlayer:isActivatingSkill()) then
-            attackerModelPlayer:setEnergy(attackerModelPlayer:getEnergy() + attackEnergy + counterEnergy)
+            local modifierForSkill = SkillModifierFunctions.getEnergyGainModifierForSkillConfiguration(attackerModelPlayer:getModelSkillConfiguration())
+            attackerModelPlayer:setEnergy(attackerModelPlayer:getEnergy() + AuxiliaryFunctions.round((attackEnergy + counterEnergy) * (100 + modifierForSkill) / 100))
         end
         if (not targetModelPlayer:isActivatingSkill()) then
-            targetModelPlayer  :setEnergy(targetModelPlayer:getEnergy()   + attackEnergy + counterEnergy)
+            local modifierForSkill = SkillModifierFunctions.getEnergyGainModifierForSkillConfiguration(targetModelPlayer:getModelSkillConfiguration())
+            targetModelPlayer:setEnergy(targetModelPlayer:getEnergy() + AuxiliaryFunctions.round((attackEnergy + counterEnergy) * (100 + modifierForSkill) / 100))
         end
 
         dispatchEvtModelPlayerUpdated(modelWarOnline, attackerPlayerIndex)
