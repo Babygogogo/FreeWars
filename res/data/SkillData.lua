@@ -172,12 +172,13 @@ SkillData.skills = {
 
     -- Modify the repair amount of units and tiles of the owner player.
     [11] = {
-        minLevelPassive = 1,
-        maxLevelPassive = 5,
-        minLevelActive  = nil,
-        maxLevelActive  = nil,
-        modifierUnit    = "",
-        levels       = {
+        minLevelPassive    = 1,
+        maxLevelPassive    = 5,
+        minLevelActive     = nil,
+        maxLevelActive     = nil,
+        maxModifierPassive = 7,
+        modifierUnit       = "",
+        levels             = {
             [1] = {modifierPassive = 1, pointsPassive = 5000, modifierActive = nil, pointsActive = nil},
             [2] = {modifierPassive = 2, pointsPassive = 10000, modifierActive = nil, pointsActive = nil},
             [3] = {modifierPassive = 3, pointsPassive = 15000, modifierActive = nil, pointsActive = nil},

@@ -855,12 +855,13 @@
             pointsActive    3 : integer
         }
 
-        minLevelPassive 0 :  integer
-        maxLevelPassive 1 :  integer
-        minLevelActive  2 :  integer
-        maxLevelActive  3 :  integer
-        modifierUnit    4 :  string
-        levels          5 : *SingleSkillLevel
+        minLevelPassive    0 :  integer
+        maxLevelPassive    1 :  integer
+        minLevelActive     2 :  integer
+        maxLevelActive     3 :  integer
+        modifierUnit       4 :  string
+        levels             5 : *SingleSkillLevel
+        maxModifierPassive 6 :  integer
     }
 
     skillDeclarationCost 0 :  integer

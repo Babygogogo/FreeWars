@@ -10,6 +10,7 @@ local WarFieldManager           = requireFW("src.app.utilities.WarFieldManager")
 local Actor                     = requireFW("src.global.actors.Actor")
 
 local string, table    = string, table
+local pairs            = pairs
 local getLocalizedText = LocalizationFunctions.getLocalizedText
 
 local ACTION_CODE_ACTIVATE_SKILL = ActionCodeFunctions.getActionCode("ActionActivateSkill")
@@ -80,6 +81,26 @@ local function generateActivateSkillConfirmationText(self, skillID, skillLevel, 
     )
 end
 
+local function doesSkillExceedLimit(skillData, modelSkillConfiguration, skillID, skillLevel)
+    local maxModifier = skillData.maxModifierPassive
+    if (not maxModifier) then
+        return false
+    end
+
+    local currentModifier = skillData.levels[skillLevel].modifierPassive
+    for _, skill in pairs(modelSkillConfiguration:getModelSkillGroupPassive():getAllSkills()) do
+        if (skill.id == skillID) then
+            currentModifier = currentModifier + skill.modifier
+        end
+    end
+    for _, skill in pairs(modelSkillConfiguration:getModelSkillGroupResearching():getAllSkills()) do
+        if (skill.id == skillID) then
+            currentModifier = currentModifier + skill.modifier
+        end
+    end
+    return currentModifier > maxModifier
+end
+
 --------------------------------------------------------------------------------
 -- The functions for sending actions.
 --------------------------------------------------------------------------------
@@ -125,6 +146,9 @@ local function generateItemsSkillLevels(self, skillID, isActiveSkill)
     local hasAvailableItem = false
     for level = minLevel, maxLevel do
         local isAvailable = skillData.levels[level][pointsFieldName] <= energy
+        if ((isAvailable) and (not isActiveSkill) and (doesSkillExceedLimit(skillData, self.m_ModelPlayerForHuman:getModelSkillConfiguration(), skillID, level))) then
+            isAvailable = false
+        end
         hasAvailableItem  = hasAvailableItem or isAvailable
 
         items[#items + 1] = {
