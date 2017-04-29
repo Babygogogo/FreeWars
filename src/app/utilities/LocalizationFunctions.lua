@@ -1110,6 +1110,7 @@ local s_Texts = {
             elseif (textType == "EffectListPassiveSkill")    then return "日常技消耗表"
             elseif (textType == "EnergyCost")                then return "能量消耗"
             elseif (textType == "HasDeclaredSkill")          then return "已发起了特技宣言"
+            elseif (textType == "HasUpdatedReserveSkills")   then return "已设置了预备主动技"
             elseif (textType == "HelpForActiveSkill")        then return s_LongText6_1
             elseif (textType == "HelpForPassiveSkill")       then return s_LongText7_1
             elseif (textType == "Level")                     then return "等级"
@@ -1137,6 +1138,7 @@ local s_Texts = {
             elseif (textType == "EffectListPassiveSkill")    then return "PassiveList"
             elseif (textType == "EnergyCost")                then return "Cost"
             elseif (textType == "HasDeclaredSkill")          then return "has declared skill activation"
+            elseif (textType == "HasUpdatedReserveSkills")   then return "has updated reserve skills"
             elseif (textType == "HelpForActiveSkill")        then return s_LongText6_2
             elseif (textType == "HelpForPassiveSkill")       then return s_LongText7_2
             elseif (textType == "Level")                     then return "Level"

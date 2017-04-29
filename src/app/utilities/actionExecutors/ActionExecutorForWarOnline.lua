@@ -420,19 +420,14 @@ local function executeActivateSkill(action, modelWarOnline)
     end
     updateTilesAndUnitsBeforeExecutingAction(action, modelWarOnline)
 
-    local skillID                 = action.skillID
-    local skillLevel              = action.skillLevel
-    local isActiveSkill           = action.isActiveSkill
-    local playerIndex             = getModelTurnManager(modelWarOnline):getPlayerIndex()
-    local modelPlayer             = getModelPlayerManager(modelWarOnline):getModelPlayer(playerIndex)
-    local modelSkillConfiguration = modelPlayer:getModelSkillConfiguration()
-    modelPlayer:setEnergy(modelPlayer:getEnergy() - modelWarOnline:getModelSkillDataManager():getSkillPoints(skillID, skillLevel, isActiveSkill))
-    if (not isActiveSkill) then
-        modelSkillConfiguration:getModelSkillGroupResearching():pushBackSkill(skillID, skillLevel)
-    else
-        modelPlayer:setActivatingSkill(true)
-        InstantSkillExecutor.executeInstantSkill(modelWarOnline, skillID, skillLevel)
-        modelSkillConfiguration:getModelSkillGroupActive():pushBackSkill(skillID, skillLevel)
+    local playerIndex           = getModelTurnManager(modelWarOnline):getPlayerIndex()
+    local modelPlayer           = getModelPlayerManager(modelWarOnline):getModelPlayer(playerIndex)
+    local modelSkillGroupActive = modelPlayer:getModelSkillConfiguration():getModelSkillGroupActive()
+    modelPlayer:setEnergy(modelPlayer:getEnergy() - modelSkillGroupActive:getTotalEnergyCost())
+        :setActivatingSkill(true)
+
+    for _, skill in ipairs(modelSkillGroupActive:getAllSkills()) do
+        InstantSkillExecutor.executeInstantSkill(modelWarOnline, skill.id, skill.level)
     end
 
     if (IS_SERVER) then
@@ -660,6 +655,17 @@ local function executeBeginTurn(action, modelWarOnline)
 
         if (not lostPlayerIndex) then
             modelTurnManager:beginTurnPhaseBeginning(action.income, action.repairData, action.supplyData, function()
+                local playerIndexInTurn = modelTurnManager:getPlayerIndex()
+                if (playerIndexInTurn == modelPlayerManager:getPlayerIndexLoggedIn()) then
+                    local modelMessageIndicator = getModelMessageIndicator(modelWarOnline)
+                    modelPlayerManager:forEachModelPlayer(function(modelPlayer, playerIndex)
+                        if ((playerIndex ~= playerIndexInTurn)                                                    and
+                            (not modelPlayer:getModelSkillConfiguration():getModelSkillGroupReserve():isEmpty())) then
+                            modelMessageIndicator:showMessage(string.format("[%s] %s!", modelPlayer:getAccount(), getLocalizedText(22, "HasUpdatedReserveSkills")))
+                        end
+                    end)
+                end
+
                 modelWarOnline:setExecutingAction(false)
             end)
         else
@@ -1478,6 +1484,31 @@ local function executeSurrender(action, modelWarOnline)
     end
 end
 
+local function executeUpdateReserveSkills(action, modelWarOnline)
+    if (not prepareForExecutingWarAction(action, modelWarOnline)) then
+        return
+    end
+
+    local playerIndex = getModelTurnManager(modelWarOnline):getPlayerIndex()
+    local modelPlayer = getModelPlayerManager(modelWarOnline):getModelPlayer(playerIndex)
+    modelPlayer:getModelSkillConfiguration():getModelSkillGroupReserve():ctor(action.reserveSkills)
+
+    if (IS_SERVER) then
+        modelWarOnline:setExecutingAction(false)
+        OnlineWarManager.updateWithModelWarOnline(modelWarOnline)
+
+    else
+        cleanupOnReceivingResponseFromServer(modelWarOnline)
+
+        getModelMessageIndicator(modelWarOnline):showMessage(
+            string.format("[%s] %s!", modelPlayer:getNickname(), getLocalizedText(22, "HasUpdatedReserveSkills"))
+        )
+        dispatchEvtModelPlayerUpdated(modelWarOnline, playerIndex)
+
+        modelWarOnline:setExecutingAction(false)
+    end
+end
+
 local function executeVoteForDraw(action, modelWarOnline)
     if (not prepareForExecutingWarAction(action, modelWarOnline)) then
         return
@@ -1593,6 +1624,7 @@ function ActionExecutorForWarOnline.execute(action, modelWarOnline)
     elseif (actionCode == ACTION_CODES.ActionSupplyModelUnit)        then executeSupplyModelUnit(       action, modelWarOnline)
     elseif (actionCode == ACTION_CODES.ActionSurface)                then executeSurface(               action, modelWarOnline)
     elseif (actionCode == ACTION_CODES.ActionSurrender)              then executeSurrender(             action, modelWarOnline)
+    elseif (actionCode == ACTION_CODES.ActionUpdateReserveSkills)    then executeUpdateReserveSkills(   action, modelWarOnline)
     elseif (actionCode == ACTION_CODES.ActionVoteForDraw)            then executeVoteForDraw(           action, modelWarOnline)
     elseif (actionCode == ACTION_CODES.ActionWait)                   then executeWait(                  action, modelWarOnline)
     end

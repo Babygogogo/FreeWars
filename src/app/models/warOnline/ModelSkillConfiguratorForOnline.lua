@@ -136,8 +136,11 @@ end
 -- The functions for sending actions.
 --------------------------------------------------------------------------------
 local function sendActionActivateSkill(self)
+    local modelWar = self.m_ModelWar
     WebSocketManager.sendAction({
-
+        actionCode = ACTION_CODE_ACTIVATE_SKILL,
+        warID      = SingletonGetters.getWarId(modelWar),
+        actionID   = SingletonGetters.getActionId(modelWar) + 1,
     })
 end
 

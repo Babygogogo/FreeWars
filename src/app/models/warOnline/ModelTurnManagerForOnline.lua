@@ -357,7 +357,9 @@ local function runTurnPhaseResetSkillState(self)
     local playerIndex = self.m_PlayerIndex
     local modelPlayer = self.m_ModelPlayerManager:getModelPlayer(playerIndex)
     modelPlayer:setActivatingSkill(false)
-        :getModelSkillConfiguration():mergePassiveAndResearchingSkills()
+        :getModelSkillConfiguration()
+            :mergePassiveAndResearchingSkills()
+            :updateActiveAndReserveSkills()
 
     if (not IS_SERVER) then
         local func = function(modelUnit)

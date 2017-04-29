@@ -225,9 +225,6 @@
     revealedTiles     6 : *TileData(positionIndex)
     actingUnitsData   7 : *UnitData(unitID)
     actingTilesData   8 : *TileData(positionIndex)
-    skillID           9 :  integer
-    skillLevel       10 :  integer
-    isActiveSkill    11 :  boolean
 }
 
 .ActionAttack {
