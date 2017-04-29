@@ -624,6 +624,10 @@ local function translateSurrender(action)
     return action
 end
 
+local function translateUpdateReserveSkills(action)
+    return action
+end
+
 local function translateWait(action)
     local modelWar              = action.modelWar
     local rawPath, launchUnitID = action.path, action.launchUnitID
@@ -657,6 +661,7 @@ function ActionTranslatorForNative.translate(action)
     elseif (actionCode == ACTION_CODES.ActionSupplyModelUnit)        then return translateSupplyModelUnit(       action)
     elseif (actionCode == ACTION_CODES.ActionSurface)                then return translateSurface(               action)
     elseif (actionCode == ACTION_CODES.ActionSurrender)              then return translateSurrender(             action)
+    elseif (actionCode == ACTION_CODES.ActionUpdateReserveSkills)    then return translateUpdateReserveSkills(   action)
     elseif (actionCode == ACTION_CODES.ActionWait)                   then return translateWait(                  action)
     end
 end

@@ -297,19 +297,13 @@ end
 local function executeActivateSkill(action, modelWar)
     modelWar:setExecutingAction(true)
 
-    local skillID                 = action.skillID
-    local skillLevel              = action.skillLevel
-    local isActiveSkill           = action.isActiveSkill
-    local playerIndexInTurn       = getModelTurnManager(modelWar):getPlayerIndex()
-    local modelPlayer             = getModelPlayerManager(modelWar):getModelPlayer(playerIndexInTurn)
-    local modelSkillConfiguration = modelPlayer:getModelSkillConfiguration()
-    modelPlayer:setEnergy(modelPlayer:getEnergy() - modelWar:getModelSkillDataManager():getSkillPoints(skillID, skillLevel, isActiveSkill))
-    if (not isActiveSkill) then
-        modelSkillConfiguration:getModelSkillGroupResearching():pushBackSkill(skillID, skillLevel)
-    else
-        modelPlayer:setActivatingSkill(true)
-        InstantSkillExecutor.executeInstantSkill(modelWar, skillID, skillLevel)
-        modelSkillConfiguration:getModelSkillGroupActive():pushBackSkill(skillID, skillLevel)
+    local playerIndexInTurn     = getModelTurnManager(modelWar):getPlayerIndex()
+    local modelPlayer           = getModelPlayerManager(modelWar):getModelPlayer(playerIndexInTurn)
+    local modelSkillGroupActive = modelPlayer:getModelSkillConfiguration():getModelSkillGroupActive()
+    modelPlayer:setEnergy(modelPlayer:getEnergy() - modelSkillGroupActive:getTotalEnergyCost())
+        :setActivatingSkill(true)
+    for _, skill in ipairs(modelSkillGroupActive:getAllSkills()) do
+        InstantSkillExecutor.executeInstantSkill(modelWar, skill.id, skill.level)
     end
 
     local modelGridEffect     = getModelGridEffect(modelWar)
@@ -1056,6 +1050,20 @@ local function executeSurrender(action, modelWar)
     modelWar:setExecutingAction(false)
 end
 
+local function executeUpdateReserveSkills(action, modelWar)
+    modelWar:setExecutingAction(true)
+    local playerIndex = getModelTurnManager(modelWar):getPlayerIndex()
+    local modelPlayer = getModelPlayerManager(modelWar):getModelPlayer(playerIndex)
+    modelPlayer:getModelSkillConfiguration():getModelSkillGroupReserve():ctor(action.reserveSkills)
+
+    getModelMessageIndicator(modelWar):showMessage(
+        string.format("[%s] %s!", modelPlayer:getNickname(), getLocalizedText(22, "HasUpdatedReserveSkills"))
+    )
+    dispatchEvtModelPlayerUpdated(modelWar, playerIndex)
+
+    modelWar:setExecutingAction(false)
+end
+
 local function executeWait(action, modelWar)
     modelWar:setExecutingAction(true)
 
@@ -1110,6 +1118,7 @@ function ActionExecutorForWarNative.execute(action, modelWar)
     elseif (actionCode == ACTION_CODES.ActionSupplyModelUnit)        then executeSupplyModelUnit(       action, modelWar)
     elseif (actionCode == ACTION_CODES.ActionSurface)                then executeSurface(               action, modelWar)
     elseif (actionCode == ACTION_CODES.ActionSurrender)              then executeSurrender(             action, modelWar)
+    elseif (actionCode == ACTION_CODES.ActionUpdateReserveSkills)    then executeUpdateReserveSkills(   action, modelWar)
     elseif (actionCode == ACTION_CODES.ActionWait)                   then executeWait(                  action, modelWar)
     end
 

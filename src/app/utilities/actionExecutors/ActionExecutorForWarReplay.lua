@@ -264,19 +264,13 @@ end
 local function executeActivateSkill(action, modelWarReplay)
     modelWarReplay:setExecutingAction(true)
 
-    local skillID                 = action.skillID
-    local skillLevel              = action.skillLevel
-    local isActiveSkill           = action.isActiveSkill
-    local playerIndex             = getModelTurnManager(modelWarReplay):getPlayerIndex()
-    local modelPlayer             = getModelPlayerManager(modelWarReplay):getModelPlayer(playerIndex)
-    local modelSkillConfiguration = modelPlayer:getModelSkillConfiguration()
-    modelPlayer:setEnergy(modelPlayer:getEnergy() - modelWarReplay:getModelSkillDataManager():getSkillPoints(skillID, skillLevel, isActiveSkill))
-    if (not isActiveSkill) then
-        modelSkillConfiguration:getModelSkillGroupResearching():pushBackSkill(skillID, skillLevel)
-    else
-        modelPlayer:setActivatingSkill(true)
-        InstantSkillExecutor.executeInstantSkill(modelWarReplay, skillID, skillLevel)
-        modelSkillConfiguration:getModelSkillGroupActive():pushBackSkill(skillID, skillLevel)
+    local playerIndex           = getModelTurnManager(modelWarReplay):getPlayerIndex()
+    local modelPlayer           = getModelPlayerManager(modelWarReplay):getModelPlayer(playerIndex)
+    local modelSkillGroupActive = modelPlayer:getModelSkillConfiguration():getModelSkillGroupActive()
+    modelPlayer:setEnergy(modelPlayer:getEnergy() - modelSkillGroupActive:getTotalEnergyCost())
+        :setActivatingSkill(true)
+    for _, skill in ipairs(modelSkillGroupActive:getAllSkills()) do
+        InstantSkillExecutor.executeInstantSkill(modelWarReplay, skill.id, skill.level)
     end
 
     if (not modelWarReplay:isFastExecutingActions()) then
@@ -1066,6 +1060,22 @@ local function executeSurrender(action, modelWarReplay)
     modelWarReplay:setExecutingAction(false)
 end
 
+local function executeUpdateReserveSkills(action, modelWarReplay)
+    modelWarReplay:setExecutingAction(true)
+    local playerIndex = getModelTurnManager(modelWarReplay):getPlayerIndex()
+    local modelPlayer = getModelPlayerManager(modelWarReplay):getModelPlayer(playerIndex)
+    modelPlayer:getModelSkillConfiguration():getModelSkillGroupReserve():ctor(action.reserveSkills)
+
+    if (not modelWarReplay:isFastExecutingActions()) then
+        getModelMessageIndicator(modelWarReplay):showMessage(
+            string.format("[%s] %s!", modelPlayer:getNickname(), getLocalizedText(22, "HasUpdatedReserveSkills"))
+        )
+        dispatchEvtModelPlayerUpdated(modelWarReplay, playerIndex)
+    end
+
+    modelWarReplay:setExecutingAction(false)
+end
+
 local function executeVoteForDraw(action, modelWarReplay)
     modelWarReplay:setExecutingAction(true)
 
@@ -1155,6 +1165,7 @@ function ActionExecutorForWarReplay.executeReplayAction(action, modelWarReplay)
     elseif (actionCode == ACTION_CODES.ActionSupplyModelUnit)        then executeSupplyModelUnit(       action, modelWarReplay)
     elseif (actionCode == ACTION_CODES.ActionSurface)                then executeSurface(               action, modelWarReplay)
     elseif (actionCode == ACTION_CODES.ActionSurrender)              then executeSurrender(             action, modelWarReplay)
+    elseif (actionCode == ACTION_CODES.ActionUpdateReserveSkills)    then executeUpdateReserveSkills(   action, modelWarReplay)
     elseif (actionCode == ACTION_CODES.ActionVoteForDraw)            then executeVoteForDraw(           action, modelWarReplay)
     elseif (actionCode == ACTION_CODES.ActionWait)                   then executeWait(                  action, modelWarReplay)
     else                                                                  error("ActionExecutorForWarReplay.executeReplayAction() invalid action: " .. SerializationFunctions.toString(action))
