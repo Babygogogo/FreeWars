@@ -30,7 +30,6 @@ local math = math
 --------------------------------------------------------------------------------
 function ModelPlayer:ctor(param)
     self.m_Account                 = param.account
-    self.m_CanActivateSkill        = param.canActivateSkill
     self.m_Energy                  = param.energy
     self.m_Fund                    = param.fund
     self.m_HasVotedForDraw         = param.hasVotedForDraw
@@ -50,7 +49,6 @@ end
 function ModelPlayer:toSerializableTable()
     return {
         account             = self:getAccount(),
-        canActivateSkill    = self.m_CanActivateSkill,
         energy              = self.m_Energy,
         fund                = self:getFund(),
         hasVotedForDraw     = self:hasVotedForDraw(),
@@ -66,7 +64,6 @@ end
 function ModelPlayer:toSerializableReplayData()
     return {
         account             = self:getAccount(),
-        canActivateSkill    = false,
         energy              = self.m_ModelWar:getStartingEnergy(),
         fund                = self.m_ModelWar:getStartingFund(),
         hasVotedForDraw     = nil,
@@ -157,16 +154,6 @@ function ModelPlayer:setActivatingSkill(isActivating)
     if (not isActivating) then
         self.m_ModelSkillConfiguration:getModelSkillGroupActive():clearAllSkills()
     end
-
-    return self
-end
-
-function ModelPlayer:canActivateSkill()
-    return self.m_CanActivateSkill
-end
-
-function ModelPlayer:setCanActivateSkill(canActivate)
-    self.m_CanActivateSkill = canActivate
 
     return self
 end

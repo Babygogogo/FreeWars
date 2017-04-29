@@ -72,8 +72,10 @@ local function getBriefDescriptionForSkillGroup(modelSkillDataManager, skillGrou
         return prefix .. " " .. getLocalizedText(3, "None")
     end
 
-    local isActiveSkill         = (skillGroupType == SKILL_ACTIVE) or (skillGroupType == SKILL_RESERVE)
-    local descriptions          = {prefix}
+    local isActiveSkill = (skillGroupType == SKILL_ACTIVE) or (skillGroupType == SKILL_RESERVE)
+    local descriptions  = (isActiveSkill)                                                                            and
+        {string.format("%s    %s: %d", prefix, getLocalizedText(3, "EnergyCost"), skillGroup:getTotalEnergyCost())} or
+        {prefix}
     for i, skill in ipairs(skillGroup:getAllSkills()) do
         local skillID  = skill.id
         local modifier = (isActiveSkill) and (modelSkillDataManager:getSkillModifier(skillID, skill.level, true)) or (skill.modifier)
@@ -105,6 +107,10 @@ function SkillDescriptionFunctions.getBriefDescription(modelWar, modelSkillConfi
         getBriefDescriptionForSkillGroup(modelSkillDataManager, skillGroupActive,      SKILL_ACTIVE),
         getBriefDescriptionForSkillGroup(modelSkillDataManager, skillGroupReserve,     SKILL_RESERVE)
     )
+end
+
+function SkillDescriptionFunctions.getDescriptionForSkillGroupReserve(modelWar, modelSkillGroupReserve)
+    return getBriefDescriptionForSkillGroup(modelWar:getModelSkillDataManager(), modelSkillGroupReserve, SKILL_RESERVE)
 end
 
 return SkillDescriptionFunctions

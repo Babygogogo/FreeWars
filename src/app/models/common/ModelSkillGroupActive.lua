@@ -8,19 +8,9 @@ local pairs = pairs
 local MAX_SLOTS_COUNT = 4
 
 --------------------------------------------------------------------------------
--- The constructor and initializer.
+-- The util functions.
 --------------------------------------------------------------------------------
-function ModelSkillGroupActive:ctor(param)
-    self.m_Slots = TableFunctions.deepClone(param) or {}
-
-    return self
-end
-
---------------------------------------------------------------------------------
--- The functions for serialization.
---------------------------------------------------------------------------------
-function ModelSkillGroupActive:toSerializableTable()
-    local slots = self.m_Slots
+local function removeEmptySlots(slots)
     for i = 1, MAX_SLOTS_COUNT - 1 do
         if (not slots[i]) then
             for j = i + 1, MAX_SLOTS_COUNT do
@@ -34,8 +24,23 @@ function ModelSkillGroupActive:toSerializableTable()
             break
         end
     end
+end
 
-    return TableFunctions.deepClone(slots)
+--------------------------------------------------------------------------------
+-- The constructor and initializer.
+--------------------------------------------------------------------------------
+function ModelSkillGroupActive:ctor(param)
+    self.m_Slots = TableFunctions.deepClone(param) or {}
+
+    return self
+end
+
+--------------------------------------------------------------------------------
+-- The functions for serialization.
+--------------------------------------------------------------------------------
+function ModelSkillGroupActive:toSerializableTable()
+    removeEmptySlots(self.m_Slots)
+    return TableFunctions.deepClone(self.m_Slots)
 end
 
 --------------------------------------------------------------------------------
@@ -64,6 +69,19 @@ function ModelSkillGroupActive:isEmpty()
     return #self.m_Slots == 0
 end
 
+function ModelSkillGroupActive:hasSameSkill()
+    local flags = {}
+    for _, skill in pairs(self.m_Slots) do
+        local skillID = skill.id
+        if (flags[skillID]) then
+            return true
+        end
+        flags[skillID] = true
+    end
+
+    return false
+end
+
 function ModelSkillGroupActive:getAllSkills()
     return self.m_Slots
 end
@@ -82,6 +100,23 @@ function ModelSkillGroupActive:pushBackSkill(skillID, skillLevel)
         id    = skillID,
         level = skillLevel,
     }
+
+    return self
+end
+
+function ModelSkillGroupActive:setSkill(slotIndex, skillID, skillLevel)
+    self.m_Slots[slotIndex] = {
+        id    = skillID,
+        level = skillLevel,
+    }
+    removeEmptySlots(self.m_Slots)
+
+    return self
+end
+
+function ModelSkillGroupActive:removeSkill(slotIndex)
+    self.m_Slots[slotIndex] = nil
+    removeEmptySlots(self.m_Slots)
 
     return self
 end

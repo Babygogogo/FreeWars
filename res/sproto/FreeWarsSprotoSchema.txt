@@ -729,8 +729,7 @@
         skillConfiguration   6 : SingleSkillConfiguration
         hasVotedForDraw      7 : boolean
         isActivatingSkill    8 : boolean
-        canActivateSkill    10 : boolean
-        teamIndex           11 : integer
+        teamIndex            9 : integer
     }
 
     .TurnData {
