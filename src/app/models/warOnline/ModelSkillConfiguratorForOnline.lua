@@ -215,7 +215,7 @@ end
 local function generateItemsForStateResearchPassiveSkill(self)
     local items = {}
     for _, skillID in ipairs(self.m_ModelSkillDataManager:getSkillCategory("SkillsPassive")) do
-        local subItems, hasAvailableSubItem = generateItemsSkillLevels(self, skillID, false)
+        local subItems, hasAvailableSubItem = generateItemsSkillLevels(self, skillID)
         items[#items + 1] = {
             name        = getLocalizedText(5, skillID),
             isAvailable = hasAvailableSubItem,

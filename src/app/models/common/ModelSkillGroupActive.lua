@@ -3,6 +3,8 @@ local ModelSkillGroupActive = requireFW("src.global.functions.class")("ModelSkil
 
 local TableFunctions = requireFW("src.app.utilities.TableFunctions")
 
+local MAX_SLOTS_COUNT = 4
+
 --------------------------------------------------------------------------------
 -- The constructor and initializer.
 --------------------------------------------------------------------------------
@@ -16,7 +18,22 @@ end
 -- The functions for serialization.
 --------------------------------------------------------------------------------
 function ModelSkillGroupActive:toSerializableTable()
-    return TableFunctions.deepClone(self.m_Slots)
+    local slots = self.m_Slots
+    for i = 1, MAX_SLOTS_COUNT - 1 do
+        if (not slots[i]) then
+            for j = i + 1, MAX_SLOTS_COUNT do
+                if (slots[j]) then
+                    slots[i], slots[j] = slots[j], slots[i]
+                    break
+                end
+            end
+        end
+        if (not slots[i]) then
+            break
+        end
+    end
+
+    return TableFunctions.deepClone(slots)
 end
 
 --------------------------------------------------------------------------------
@@ -32,6 +49,10 @@ end
 -- The public functions.
 --------------------------------------------------------------------------------
 ModelSkillGroupActive.isSkillGroupActive = true
+
+function ModelSkillGroupActive.getMaxSlotsCount()
+    return MAX_SLOTS_COUNT
+end
 
 function ModelSkillGroupActive:getModelSkillDataManager()
     return self.m_ModelSkillDataManager

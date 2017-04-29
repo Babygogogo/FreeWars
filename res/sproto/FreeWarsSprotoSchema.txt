@@ -327,6 +327,7 @@
     playerPassword    2 :  string
     warID             3 :  integer
     actionID          4 :  integer
+    reserveSkills     5 : *SingleSkillActive
 }
 
 .ActionDestroyOwnedModelUnit {
@@ -836,20 +837,21 @@
     draw      3 : integer
 }
 
+.SingleSkillActive {
+    id    0 : integer
+    level 1 : integer
+}
+
+.SingleSkillPassive {
+    id       0 : integer
+    modifier 1 : integer
+}
+
 .SingleSkillConfiguration {
-    .SingleSkillActive {
-        id    0 : integer
-        level 1 : integer
-    }
-
-    .SingleSkillPassive {
-        id       0 : integer
-        modifier 1 : integer
-    }
-
     passiveSkills     1 : *SingleSkillPassive
     researchingSkills 2 : *SingleSkillPassive
     activeSkills      3 : *SingleSkillActive
+    reserveSkills     4 : *SingleSkillActive
 }
 
 .SkillData {
