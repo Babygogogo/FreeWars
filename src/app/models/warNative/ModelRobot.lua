@@ -1073,10 +1073,9 @@ local function getActionForPhase8(self)
         return nil
     else
         return {
-            actionCode    = ACTION_CODES.ActionActivateSkill,
+            actionCode    = ACTION_CODES.ActionResearchPassiveSkill,
             skillID       = targetSkillID,
             skillLevel    = 1,
-            isActiveSkill = false,
         }
     end
 end

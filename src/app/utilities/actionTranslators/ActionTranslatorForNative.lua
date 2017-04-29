@@ -588,6 +588,10 @@ local function translateProduceModelUnitOnUnit(action)
     }
 end
 
+local function translateResearchPassiveSkill(action)
+    return action
+end
+
 local function translateSupplyModelUnit(action)
     local modelWar              = action.modelWar
     local rawPath, launchUnitID = action.path, action.launchUnitID
@@ -654,9 +658,10 @@ function ActionTranslatorForNative.translate(action)
     elseif (actionCode == ACTION_CODES.ActionLoadModelUnit)          then return translateLoadModelUnit(         action)
     elseif (actionCode == ACTION_CODES.ActionProduceModelUnitOnTile) then return translateProduceModelUnitOnTile(action)
     elseif (actionCode == ACTION_CODES.ActionProduceModelUnitOnUnit) then return translateProduceModelUnitOnUnit(action)
+    elseif (actionCode == ACTION_CODES.ActionResearchPassiveSkill)   then return translateResearchPassiveSkill(  action)
+    elseif (actionCode == ACTION_CODES.ActionSupplyModelUnit)        then return translateSupplyModelUnit(       action)
     elseif (actionCode == ACTION_CODES.ActionSurface)                then return translateSurface(               action)
     elseif (actionCode == ACTION_CODES.ActionSurrender)              then return translateSurrender(             action)
-    elseif (actionCode == ACTION_CODES.ActionSupplyModelUnit)        then return translateSupplyModelUnit(       action)
     elseif (actionCode == ACTION_CODES.ActionWait)                   then return translateWait(                  action)
     end
 end

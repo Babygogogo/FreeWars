@@ -817,7 +817,7 @@ local s_Texts = {
     },
     [12] = {
         [1] = function(actionName)
-            if     (actionName == "ActionActivateSkill")          then return "发动/研发技能"
+            if     (actionName == "ActionActivateSkill")          then return "发动主动技"
             elseif (actionName == "ActionAttack")                 then return "攻击"
             elseif (actionName == "ActionBeginTurn")              then return "开始回合"
             elseif (actionName == "ActionBuildModelTile")         then return "建造"
@@ -833,6 +833,7 @@ local s_Texts = {
             elseif (actionName == "ActionLoadModelUnit")          then return "装载"
             elseif (actionName == "ActionProduceModelUnitOnTile") then return "生产部队"
             elseif (actionName == "ActionProduceModelUnitOnUnit") then return "生产舰载机"
+            elseif (actionName == "ActionResearchPassiveSkill")   then return "研发日常技"
             elseif (actionName == "ActionSupplyModelUnit")        then return "补给"
             elseif (actionName == "ActionSurface")                then return "上浮"
             elseif (actionName == "ActionSurrender")              then return "投降"
@@ -843,7 +844,7 @@ local s_Texts = {
             end
         end,
         [2] = function(actionName)
-            if     (actionName == "ActionActivateSkill")          then return "ActivateSkillGroup"
+            if     (actionName == "ActionActivateSkill")          then return "ActivateSkill"
             elseif (actionName == "ActionAttack")                 then return "Attack"
             elseif (actionName == "ActionBeginTurn")              then return "BeginTurn"
             elseif (actionName == "ActionBuildModelTile")         then return "BuildTile"
@@ -859,6 +860,7 @@ local s_Texts = {
             elseif (actionName == "ActionLoadModelUnit")          then return "Load"
             elseif (actionName == "ActionProduceModelUnitOnTile") then return "ProduceUnitOnTile"
             elseif (actionName == "ActionProduceModelUnitOnUnit") then return "ProduceUnitOnUnit"
+            elseif (actionName == "ActionResearchPassiveSkill")   then return "ResearchSkill"
             elseif (actionName == "ActionSupplyModelUnit")        then return "Supply"
             elseif (actionName == "ActionSurface")                then return "Surface"
             elseif (actionName == "ActionSurrender")              then return "Surrender"

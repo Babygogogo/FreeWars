@@ -967,6 +967,35 @@ local function executeProduceModelUnitOnUnit(action, modelWarReplay)
     end
 end
 
+local function executeResearchPassiveSkill(action, modelWarReplay)
+    modelWarReplay:setExecutingAction(true)
+
+    local skillID                 = action.skillID
+    local skillLevel              = action.skillLevel
+    local playerIndex             = getModelTurnManager(modelWarReplay):getPlayerIndex()
+    local modelPlayer             = getModelPlayerManager(modelWarReplay):getModelPlayer(playerIndex)
+    local modelSkillConfiguration = modelPlayer:getModelSkillConfiguration()
+    modelPlayer:setEnergy(modelPlayer:getEnergy() - modelWarReplay:getModelSkillDataManager():getSkillPoints(skillID, skillLevel, false))
+    modelSkillConfiguration:getModelSkillGroupResearching():pushBackSkill(skillID, skillLevel)
+
+    if (not modelWarReplay:isFastExecutingActions()) then
+        local modelGridEffect = getModelGridEffect(modelWarReplay)
+        local func            = function(modelUnit)
+            if (modelUnit:getPlayerIndex() == playerIndex) then
+                modelGridEffect:showAnimationSkillActivation(modelUnit:getGridIndex())
+                modelUnit:updateView()
+            end
+        end
+        getModelUnitMap(modelWarReplay):forEachModelUnitOnMap(func)
+            :forEachModelUnitLoaded(func)
+
+        getModelFogMap(modelWarReplay):updateView()
+        dispatchEvtModelPlayerUpdated(modelWarReplay, playerIndex)
+    end
+
+    modelWarReplay:setExecutingAction(false)
+end
+
 local function executeSupplyModelUnit(action, modelWarReplay)
     modelWarReplay:setExecutingAction(true)
 
@@ -1139,6 +1168,7 @@ function ActionExecutorForWarReplay.executeReplayAction(action, modelWarReplay)
     elseif (actionCode == ACTION_CODES.ActionLoadModelUnit)          then executeLoadModelUnit(         action, modelWarReplay)
     elseif (actionCode == ACTION_CODES.ActionProduceModelUnitOnTile) then executeProduceModelUnitOnTile(action, modelWarReplay)
     elseif (actionCode == ACTION_CODES.ActionProduceModelUnitOnUnit) then executeProduceModelUnitOnUnit(action, modelWarReplay)
+    elseif (actionCode == ACTION_CODES.ActionResearchPassiveSkill)   then executeResearchPassiveSkill(  action, modelWarReplay)
     elseif (actionCode == ACTION_CODES.ActionSupplyModelUnit)        then executeSupplyModelUnit(       action, modelWarReplay)
     elseif (actionCode == ACTION_CODES.ActionSurface)                then executeSurface(               action, modelWarReplay)
     elseif (actionCode == ACTION_CODES.ActionSurrender)              then executeSurrender(             action, modelWarReplay)

@@ -954,6 +954,40 @@ local function executeProduceModelUnitOnUnit(action, modelWar)
     end)
 end
 
+local function executeResearchPassiveSkill(action, modelWar)
+    modelWar:setExecutingAction(true)
+
+    local skillID                 = action.skillID
+    local skillLevel              = action.skillLevel
+    local playerIndexInTurn       = getModelTurnManager(modelWar):getPlayerIndex()
+    local modelPlayer             = getModelPlayerManager(modelWar):getModelPlayer(playerIndexInTurn)
+    local modelSkillConfiguration = modelPlayer:getModelSkillConfiguration()
+    modelPlayer:setEnergy(modelPlayer:getEnergy() - modelWar:getModelSkillDataManager():getSkillPoints(skillID, skillLevel, false))
+    modelSkillConfiguration:getModelSkillGroupResearching():pushBackSkill(skillID, skillLevel)
+
+    local modelGridEffect     = getModelGridEffect(modelWar)
+    local playerIndexForHuman = getModelPlayerManager(modelWar):getPlayerIndexForHuman(modelWar)
+    getModelUnitMap(modelWar):forEachModelUnitOnMap(function(modelUnit)
+            local playerIndex = modelUnit:getPlayerIndex()
+            if (playerIndex == playerIndexInTurn) then
+                modelUnit:updateView()
+                local gridIndex = modelUnit:getGridIndex()
+                if (isUnitVisible(modelWar, gridIndex, modelUnit:getUnitType(), isModelUnitDiving(modelUnit), playerIndex, playerIndexForHuman)) then
+                    modelGridEffect:showAnimationSkillActivation(gridIndex)
+                end
+            end
+        end)
+        :forEachModelUnitLoaded(function(modelUnit)
+            if (modelUnit:getPlayerIndex() == playerIndexInTurn) then
+                modelUnit:updateView()
+            end
+        end)
+
+    dispatchEvtModelPlayerUpdated(modelWar, playerIndexInTurn)
+
+    modelWar:setExecutingAction(false)
+end
+
 local function executeSupplyModelUnit(action, modelWar)
     modelWar:setExecutingAction(true)
 
@@ -1087,6 +1121,7 @@ function ActionExecutorForWarNative.execute(action, modelWar)
     elseif (actionCode == ACTION_CODES.ActionLoadModelUnit)          then executeLoadModelUnit(         action, modelWar)
     elseif (actionCode == ACTION_CODES.ActionProduceModelUnitOnTile) then executeProduceModelUnitOnTile(action, modelWar)
     elseif (actionCode == ACTION_CODES.ActionProduceModelUnitOnUnit) then executeProduceModelUnitOnUnit(action, modelWar)
+    elseif (actionCode == ACTION_CODES.ActionResearchPassiveSkill)   then executeResearchPassiveSkill(  action, modelWar)
     elseif (actionCode == ACTION_CODES.ActionSupplyModelUnit)        then executeSupplyModelUnit(       action, modelWar)
     elseif (actionCode == ACTION_CODES.ActionSurface)                then executeSurface(               action, modelWar)
     elseif (actionCode == ACTION_CODES.ActionSurrender)              then executeSurrender(             action, modelWar)

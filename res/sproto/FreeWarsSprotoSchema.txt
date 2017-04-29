@@ -40,11 +40,12 @@
     ActionLoadModelUnit               113 : ActionLoadModelUnit
     ActionProduceModelUnitOnTile      114 : ActionProduceModelUnitOnTile
     ActionProduceModelUnitOnUnit      115 : ActionProduceModelUnitOnUnit
-    ActionSupplyModelUnit             116 : ActionSupplyModelUnit
-    ActionSurface                     117 : ActionSurface
-    ActionSurrender                   118 : ActionSurrender
-    ActionVoteForDraw                 119 : ActionVoteForDraw
-    ActionWait                        120 : ActionWait
+    ActionResearchPassiveSkill        116 : ActionResearchPassiveSkill
+    ActionSupplyModelUnit             117 : ActionSupplyModelUnit
+    ActionSurface                     118 : ActionSurface
+    ActionSurrender                   119 : ActionSurrender
+    ActionVoteForDraw                 120 : ActionVoteForDraw
+    ActionWait                        121 : ActionWait
 }
 
 .ActionRedis {
@@ -463,6 +464,16 @@
     path              9 :  MovePath
     launchUnitID     10 :  integer
     cost             11 :  integer
+}
+
+.ActionResearchPassiveSkill {
+    actionCode     0 : integer
+    playerAccount  1 : string
+    playerPassword 2 : string
+    warID          3 : integer
+    actionID       4 : integer
+    skillID        5 : integer
+    skillLevel     6 : integer
 }
 
 .ActionSupplyModelUnit {
