@@ -10,6 +10,7 @@ local string           = string
 local SKILL_PASSIVE       = "SkillPassive"
 local SKILL_RESEARCHING   = "SkillResearching"
 local SKILL_ACTIVE        = "SkillActive"
+local SKILL_RESERVE       = "SkillReserve"
 
 --------------------------------------------------------------------------------
 -- The util functions.
@@ -71,7 +72,7 @@ local function getBriefDescriptionForSkillGroup(modelSkillDataManager, skillGrou
         return prefix .. " " .. getLocalizedText(3, "None")
     end
 
-    local isActiveSkill         = skillGroupType == SKILL_ACTIVE
+    local isActiveSkill         = (skillGroupType == SKILL_ACTIVE) or (skillGroupType == SKILL_RESERVE)
     local descriptions          = {prefix}
     for i, skill in ipairs(skillGroup:getAllSkills()) do
         local skillID  = skill.id
@@ -89,17 +90,20 @@ function SkillDescriptionFunctions.getBriefDescription(modelWar, modelSkillConfi
     local skillGroupPassive     = modelSkillConfiguration:getModelSkillGroupPassive()
     local skillGroupResearching = modelSkillConfiguration:getModelSkillGroupResearching()
     local skillGroupActive      = modelSkillConfiguration:getModelSkillGroupActive()
+    local skillGroupReserve     = modelSkillConfiguration:getModelSkillGroupReserve()
     if ((skillGroupPassive    :isEmpty())  and
         (skillGroupResearching:isEmpty())  and
-        (skillGroupActive     :isEmpty())) then
+        (skillGroupActive     :isEmpty())  and
+        (skillGroupReserve    :isEmpty())) then
         return getLocalizedText(3, "NoSkills")
     end
 
     local modelSkillDataManager = modelWar:getModelSkillDataManager()
-    return string.format("%s\n\n%s\n\n%s",
+    return string.format("%s\n\n%s\n\n%s\n\n%s",
         getBriefDescriptionForSkillGroup(modelSkillDataManager, skillGroupPassive,     SKILL_PASSIVE),
         getBriefDescriptionForSkillGroup(modelSkillDataManager, skillGroupResearching, SKILL_RESEARCHING),
-        getBriefDescriptionForSkillGroup(modelSkillDataManager, skillGroupActive,      SKILL_ACTIVE)
+        getBriefDescriptionForSkillGroup(modelSkillDataManager, skillGroupActive,      SKILL_ACTIVE),
+        getBriefDescriptionForSkillGroup(modelSkillDataManager, skillGroupReserve,     SKILL_RESERVE)
     )
 end
 

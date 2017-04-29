@@ -660,16 +660,6 @@ local function executeBeginTurn(action, modelWarOnline)
 
         if (not lostPlayerIndex) then
             modelTurnManager:beginTurnPhaseBeginning(action.income, action.repairData, action.supplyData, function()
-                local playerIndexInTurn = modelTurnManager:getPlayerIndex()
-                if (playerIndexInTurn == modelPlayerManager:getPlayerIndexLoggedIn()) then
-                    local modelMessageIndicator = getModelMessageIndicator(modelWarOnline)
-                    modelPlayerManager:forEachModelPlayer(function(modelPlayer, playerIndex)
-                        if ((playerIndex ~= playerIndexInTurn) and (modelPlayer:isSkillDeclared())) then
-                            modelMessageIndicator:showMessage(string.format("[%s]%s!", modelPlayer:getAccount(), getLocalizedText(22, "HasDeclaredSkill")))
-                        end
-                    end)
-                end
-
                 modelWarOnline:setExecutingAction(false)
             end)
         else
@@ -844,30 +834,6 @@ local function executeCaptureModelTile(action, modelWarOnline)
                 modelWarOnline:setExecutingAction(false)
             end)
         end
-    end
-end
-
-local function executeDeclareSkill(action, modelWarOnline)
-    if (not prepareForExecutingWarAction(action, modelWarOnline)) then
-        return
-    end
-
-    local playerIndex = getModelTurnManager(modelWarOnline):getPlayerIndex()
-    local modelPlayer = getModelPlayerManager(modelWarOnline):getModelPlayer(playerIndex)
-    modelPlayer:setEnergy(modelPlayer:getEnergy() - modelWarOnline:getModelSkillDataManager():getSkillDeclarationCost())
-        :setSkillDeclared(true)
-
-    if (IS_SERVER) then
-        modelWarOnline:setExecutingAction(false)
-        OnlineWarManager.updateWithModelWarOnline(modelWarOnline)
-
-    else
-        cleanupOnReceivingResponseFromServer(modelWarOnline)
-        SingletonGetters.getModelMessageIndicator(modelWarOnline):showMessage(string.format("[%s]%s!", modelPlayer:getNickname(), getLocalizedText(22, "HasDeclaredSkill")))
-
-        dispatchEvtModelPlayerUpdated(modelWarOnline, playerIndex)
-
-        modelWarOnline:setExecutingAction(false)
     end
 end
 
@@ -1613,7 +1579,6 @@ function ActionExecutorForWarOnline.execute(action, modelWarOnline)
     elseif (actionCode == ACTION_CODES.ActionBeginTurn)              then executeBeginTurn(             action, modelWarOnline)
     elseif (actionCode == ACTION_CODES.ActionBuildModelTile)         then executeBuildModelTile(        action, modelWarOnline)
     elseif (actionCode == ACTION_CODES.ActionCaptureModelTile)       then executeCaptureModelTile(      action, modelWarOnline)
-    elseif (actionCode == ACTION_CODES.ActionDeclareSkill)           then executeDeclareSkill(          action, modelWarOnline)
     elseif (actionCode == ACTION_CODES.ActionDestroyOwnedModelUnit)  then executeDestroyOwnedModelUnit( action, modelWarOnline)
     elseif (actionCode == ACTION_CODES.ActionDive)                   then executeDive(                  action, modelWarOnline)
     elseif (actionCode == ACTION_CODES.ActionDropModelUnit)          then executeDropModelUnit(         action, modelWarOnline)

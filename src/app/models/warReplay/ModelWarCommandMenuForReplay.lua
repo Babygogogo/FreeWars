@@ -59,7 +59,6 @@ local function generateEmptyDataForEachPlayer(self)
                 fund            = modelPlayer:getFund(),
                 idleUnitsCount  = 0,
                 income          = 0,
-                isSkillDeclared = modelPlayer:isSkillDeclared(),
                 nickname        = modelPlayer:getNickname(),
                 teamIndex       = modelPlayer:getTeamIndex(),
                 tilesCount      = 0,
@@ -138,11 +137,10 @@ local function generateTextWarInfo(self)
         else
             local d              = dataForEachPlayer[i]
             local isPlayerInTurn = i == playerIndexInTurn
-            stringList[#stringList + 1] = string.format("%s %d: %s %s\n%s: %s        %s: %d        %s: %s\n%s: %d        %s: %s        %s: %d\n%s: %d%s        %s: %d",
+            stringList[#stringList + 1] = string.format("%s %d: %s %s\n%s: %s        %s: %d\n%s: %d        %s: %s        %s: %d\n%s: %d%s        %s: %d",
                 getLocalizedText(65, "Player"),       i,           d.nickname, ((isPlayerInTurn) and (getInTurnDescription(modelWarReplay)) or ("")),
                 getLocalizedText(14, "TeamIndex"),    AuxiliaryFunctions.getTeamNameWithTeamIndex(d.teamIndex),
                 getLocalizedText(65, "Energy"),       d.energy,
-                getLocalizedText(22, "DeclareSkill"), (d.isSkillDeclared) and (getLocalizedText(22, "Yes")) or (getLocalizedText(22, "No")),
                 getLocalizedText(65, "TilesCount"),   d.tilesCount,
                 getLocalizedText(65, "Fund"),         "" .. d.fund,
                 getLocalizedText(65, "Income"),       d.income,

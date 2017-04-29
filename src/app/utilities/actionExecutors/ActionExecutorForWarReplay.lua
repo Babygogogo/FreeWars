@@ -614,22 +614,6 @@ local function executeCaptureModelTile(action, modelWarReplay)
     end
 end
 
-local function executeDeclareSkill(action, modelWarReplay)
-    modelWarReplay:setExecutingAction(true)
-
-    local playerIndex = getModelTurnManager(modelWarReplay):getPlayerIndex()
-    local modelPlayer = getModelPlayerManager(modelWarReplay):getModelPlayer(playerIndex)
-    modelPlayer:setEnergy(modelPlayer:getEnergy() - modelWarReplay:getModelSkillDataManager():getSkillDeclarationCost())
-        :setSkillDeclared(true)
-
-    if (not modelWarReplay:isFastExecutingActions()) then
-        SingletonGetters.getModelMessageIndicator(modelWarReplay):showMessage(string.format("[%s]%s!", modelPlayer:getNickname(), getLocalizedText(22, "HasDeclaredSkill")))
-        dispatchEvtModelPlayerUpdated(modelWarReplay, playerIndex)
-    end
-
-    modelWarReplay:setExecutingAction(false)
-end
-
 local function executeDestroyOwnedModelUnit(action, modelWarReplay)
     modelWarReplay:setExecutingAction(true)
 
@@ -1157,7 +1141,6 @@ function ActionExecutorForWarReplay.executeReplayAction(action, modelWarReplay)
     elseif (actionCode == ACTION_CODES.ActionBeginTurn)              then executeBeginTurn(             action, modelWarReplay)
     elseif (actionCode == ACTION_CODES.ActionBuildModelTile)         then executeBuildModelTile(        action, modelWarReplay)
     elseif (actionCode == ACTION_CODES.ActionCaptureModelTile)       then executeCaptureModelTile(      action, modelWarReplay)
-    elseif (actionCode == ACTION_CODES.ActionDeclareSkill)           then executeDeclareSkill(          action, modelWarReplay)
     elseif (actionCode == ACTION_CODES.ActionDestroyOwnedModelUnit)  then executeDestroyOwnedModelUnit( action, modelWarReplay)
     elseif (actionCode == ACTION_CODES.ActionDive)                   then executeDive(                  action, modelWarReplay)
     elseif (actionCode == ACTION_CODES.ActionDropModelUnit)          then executeDropModelUnit(         action, modelWarReplay)

@@ -36,7 +36,6 @@ function ModelPlayer:ctor(param)
     self.m_HasVotedForDraw         = param.hasVotedForDraw
     self.m_IsActivatingSkill       = param.isActivatingSkill
     self.m_IsAlive                 = param.isAlive
-    self.m_IsSkillDeclared         = param.isSkillDeclared
     self.m_Nickname                = param.nickname
     self.m_ModelSkillConfiguration = ModelSkillConfiguration:create(param.skillConfiguration)
     self.m_PlayerIndex             = param.playerIndex
@@ -57,7 +56,6 @@ function ModelPlayer:toSerializableTable()
         hasVotedForDraw     = self:hasVotedForDraw(),
         isActivatingSkill   = self.m_IsActivatingSkill,
         isAlive             = self:isAlive(),
-        isSkillDeclared     = self.m_IsSkillDeclared,
         nickname            = self:getNickname(),
         skillConfiguration  = self:getModelSkillConfiguration():toSerializableTable(),
         playerIndex         = self.m_PlayerIndex,
@@ -74,7 +72,6 @@ function ModelPlayer:toSerializableReplayData()
         hasVotedForDraw     = nil,
         isActivatingSkill   = false,
         isAlive             = true,
-        isSkillDeclared     = false,
         nickname            = self:getNickname(),
         skillConfiguration  = self:getModelSkillConfiguration():toSerializableReplayData(),
         playerIndex         = self.m_PlayerIndex,
@@ -160,16 +157,6 @@ function ModelPlayer:setActivatingSkill(isActivating)
     if (not isActivating) then
         self.m_ModelSkillConfiguration:getModelSkillGroupActive():clearAllSkills()
     end
-
-    return self
-end
-
-function ModelPlayer:isSkillDeclared()
-    return self.m_IsSkillDeclared
-end
-
-function ModelPlayer:setSkillDeclared(isSkillDeclared)
-    self.m_IsSkillDeclared = isSkillDeclared
 
     return self
 end

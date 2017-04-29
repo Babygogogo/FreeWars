@@ -13,7 +13,6 @@ local string, table    = string, table
 local pairs            = pairs
 local getLocalizedText = LocalizationFunctions.getLocalizedText
 
-local ACTION_CODE_DECLARE_SKILL          = ActionCodeFunctions.getActionCode("ActionDeclareSkill")
 local ACTION_CODE_RESEARCH_PASSIVE_SKILL = ActionCodeFunctions.getActionCode("ActionResearchPassiveSkill")
 
 --------------------------------------------------------------------------------
@@ -21,21 +20,19 @@ local ACTION_CODE_RESEARCH_PASSIVE_SKILL = ActionCodeFunctions.getActionCode("Ac
 --------------------------------------------------------------------------------
 local function generateSkillInfoText(self)
     local modelWar   = self.m_ModelWar
-    local stringList = {string.format("%s: %d%%    %s: %s    %s: %s    %s: %s",
+    local stringList = {string.format("%s: %d%%    %s: %s    %s: %s",
         getLocalizedText(14, "EnergyGainModifier"),     modelWar:getEnergyGainModifier(),
         getLocalizedText(14, "EnablePassiveSkill"),     getLocalizedText(14, (modelWar:isPassiveSkillEnabled())      and ("Yes") or ("No")),
-        getLocalizedText(14, "EnableActiveSkill"),      getLocalizedText(14, (modelWar:isActiveSkillEnabled())       and ("Yes") or ("No")),
-        getLocalizedText(14, "EnableSkillDeclaration"), getLocalizedText(14, (modelWar:isSkillDeclarationEnabled())  and ("Yes") or ("No"))
+        getLocalizedText(14, "EnableActiveSkill"),      getLocalizedText(14, (modelWar:isActiveSkillEnabled())       and ("Yes") or ("No"))
     )}
 
     SingletonGetters.getModelPlayerManager(modelWar):forEachModelPlayer(function(modelPlayer, playerIndex)
         if (not modelPlayer:isAlive()) then
             stringList[#stringList + 1] = string.format("%s %d: %s (%s)", getLocalizedText(65, "Player"), playerIndex, modelPlayer:getNickname(), getLocalizedText(65, "Lost"))
         else
-            stringList[#stringList + 1] = string.format("%s %d: %s    %s: %d    %s: %s\n%s",
+            stringList[#stringList + 1] = string.format("%s %d: %s    %s: %d\n%s",
                 getLocalizedText(65, "Player"), playerIndex, modelPlayer:getNickname(),
                 getLocalizedText(22, "CurrentEnergy"), modelPlayer:getEnergy(),
-                getLocalizedText(22, "DeclareSkill"),  getLocalizedText(22, modelPlayer:isSkillDeclared() and "Yes" or "No"),
                 SkillDescriptionFunctions.getBriefDescription(modelWar, modelPlayer:getModelSkillConfiguration())
             )
         end
@@ -112,12 +109,6 @@ local function sendActionResearchPassiveSkill(self, skillID, skillLevel)
     })
 end
 
-local function sendActionDeclareSkill(self)
-    self.m_ModelWar:translateAndExecuteAction({
-        actionCode  = ACTION_CODE_DECLARE_SKILL,
-    })
-end
-
 local function cleanupAfterSendAction(modelWar)
     SingletonGetters.getModelWarCommandMenu(modelWar):setEnabled(false)
 end
@@ -177,11 +168,12 @@ local function generateItemsForStateMain(self)
         if (modelWar:isPassiveSkillEnabled()) then
             items[#items + 1] = self.m_ItemResearchPassiveSkill
         end
-        if ((modelWar:isSkillDeclarationEnabled()) and (modelWar:isActiveSkillEnabled()) and (not modelPlayer:isSkillDeclared()) and (modelPlayer:getEnergy() >= self.m_SkillDeclarationCost)) then
-            items[#items + 1] = self.m_ItemDeclareSkill
-        end
-        if ((modelWar:isActiveSkillEnabled()) and
-            ((modelPlayer:canActivateSkill() or (not modelWar:isSkillDeclarationEnabled())))) then
+        local modelPlayer           = self.m_ModelPlayerForHuman
+        local modelSkillGroupActive = modelPlayer:getModelSkillConfiguration():getModelSkillGroupActive()
+        if ((modelWar:isActiveSkillEnabled())                                        and
+            (not modelPlayer:isActivatingSkill())                                    and
+            (not modelSkillGroupActive:isEmpty())                                    and
+            (modelPlayer:getEnergy() >= modelSkillGroupActive:getTotalEnergyCost())) then
             items[#items + 1] = self.m_ItemActivateActiveSkill
         end
         items[#items + 1] = self.m_ItemSkillInfo
@@ -242,19 +234,10 @@ local function initItemActivateActiveSkill(self)
     }
 end
 
-local function initItemDeclareSkill(self)
-    self.m_ItemDeclareSkill = {
-        name     = getLocalizedText(22, "DeclareSkill"),
+local function initItemUpdateReserveSkills(self)
+    self.m_ItemUpdateReserveSkills = {
+        name     = getLocalizedText(22, "UpdateReserveSkill"),
         callback = function()
-            local modelWar   = self.m_ModelWar
-            local modelConfirmBox = SingletonGetters.getModelConfirmBox(modelWar)
-            modelConfirmBox:setConfirmText(getLocalizedText(22, "ConfirmationDeclareSkill"))
-                :setOnConfirmYes(function()
-                    sendActionDeclareSkill(self)
-                    cleanupAfterSendAction(modelWar)
-                    modelConfirmBox:setEnabled(false)
-                end)
-                :setEnabled(true)
         end,
     }
 end
@@ -324,9 +307,9 @@ function ModelSkillConfiguratorForNative:ctor()
     initItemActivateActiveSkill( self)
     initItemCostListActiveSkill( self)
     initItemCostListPassiveSkill(self)
-    initItemDeclareSkill(        self)
     initItemResearchPassiveSkill(self)
     initItemSkillInfo(           self)
+    initItemUpdateReserveSkills( self)
 
     return self
 end
@@ -340,7 +323,6 @@ end
 function ModelSkillConfiguratorForNative:onStartRunning(modelWar)
     self.m_ModelWar              = modelWar
     self.m_ModelSkillDataManager = modelWar:getModelSkillDataManager()
-    self.m_SkillDeclarationCost  = self.m_ModelSkillDataManager:getSkillDeclarationCost()
     self.m_ModelPlayerManager    = SingletonGetters.getModelPlayerManager(modelWar)
     self.m_PlayerIndexForHuman, self.m_ModelPlayerForHuman = self.m_ModelPlayerManager:getPlayerIndexForHuman()
 

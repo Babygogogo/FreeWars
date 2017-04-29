@@ -448,10 +448,6 @@ local function translateCaptureModelTile(action)
     end
 end
 
-local function translateDeclareSkill(action)
-    return action
-end
-
 local function translateDestroyOwnedModelUnit(action)
     return action
 end
@@ -647,7 +643,6 @@ function ActionTranslatorForNative.translate(action)
     elseif (actionCode == ACTION_CODES.ActionBeginTurn)              then return translateBeginTurn(             action)
     elseif (actionCode == ACTION_CODES.ActionBuildModelTile)         then return translateBuildModelTile(        action)
     elseif (actionCode == ACTION_CODES.ActionCaptureModelTile)       then return translateCaptureModelTile(      action)
-    elseif (actionCode == ACTION_CODES.ActionDeclareSkill)           then return translateDeclareSkill(          action)
     elseif (actionCode == ACTION_CODES.ActionDestroyOwnedModelUnit)  then return translateDestroyOwnedModelUnit( action)
     elseif (actionCode == ACTION_CODES.ActionDive)                   then return translateDive(                  action)
     elseif (actionCode == ACTION_CODES.ActionDropModelUnit)          then return translateDropModelUnit(         action)

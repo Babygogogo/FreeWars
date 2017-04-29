@@ -246,8 +246,6 @@ local function runTurnPhaseResetSkillState(self)
     local playerIndex = self.m_PlayerIndex
     local modelPlayer = getModelPlayerManager(self.m_ModelWarReplay):getModelPlayer(playerIndex)
     modelPlayer:setActivatingSkill(false)
-        :setCanActivateSkill(modelPlayer:isSkillDeclared())
-        :setSkillDeclared(false)
         :getModelSkillConfiguration():mergePassiveAndResearchingSkills()
 
     local func = function(modelUnit)

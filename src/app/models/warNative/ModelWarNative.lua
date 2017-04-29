@@ -114,7 +114,6 @@ function ModelWarNative:ctor(warData)
     self.m_IsFogOfWarByDefault          = warData.isFogOfWarByDefault
     self.m_IsPassiveSkillEnabled        = warData.isPassiveSkillEnabled
     self.m_IsCampaign                   = warData.isCampaign
-    self.m_IsSkillDeclarationEnabled    = warData.isSkillDeclarationEnabled
     self.m_IsWarEnded                   = warData.isWarEnded
     self.m_MoveRangeModifier            = warData.moveRangeModifier
     self.m_SaveIndex                    = warData.saveIndex
@@ -165,7 +164,6 @@ function ModelWarNative:toSerializableTable()
         isFogOfWarByDefault          = self.m_IsFogOfWarByDefault,
         isPassiveSkillEnabled        = self.m_IsPassiveSkillEnabled,
         isCampaign                   = self.m_IsCampaign,
-        isSkillDeclarationEnabled    = self.m_IsSkillDeclarationEnabled,
         isWarEnded                   = self.m_IsWarEnded,
         moveRangeModifier            = self.m_MoveRangeModifier,
         saveIndex                    = self.m_SaveIndex,
@@ -386,10 +384,6 @@ end
 
 function ModelWarNative:isPassiveSkillEnabled()
     return self.m_IsPassiveSkillEnabled
-end
-
-function ModelWarNative:isSkillDeclarationEnabled()
-    return self.m_IsSkillDeclarationEnabled
 end
 
 function ModelWarNative:isCampaign()

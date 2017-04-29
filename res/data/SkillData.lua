@@ -1,8 +1,6 @@
 
 local SkillData = {}
 
-SkillData.skillDeclarationCost = 2500
-
 SkillData.categories = {
     ["SkillsActive"] = {
         1, 2, 3, 4, 5, 6, 7, 9, 10, 12,

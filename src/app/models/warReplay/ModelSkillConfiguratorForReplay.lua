@@ -13,21 +13,19 @@ local getLocalizedText = LocalizationFunctions.getLocalizedText
 --------------------------------------------------------------------------------
 local function generateSkillInfoText(self)
     local modelWar   = self.m_ModelWar
-    local stringList = {string.format("%s: %d%%    %s: %s    %s: %s    %s: %s",
+    local stringList = {string.format("%s: %d%%    %s: %s    %s: %s",
         getLocalizedText(14, "EnergyGainModifier"),     modelWar:getEnergyGainModifier(),
         getLocalizedText(14, "EnablePassiveSkill"),     getLocalizedText(14, (modelWar:isPassiveSkillEnabled())      and ("Yes") or ("No")),
-        getLocalizedText(14, "EnableActiveSkill"),      getLocalizedText(14, (modelWar:isActiveSkillEnabled())       and ("Yes") or ("No")),
-        getLocalizedText(14, "EnableSkillDeclaration"), getLocalizedText(14, (modelWar:isSkillDeclarationEnabled())  and ("Yes") or ("No"))
+        getLocalizedText(14, "EnableActiveSkill"),      getLocalizedText(14, (modelWar:isActiveSkillEnabled())       and ("Yes") or ("No"))
     )}
 
     SingletonGetters.getModelPlayerManager(modelWar):forEachModelPlayer(function(modelPlayer, playerIndex)
         if (not modelPlayer:isAlive()) then
             stringList[#stringList + 1] = string.format("%s %d: %s (%s)", getLocalizedText(65, "Player"), playerIndex, modelPlayer:getNickname(), getLocalizedText(65, "Lost"))
         else
-            stringList[#stringList + 1] = string.format("%s %d: %s    %s: %d    %s: %s\n%s",
+            stringList[#stringList + 1] = string.format("%s %d: %s    %s: %d\n%s",
                 getLocalizedText(65, "Player"), playerIndex, modelPlayer:getNickname(),
                 getLocalizedText(22, "CurrentEnergy"), modelPlayer:getEnergy(),
-                getLocalizedText(22, "DeclareSkill"),  getLocalizedText(22, modelPlayer:isSkillDeclared() and "Yes" or "No"),
                 SkillDescriptionFunctions.getBriefDescription(modelWar, modelPlayer:getModelSkillConfiguration())
             )
         end

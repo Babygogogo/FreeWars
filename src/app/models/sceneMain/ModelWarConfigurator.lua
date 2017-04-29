@@ -131,14 +131,6 @@ local function generateTextForEnableActiveSkill(isActiveSkillEnabled)
     end
 end
 
-local function generateTextForEnableSkillDeclaration(isSkillDeclarationEnabled)
-    if (isSkillDeclarationEnabled) then
-        return nil
-    else
-        return string.format("%s:         %s", getLocalizedText(14, "EnableSkillDeclaration"), getLocalizedText(14, (isSkillDeclarationEnabled) and ("Yes") or ("No")))
-    end
-end
-
 local function generateTextForMoveRangeModifier(moveRangeModifier)
     if (moveRangeModifier == 0) then
         return nil
@@ -165,16 +157,15 @@ end
 
 local function generateTextForAdvancedSettings(self)
     local textList = {getLocalizedText(14, "Advanced Settings") .. ":"}
-    textList[#textList + 1] = generateTextForStartingFund(          self.m_StartingFund)
-    textList[#textList + 1] = generateTextForIncomeModifier(        self.m_IncomeModifier)
-    textList[#textList + 1] = generateTextForStartingEnergy(        self.m_StartingEnergy)
-    textList[#textList + 1] = generateTextForEnergyModifier(        self.m_EnergyGainModifier)
-    textList[#textList + 1] = generateTextForEnablePassiveSkill(    self.m_IsPassiveSkillEnabled)
-    textList[#textList + 1] = generateTextForEnableActiveSkill(     self.m_IsActiveSkillEnabled)
-    textList[#textList + 1] = generateTextForEnableSkillDeclaration(self.m_IsSkillDeclarationEnabled)
-    textList[#textList + 1] = generateTextForMoveRangeModifier(     self.m_MoveRangeModifier)
-    textList[#textList + 1] = generateTextForAttackModifier(        self.m_AttackModifier)
-    textList[#textList + 1] = generateTextForVisionModifier(        self.m_VisionModifier)
+    textList[#textList + 1] = generateTextForStartingFund(      self.m_StartingFund)
+    textList[#textList + 1] = generateTextForIncomeModifier(    self.m_IncomeModifier)
+    textList[#textList + 1] = generateTextForStartingEnergy(    self.m_StartingEnergy)
+    textList[#textList + 1] = generateTextForEnergyModifier(    self.m_EnergyGainModifier)
+    textList[#textList + 1] = generateTextForEnablePassiveSkill(self.m_IsPassiveSkillEnabled)
+    textList[#textList + 1] = generateTextForEnableActiveSkill( self.m_IsActiveSkillEnabled)
+    textList[#textList + 1] = generateTextForMoveRangeModifier( self.m_MoveRangeModifier)
+    textList[#textList + 1] = generateTextForAttackModifier(    self.m_AttackModifier)
+    textList[#textList + 1] = generateTextForVisionModifier(    self.m_VisionModifier)
 
     if (#textList == 1) then
         textList[#textList + 1] = getLocalizedText(14, "None")
@@ -336,7 +327,6 @@ local function sendActionNewWar(self)
         intervalUntilBoot         = self.m_IntervalUntilBoot,
         isActiveSkillEnabled      = self.m_IsActiveSkillEnabled,
         isPassiveSkillEnabled     = self.m_IsPassiveSkillEnabled,
-        isSkillDeclarationEnabled = self.m_IsSkillDeclarationEnabled,
         isFogOfWarByDefault       = self.m_IsFogOfWarByDefault,
         isRankMatch               = self.m_IsRankMatch,
         maxDiffScore              = self.m_MaxDiffScore,
@@ -387,13 +377,6 @@ local function setStateEnablePassiveSkill(self)
     self.m_View:setMenuTitleText(getLocalizedText(14, "EnablePassiveSkill"))
         :setItems(self.m_ItemsForStateEnablePassiveSkill)
         :setOverviewText(getLocalizedText(35, "HelpForEnablePassiveSkill"))
-end
-
-local function setStateEnableSkillDeclaration(self)
-    self.m_State = "stateEnableSkillDeclaration"
-    self.m_View:setMenuTitleText(getLocalizedText(14, "EnableSkillDeclaration"))
-        :setItems(self.m_ItemsForStateEnableSkillDeclaration)
-        :setOverviewText(getLocalizedText(35, "HelpForEnableSkillDeclaration"))
 end
 
 local function setStateEnergyGainModifier(self)
@@ -526,15 +509,6 @@ local function initItemEnablePassiveSkill(self)
     }
 end
 
-local function initItemEnableSkillDeclaration(self)
-    self.m_ItemEnableSkillDeclaration = {
-        name     = getLocalizedText(14, "EnableSkillDeclaration"),
-        callback = function()
-            setStateEnableSkillDeclaration(self)
-        end,
-    }
-end
-
 local function initItemEnergyGainModifier(self)
     self.m_ItemEnergyModifier = {
         name     = getLocalizedText(14, "Energy Gain Modifier"),
@@ -660,7 +634,6 @@ local function initItemsForStateAdvancedSettings(self)
         self.m_ItemEnergyModifier,
         self.m_ItemEnablePassiveSkill,
         self.m_ItemEnableActiveSkill,
-        self.m_ItemEnableSkillDeclaration,
         self.m_ItemMoveRangeModifier,
         self.m_ItemAttackModifier,
         self.m_ItemVisionModifier,
@@ -714,25 +687,6 @@ local function initItemsForStateEnablePassiveSkill(self)
             name     = getLocalizedText(14, "No"),
             callback = function()
                 self.m_IsPassiveSkillEnabled = false
-                setStateMain(self)
-            end,
-        }
-    }
-end
-
-local function initItemsForStateEnableSkillDeclaration(self)
-    self.m_ItemsForStateEnableSkillDeclaration = {
-        {
-            name     = getLocalizedText(14, "Yes"),
-            callback = function()
-                self.m_IsSkillDeclarationEnabled = true
-                setStateMain(self)
-            end,
-        },
-        {
-            name     = getLocalizedText(14, "No"),
-            callback = function()
-                self.m_IsSkillDeclarationEnabled = false
                 setStateMain(self)
             end,
         }
@@ -919,7 +873,6 @@ function ModelWarConfigurator:ctor()
     initItemAttackModifier(        self)
     initItemEnableActiveSkill(     self)
     initItemEnablePassiveSkill(    self)
-    initItemEnableSkillDeclaration(self)
     initItemEnergyGainModifier(    self)
     initItemFogOfWar(              self)
     initItemIncomeModifier(        self)
@@ -938,7 +891,6 @@ function ModelWarConfigurator:ctor()
     initItemsForStateAttackModifier(        self)
     initItemsForStateEnableActiveSkill(     self)
     initItemsForStateEnablePassiveSkill(    self)
-    initItemsForStateEnableSkillDeclaration(self)
     initItemsForStateEnergyGainModifier(    self)
     initItemsForStateFogOfWar(              self)
     initItemsForStateIncomeModifier(        self)
@@ -1056,7 +1008,6 @@ function ModelWarConfigurator:resetWithWarConfiguration(warConfiguration)
         self.m_IsFogOfWarByDefault       = false
         self.m_IsPassiveSkillEnabled     = true
         self.m_IsRankMatch               = false
-        self.m_IsSkillDeclarationEnabled = true
         self.m_ItemsForStatePlayerIndex  = createItemsForStatePlayerIndex(self)
         self.m_ItemsForStateTeamIndex    = createItemsForStateTeamIndex(self)
         self.m_MaxDiffScore              = 100
@@ -1078,7 +1029,6 @@ function ModelWarConfigurator:resetWithWarConfiguration(warConfiguration)
         self.m_IsFogOfWarByDefault       = warConfiguration.isFogOfWarByDefault
         self.m_IsPassiveSkillEnabled     = warConfiguration.isPassiveSkillEnabled
         self.m_IsRankMatch               = warConfiguration.isRankMatch
-        self.m_IsSkillDeclarationEnabled = warConfiguration.isSkillDeclarationEnabled
         self.m_ItemsForStatePlayerIndex  = createItemsForStatePlayerIndex(self)
         self.m_ItemsForStateTeamIndex    = createItemsForStateTeamIndex(self)
         self.m_MaxDiffScore              = warConfiguration.maxDiffScore
@@ -1100,7 +1050,6 @@ function ModelWarConfigurator:resetWithWarConfiguration(warConfiguration)
         self.m_IsFogOfWarByDefault       = warConfiguration.isFogOfWarByDefault
         self.m_IsPassiveSkillEnabled     = warConfiguration.isPassiveSkillEnabled
         self.m_IsRankMatch               = warConfiguration.isRankMatch
-        self.m_IsSkillDeclarationEnabled = warConfiguration.isSkillDeclarationEnabled
         self.m_ItemsForStatePlayerIndex  = nil
         self.m_ItemsForStateTeamIndex    = nil
         self.m_MaxDiffScore              = warConfiguration.maxDiffScore
@@ -1122,7 +1071,6 @@ function ModelWarConfigurator:resetWithWarConfiguration(warConfiguration)
         self.m_IsFogOfWarByDefault       = warConfiguration.isFogOfWarByDefault
         self.m_IsPassiveSkillEnabled     = warConfiguration.isPassiveSkillEnabled
         self.m_IsRankMatch               = warConfiguration.isRankMatch
-        self.m_IsSkillDeclarationEnabled = warConfiguration.isSkillDeclarationEnabled
         self.m_ItemsForStatePlayerIndex  = nil
         self.m_ItemsForStateTeamIndex    = nil
         self.m_MaxDiffScore              = warConfiguration.maxDiffScore
@@ -1188,7 +1136,6 @@ function ModelWarConfigurator:onButtonBackTouched()
     elseif (state == "stateAttackModifier")         then setStateAdvancedSettings(self)
     elseif (state == "stateEnableActiveSkill")      then setStateAdvancedSettings(self)
     elseif (state == "stateEnablePassiveSkill")     then setStateAdvancedSettings(self)
-    elseif (state == "stateEnableSkillDeclaration") then setStateAdvancedSettings(self)
     elseif (state == "stateEnergyModifier")         then setStateAdvancedSettings(self)
     elseif (state == "stateFogOfWar")               then setStateMain(self)
     elseif (state == "stateIncomeModifier")         then setStateAdvancedSettings(self)

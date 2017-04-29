@@ -3,6 +3,8 @@ local ModelSkillGroupActive = requireFW("src.global.functions.class")("ModelSkil
 
 local TableFunctions = requireFW("src.app.utilities.TableFunctions")
 
+local pairs = pairs
+
 local MAX_SLOTS_COUNT = 4
 
 --------------------------------------------------------------------------------
@@ -64,6 +66,15 @@ end
 
 function ModelSkillGroupActive:getAllSkills()
     return self.m_Slots
+end
+
+function ModelSkillGroupActive:getTotalEnergyCost()
+    local energyCost = 0
+    for _, skill in pairs(self.m_Slots) do
+        energyCost = energyCost + self.m_ModelSkillDataManager:getSkillPoints(skill.id, skill.level, true)
+    end
+
+    return energyCost
 end
 
 function ModelSkillGroupActive:pushBackSkill(skillID, skillLevel)
