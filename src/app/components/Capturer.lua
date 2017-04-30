@@ -84,7 +84,7 @@ end
 
 function Capturer:getCaptureAmount()
     local modelPlayer = getModelPlayerManager(self.m_ModelWar):getModelPlayer(self.m_Owner:getPlayerIndex())
-    local modifier    = getCaptureAmountModifierForSkillConfiguration(modelPlayer:getModelSkillConfiguration())
+    local modifier    = getCaptureAmountModifierForSkillConfiguration(modelPlayer:getModelSkillConfiguration(), modelPlayer:isActivatingSkill())
     return round(self.m_Owner:getNormalizedCurrentHP() * (100 + modifier) / 100)
 end
 

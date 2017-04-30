@@ -129,20 +129,40 @@ end
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
-function SkillModifierFunctions.getAttackModifierForSkillConfiguration(configuration)
-    return getAttackModifierForSkillGroup(configuration:getModelSkillGroupPassive()) + getAttackModifierForSkillGroup(configuration:getModelSkillGroupActive())
+function SkillModifierFunctions.getAttackModifierForSkillConfiguration(configuration, isActivatingSkill)
+    local modifier = getAttackModifierForSkillGroup(configuration:getModelSkillGroupPassive())
+    if (isActivatingSkill) then
+        modifier = modifier + getAttackModifierForSkillGroup(configuration:getModelSkillGroupActive())
+    end
+
+    return modifier
 end
 
-function SkillModifierFunctions.getDefenseModifierForSkillConfiguration(configuration)
-    return getDefenseModifierForSkillGroup(configuration:getModelSkillGroupPassive()) + getDefenseModifierForSkillGroup(configuration:getModelSkillGroupActive())
+function SkillModifierFunctions.getDefenseModifierForSkillConfiguration(configuration, isActivatingSkill)
+    local modifier = getDefenseModifierForSkillGroup(configuration:getModelSkillGroupPassive())
+    if (isActivatingSkill) then
+        modifier = modifier + getDefenseModifierForSkillGroup(configuration:getModelSkillGroupActive())
+    end
+
+    return modifier
 end
 
-function SkillModifierFunctions.getMoveRangeModifierForSkillConfiguration(configuration)
-    return getMoveRangeModifierForSkillGroup(configuration:getModelSkillGroupPassive()) + getMoveRangeModifierForSkillGroup(configuration:getModelSkillGroupActive())
+function SkillModifierFunctions.getMoveRangeModifierForSkillConfiguration(configuration, isActivatingSkill)
+    local modifier = getMoveRangeModifierForSkillGroup(configuration:getModelSkillGroupPassive())
+    if (isActivatingSkill) then
+        modifier = modifier + getMoveRangeModifierForSkillGroup(configuration:getModelSkillGroupActive())
+    end
+
+    return modifier
 end
 
-function SkillModifierFunctions.getAttackRangeModifierForSkillConfiguration(configuration)
-    return getAttackRangeModifierForSkillGroup(configuration:getModelSkillGroupPassive()) + getAttackRangeModifierForSkillGroup(configuration:getModelSkillGroupActive())
+function SkillModifierFunctions.getAttackRangeModifierForSkillConfiguration(configuration, isActivatingSkill)
+    local modifier = getAttackRangeModifierForSkillGroup(configuration:getModelSkillGroupPassive())
+    if (isActivatingSkill) then
+        modifier = modifier + getAttackRangeModifierForSkillGroup(configuration:getModelSkillGroupActive())
+    end
+
+    return modifier
 end
 
 function SkillModifierFunctions.getIncomeModifierForSkillConfiguration(configuration)
@@ -153,8 +173,13 @@ function SkillModifierFunctions.getRepairAmountModifierForSkillConfiguration(con
     return getRepairAmountModifierForSkillGroup(configuration:getModelSkillGroupPassive())
 end
 
-function SkillModifierFunctions.getCaptureAmountModifierForSkillConfiguration(configuration)
-    return getCaptureAmountModifierForSkillGroup(configuration:getModelSkillGroupPassive()) + getCaptureAmountModifierForSkillGroup(configuration:getModelSkillGroupActive())
+function SkillModifierFunctions.getCaptureAmountModifierForSkillConfiguration(configuration, isActivatingSkill)
+    local modifier = getCaptureAmountModifierForSkillGroup(configuration:getModelSkillGroupPassive())
+    if (isActivatingSkill) then
+        modifier = modifier + getCaptureAmountModifierForSkillGroup(configuration:getModelSkillGroupActive())
+    end
+
+    return modifier
 end
 
 function SkillModifierFunctions.getEnergyGainModifierForSkillConfiguration(configuration)

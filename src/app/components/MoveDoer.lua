@@ -77,9 +77,9 @@ end
 -- The exported functions.
 --------------------------------------------------------------------------------
 function MoveDoer:getMoveRange()
-    local owner       = self.m_Owner
-    local modelPlayer = SingletonGetters.getModelPlayerManager(self.m_ModelWar):getModelPlayer(owner:getPlayerIndex())
-    return math.max(1, self.m_Template.range + self.m_ModelWar:getMoveRangeModifier() + SkillModifierFunctions.getMoveRangeModifierForSkillConfiguration(modelPlayer:getModelSkillConfiguration()))
+    local modelPlayer      = SingletonGetters.getModelPlayerManager(self.m_ModelWar):getModelPlayer(self.m_Owner:getPlayerIndex())
+    local modifierForSkill = SkillModifierFunctions.getMoveRangeModifierForSkillConfiguration(modelPlayer:getModelSkillConfiguration(), modelPlayer:isActivatingSkill())
+    return math.max(1, self.m_Template.range + self.m_ModelWar:getMoveRangeModifier() + modifierForSkill)
 end
 
 function MoveDoer:getMoveType()
