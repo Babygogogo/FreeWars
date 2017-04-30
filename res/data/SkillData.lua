@@ -212,11 +212,11 @@ SkillData.skills = {
         maxModifierPassive = nil,
         modifierUnit       = "%",
         levels             = {
-            [1] = {modifierPassive = 15, pointsPassive = 5000, modifierActive = nil, pointsActive = nil},
-            [2] = {modifierPassive = 30, pointsPassive = 10000, modifierActive = nil, pointsActive = nil},
-            [3] = {modifierPassive = 45, pointsPassive = 15000, modifierActive = nil, pointsActive = nil},
-            [4] = {modifierPassive = 60, pointsPassive = 20000, modifierActive = nil, pointsActive = nil},
-            [5] = {modifierPassive = 75, pointsPassive = 25000, modifierActive = nil, pointsActive = nil},
+            [1] = {modifierPassive = 20, pointsPassive = 5000, modifierActive = nil, pointsActive = nil},
+            [2] = {modifierPassive = 40, pointsPassive = 10000, modifierActive = nil, pointsActive = nil},
+            [3] = {modifierPassive = 60, pointsPassive = 15000, modifierActive = nil, pointsActive = nil},
+            [4] = {modifierPassive = 80, pointsPassive = 20000, modifierActive = nil, pointsActive = nil},
+            [5] = {modifierPassive = 100, pointsPassive = 25000, modifierActive = nil, pointsActive = nil},
         },
     },
 }

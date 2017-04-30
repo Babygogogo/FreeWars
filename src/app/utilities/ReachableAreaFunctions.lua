@@ -113,7 +113,7 @@ function ReachableAreaFunctions.createArea(origin, maxMoveCost, moveCostGetter, 
     return area
 end
 
-function ReachableAreaFunctions.findNearestCapturableTile(modelTileMap, modelUnit, shouldYield)
+function ReachableAreaFunctions.findNearestCapturableTile(modelTileMap, modelUnitMap, modelUnit, shouldYield)
     local area, availableGridList = {}, {}
     updateAvailableGridList(availableGridList, 0, modelUnit:getGridIndex(), nil, 0)
 
@@ -125,12 +125,15 @@ function ReachableAreaFunctions.findNearestCapturableTile(modelTileMap, modelUni
             coroutine.yield()
         end
 
-        local listNode         = reorderListWithMinMoveCost(availableGridList, listIndex)
-        local currentGridIndex = listNode.gridIndex
-        local totalMoveCost    = listNode.totalMoveCost
-        local modelTile        = modelTileMap:getModelTile(currentGridIndex)
+        local listNode          = reorderListWithMinMoveCost(availableGridList, listIndex)
+        local currentGridIndex  = listNode.gridIndex
+        local totalMoveCost     = listNode.totalMoveCost
+        local modelTile         = modelTileMap:getModelTile(currentGridIndex)
+        local existingModelUnit = modelUnitMap:getModelUnit(currentGridIndex)
 
-        if ((modelTile.getCurrentCapturePoint) and (modelTile:getTeamIndex() ~= teamIndex)) then
+        if ((modelTile.getCurrentCapturePoint)                                                                                and
+            (modelTile:getTeamIndex() ~= teamIndex)                                                                           and
+            ((not existingModelUnit) or (existingModelUnit == modelUnit) or (existingModelUnit:getTeamIndex() ~= teamIndex))) then
             return modelTile
         elseif (updateArea(area, currentGridIndex, nil, totalMoveCost)) then
             for _, nextGridIndex in pairs(GridIndexFunctions.getAdjacentGrids(currentGridIndex, mapSize)) do

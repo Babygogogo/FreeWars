@@ -347,7 +347,7 @@ end
 --------------------------------------------------------------------------------
 local function createScoreMapForDistance(self, modelUnit)
     local modelTileMap          = self.m_ModelTileMap
-    local nearestCapturableTile = ReachableAreaFunctions.findNearestCapturableTile(modelTileMap, modelUnit, true)
+    local nearestCapturableTile = ReachableAreaFunctions.findNearestCapturableTile(modelTileMap, self.m_ModelUnitMap, modelUnit, true)
     if (not nearestCapturableTile) then
         return nil
     end
@@ -544,7 +544,7 @@ local function getScoreForActionProduceModelUnitOnTile(self, gridIndex, tiledID,
         score = score + (-999999)                                                                                               -- ADJUSTABLE
     end
 
-    score = score - getPossibleDamageInPlayerTurn(self, modelUnit, gridIndex) * productionCost / 3000
+    -- score = score - getPossibleDamageInPlayerTurn(self, modelUnit, gridIndex) * productionCost / 3000
 
     self.m_ModelUnitMap:forEachModelUnitOnMap(function(unitOnMap)
         if (unitOnMap:getPlayerIndex() == self.m_PlayerIndexForHuman) then
