@@ -77,8 +77,10 @@ function ModelSkillConfiguration:mergePassiveAndResearchingSkills()
 end
 
 function ModelSkillConfiguration:updateActiveAndReserveSkills()
-    self.m_ModelSkillGroupActive:ctor(self.m_ModelSkillGroupReserve:getAllSkills())
-    self.m_ModelSkillGroupReserve:clearAllSkills()
+    if (not self.m_ModelSkillGroupReserve:isEmpty()) then
+        self.m_ModelSkillGroupActive:ctor(self.m_ModelSkillGroupReserve:getAllSkills())
+        self.m_ModelSkillGroupReserve:clearAllSkills()
+    end
 
     return self
 end

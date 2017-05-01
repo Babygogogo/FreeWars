@@ -450,9 +450,7 @@ local function initItemsForStateUpdateReserveSkills(self)
     items[#items + 1] = {
         name     = getLocalizedText(1, "Confirm"),
         callback = function()
-            if (modelSkillGroupReserve:isEmpty()) then
-                SingletonGetters.getModelMessageIndicator(modelWar):showMessage(getLocalizedText(3, "NoReserveSkills"))
-            elseif (modelSkillGroupReserve:hasSameSkill()) then
+            if (modelSkillGroupReserve:hasSameSkill()) then
                 SingletonGetters.getModelMessageIndicator(modelWar):showMessage(getLocalizedText(3, "DuplicatedReserveSkills"))
             else
                 local modelConfirmBox = SingletonGetters.getModelConfirmBox(modelWar)

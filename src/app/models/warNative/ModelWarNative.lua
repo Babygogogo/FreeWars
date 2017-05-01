@@ -434,7 +434,6 @@ function ModelWarNative:getScoreForTechnique()
     计算公式为：
     （1）当R≤0.8时：技术分=max（Rx125，0）
     （2）当R≥0.8时：技术分=min（Rx62.5+50，150）
-    ]]
     local builtValueForAi     = self:getTotalBuiltUnitValueForAi()
     local builtValueForPlayer = self:getTotalBuiltUnitValueForPlayer()
     local lostValueForPlayer  = self:getTotalLostUnitValueForPlayer()
@@ -442,6 +441,22 @@ function ModelWarNative:getScoreForTechnique()
     return (reference >= 0.8)                              and
         (math.floor(math.min(reference * 62.5 + 50, 150))) or
         (math.floor(math.max(reference * 125,       0)))
+    ]]
+    --[[
+    技术（Technique）
+    技术分的评判参数是R = 我损失单位价值 / 敌总单位价值
+    令r为地图作者设置的标准值（默认为0.4），则计算公式为：
+    score = floor(100 / (R / r))
+          = floor(100 * 0.4 * 敌总价值 / 我损失价值)
+    且范围为0~150
+    ]]
+    local builtValueForAi    = self:getTotalBuiltUnitValueForAi()
+    local lostValueForPlayer = math.max(self:getTotalLostUnitValueForPlayer(), 1)
+    local score              = math.floor(100 * 0.4 * builtValueForAi / lostValueForPlayer)
+    if     (score > 150) then return 150
+    elseif (score < 0)   then return 0
+    else                      return score
+    end
 end
 
 function ModelWarNative:getIncomeModifier()
