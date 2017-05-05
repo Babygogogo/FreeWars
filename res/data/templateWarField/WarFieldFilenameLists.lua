@@ -10,6 +10,7 @@ return {
         "PVE_HuiXingZhen",
         "PVE_MengHuChuShan",
         "PVE_ShenHanZhiHai",
+        "PVE_ShiLianZhiDi",
         "PVE_WangPaiKongJun",
         "PVE_WeiWenTuMing",
         "PVE_WuDaoKou",
