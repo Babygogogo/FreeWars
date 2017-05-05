@@ -182,8 +182,41 @@ local function getBaseDamageCostWithTargetAndDamage(target, damage)
     end
 end
 
-local function getEnergyModifierWithTargetAndDamage(target, damage, energyGainModifier)
+local function getEnergyWithTargetAndDamage(target, damage, energyGainModifier)
     return math.floor((target:getNormalizedCurrentHP() - math.ceil(math.max(0, target:getCurrentHP() - (damage or 0)) / 10)) * energyGainModifier)
+end
+
+local function getEnergyGainModifierForModelPlayer(modelWarReplay, modelPlayer)
+    local skillConfiguration = modelPlayer:getModelSkillConfiguration()
+    local modifier           = modelWarReplay:getEnergyGainModifier() + SkillModifierFunctions.getEnergyGainModifierForSkillConfiguration(skillConfiguration)
+    return modifier * (SkillModifierFunctions.getEnergyGainMultiplierForSkillConfiguration(skillConfiguration) / 100 + 1)
+end
+
+local function updateEnergyOnActionAttack(modelWarReplay, attacker, target, attackDamage, counterDamage)
+    if (not target.getUnitType) then
+        return
+    end
+
+    local modelPlayerManager  = modelWarReplay:getModelPlayerManager()
+    local attackerModelPlayer = modelPlayerManager:getModelPlayer(attacker:getPlayerIndex())
+    if (not attackerModelPlayer:isActivatingSkill()) then
+        local modifier = getEnergyGainModifierForModelPlayer(modelWarReplay, attackerModelPlayer)
+        attackerModelPlayer:setEnergy(attackerModelPlayer:getEnergy()
+            + getEnergyWithTargetAndDamage(target,   attackDamage,  modifier)
+            + getEnergyWithTargetAndDamage(attacker, counterDamage, modifier)
+        )
+    end
+
+    local targetModelPlayer = modelPlayerManager:getModelPlayer(target:getPlayerIndex())
+    if (not targetModelPlayer:isActivatingSkill()) then
+        local modifier = getEnergyGainModifierForModelPlayer(modelWarReplay, targetModelPlayer)
+        targetModelPlayer:setEnergy(targetModelPlayer:getEnergy()
+            + getEnergyWithTargetAndDamage(target,   attackDamage,  modifier)
+            + getEnergyWithTargetAndDamage(attacker, counterDamage, modifier)
+        )
+    end
+
+    dispatchEvtModelPlayerUpdated(modelWarReplay, attacker:getPlayerIndex())
 end
 
 local function getAdjacentPlasmaGridIndexes(gridIndex, modelTileMap)
@@ -308,33 +341,12 @@ local function executeAttack(action, modelWarReplay)
     moveModelUnitWithAction(action, modelWarReplay)
     attacker:setStateActioned()
 
+    updateEnergyOnActionAttack(modelWarReplay, attacker, attackTarget, attackDamage, counterDamage)
     if (attacker:getPrimaryWeaponBaseDamage(attackTarget:getDefenseType())) then
         attacker:setPrimaryWeaponCurrentAmmo(attacker:getPrimaryWeaponCurrentAmmo() - 1)
     end
     if ((counterDamage) and (attackTarget:getPrimaryWeaponBaseDamage(attacker:getDefenseType()))) then
         attackTarget:setPrimaryWeaponCurrentAmmo(attackTarget:getPrimaryWeaponCurrentAmmo() - 1)
-    end
-
-    local modelPlayerManager = getModelPlayerManager(modelWarReplay)
-    if (attackTarget.getUnitType) then
-        local attackerDamageCost  = getBaseDamageCostWithTargetAndDamage(attacker,     counterDamage or 0)
-        local targetDamageCost    = getBaseDamageCostWithTargetAndDamage(attackTarget, attackDamage)
-        local attackerModelPlayer = modelPlayerManager:getModelPlayer(attackerPlayerIndex)
-        local targetModelPlayer   = modelPlayerManager:getModelPlayer(targetPlayerIndex)
-        local energyGainModifier  = modelWarReplay:getEnergyGainModifier()
-        local attackEnergy        = getEnergyModifierWithTargetAndDamage(attackTarget, attackDamage,  energyGainModifier)
-        local counterEnergy       = getEnergyModifierWithTargetAndDamage(attacker,     counterDamage, energyGainModifier)
-
-        if (not attackerModelPlayer:isActivatingSkill()) then
-            local modifierForSkill = SkillModifierFunctions.getEnergyGainModifierForSkillConfiguration(attackerModelPlayer:getModelSkillConfiguration())
-            attackerModelPlayer:setEnergy(attackerModelPlayer:getEnergy() + AuxiliaryFunctions.round((attackEnergy + counterEnergy) * (100 + modifierForSkill) / 100))
-        end
-        if (not targetModelPlayer:isActivatingSkill()) then
-            local modifierForSkill = SkillModifierFunctions.getEnergyGainModifierForSkillConfiguration(targetModelPlayer:getModelSkillConfiguration())
-            targetModelPlayer:setEnergy(targetModelPlayer:getEnergy() + AuxiliaryFunctions.round((attackEnergy + counterEnergy) * (100 + modifierForSkill) / 100))
-        end
-
-        dispatchEvtModelPlayerUpdated(modelWarReplay, attackerPlayerIndex)
     end
 
     local attackerNewHP = math.max(0, attacker:getCurrentHP() - (counterDamage or 0))
@@ -363,6 +375,7 @@ local function executeAttack(action, modelWarReplay)
         end
     end
 
+    local modelPlayerManager = getModelPlayerManager(modelWarReplay)
     local modelTurnManager   = getModelTurnManager(modelWarReplay)
     local lostPlayerIndex    = action.lostPlayerIndex
     local isInTurnPlayerLost = (lostPlayerIndex == attackerPlayerIndex)

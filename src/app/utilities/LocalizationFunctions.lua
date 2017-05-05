@@ -623,6 +623,7 @@ local s_Texts = {
             elseif (skillID == 11) then return "我方建筑及部队的维修量"
             elseif (skillID == 12) then return "我方步兵系的占领速度（四舍五入）"
             elseif (skillID == 13) then return "我方能量值获取速度（四舍五入）"
+            elseif (skillID == 14) then return "我方能量值获取速度（不受战局设定影响）"
             else                        return "未知4:" .. (skillID or "")
             end
         end,
@@ -645,6 +646,7 @@ local s_Texts = {
             elseif (skillID == 11) then return "我军维修量"
             elseif (skillID == 12) then return "占领速度"
             elseif (skillID == 13) then return "能量增速"
+            elseif (skillID == 14) then return "能量增速"
             else                        return "未知5:" .. (skillID or "")
             end
         end,
@@ -1170,6 +1172,7 @@ local s_Texts = {
             elseif (skillID == 11) then return "增加我方建筑及部队的维修量。"
             elseif (skillID == 12) then return "增加我方步兵系的占领速度（四舍五入）。"
             elseif (skillID == 13) then return "增加我方的能量获取速度（四舍五入）。"
+            elseif (skillID == 14) then return "增加我方的能量获取速度（不受战局设定影响）。"
             else                        return "未知23:" .. (skillID or "")
             end
         end,

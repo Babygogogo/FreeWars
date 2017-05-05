@@ -118,6 +118,20 @@ local function getEnergyGainModifierForSkillGroup(modelSkillGroup)
     local isActiveSkill         = modelSkillGroup.isSkillGroupActive
     for _, skill in ipairs(modelSkillGroup:getAllSkills()) do
         local skillID = skill.id
+        if (skillID == 14) then
+            modifier = modifier + getSkillModifierWithSkillData(modelSkillDataManager, skill, isActiveSkill)
+        end
+    end
+
+    return modifier
+end
+
+local function getEnergyGainMultiplierForSkillGroup(modelSkillGroup)
+    local modelSkillDataManager = modelSkillGroup:getModelSkillDataManager()
+    local modifier              = 0
+    local isActiveSkill         = modelSkillGroup.isSkillGroupActive
+    for _, skill in ipairs(modelSkillGroup:getAllSkills()) do
+        local skillID = skill.id
         if (skillID == 13) then
             modifier = modifier + getSkillModifierWithSkillData(modelSkillDataManager, skill, isActiveSkill)
         end
@@ -184,6 +198,10 @@ end
 
 function SkillModifierFunctions.getEnergyGainModifierForSkillConfiguration(configuration)
     return getEnergyGainModifierForSkillGroup(configuration:getModelSkillGroupPassive())
+end
+
+function SkillModifierFunctions.getEnergyGainMultiplierForSkillConfiguration(configuration)
+    return getEnergyGainMultiplierForSkillGroup(configuration:getModelSkillGroupPassive())
 end
 
 return SkillModifierFunctions
