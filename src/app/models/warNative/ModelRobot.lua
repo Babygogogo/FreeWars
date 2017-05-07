@@ -39,8 +39,8 @@ local PRODUCTION_CANDIDATES       = {                                           
         Rig        = nil,
     },
     Airport = {
-        Fighter         = 300,
-        Bomber          = 300,
+        Fighter         = 200,
+        Bomber          = 200,
         Duster          = 400,
         BattleCopter    = 600,
         TransportCopter = nil,
@@ -539,9 +539,11 @@ local function getScoreForActionProduceModelUnitOnTile(self, gridIndex, tiledID,
     local tileType = self.m_ModelTileMap:getModelTile(gridIndex):getTileType()
     local unitType = modelUnit:getUnitType()
     local score    = PRODUCTION_CANDIDATES[tileType][unitType]                                                                  -- ADJUSTABLE
-    if (((tileType == "Factory") and ((idleFactoriesCount - 1) * 1500 > (fund - productionCost)))  or
-        ((tileType ~= "Factory") and ((idleFactoriesCount)     * 1500 > (fund - productionCost)))) then
-        score = score + (-999999)                                                                                               -- ADJUSTABLE
+    if (unitType ~= "Infantry") then
+        if (((tileType == "Factory") and ((idleFactoriesCount - 1) * 1500 > (fund - productionCost)))  or
+            ((tileType ~= "Factory") and ((idleFactoriesCount)     * 1500 > (fund - productionCost)))) then
+            score = score + (-999999)                                                                                           -- ADJUSTABLE
+        end
     end
 
     -- score = score - getPossibleDamageInPlayerTurn(self, modelUnit, gridIndex) * productionCost / 3000

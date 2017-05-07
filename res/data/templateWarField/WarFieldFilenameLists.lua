@@ -88,6 +88,7 @@ return {
         "ManShouXueXing",
         "SanHeGu",
         "ShenSeYanCaoZhanZheng",
+        "PVE_ShiLianZhiDi",
         "ShuiXingYaoSai",
         "SiPanDao",
         "SiTongBaDa",
