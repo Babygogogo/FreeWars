@@ -46,7 +46,8 @@ local function getAttackBonusMultiplier(attacker, modelWar)
         end
     end)
 
-    bonus = bonus + SkillModifierFunctions.getAttackModifierForSkillConfiguration(modelWar:getModelPlayerManager():getModelPlayer(playerIndex):getModelSkillConfiguration())
+    local modelPlayer = modelWar:getModelPlayerManager():getModelPlayer(playerIndex)
+    bonus = bonus + SkillModifierFunctions.getAttackModifierForSkillConfiguration(modelPlayer:getModelSkillConfiguration(), modelPlayer:isActivatingSkill())
 
     return math.max(1 + bonus / 100, 0)
 end
@@ -72,7 +73,8 @@ local function getDefenseBonusMultiplier(attacker, attackerGridIndex, target, ta
         (target:getPromotionDefenseBonus())            or
         (0))
 
-    bonus = bonus + SkillModifierFunctions.getDefenseModifierForSkillConfiguration(modelWar:getModelPlayerManager():getModelPlayer(playerIndex):getModelSkillConfiguration())
+    local modelPlayer = modelWar:getModelPlayerManager():getModelPlayer(playerIndex)
+    bonus = bonus + SkillModifierFunctions.getDefenseModifierForSkillConfiguration(modelPlayer:getModelSkillConfiguration(), modelPlayer:isActivatingSkill())
 
     if (bonus >= 0) then
         return 1 / (1 + bonus / 100)

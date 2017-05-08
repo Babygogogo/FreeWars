@@ -162,7 +162,6 @@ function ModelWarReplay:ctor(sceneData)
     self.m_IsPassiveSkillEnabled     = sceneData.isPassiveSkillEnabled
     self.m_IsRandomWarField          = sceneData.isRandomWarField
     self.m_IsRankMatch               = sceneData.isRankMatch
-    self.m_IsSkillDeclarationEnabled = sceneData.isSkillDeclarationEnabled
     self.m_IsWarEnded                = sceneData.isWarEnded
     self.m_MaxDiffScore              = sceneData.maxDiffScore
     self.m_MoveRangeModifier         = sceneData.moveRangeModifier          or 0
@@ -174,9 +173,6 @@ function ModelWarReplay:ctor(sceneData)
     self.m_WarPassword               = sceneData.warPassword
     setActionId(self, sceneData.actionID)
 
-    if (self.m_IsSkillDeclarationEnabled == nil) then
-        self.m_IsSkillDeclarationEnabled = true
-    end
     for playerIndex, playerData in pairs(sceneData.players) do
         playerData.teamIndex = playerData.teamIndex or playerIndex
     end
@@ -254,7 +250,6 @@ function ModelWarReplay:toSerializableTable()
         isPassiveSkillEnabled     = self.m_IsPassiveSkillEnabled,
         isRandomWarField          = self.m_IsRandomWarField,
         isRankMatch               = self.m_IsRankMatch,
-        isSkillDeclarationEnabled = self.m_IsSkillDeclarationEnabled,
         isWarEnded                = self.m_IsWarEnded,
         maxDiffScore              = self.m_MaxDiffScore,
         moveRangeModifier         = self.m_MoveRangeModifier,
@@ -422,10 +417,6 @@ end
 
 function ModelWarReplay:isPassiveSkillEnabled()
     return self.m_IsPassiveSkillEnabled
-end
-
-function ModelWarReplay:isSkillDeclarationEnabled()
-    return self.m_IsSkillDeclarationEnabled
 end
 
 function ModelWarReplay:getIncomeModifier()

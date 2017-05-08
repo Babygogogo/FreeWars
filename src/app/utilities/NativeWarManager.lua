@@ -33,12 +33,10 @@ end
 local function generateSinglePlayerData(account, playerIndex, teamIndex, startingEnergy, startingFund)
     return {
         account           = account,
-        canActivateSkill  = false,
         energy            = startingEnergy,
         fund              = startingFund,
         isActivatingSkill = false,
         isAlive           = true,
-        isSkillDeclared   = false,
         nickname          = account,
         playerIndex       = playerIndex,
         teamIndex         = teamIndex,
@@ -72,7 +70,6 @@ local function generateWarConfiguration(warData)
         isActiveSkillEnabled      = warData.isActiveSkillEnabled,
         isFogOfWarByDefault       = warData.isFogOfWarByDefault,
         isPassiveSkillEnabled     = warData.isPassiveSkillEnabled,
-        isSkillDeclarationEnabled = warData.isSkillDeclarationEnabled,
         moveRangeModifier         = warData.moveRangeModifier,
         players                   = players,
         saveIndex                 = warData.saveIndex,
@@ -142,7 +139,6 @@ function NativeWarManager.createInitialWarData(warConfiguration)
         isCampaign                = warConfiguration.isCampaign,
         isFogOfWarByDefault       = warConfiguration.isFogOfWarByDefault,
         isPassiveSkillEnabled     = warConfiguration.isPassiveSkillEnabled,
-        isSkillDeclarationEnabled = warConfiguration.isSkillDeclarationEnabled,
         isWarEnded                = false,
         moveRangeModifier         = warConfiguration.moveRangeModifier,
         saveIndex                 = warConfiguration.saveIndex,

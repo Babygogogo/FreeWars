@@ -29,22 +29,23 @@
     ActionBeginTurn                   102 : ActionBeginTurn
     ActionBuildModelTile              103 : ActionBuildModelTile
     ActionCaptureModelTile            104 : ActionCaptureModelTile
-    ActionDeclareSkill                105 : ActionDeclareSkill
-    ActionDestroyOwnedModelUnit       106 : ActionDestroyOwnedModelUnit
-    ActionDive                        107 : ActionDive
-    ActionDropModelUnit               108 : ActionDropModelUnit
-    ActionEndTurn                     109 : ActionEndTurn
-    ActionJoinModelUnit               110 : ActionJoinModelUnit
-    ActionLaunchFlare                 111 : ActionLaunchFlare
-    ActionLaunchSilo                  112 : ActionLaunchSilo
-    ActionLoadModelUnit               113 : ActionLoadModelUnit
-    ActionProduceModelUnitOnTile      114 : ActionProduceModelUnitOnTile
-    ActionProduceModelUnitOnUnit      115 : ActionProduceModelUnitOnUnit
+    ActionDestroyOwnedModelUnit       105 : ActionDestroyOwnedModelUnit
+    ActionDive                        106 : ActionDive
+    ActionDropModelUnit               107 : ActionDropModelUnit
+    ActionEndTurn                     108 : ActionEndTurn
+    ActionJoinModelUnit               109 : ActionJoinModelUnit
+    ActionLaunchFlare                 110 : ActionLaunchFlare
+    ActionLaunchSilo                  111 : ActionLaunchSilo
+    ActionLoadModelUnit               112 : ActionLoadModelUnit
+    ActionProduceModelUnitOnTile      113 : ActionProduceModelUnitOnTile
+    ActionProduceModelUnitOnUnit      114 : ActionProduceModelUnitOnUnit
+    ActionResearchPassiveSkill        115 : ActionResearchPassiveSkill
     ActionSupplyModelUnit             116 : ActionSupplyModelUnit
     ActionSurface                     117 : ActionSurface
     ActionSurrender                   118 : ActionSurrender
-    ActionVoteForDraw                 119 : ActionVoteForDraw
-    ActionWait                        120 : ActionWait
+    ActionUpdateReserveSkills         119 : ActionUpdateReserveSkills
+    ActionVoteForDraw                 120 : ActionVoteForDraw
+    ActionWait                        121 : ActionWait
 }
 
 .ActionRedis {
@@ -171,7 +172,6 @@
     incomeModifier            15 : integer
     startingEnergy            16 : integer
     startingFund              17 : integer
-    isSkillDeclarationEnabled 18 : boolean
     moveRangeModifier         19 : integer
     attackModifier            20 : integer
     visionModifier            21 : integer
@@ -225,9 +225,6 @@
     revealedTiles     6 : *TileData(positionIndex)
     actingUnitsData   7 : *UnitData(unitID)
     actingTilesData   8 : *TileData(positionIndex)
-    skillID           9 :  integer
-    skillLevel       10 :  integer
-    isActiveSkill    11 :  boolean
 }
 
 .ActionAttack {
@@ -318,14 +315,6 @@
     path              9 :  MovePath
     launchUnitID     10 :  integer
     lostPlayerIndex  11 :  integer
-}
-
-.ActionDeclareSkill {
-    actionCode        0 :  integer
-    playerAccount     1 :  string
-    playerPassword    2 :  string
-    warID             3 :  integer
-    actionID          4 :  integer
 }
 
 .ActionDestroyOwnedModelUnit {
@@ -465,6 +454,16 @@
     cost             11 :  integer
 }
 
+.ActionResearchPassiveSkill {
+    actionCode     0 : integer
+    playerAccount  1 : string
+    playerPassword 2 : string
+    warID          3 : integer
+    actionID       4 : integer
+    skillID        5 : integer
+    skillLevel     6 : integer
+}
+
 .ActionSupplyModelUnit {
     actionCode        0 :  integer
     playerAccount     1 :  string
@@ -499,6 +498,15 @@
     playerPassword   2 : string
     warID            3 : integer
     actionID         4 : integer
+}
+
+.ActionUpdateReserveSkills {
+    actionCode     0 :  integer
+    playerAccount  1 :  string
+    playerPassword 2 :  string
+    warID          3 :  integer
+    actionID       4 :  integer
+    reserveSkills  5 : *SingleSkillActive
 }
 
 .ActionVoteForDraw {
@@ -718,9 +726,7 @@
         skillConfiguration   6 : SingleSkillConfiguration
         hasVotedForDraw      7 : boolean
         isActivatingSkill    8 : boolean
-        isSkillDeclared      9 : boolean
-        canActivateSkill    10 : boolean
-        teamIndex           11 : integer
+        teamIndex            9 : integer
     }
 
     .TurnData {
@@ -790,7 +796,6 @@
     startingEnergy               23 :  integer
     startingFund                 24 :  integer
     chatData                     25 :  ChatData
-    isSkillDeclarationEnabled    26 :  boolean
     skillData                    27 :  SkillData
     moveRangeModifier            28 :  integer
     attackModifier               29 :  integer
@@ -825,20 +830,21 @@
     draw      3 : integer
 }
 
+.SingleSkillActive {
+    id    0 : integer
+    level 1 : integer
+}
+
+.SingleSkillPassive {
+    id       0 : integer
+    modifier 1 : integer
+}
+
 .SingleSkillConfiguration {
-    .SingleSkillActive {
-        id    0 : integer
-        level 1 : integer
-    }
-
-    .SingleSkillPassive {
-        id       0 : integer
-        modifier 1 : integer
-    }
-
     passiveSkills     1 : *SingleSkillPassive
     researchingSkills 2 : *SingleSkillPassive
     activeSkills      3 : *SingleSkillActive
+    reserveSkills     4 : *SingleSkillActive
 }
 
 .SkillData {
@@ -864,7 +870,6 @@
         maxModifierPassive 6 :  integer
     }
 
-    skillDeclarationCost 0 :  integer
     categories           1 :  SkillCategories
     skills               2 : *SingleSkillData
 }
@@ -918,7 +923,6 @@
     incomeModifier            17 :  integer
     startingEnergy            18 :  integer
     startingFund              19 :  integer
-    isSkillDeclarationEnabled 20 :  boolean
     moveRangeModifier         21 :  integer
     attackModifier            22 :  integer
     visionModifier            23 :  integer

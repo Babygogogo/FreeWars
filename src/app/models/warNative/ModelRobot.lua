@@ -39,8 +39,8 @@ local PRODUCTION_CANDIDATES       = {                                           
         Rig        = nil,
     },
     Airport = {
-        Fighter         = 300,
-        Bomber          = 300,
+        Fighter         = 200,
+        Bomber          = 200,
         Duster          = 400,
         BattleCopter    = 600,
         TransportCopter = nil,
@@ -347,7 +347,7 @@ end
 --------------------------------------------------------------------------------
 local function createScoreMapForDistance(self, modelUnit)
     local modelTileMap          = self.m_ModelTileMap
-    local nearestCapturableTile = ReachableAreaFunctions.findNearestCapturableTile(modelTileMap, modelUnit, true)
+    local nearestCapturableTile = ReachableAreaFunctions.findNearestCapturableTile(modelTileMap, self.m_ModelUnitMap, modelUnit, true)
     if (not nearestCapturableTile) then
         return nil
     end
@@ -539,12 +539,14 @@ local function getScoreForActionProduceModelUnitOnTile(self, gridIndex, tiledID,
     local tileType = self.m_ModelTileMap:getModelTile(gridIndex):getTileType()
     local unitType = modelUnit:getUnitType()
     local score    = PRODUCTION_CANDIDATES[tileType][unitType]                                                                  -- ADJUSTABLE
-    if (((tileType == "Factory") and ((idleFactoriesCount - 1) * 1500 > (fund - productionCost)))  or
-        ((tileType ~= "Factory") and ((idleFactoriesCount)     * 1500 > (fund - productionCost)))) then
-        score = score + (-999999)                                                                                               -- ADJUSTABLE
+    if (unitType ~= "Infantry") then
+        if (((tileType == "Factory") and ((idleFactoriesCount - 1) * 1500 > (fund - productionCost)))  or
+            ((tileType ~= "Factory") and ((idleFactoriesCount)     * 1500 > (fund - productionCost)))) then
+            score = score + (-999999)                                                                                           -- ADJUSTABLE
+        end
     end
 
-    score = score - getPossibleDamageInPlayerTurn(self, modelUnit, gridIndex) * productionCost / 3000
+    -- score = score - getPossibleDamageInPlayerTurn(self, modelUnit, gridIndex) * productionCost / 3000
 
     self.m_ModelUnitMap:forEachModelUnitOnMap(function(unitOnMap)
         if (unitOnMap:getPlayerIndex() == self.m_PlayerIndexForHuman) then
@@ -1061,7 +1063,7 @@ local function getActionForPhase8(self)
     local availableSkillIds = {}
     for skillID, energyCost in pairs(self.m_PassiveSkillData) do
         if (energy >= energyCost) then
-            if ((skillID ~= 11) and (skillID ~= 12)) then
+            if ((skillID ~= 11) and (skillID ~= 12) and (skillID ~= 13) and (skillID ~= 14)) then
                 availableSkillIds[#availableSkillIds + 1] = skillID
             end
         end
@@ -1073,10 +1075,9 @@ local function getActionForPhase8(self)
         return nil
     else
         return {
-            actionCode    = ACTION_CODES.ActionActivateSkill,
+            actionCode    = ACTION_CODES.ActionResearchPassiveSkill,
             skillID       = targetSkillID,
             skillLevel    = 1,
-            isActiveSkill = false,
         }
     end
 end

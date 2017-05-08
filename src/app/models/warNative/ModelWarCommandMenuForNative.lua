@@ -76,7 +76,6 @@ local function generateEmptyDataForEachPlayer(self)
                 fund            = (shouldShowFund) and (modelPlayer:getFund()) or ("--"),
                 income          = 0,
                 idleUnitsCount  = 0,
-                isSkillDeclared = modelPlayer:isSkillDeclared(),
                 nickname        = modelPlayer:getNickname(),
                 teamIndex       = modelPlayer:getTeamIndex(),
                 tilesCount      = 0,
@@ -152,11 +151,10 @@ local function generateTextWarInfo(self)
             local shouldShowTilesCount = (not isFogOfWar) or (i == self.m_PlayerIndexForHuman)
             local shouldShowIdleUnits  = (i == playerIndexInTurn) and (i == self.m_PlayerIndexForHuman)
 
-            stringList[#stringList + 1] = string.format("%s %d: %s\n%s: %s        %s: %d        %s: %s\n%s: %s        %s: %s        %s: %s\n%s: %s%s        %s: %s",
+            stringList[#stringList + 1] = string.format("%s %d: %s\n%s: %s        %s: %d\n%s: %s        %s: %s        %s: %s\n%s: %s%s        %s: %s",
                 getLocalizedText(65, "Player"),       i,           d.nickname,
                 getLocalizedText(14, "TeamIndex"),    AuxiliaryFunctions.getTeamNameWithTeamIndex(d.teamIndex),
                 getLocalizedText(65, "Energy"),       d.energy,
-                getLocalizedText(22, "DeclareSkill"), (d.isSkillDeclared) and (getLocalizedText(22, "Yes")) or (getLocalizedText(22, "No")),
                 getLocalizedText(65, "TilesCount"),   (shouldShowTilesCount) and ("" .. d.tilesCount) or ("--"),
                 getLocalizedText(65, "Fund"),         "" .. d.fund,
                 getLocalizedText(65, "Income"),       (shouldShowTilesCount) and ("" .. d.income) or ("--"),
@@ -415,15 +413,6 @@ local function createEndTurnText(self)
     local idleFactoriesCount, idleAirportsCount, idleSeaportsCount = getIdleTilesCount(self)
     if (idleFactoriesCount + idleAirportsCount + idleSeaportsCount > 0) then
         textList[#textList + 1] = string.format("%s:  %d    %d    %d", getLocalizedText(65, "IdleTiles"), idleFactoriesCount, idleAirportsCount, idleSeaportsCount)
-    end
-
-    local modelWar    = self.m_ModelWar
-    local modelPlayer = self.m_ModelPlayerForHuman
-    if ((modelWar:isActiveSkillEnabled())                         and
-        (modelWar:isSkillDeclarationEnabled())                    and
-        (not modelPlayer:isSkillDeclared())                       and
-        (modelPlayer:getEnergy() >= self.m_SkillDeclarationCost)) then
-        textList[#textList + 1] = getLocalizedText(66, "SkillNotDeclared")
     end
 
     if (#textList == 0) then
@@ -1052,7 +1041,6 @@ end
 --------------------------------------------------------------------------------
 function ModelWarCommandMenuForNative:onStartRunning(modelWar)
     self.m_ModelWar             = modelWar
-    self.m_SkillDeclarationCost = modelWar:getModelSkillDataManager():getSkillDeclarationCost()
     self.m_ModelPlayerManager   = SingletonGetters.getModelPlayerManager(modelWar)
     self.m_PlayerIndexForHuman, self.m_ModelPlayerForHuman = self.m_ModelPlayerManager:getPlayerIndexForHuman()
 

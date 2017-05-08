@@ -149,7 +149,6 @@ function ModelWarOnline:ctor(sceneData)
     self.m_IsPassiveSkillEnabled     = sceneData.isPassiveSkillEnabled
     self.m_IsRandomWarField          = sceneData.isRandomWarField
     self.m_IsRankMatch               = sceneData.isRankMatch
-    self.m_IsSkillDeclarationEnabled = sceneData.isSkillDeclarationEnabled
     self.m_IsWarEnded                = sceneData.isWarEnded
     self.m_MaxBaseSkillPoints        = sceneData.maxBaseSkillPoints
     self.m_MaxDiffScore              = sceneData.maxDiffScore
@@ -207,7 +206,6 @@ function ModelWarOnline:toSerializableTable()
         isPassiveSkillEnabled     = self.m_IsPassiveSkillEnabled,
         isRandomWarField          = self.m_IsRandomWarField,
         isRankMatch               = self.m_IsRankMatch,
-        isSkillDeclarationEnabled = self.m_IsSkillDeclarationEnabled,
         isWarEnded                = self.m_IsWarEnded,
         maxBaseSkillPoints        = self.m_MaxBaseSkillPoints,
         maxDiffScore              = self.m_MaxDiffScore,
@@ -241,7 +239,6 @@ function ModelWarOnline:toSerializableTableForPlayerIndex(playerIndex)
         isPassiveSkillEnabled     = self.m_IsPassiveSkillEnabled,
         isRandomWarField          = self.m_IsRandomWarField,
         isRankMatch               = self.m_IsRankMatch,
-        isSkillDeclarationEnabled = self.m_IsSkillDeclarationEnabled,
         isWarEnded                = self.m_IsWarEnded,
         maxBaseSkillPoints        = self.m_MaxBaseSkillPoints,
         maxDiffScore              = self.m_MaxDiffScore,
@@ -275,7 +272,6 @@ function ModelWarOnline:toSerializableReplayData()
         isPassiveSkillEnabled     = self.m_IsPassiveSkillEnabled,
         isRandomWarField          = self.m_IsRandomWarField,
         isRankMatch               = self.m_IsRankMatch,
-        isSkillDeclarationEnabled = self.m_IsSkillDeclarationEnabled,
         isWarEnded                = false,
         maxBaseSkillPoints        = self.m_MaxBaseSkillPoints,
         maxDiffScore              = self.m_MaxDiffScore,
@@ -423,10 +419,6 @@ end
 
 function ModelWarOnline:isPassiveSkillEnabled()
     return self.m_IsPassiveSkillEnabled
-end
-
-function ModelWarOnline:isSkillDeclarationEnabled()
-    return self.m_IsSkillDeclarationEnabled
 end
 
 function ModelWarOnline:getIncomeModifier()

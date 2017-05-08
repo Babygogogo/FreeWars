@@ -13,7 +13,6 @@ return {
     isActiveSkillEnabled      = true,  -- 是否启用主动技（布尔值）：true=是（默认），false=否。
     isFogOfWarByDefault       = false, -- 是否雾战（布尔值）：true=是，false=否（默认）。
     isPassiveSkillEnabled     = true,  -- 是否启用日常技（布尔值）：true=是（默认），false=否。
-    isSkillDeclarationEnabled = true,  -- 是否启用主动技宣言（布尔值）：true=是（默认），false=否。
     playerIndex               = 1,     -- 玩家行动顺序（正整数）：1=红方（默认），2=蓝，3=黄，4=黑。可用范围：1 ~ 地图玩家总数
     moveRangeModifier         = 0,     -- 全局部队移动力加成（整数）：0=无加成（默认），-1=全部减一，1=全部+1。可用范围：任意整数（无论如何，部队最低移动力为1）
     startingEnergy            = 0,     -- 全局初始能量值（整数）：0=0（默认）。可用范围：0 ~ 无穷大

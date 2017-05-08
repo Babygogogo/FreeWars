@@ -32,10 +32,6 @@ end
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
-function ModelSkillDataManager:getSkillDeclarationCost()
-    return self.m_SkillData.skillDeclarationCost
-end
-
 function ModelSkillDataManager:getSkillPoints(id, level, isActive)
     assert(type(isActive) == "boolean", "ModelSkillDataManager.getSkillPoints() invalid param isActive. Boolean expected.")
     if (isActive) then

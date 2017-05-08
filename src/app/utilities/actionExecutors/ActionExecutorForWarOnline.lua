@@ -267,8 +267,41 @@ local function getBaseDamageCostWithTargetAndDamage(target, damage)
     end
 end
 
-local function getEnergyModifierWithTargetAndDamage(target, damage, energyGainModifier)
+local function getEnergyWithTargetAndDamage(target, damage, energyGainModifier)
     return math.floor((target:getNormalizedCurrentHP() - math.ceil(math.max(0, target:getCurrentHP() - (damage or 0)) / 10)) * energyGainModifier)
+end
+
+local function getEnergyGainModifierForModelPlayer(modelWarOnline, modelPlayer)
+    local skillConfiguration = modelPlayer:getModelSkillConfiguration()
+    local modifier           = modelWarOnline:getEnergyGainModifier() + SkillModifierFunctions.getEnergyGainModifierForSkillConfiguration(skillConfiguration)
+    return modifier * (SkillModifierFunctions.getEnergyGainMultiplierForSkillConfiguration(skillConfiguration) / 100 + 1)
+end
+
+local function updateEnergyOnActionAttack(modelWarOnline, attacker, target, attackDamage, counterDamage)
+    if (not target.getUnitType) then
+        return
+    end
+
+    local modelPlayerManager  = modelWarOnline:getModelPlayerManager()
+    local attackerModelPlayer = modelPlayerManager:getModelPlayer(attacker:getPlayerIndex())
+    if (not attackerModelPlayer:isActivatingSkill()) then
+        local modifier = getEnergyGainModifierForModelPlayer(modelWarOnline, attackerModelPlayer)
+        attackerModelPlayer:setEnergy(attackerModelPlayer:getEnergy()
+            + getEnergyWithTargetAndDamage(target,   attackDamage,  modifier)
+            + getEnergyWithTargetAndDamage(attacker, counterDamage, modifier)
+        )
+    end
+
+    local targetModelPlayer = modelPlayerManager:getModelPlayer(target:getPlayerIndex())
+    if (not targetModelPlayer:isActivatingSkill()) then
+        local modifier = getEnergyGainModifierForModelPlayer(modelWarOnline, targetModelPlayer)
+        targetModelPlayer:setEnergy(targetModelPlayer:getEnergy()
+            + getEnergyWithTargetAndDamage(target,   attackDamage,  modifier)
+            + getEnergyWithTargetAndDamage(attacker, counterDamage, modifier)
+        )
+    end
+
+    dispatchEvtModelPlayerUpdated(modelWarOnline, attacker:getPlayerIndex())
 end
 
 local function getAdjacentPlasmaGridIndexes(gridIndex, modelTileMap)
@@ -420,19 +453,14 @@ local function executeActivateSkill(action, modelWarOnline)
     end
     updateTilesAndUnitsBeforeExecutingAction(action, modelWarOnline)
 
-    local skillID                 = action.skillID
-    local skillLevel              = action.skillLevel
-    local isActiveSkill           = action.isActiveSkill
-    local playerIndex             = getModelTurnManager(modelWarOnline):getPlayerIndex()
-    local modelPlayer             = getModelPlayerManager(modelWarOnline):getModelPlayer(playerIndex)
-    local modelSkillConfiguration = modelPlayer:getModelSkillConfiguration()
-    modelPlayer:setEnergy(modelPlayer:getEnergy() - modelWarOnline:getModelSkillDataManager():getSkillPoints(skillID, skillLevel, isActiveSkill))
-    if (not isActiveSkill) then
-        modelSkillConfiguration:getModelSkillGroupResearching():pushBackSkill(skillID, skillLevel)
-    else
-        modelPlayer:setActivatingSkill(true)
-        InstantSkillExecutor.executeInstantSkill(modelWarOnline, skillID, skillLevel)
-        modelSkillConfiguration:getModelSkillGroupActive():pushBackSkill(skillID, skillLevel)
+    local playerIndex           = getModelTurnManager(modelWarOnline):getPlayerIndex()
+    local modelPlayer           = getModelPlayerManager(modelWarOnline):getModelPlayer(playerIndex)
+    local modelSkillGroupActive = modelPlayer:getModelSkillConfiguration():getModelSkillGroupActive()
+    modelPlayer:setEnergy(modelPlayer:getEnergy() - modelSkillGroupActive:getTotalEnergyCost())
+        :setActivatingSkill(true)
+
+    for _, skill in ipairs(modelSkillGroupActive:getAllSkills()) do
+        InstantSkillExecutor.executeInstantSkill(modelWarOnline, skill.id, skill.level)
     end
 
     if (IS_SERVER) then
@@ -479,33 +507,12 @@ local function executeAttack(action, modelWarOnline)
     moveModelUnitWithAction(action, modelWarOnline)
     attacker:setStateActioned()
 
+    updateEnergyOnActionAttack(modelWarOnline, attacker, attackTarget, attackDamage, counterDamage)
     if (attacker:getPrimaryWeaponBaseDamage(attackTarget:getDefenseType())) then
         attacker:setPrimaryWeaponCurrentAmmo(attacker:getPrimaryWeaponCurrentAmmo() - 1)
     end
     if ((counterDamage) and (attackTarget:getPrimaryWeaponBaseDamage(attacker:getDefenseType()))) then
         attackTarget:setPrimaryWeaponCurrentAmmo(attackTarget:getPrimaryWeaponCurrentAmmo() - 1)
-    end
-
-    local modelPlayerManager = getModelPlayerManager(modelWarOnline)
-    if (attackTarget.getUnitType) then
-        local attackerDamageCost  = getBaseDamageCostWithTargetAndDamage(attacker,     counterDamage or 0)
-        local targetDamageCost    = getBaseDamageCostWithTargetAndDamage(attackTarget, attackDamage)
-        local attackerModelPlayer = modelPlayerManager:getModelPlayer(attackerPlayerIndex)
-        local targetModelPlayer   = modelPlayerManager:getModelPlayer(targetPlayerIndex)
-        local energyGainModifier  = modelWarOnline:getEnergyGainModifier()
-        local attackEnergy        = getEnergyModifierWithTargetAndDamage(attackTarget, attackDamage,  energyGainModifier)
-        local counterEnergy       = getEnergyModifierWithTargetAndDamage(attacker,     counterDamage, energyGainModifier)
-
-        if (not attackerModelPlayer:isActivatingSkill()) then
-            local modifierForSkill = SkillModifierFunctions.getEnergyGainModifierForSkillConfiguration(attackerModelPlayer:getModelSkillConfiguration())
-            attackerModelPlayer:setEnergy(attackerModelPlayer:getEnergy() + AuxiliaryFunctions.round((attackEnergy + counterEnergy) * (100 + modifierForSkill) / 100))
-        end
-        if (not targetModelPlayer:isActivatingSkill()) then
-            local modifierForSkill = SkillModifierFunctions.getEnergyGainModifierForSkillConfiguration(targetModelPlayer:getModelSkillConfiguration())
-            targetModelPlayer:setEnergy(targetModelPlayer:getEnergy() + AuxiliaryFunctions.round((attackEnergy + counterEnergy) * (100 + modifierForSkill) / 100))
-        end
-
-        dispatchEvtModelPlayerUpdated(modelWarOnline, attackerPlayerIndex)
     end
 
     local attackerNewHP = math.max(0, attacker:getCurrentHP() - (counterDamage or 0))
@@ -541,6 +548,7 @@ local function executeAttack(action, modelWarOnline)
         end
     end
 
+    local modelPlayerManager = getModelPlayerManager(modelWarOnline)
     local modelTurnManager   = getModelTurnManager(modelWarOnline)
     local lostPlayerIndex    = action.lostPlayerIndex
     local isInTurnPlayerLost = (lostPlayerIndex == attackerPlayerIndex)
@@ -664,8 +672,9 @@ local function executeBeginTurn(action, modelWarOnline)
                 if (playerIndexInTurn == modelPlayerManager:getPlayerIndexLoggedIn()) then
                     local modelMessageIndicator = getModelMessageIndicator(modelWarOnline)
                     modelPlayerManager:forEachModelPlayer(function(modelPlayer, playerIndex)
-                        if ((playerIndex ~= playerIndexInTurn) and (modelPlayer:isSkillDeclared())) then
-                            modelMessageIndicator:showMessage(string.format("[%s]%s!", modelPlayer:getAccount(), getLocalizedText(22, "HasDeclaredSkill")))
+                        if ((playerIndex ~= playerIndexInTurn)                                                    and
+                            (not modelPlayer:getModelSkillConfiguration():getModelSkillGroupReserve():isEmpty())) then
+                            modelMessageIndicator:showMessage(string.format("[%s] %s!", modelPlayer:getAccount(), getLocalizedText(22, "HasUpdatedReserveSkills")))
                         end
                     end)
                 end
@@ -844,30 +853,6 @@ local function executeCaptureModelTile(action, modelWarOnline)
                 modelWarOnline:setExecutingAction(false)
             end)
         end
-    end
-end
-
-local function executeDeclareSkill(action, modelWarOnline)
-    if (not prepareForExecutingWarAction(action, modelWarOnline)) then
-        return
-    end
-
-    local playerIndex = getModelTurnManager(modelWarOnline):getPlayerIndex()
-    local modelPlayer = getModelPlayerManager(modelWarOnline):getModelPlayer(playerIndex)
-    modelPlayer:setEnergy(modelPlayer:getEnergy() - modelWarOnline:getModelSkillDataManager():getSkillDeclarationCost())
-        :setSkillDeclared(true)
-
-    if (IS_SERVER) then
-        modelWarOnline:setExecutingAction(false)
-        OnlineWarManager.updateWithModelWarOnline(modelWarOnline)
-
-    else
-        cleanupOnReceivingResponseFromServer(modelWarOnline)
-        SingletonGetters.getModelMessageIndicator(modelWarOnline):showMessage(string.format("[%s]%s!", modelPlayer:getNickname(), getLocalizedText(22, "HasDeclaredSkill")))
-
-        dispatchEvtModelPlayerUpdated(modelWarOnline, playerIndex)
-
-        modelWarOnline:setExecutingAction(false)
     end
 end
 
@@ -1353,6 +1338,44 @@ local function executeProduceModelUnitOnUnit(action, modelWarOnline)
     end
 end
 
+local function executeResearchPassiveSkill(action, modelWarOnline)
+    if (not prepareForExecutingWarAction(action, modelWarOnline)) then
+        return
+    end
+    updateTilesAndUnitsBeforeExecutingAction(action, modelWarOnline)
+
+    local skillID                 = action.skillID
+    local skillLevel              = action.skillLevel
+    local playerIndex             = getModelTurnManager(modelWarOnline):getPlayerIndex()
+    local modelPlayer             = getModelPlayerManager(modelWarOnline):getModelPlayer(playerIndex)
+    local modelSkillConfiguration = modelPlayer:getModelSkillConfiguration()
+    modelPlayer:setEnergy(modelPlayer:getEnergy() - modelWarOnline:getModelSkillDataManager():getSkillPoints(skillID, skillLevel, false))
+    modelSkillConfiguration:getModelSkillGroupResearching():pushBackSkill(skillID, skillLevel)
+
+    if (IS_SERVER) then
+        modelWarOnline:setExecutingAction(false)
+        OnlineWarManager.updateWithModelWarOnline(modelWarOnline)
+
+    else
+        cleanupOnReceivingResponseFromServer(modelWarOnline)
+
+        local modelGridEffect = getModelGridEffect(modelWarOnline)
+        local func            = function(modelUnit)
+            if (modelUnit:getPlayerIndex() == playerIndex) then
+                modelGridEffect:showAnimationSkillActivation(modelUnit:getGridIndex())
+                modelUnit:updateView()
+            end
+        end
+        getModelUnitMap(modelWarOnline):forEachModelUnitOnMap(func)
+            :forEachModelUnitLoaded(func)
+
+        updateTileAndUnitMapOnVisibilityChanged(modelWarOnline)
+        dispatchEvtModelPlayerUpdated(modelWarOnline, playerIndex)
+
+        modelWarOnline:setExecutingAction(false)
+    end
+end
+
 local function executeSupplyModelUnit(action, modelWarOnline)
     if (not prepareForExecutingWarAction(action, modelWarOnline)) then
         return
@@ -1474,6 +1497,31 @@ local function executeSurrender(action, modelWarOnline)
     end
 end
 
+local function executeUpdateReserveSkills(action, modelWarOnline)
+    if (not prepareForExecutingWarAction(action, modelWarOnline)) then
+        return
+    end
+
+    local playerIndex = getModelTurnManager(modelWarOnline):getPlayerIndex()
+    local modelPlayer = getModelPlayerManager(modelWarOnline):getModelPlayer(playerIndex)
+    modelPlayer:getModelSkillConfiguration():getModelSkillGroupReserve():ctor(action.reserveSkills)
+
+    if (IS_SERVER) then
+        modelWarOnline:setExecutingAction(false)
+        OnlineWarManager.updateWithModelWarOnline(modelWarOnline)
+
+    else
+        cleanupOnReceivingResponseFromServer(modelWarOnline)
+
+        getModelMessageIndicator(modelWarOnline):showMessage(
+            string.format("[%s] %s!", modelPlayer:getNickname(), getLocalizedText(22, "HasUpdatedReserveSkills"))
+        )
+        dispatchEvtModelPlayerUpdated(modelWarOnline, playerIndex)
+
+        modelWarOnline:setExecutingAction(false)
+    end
+end
+
 local function executeVoteForDraw(action, modelWarOnline)
     if (not prepareForExecutingWarAction(action, modelWarOnline)) then
         return
@@ -1575,7 +1623,6 @@ function ActionExecutorForWarOnline.execute(action, modelWarOnline)
     elseif (actionCode == ACTION_CODES.ActionBeginTurn)              then executeBeginTurn(             action, modelWarOnline)
     elseif (actionCode == ACTION_CODES.ActionBuildModelTile)         then executeBuildModelTile(        action, modelWarOnline)
     elseif (actionCode == ACTION_CODES.ActionCaptureModelTile)       then executeCaptureModelTile(      action, modelWarOnline)
-    elseif (actionCode == ACTION_CODES.ActionDeclareSkill)           then executeDeclareSkill(          action, modelWarOnline)
     elseif (actionCode == ACTION_CODES.ActionDestroyOwnedModelUnit)  then executeDestroyOwnedModelUnit( action, modelWarOnline)
     elseif (actionCode == ACTION_CODES.ActionDive)                   then executeDive(                  action, modelWarOnline)
     elseif (actionCode == ACTION_CODES.ActionDropModelUnit)          then executeDropModelUnit(         action, modelWarOnline)
@@ -1586,9 +1633,11 @@ function ActionExecutorForWarOnline.execute(action, modelWarOnline)
     elseif (actionCode == ACTION_CODES.ActionLoadModelUnit)          then executeLoadModelUnit(         action, modelWarOnline)
     elseif (actionCode == ACTION_CODES.ActionProduceModelUnitOnTile) then executeProduceModelUnitOnTile(action, modelWarOnline)
     elseif (actionCode == ACTION_CODES.ActionProduceModelUnitOnUnit) then executeProduceModelUnitOnUnit(action, modelWarOnline)
+    elseif (actionCode == ACTION_CODES.ActionResearchPassiveSkill)   then executeResearchPassiveSkill(  action, modelWarOnline)
     elseif (actionCode == ACTION_CODES.ActionSupplyModelUnit)        then executeSupplyModelUnit(       action, modelWarOnline)
     elseif (actionCode == ACTION_CODES.ActionSurface)                then executeSurface(               action, modelWarOnline)
     elseif (actionCode == ACTION_CODES.ActionSurrender)              then executeSurrender(             action, modelWarOnline)
+    elseif (actionCode == ACTION_CODES.ActionUpdateReserveSkills)    then executeUpdateReserveSkills(   action, modelWarOnline)
     elseif (actionCode == ACTION_CODES.ActionVoteForDraw)            then executeVoteForDraw(           action, modelWarOnline)
     elseif (actionCode == ACTION_CODES.ActionWait)                   then executeWait(                  action, modelWarOnline)
     end

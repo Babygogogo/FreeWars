@@ -448,10 +448,6 @@ local function translateCaptureModelTile(action)
     end
 end
 
-local function translateDeclareSkill(action)
-    return action
-end
-
 local function translateDestroyOwnedModelUnit(action)
     return action
 end
@@ -588,6 +584,10 @@ local function translateProduceModelUnitOnUnit(action)
     }
 end
 
+local function translateResearchPassiveSkill(action)
+    return action
+end
+
 local function translateSupplyModelUnit(action)
     local modelWar              = action.modelWar
     local rawPath, launchUnitID = action.path, action.launchUnitID
@@ -624,6 +624,10 @@ local function translateSurrender(action)
     return action
 end
 
+local function translateUpdateReserveSkills(action)
+    return action
+end
+
 local function translateWait(action)
     local modelWar              = action.modelWar
     local rawPath, launchUnitID = action.path, action.launchUnitID
@@ -643,7 +647,6 @@ function ActionTranslatorForNative.translate(action)
     elseif (actionCode == ACTION_CODES.ActionBeginTurn)              then return translateBeginTurn(             action)
     elseif (actionCode == ACTION_CODES.ActionBuildModelTile)         then return translateBuildModelTile(        action)
     elseif (actionCode == ACTION_CODES.ActionCaptureModelTile)       then return translateCaptureModelTile(      action)
-    elseif (actionCode == ACTION_CODES.ActionDeclareSkill)           then return translateDeclareSkill(          action)
     elseif (actionCode == ACTION_CODES.ActionDestroyOwnedModelUnit)  then return translateDestroyOwnedModelUnit( action)
     elseif (actionCode == ACTION_CODES.ActionDive)                   then return translateDive(                  action)
     elseif (actionCode == ACTION_CODES.ActionDropModelUnit)          then return translateDropModelUnit(         action)
@@ -654,9 +657,11 @@ function ActionTranslatorForNative.translate(action)
     elseif (actionCode == ACTION_CODES.ActionLoadModelUnit)          then return translateLoadModelUnit(         action)
     elseif (actionCode == ACTION_CODES.ActionProduceModelUnitOnTile) then return translateProduceModelUnitOnTile(action)
     elseif (actionCode == ACTION_CODES.ActionProduceModelUnitOnUnit) then return translateProduceModelUnitOnUnit(action)
+    elseif (actionCode == ACTION_CODES.ActionResearchPassiveSkill)   then return translateResearchPassiveSkill(  action)
+    elseif (actionCode == ACTION_CODES.ActionSupplyModelUnit)        then return translateSupplyModelUnit(       action)
     elseif (actionCode == ACTION_CODES.ActionSurface)                then return translateSurface(               action)
     elseif (actionCode == ACTION_CODES.ActionSurrender)              then return translateSurrender(             action)
-    elseif (actionCode == ACTION_CODES.ActionSupplyModelUnit)        then return translateSupplyModelUnit(       action)
+    elseif (actionCode == ACTION_CODES.ActionUpdateReserveSkills)    then return translateUpdateReserveSkills(   action)
     elseif (actionCode == ACTION_CODES.ActionWait)                   then return translateWait(                  action)
     end
 end

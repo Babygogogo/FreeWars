@@ -3,6 +3,8 @@ local ActionCodeFunctions = {}
 
 local TableFunctions = requireFW("src.app.utilities.TableFunctions")
 
+local assert = assert
+
 local s_ActionCodes = {
     ActionChat                         = 1,
     ActionDownloadReplayData           = 2,
@@ -30,22 +32,23 @@ local s_ActionCodes = {
     ActionBeginTurn                    = 102,
     ActionBuildModelTile               = 103,
     ActionCaptureModelTile             = 104,
-    ActionDeclareSkill                 = 105,
-    ActionDestroyOwnedModelUnit        = 106,
-    ActionDive                         = 107,
-    ActionDropModelUnit                = 108,
-    ActionEndTurn                      = 109,
-    ActionJoinModelUnit                = 110,
-    ActionLaunchFlare                  = 111,
-    ActionLaunchSilo                   = 112,
-    ActionLoadModelUnit                = 113,
-    ActionProduceModelUnitOnTile       = 114,
-    ActionProduceModelUnitOnUnit       = 115,
+    ActionDestroyOwnedModelUnit        = 105,
+    ActionDive                         = 106,
+    ActionDropModelUnit                = 107,
+    ActionEndTurn                      = 108,
+    ActionJoinModelUnit                = 109,
+    ActionLaunchFlare                  = 110,
+    ActionLaunchSilo                   = 111,
+    ActionLoadModelUnit                = 112,
+    ActionProduceModelUnitOnTile       = 113,
+    ActionProduceModelUnitOnUnit       = 114,
+    ActionResearchPassiveSkill         = 115,
     ActionSupplyModelUnit              = 116,
     ActionSurface                      = 117,
     ActionSurrender                    = 118,
-    ActionVoteForDraw                  = 119,
-    ActionWait                         = 120,
+    ActionUpdateReserveSkills          = 119,
+    ActionVoteForDraw                  = 120,
+    ActionWait                         = 121,
 }
 local s_ActionNames
 

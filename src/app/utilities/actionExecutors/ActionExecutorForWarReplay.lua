@@ -182,8 +182,41 @@ local function getBaseDamageCostWithTargetAndDamage(target, damage)
     end
 end
 
-local function getEnergyModifierWithTargetAndDamage(target, damage, energyGainModifier)
+local function getEnergyWithTargetAndDamage(target, damage, energyGainModifier)
     return math.floor((target:getNormalizedCurrentHP() - math.ceil(math.max(0, target:getCurrentHP() - (damage or 0)) / 10)) * energyGainModifier)
+end
+
+local function getEnergyGainModifierForModelPlayer(modelWarReplay, modelPlayer)
+    local skillConfiguration = modelPlayer:getModelSkillConfiguration()
+    local modifier           = modelWarReplay:getEnergyGainModifier() + SkillModifierFunctions.getEnergyGainModifierForSkillConfiguration(skillConfiguration)
+    return modifier * (SkillModifierFunctions.getEnergyGainMultiplierForSkillConfiguration(skillConfiguration) / 100 + 1)
+end
+
+local function updateEnergyOnActionAttack(modelWarReplay, attacker, target, attackDamage, counterDamage)
+    if (not target.getUnitType) then
+        return
+    end
+
+    local modelPlayerManager  = modelWarReplay:getModelPlayerManager()
+    local attackerModelPlayer = modelPlayerManager:getModelPlayer(attacker:getPlayerIndex())
+    if (not attackerModelPlayer:isActivatingSkill()) then
+        local modifier = getEnergyGainModifierForModelPlayer(modelWarReplay, attackerModelPlayer)
+        attackerModelPlayer:setEnergy(attackerModelPlayer:getEnergy()
+            + getEnergyWithTargetAndDamage(target,   attackDamage,  modifier)
+            + getEnergyWithTargetAndDamage(attacker, counterDamage, modifier)
+        )
+    end
+
+    local targetModelPlayer = modelPlayerManager:getModelPlayer(target:getPlayerIndex())
+    if (not targetModelPlayer:isActivatingSkill()) then
+        local modifier = getEnergyGainModifierForModelPlayer(modelWarReplay, targetModelPlayer)
+        targetModelPlayer:setEnergy(targetModelPlayer:getEnergy()
+            + getEnergyWithTargetAndDamage(target,   attackDamage,  modifier)
+            + getEnergyWithTargetAndDamage(attacker, counterDamage, modifier)
+        )
+    end
+
+    dispatchEvtModelPlayerUpdated(modelWarReplay, attacker:getPlayerIndex())
 end
 
 local function getAdjacentPlasmaGridIndexes(gridIndex, modelTileMap)
@@ -264,19 +297,13 @@ end
 local function executeActivateSkill(action, modelWarReplay)
     modelWarReplay:setExecutingAction(true)
 
-    local skillID                 = action.skillID
-    local skillLevel              = action.skillLevel
-    local isActiveSkill           = action.isActiveSkill
-    local playerIndex             = getModelTurnManager(modelWarReplay):getPlayerIndex()
-    local modelPlayer             = getModelPlayerManager(modelWarReplay):getModelPlayer(playerIndex)
-    local modelSkillConfiguration = modelPlayer:getModelSkillConfiguration()
-    modelPlayer:setEnergy(modelPlayer:getEnergy() - modelWarReplay:getModelSkillDataManager():getSkillPoints(skillID, skillLevel, isActiveSkill))
-    if (not isActiveSkill) then
-        modelSkillConfiguration:getModelSkillGroupResearching():pushBackSkill(skillID, skillLevel)
-    else
-        modelPlayer:setActivatingSkill(true)
-        InstantSkillExecutor.executeInstantSkill(modelWarReplay, skillID, skillLevel)
-        modelSkillConfiguration:getModelSkillGroupActive():pushBackSkill(skillID, skillLevel)
+    local playerIndex           = getModelTurnManager(modelWarReplay):getPlayerIndex()
+    local modelPlayer           = getModelPlayerManager(modelWarReplay):getModelPlayer(playerIndex)
+    local modelSkillGroupActive = modelPlayer:getModelSkillConfiguration():getModelSkillGroupActive()
+    modelPlayer:setEnergy(modelPlayer:getEnergy() - modelSkillGroupActive:getTotalEnergyCost())
+        :setActivatingSkill(true)
+    for _, skill in ipairs(modelSkillGroupActive:getAllSkills()) do
+        InstantSkillExecutor.executeInstantSkill(modelWarReplay, skill.id, skill.level)
     end
 
     if (not modelWarReplay:isFastExecutingActions()) then
@@ -314,33 +341,12 @@ local function executeAttack(action, modelWarReplay)
     moveModelUnitWithAction(action, modelWarReplay)
     attacker:setStateActioned()
 
+    updateEnergyOnActionAttack(modelWarReplay, attacker, attackTarget, attackDamage, counterDamage)
     if (attacker:getPrimaryWeaponBaseDamage(attackTarget:getDefenseType())) then
         attacker:setPrimaryWeaponCurrentAmmo(attacker:getPrimaryWeaponCurrentAmmo() - 1)
     end
     if ((counterDamage) and (attackTarget:getPrimaryWeaponBaseDamage(attacker:getDefenseType()))) then
         attackTarget:setPrimaryWeaponCurrentAmmo(attackTarget:getPrimaryWeaponCurrentAmmo() - 1)
-    end
-
-    local modelPlayerManager = getModelPlayerManager(modelWarReplay)
-    if (attackTarget.getUnitType) then
-        local attackerDamageCost  = getBaseDamageCostWithTargetAndDamage(attacker,     counterDamage or 0)
-        local targetDamageCost    = getBaseDamageCostWithTargetAndDamage(attackTarget, attackDamage)
-        local attackerModelPlayer = modelPlayerManager:getModelPlayer(attackerPlayerIndex)
-        local targetModelPlayer   = modelPlayerManager:getModelPlayer(targetPlayerIndex)
-        local energyGainModifier  = modelWarReplay:getEnergyGainModifier()
-        local attackEnergy        = getEnergyModifierWithTargetAndDamage(attackTarget, attackDamage,  energyGainModifier)
-        local counterEnergy       = getEnergyModifierWithTargetAndDamage(attacker,     counterDamage, energyGainModifier)
-
-        if (not attackerModelPlayer:isActivatingSkill()) then
-            local modifierForSkill = SkillModifierFunctions.getEnergyGainModifierForSkillConfiguration(attackerModelPlayer:getModelSkillConfiguration())
-            attackerModelPlayer:setEnergy(attackerModelPlayer:getEnergy() + AuxiliaryFunctions.round((attackEnergy + counterEnergy) * (100 + modifierForSkill) / 100))
-        end
-        if (not targetModelPlayer:isActivatingSkill()) then
-            local modifierForSkill = SkillModifierFunctions.getEnergyGainModifierForSkillConfiguration(targetModelPlayer:getModelSkillConfiguration())
-            targetModelPlayer:setEnergy(targetModelPlayer:getEnergy() + AuxiliaryFunctions.round((attackEnergy + counterEnergy) * (100 + modifierForSkill) / 100))
-        end
-
-        dispatchEvtModelPlayerUpdated(modelWarReplay, attackerPlayerIndex)
     end
 
     local attackerNewHP = math.max(0, attacker:getCurrentHP() - (counterDamage or 0))
@@ -369,6 +375,7 @@ local function executeAttack(action, modelWarReplay)
         end
     end
 
+    local modelPlayerManager = getModelPlayerManager(modelWarReplay)
     local modelTurnManager   = getModelTurnManager(modelWarReplay)
     local lostPlayerIndex    = action.lostPlayerIndex
     local isInTurnPlayerLost = (lostPlayerIndex == attackerPlayerIndex)
@@ -612,22 +619,6 @@ local function executeCaptureModelTile(action, modelWarReplay)
             end)
         end
     end
-end
-
-local function executeDeclareSkill(action, modelWarReplay)
-    modelWarReplay:setExecutingAction(true)
-
-    local playerIndex = getModelTurnManager(modelWarReplay):getPlayerIndex()
-    local modelPlayer = getModelPlayerManager(modelWarReplay):getModelPlayer(playerIndex)
-    modelPlayer:setEnergy(modelPlayer:getEnergy() - modelWarReplay:getModelSkillDataManager():getSkillDeclarationCost())
-        :setSkillDeclared(true)
-
-    if (not modelWarReplay:isFastExecutingActions()) then
-        SingletonGetters.getModelMessageIndicator(modelWarReplay):showMessage(string.format("[%s]%s!", modelPlayer:getNickname(), getLocalizedText(22, "HasDeclaredSkill")))
-        dispatchEvtModelPlayerUpdated(modelWarReplay, playerIndex)
-    end
-
-    modelWarReplay:setExecutingAction(false)
 end
 
 local function executeDestroyOwnedModelUnit(action, modelWarReplay)
@@ -967,6 +958,35 @@ local function executeProduceModelUnitOnUnit(action, modelWarReplay)
     end
 end
 
+local function executeResearchPassiveSkill(action, modelWarReplay)
+    modelWarReplay:setExecutingAction(true)
+
+    local skillID                 = action.skillID
+    local skillLevel              = action.skillLevel
+    local playerIndex             = getModelTurnManager(modelWarReplay):getPlayerIndex()
+    local modelPlayer             = getModelPlayerManager(modelWarReplay):getModelPlayer(playerIndex)
+    local modelSkillConfiguration = modelPlayer:getModelSkillConfiguration()
+    modelPlayer:setEnergy(modelPlayer:getEnergy() - modelWarReplay:getModelSkillDataManager():getSkillPoints(skillID, skillLevel, false))
+    modelSkillConfiguration:getModelSkillGroupResearching():pushBackSkill(skillID, skillLevel)
+
+    if (not modelWarReplay:isFastExecutingActions()) then
+        local modelGridEffect = getModelGridEffect(modelWarReplay)
+        local func            = function(modelUnit)
+            if (modelUnit:getPlayerIndex() == playerIndex) then
+                modelGridEffect:showAnimationSkillActivation(modelUnit:getGridIndex())
+                modelUnit:updateView()
+            end
+        end
+        getModelUnitMap(modelWarReplay):forEachModelUnitOnMap(func)
+            :forEachModelUnitLoaded(func)
+
+        getModelFogMap(modelWarReplay):updateView()
+        dispatchEvtModelPlayerUpdated(modelWarReplay, playerIndex)
+    end
+
+    modelWarReplay:setExecutingAction(false)
+end
+
 local function executeSupplyModelUnit(action, modelWarReplay)
     modelWarReplay:setExecutingAction(true)
 
@@ -1053,6 +1073,22 @@ local function executeSurrender(action, modelWarReplay)
     modelWarReplay:setExecutingAction(false)
 end
 
+local function executeUpdateReserveSkills(action, modelWarReplay)
+    modelWarReplay:setExecutingAction(true)
+    local playerIndex = getModelTurnManager(modelWarReplay):getPlayerIndex()
+    local modelPlayer = getModelPlayerManager(modelWarReplay):getModelPlayer(playerIndex)
+    modelPlayer:getModelSkillConfiguration():getModelSkillGroupReserve():ctor(action.reserveSkills)
+
+    if (not modelWarReplay:isFastExecutingActions()) then
+        getModelMessageIndicator(modelWarReplay):showMessage(
+            string.format("[%s] %s!", modelPlayer:getNickname(), getLocalizedText(22, "HasUpdatedReserveSkills"))
+        )
+        dispatchEvtModelPlayerUpdated(modelWarReplay, playerIndex)
+    end
+
+    modelWarReplay:setExecutingAction(false)
+end
+
 local function executeVoteForDraw(action, modelWarReplay)
     modelWarReplay:setExecutingAction(true)
 
@@ -1128,7 +1164,6 @@ function ActionExecutorForWarReplay.executeReplayAction(action, modelWarReplay)
     elseif (actionCode == ACTION_CODES.ActionBeginTurn)              then executeBeginTurn(             action, modelWarReplay)
     elseif (actionCode == ACTION_CODES.ActionBuildModelTile)         then executeBuildModelTile(        action, modelWarReplay)
     elseif (actionCode == ACTION_CODES.ActionCaptureModelTile)       then executeCaptureModelTile(      action, modelWarReplay)
-    elseif (actionCode == ACTION_CODES.ActionDeclareSkill)           then executeDeclareSkill(          action, modelWarReplay)
     elseif (actionCode == ACTION_CODES.ActionDestroyOwnedModelUnit)  then executeDestroyOwnedModelUnit( action, modelWarReplay)
     elseif (actionCode == ACTION_CODES.ActionDive)                   then executeDive(                  action, modelWarReplay)
     elseif (actionCode == ACTION_CODES.ActionDropModelUnit)          then executeDropModelUnit(         action, modelWarReplay)
@@ -1139,9 +1174,11 @@ function ActionExecutorForWarReplay.executeReplayAction(action, modelWarReplay)
     elseif (actionCode == ACTION_CODES.ActionLoadModelUnit)          then executeLoadModelUnit(         action, modelWarReplay)
     elseif (actionCode == ACTION_CODES.ActionProduceModelUnitOnTile) then executeProduceModelUnitOnTile(action, modelWarReplay)
     elseif (actionCode == ACTION_CODES.ActionProduceModelUnitOnUnit) then executeProduceModelUnitOnUnit(action, modelWarReplay)
+    elseif (actionCode == ACTION_CODES.ActionResearchPassiveSkill)   then executeResearchPassiveSkill(  action, modelWarReplay)
     elseif (actionCode == ACTION_CODES.ActionSupplyModelUnit)        then executeSupplyModelUnit(       action, modelWarReplay)
     elseif (actionCode == ACTION_CODES.ActionSurface)                then executeSurface(               action, modelWarReplay)
     elseif (actionCode == ACTION_CODES.ActionSurrender)              then executeSurrender(             action, modelWarReplay)
+    elseif (actionCode == ACTION_CODES.ActionUpdateReserveSkills)    then executeUpdateReserveSkills(   action, modelWarReplay)
     elseif (actionCode == ACTION_CODES.ActionVoteForDraw)            then executeVoteForDraw(           action, modelWarReplay)
     elseif (actionCode == ACTION_CODES.ActionWait)                   then executeWait(                  action, modelWarReplay)
     else                                                                  error("ActionExecutorForWarReplay.executeReplayAction() invalid action: " .. SerializationFunctions.toString(action))

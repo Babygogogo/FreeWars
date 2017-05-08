@@ -42,10 +42,10 @@ local UNIT_MAX_HP  = GameConstantFunctions.getUnitMaxHP()
 --------------------------------------------------------------------------------
 -- The functions for dispatching events.
 --------------------------------------------------------------------------------
-local function dispatchEvtModelPlayerUpdated(modelWar, playerIndex)
-    getScriptEventDispatcher(modelWar):dispatchEvent({
+local function dispatchEvtModelPlayerUpdated(modelWarNative, playerIndex)
+    getScriptEventDispatcher(modelWarNative):dispatchEvent({
         name        = "EvtModelPlayerUpdated",
-        modelPlayer = getModelPlayerManager(modelWar):getModelPlayer(playerIndex),
+        modelPlayer = getModelPlayerManager(modelWarNative):getModelPlayer(playerIndex),
         playerIndex = playerIndex,
     })
 end
@@ -67,28 +67,28 @@ local function isModelUnitDiving(modelUnit)
     return (modelUnit.isDiving) and (modelUnit:isDiving())
 end
 
-local function updateFundWithCost(modelWar, playerIndex, cost)
-    local modelPlayer = getModelPlayerManager(modelWar):getModelPlayer(playerIndex)
+local function updateFundWithCost(modelWarNative, playerIndex, cost)
+    local modelPlayer = getModelPlayerManager(modelWarNative):getModelPlayer(playerIndex)
     modelPlayer:setFund(modelPlayer:getFund() - cost)
 
-    if (playerIndex == getModelPlayerManager(modelWar):getPlayerIndexForHuman()) then
-        modelWar:setTotalBuiltUnitValueForPlayer(modelWar:getTotalBuiltUnitValueForPlayer() + cost)
+    if (playerIndex == getModelPlayerManager(modelWarNative):getPlayerIndexForHuman()) then
+        modelWarNative:setTotalBuiltUnitValueForPlayer(modelWarNative:getTotalBuiltUnitValueForPlayer() + cost)
     else
-        modelWar:setTotalBuiltUnitValueForAi(modelWar:getTotalBuiltUnitValueForAi() + cost)
+        modelWarNative:setTotalBuiltUnitValueForAi(modelWarNative:getTotalBuiltUnitValueForAi() + cost)
     end
 
-    dispatchEvtModelPlayerUpdated(modelWar, playerIndex)
+    dispatchEvtModelPlayerUpdated(modelWarNative, playerIndex)
 end
 
-local function promoteModelUnitOnProduce(modelUnit, modelWar)
-    local modelPlayer = getModelPlayerManager(modelWar):getModelPlayer(modelUnit:getPlayerIndex())
+local function promoteModelUnitOnProduce(modelUnit, modelWarNative)
+    local modelPlayer = getModelPlayerManager(modelWarNative):getModelPlayer(modelUnit:getPlayerIndex())
     local modifier    = 0 -- SkillModifierFunctions.getPassivePromotionModifier(modelPlayer:getModelSkillConfiguration())
     if ((modifier > 0) and (modelUnit.setCurrentPromotion)) then
         modelUnit:setCurrentPromotion(modifier)
     end
 end
 
-local function produceActorUnit(modelWar, tiledID, unitID, gridIndex)
+local function produceActorUnit(modelWarNative, tiledID, unitID, gridIndex)
     local actorData = {
         tiledID       = tiledID,
         unitID        = unitID,
@@ -96,17 +96,17 @@ local function produceActorUnit(modelWar, tiledID, unitID, gridIndex)
     }
     local actorUnit = Actor.createWithModelAndViewName("warReplay.ModelUnitForReplay", actorData, "common.ViewUnit")
     local modelUnit = actorUnit:getModel()
-    promoteModelUnitOnProduce(modelUnit, modelWar)
+    promoteModelUnitOnProduce(modelUnit, modelWarNative)
     modelUnit:setStateActioned()
-        :onStartRunning(modelWar)
+        :onStartRunning(modelWarNative)
 
     return actorUnit
 end
 
-local function getAndSupplyAdjacentModelUnits(modelWar, supplierGridIndex, playerIndex)
+local function getAndSupplyAdjacentModelUnits(modelWarNative, supplierGridIndex, playerIndex)
     assert(type(playerIndex) == "number", "ActionExecutorForWarNative-getAndSupplyAdjacentModelUnits() invalid playerIndex: " .. (playerIndex or ""))
 
-    local modelUnitMap = getModelUnitMap(modelWar)
+    local modelUnitMap = getModelUnitMap(modelWarNative)
     local targets      = {}
     for _, adjacentGridIndex in pairs(getAdjacentGrids(supplierGridIndex, modelUnitMap:getMapSize())) do
         local target = modelUnitMap:getModelUnit(adjacentGridIndex)
@@ -118,12 +118,12 @@ local function getAndSupplyAdjacentModelUnits(modelWar, supplierGridIndex, playe
     return targets
 end
 
-local function moveModelUnitWithAction(action, modelWar)
+local function moveModelUnitWithAction(action, modelWarNative)
     local path               = action.path
     local pathNodes          = path.pathNodes
     local beginningGridIndex = pathNodes[1]
-    local modelFogMap        = getModelFogMap(modelWar)
-    local modelUnitMap       = getModelUnitMap(modelWar)
+    local modelFogMap        = getModelFogMap(modelWarNative)
+    local modelUnitMap       = getModelUnitMap(modelWarNative)
     local launchUnitID       = action.launchUnitID
     local focusModelUnit     = modelUnitMap:getFocusModelUnit(beginningGridIndex, launchUnitID)
     modelFogMap:updateMapForPathsWithModelUnitAndPath(focusModelUnit, pathNodes)
@@ -173,7 +173,7 @@ local function moveModelUnitWithAction(action, modelWar)
             modelUnitMap:swapActorUnit(beginningGridIndex, endingGridIndex)
         end
 
-        local modelTile = getModelTileMap(modelWar):getModelTile(beginningGridIndex)
+        local modelTile = getModelTileMap(modelWarNative):getModelTile(beginningGridIndex)
         if (modelTile.setCurrentBuildPoint) then
             modelTile:setCurrentBuildPoint(modelTile:getMaxBuildPoint())
         end
@@ -192,10 +192,6 @@ local function getBaseDamageCostWithTargetAndDamage(target, damage)
     end
 end
 
-local function getEnergyModifierWithTargetAndDamage(target, damage, energyGainModifier)
-    return math.floor((target:getNormalizedCurrentHP() - math.ceil(math.max(0, target:getCurrentHP() - (damage or 0)) / 10)) * energyGainModifier)
-end
-
 local function getLostValueWithModelUnitAndDamage(modelUnitMap, modelUnit, damage)
     local newNormalizedHP  = math.ceil(math.max(0, modelUnit:getCurrentHP() - (damage or 0)) / 10)
     local value            = modelUnit:getProductionCost() * (modelUnit:getNormalizedCurrentHP() - newNormalizedHP) / 10
@@ -206,6 +202,50 @@ local function getLostValueWithModelUnitAndDamage(modelUnitMap, modelUnit, damag
     end
 
     return value
+end
+
+local function getEnergyWithTargetAndDamage(target, damage, energyGainModifier)
+    return math.floor((target:getNormalizedCurrentHP() - math.ceil(math.max(0, target:getCurrentHP() - (damage or 0)) / 10)) * energyGainModifier)
+end
+
+local function getEnergyGainModifierForModelPlayer(modelWarNative, modelPlayer)
+    local skillConfiguration = modelPlayer:getModelSkillConfiguration()
+    local modifier           = modelWarNative:getEnergyGainModifier() + SkillModifierFunctions.getEnergyGainModifierForSkillConfiguration(skillConfiguration)
+    return modifier * (SkillModifierFunctions.getEnergyGainMultiplierForSkillConfiguration(skillConfiguration) / 100 + 1)
+end
+
+local function updateEnergyOnActionAttack(modelWarNative, attacker, target, attackDamage, counterDamage)
+    if (not target.getUnitType) then
+        return
+    end
+
+    local modelPlayerManager  = modelWarNative:getModelPlayerManager()
+    local attackerModelPlayer = modelPlayerManager:getModelPlayer(attacker:getPlayerIndex())
+    if (not attackerModelPlayer:isActivatingSkill()) then
+        local modifier = getEnergyGainModifierForModelPlayer(modelWarNative, attackerModelPlayer)
+        attackerModelPlayer:setEnergy(attackerModelPlayer:getEnergy()
+            + getEnergyWithTargetAndDamage(target,   attackDamage,  modifier)
+            + getEnergyWithTargetAndDamage(attacker, counterDamage, modifier)
+        )
+    end
+
+    local targetModelPlayer = modelPlayerManager:getModelPlayer(target:getPlayerIndex())
+    if (not targetModelPlayer:isActivatingSkill()) then
+        local modifier = getEnergyGainModifierForModelPlayer(modelWarNative, targetModelPlayer)
+        targetModelPlayer:setEnergy(targetModelPlayer:getEnergy()
+            + getEnergyWithTargetAndDamage(target,   attackDamage,  modifier)
+            + getEnergyWithTargetAndDamage(attacker, counterDamage, modifier)
+        )
+    end
+
+    local modelUnitMap = SingletonGetters.getModelUnitMap(modelWarNative)
+    if (target:getPlayerIndex() == modelPlayerManager:getPlayerIndexForHuman()) then
+        modelWarNative:setTotalLostUnitValueForPlayer(modelWarNative:getTotalLostUnitValueForPlayer() + getLostValueWithModelUnitAndDamage(modelUnitMap, target,   attackDamage))
+    else
+        modelWarNative:setTotalLostUnitValueForPlayer(modelWarNative:getTotalLostUnitValueForPlayer() + getLostValueWithModelUnitAndDamage(modelUnitMap, attacker, counterDamage))
+    end
+
+    dispatchEvtModelPlayerUpdated(modelWarNative, attacker:getPlayerIndex())
 end
 
 local function getAdjacentPlasmaGridIndexes(gridIndex, modelTileMap)
@@ -236,16 +276,16 @@ local function callbackOnWarEndedForClient()
     runSceneMain(getLoggedInAccountAndPassword() ~= nil)
 end
 
-local function updateTileAndUnitMapOnVisibilityChanged(modelWar)
-    local playerIndex = getModelPlayerManager(modelWar):getPlayerIndexForHuman()
-    getModelTileMap(modelWar):forEachModelTile(function(modelTile)
+local function updateTileAndUnitMapOnVisibilityChanged(modelWarNative)
+    local playerIndex = getModelPlayerManager(modelWarNative):getPlayerIndexForHuman()
+    getModelTileMap(modelWarNative):forEachModelTile(function(modelTile)
         modelTile:updateView()
     end)
-    getModelUnitMap(modelWar):forEachModelUnitOnMap(function(modelUnit)
-        modelUnit:setViewVisible(isUnitVisible(modelWar, modelUnit:getGridIndex(), modelUnit:getUnitType(), isModelUnitDiving(modelUnit), modelUnit:getPlayerIndex(), playerIndex))
+    getModelUnitMap(modelWarNative):forEachModelUnitOnMap(function(modelUnit)
+        modelUnit:setViewVisible(isUnitVisible(modelWarNative, modelUnit:getGridIndex(), modelUnit:getUnitType(), isModelUnitDiving(modelUnit), modelUnit:getPlayerIndex(), playerIndex))
     end)
 
-    getScriptEventDispatcher(modelWar)
+    getScriptEventDispatcher(modelWarNative)
         :dispatchEvent({name = "EvtModelTileMapUpdated"})
         :dispatchEvent({name = "EvtModelUnitMapUpdated"})
 end
@@ -253,8 +293,8 @@ end
 --------------------------------------------------------------------------------
 -- The executors for web actions.
 --------------------------------------------------------------------------------
-local function executeWebChat(action, modelWar)
-    SingletonGetters.getModelMessageIndicator(modelWar):showMessage(string.format("%s[%s]%s: %s",
+local function executeWebChat(action, modelWarNative)
+    SingletonGetters.getModelMessageIndicator(modelWarNative):showMessage(string.format("%s[%s]%s: %s",
         getLocalizedText(65, "War"),
         AuxiliaryFunctions.getWarNameWithWarId(action.warID),
         getLocalizedText(65, "ReceiveChatText"),
@@ -262,64 +302,58 @@ local function executeWebChat(action, modelWar)
     ))
 end
 
-local function executeWebLogin(action, modelWar)
+local function executeWebLogin(action, modelWarNative)
     local account, password = action.loginAccount, action.loginPassword
     if (account ~= getLoggedInAccountAndPassword()) then
         WebSocketManager.setLoggedInAccountAndPassword(account, password)
         SerializationFunctions.serializeAccountAndPassword(account, password)
 
-        getModelMessageIndicator(modelWar):showMessage(getLocalizedText(26, account))
+        getModelMessageIndicator(modelWarNative):showMessage(getLocalizedText(26, account))
     end
 end
 
-local function executeWebLogout(action, modelWar)
+local function executeWebLogout(action, modelWarNative)
     WebSocketManager.setLoggedInAccountAndPassword(nil, nil)
 end
 
-local function executeWebMessage(action, modelWar)
+local function executeWebMessage(action, modelWarNative)
     local message = getLocalizedText(action.messageCode, unpack(action.messageParams or {}))
-    getModelMessageIndicator(modelWar):showMessage(message)
+    getModelMessageIndicator(modelWarNative):showMessage(message)
 end
 
-local function executeWebRegister(action, modelWar)
+local function executeWebRegister(action, modelWarNative)
     local account, password = action.registerAccount, action.registerPassword
     if (account ~= getLoggedInAccountAndPassword()) then
         WebSocketManager.setLoggedInAccountAndPassword(account, password)
         SerializationFunctions.serializeAccountAndPassword(account, password)
 
-        getModelMessageIndicator(modelWar):showMessage(getLocalizedText(27, account))
+        getModelMessageIndicator(modelWarNative):showMessage(getLocalizedText(27, account))
     end
 end
 
 --------------------------------------------------------------------------------
 -- The executors for war actions.
 --------------------------------------------------------------------------------
-local function executeActivateSkill(action, modelWar)
-    modelWar:setExecutingAction(true)
+local function executeActivateSkill(action, modelWarNative)
+    modelWarNative:setExecutingAction(true)
 
-    local skillID                 = action.skillID
-    local skillLevel              = action.skillLevel
-    local isActiveSkill           = action.isActiveSkill
-    local playerIndexInTurn       = getModelTurnManager(modelWar):getPlayerIndex()
-    local modelPlayer             = getModelPlayerManager(modelWar):getModelPlayer(playerIndexInTurn)
-    local modelSkillConfiguration = modelPlayer:getModelSkillConfiguration()
-    modelPlayer:setEnergy(modelPlayer:getEnergy() - modelWar:getModelSkillDataManager():getSkillPoints(skillID, skillLevel, isActiveSkill))
-    if (not isActiveSkill) then
-        modelSkillConfiguration:getModelSkillGroupResearching():pushBackSkill(skillID, skillLevel)
-    else
-        modelPlayer:setActivatingSkill(true)
-        InstantSkillExecutor.executeInstantSkill(modelWar, skillID, skillLevel)
-        modelSkillConfiguration:getModelSkillGroupActive():pushBackSkill(skillID, skillLevel)
+    local playerIndexInTurn     = getModelTurnManager(modelWarNative):getPlayerIndex()
+    local modelPlayer           = getModelPlayerManager(modelWarNative):getModelPlayer(playerIndexInTurn)
+    local modelSkillGroupActive = modelPlayer:getModelSkillConfiguration():getModelSkillGroupActive()
+    modelPlayer:setEnergy(modelPlayer:getEnergy() - modelSkillGroupActive:getTotalEnergyCost())
+        :setActivatingSkill(true)
+    for _, skill in ipairs(modelSkillGroupActive:getAllSkills()) do
+        InstantSkillExecutor.executeInstantSkill(modelWarNative, skill.id, skill.level)
     end
 
-    local modelGridEffect     = getModelGridEffect(modelWar)
-    local playerIndexForHuman = getModelPlayerManager(modelWar):getPlayerIndexForHuman(modelWar)
-    getModelUnitMap(modelWar):forEachModelUnitOnMap(function(modelUnit)
+    local modelGridEffect     = getModelGridEffect(modelWarNative)
+    local playerIndexForHuman = getModelPlayerManager(modelWarNative):getPlayerIndexForHuman(modelWarNative)
+    getModelUnitMap(modelWarNative):forEachModelUnitOnMap(function(modelUnit)
             local playerIndex = modelUnit:getPlayerIndex()
             if (playerIndex == playerIndexInTurn) then
                 modelUnit:updateView()
                 local gridIndex = modelUnit:getGridIndex()
-                if (isUnitVisible(modelWar, gridIndex, modelUnit:getUnitType(), isModelUnitDiving(modelUnit), playerIndex, playerIndexForHuman)) then
+                if (isUnitVisible(modelWarNative, gridIndex, modelUnit:getUnitType(), isModelUnitDiving(modelUnit), playerIndex, playerIndexForHuman)) then
                     modelGridEffect:showAnimationSkillActivation(gridIndex)
                 end
             end
@@ -330,28 +364,29 @@ local function executeActivateSkill(action, modelWar)
             end
         end)
 
-    dispatchEvtModelPlayerUpdated(modelWar, playerIndexInTurn)
+    dispatchEvtModelPlayerUpdated(modelWarNative, playerIndexInTurn)
 
-    modelWar:setExecutingAction(false)
+    modelWarNative:setExecutingAction(false)
 end
 
-local function executeAttack(action, modelWar)
-    modelWar:setExecutingAction(true)
+local function executeAttack(action, modelWarNative)
+    modelWarNative:setExecutingAction(true)
 
     local pathNodes           = action.path.pathNodes
     local attackDamage        = action.attackDamage
     local counterDamage       = action.counterDamage
     local attackerGridIndex   = pathNodes[#pathNodes]
     local targetGridIndex     = action.targetGridIndex
-    local modelUnitMap        = getModelUnitMap(modelWar)
-    local modelTileMap        = getModelTileMap(modelWar)
+    local modelUnitMap        = getModelUnitMap(modelWarNative)
+    local modelTileMap        = getModelTileMap(modelWarNative)
     local attacker            = modelUnitMap:getFocusModelUnit(pathNodes[1], action.launchUnitID)
     local attackTarget        = modelUnitMap:getModelUnit(targetGridIndex) or modelTileMap:getModelTile(targetGridIndex)
     local attackerPlayerIndex = attacker:getPlayerIndex()
     local targetPlayerIndex   = attackTarget:getPlayerIndex()
-    moveModelUnitWithAction(action, modelWar)
+    moveModelUnitWithAction(action, modelWarNative)
     attacker:setStateActioned()
 
+    updateEnergyOnActionAttack(modelWarNative, attacker, attackTarget, attackDamage, counterDamage)
     if (attacker:getPrimaryWeaponBaseDamage(attackTarget:getDefenseType())) then
         attacker:setPrimaryWeaponCurrentAmmo(attacker:getPrimaryWeaponCurrentAmmo() - 1)
     end
@@ -359,53 +394,20 @@ local function executeAttack(action, modelWar)
         attackTarget:setPrimaryWeaponCurrentAmmo(attackTarget:getPrimaryWeaponCurrentAmmo() - 1)
     end
 
-    local modelPlayerManager = getModelPlayerManager(modelWar)
-    if (attackTarget.getUnitType) then
-        local attackerDamageCost  = getBaseDamageCostWithTargetAndDamage(attacker,     counterDamage or 0)
-        local targetDamageCost    = getBaseDamageCostWithTargetAndDamage(attackTarget, attackDamage)
-        local attackerModelPlayer = modelPlayerManager:getModelPlayer(attackerPlayerIndex)
-        local targetModelPlayer   = modelPlayerManager:getModelPlayer(targetPlayerIndex)
-        local energyGainModifier  = modelWar:getEnergyGainModifier()
-        local attackEnergy        = getEnergyModifierWithTargetAndDamage(attackTarget, attackDamage,  energyGainModifier)
-        local counterEnergy       = getEnergyModifierWithTargetAndDamage(attacker,     counterDamage, energyGainModifier)
-
-        if (not attackerModelPlayer:isActivatingSkill()) then
-            local modifierForSkill = SkillModifierFunctions.getEnergyGainModifierForSkillConfiguration(attackerModelPlayer:getModelSkillConfiguration())
-            attackerModelPlayer:setEnergy(attackerModelPlayer:getEnergy() + AuxiliaryFunctions.round((attackEnergy + counterEnergy) * (100 + modifierForSkill) / 100))
-        end
-        if (not targetModelPlayer:isActivatingSkill()) then
-            local modifierForSkill = SkillModifierFunctions.getEnergyGainModifierForSkillConfiguration(targetModelPlayer:getModelSkillConfiguration())
-            targetModelPlayer:setEnergy(targetModelPlayer:getEnergy() + AuxiliaryFunctions.round((attackEnergy + counterEnergy) * (100 + modifierForSkill) / 100))
-        end
-
-        if (targetPlayerIndex == modelPlayerManager:getPlayerIndexForHuman()) then
-            modelWar:setTotalLostUnitValueForPlayer(
-                modelWar:getTotalLostUnitValueForPlayer() +
-                getLostValueWithModelUnitAndDamage(modelUnitMap, attackTarget, attackDamage)
-            )
-        else
-            modelWar:setTotalLostUnitValueForPlayer(
-                modelWar:getTotalLostUnitValueForPlayer() +
-                getLostValueWithModelUnitAndDamage(modelUnitMap, attacker, counterDamage)
-            )
-        end
-
-        dispatchEvtModelPlayerUpdated(modelWar, attackerPlayerIndex)
-    end
-
     local attackerNewHP = math.max(0, attacker:getCurrentHP() - (counterDamage or 0))
     attacker:setCurrentHP(attackerNewHP)
     if (attackerNewHP == 0) then
         attackTarget:setCurrentPromotion(math.min(attackTarget:getMaxPromotion(), attackTarget:getCurrentPromotion() + 1))
-        Destroyers.destroyActorUnitOnMap(modelWar, attackerGridIndex, false)
+        Destroyers.destroyActorUnitOnMap(modelWarNative, attackerGridIndex, false)
     end
 
-    if ((attackTarget.getUnitType)                                                                       and
-        (modelPlayerManager:getPlayerIndexForHuman() == getModelTurnManager(modelWar):getPlayerIndex())) then
-        modelWar:setTotalAttacksCount(modelWar:getTotalAttacksCount() + 1)
-            :setTotalAttackDamage(modelWar:getTotalAttackDamage() + attackDamage)
+    local modelPlayerManager = getModelPlayerManager(modelWarNative)
+    if ((attackTarget.getUnitType)                                                                             and
+        (modelPlayerManager:getPlayerIndexForHuman() == getModelTurnManager(modelWarNative):getPlayerIndex())) then
+        modelWarNative:setTotalAttacksCount(modelWarNative:getTotalAttacksCount() + 1)
+            :setTotalAttackDamage(modelWarNative:getTotalAttackDamage() + attackDamage)
         if (attackTarget:getCurrentHP() <= attackDamage) then
-            modelWar:setTotalKillsCount(modelWar:getTotalKillsCount() + 1)
+            modelWarNative:setTotalKillsCount(modelWarNative:getTotalKillsCount() + 1)
         end
     end
 
@@ -417,7 +419,7 @@ local function executeAttack(action, modelWar)
             targetVision = attackTarget:getVisionForPlayerIndex(targetPlayerIndex)
 
             attacker:setCurrentPromotion(math.min(attacker:getMaxPromotion(), attacker:getCurrentPromotion() + 1))
-            Destroyers.destroyActorUnitOnMap(modelWar, targetGridIndex, false, true)
+            Destroyers.destroyActorUnitOnMap(modelWarNative, targetGridIndex, false, true)
         else
             attackTarget:updateWithObjectAndBaseId(0)
 
@@ -428,11 +430,11 @@ local function executeAttack(action, modelWar)
         end
     end
 
-    local modelTurnManager = getModelTurnManager(modelWar)
+    local modelTurnManager = getModelTurnManager(modelWarNative)
     local lostPlayerIndex  = action.lostPlayerIndex
     local isHumanLost      = (lostPlayerIndex == modelPlayerManager:getPlayerIndexForHuman())
     if ((isHumanLost) or (modelPlayerManager:getAliveTeamsCount(lostPlayerIndex) <= 1)) then
-        modelWar:setEnded(true)
+        modelWarNative:setEnded(true)
     end
 
     attacker:moveViewAlongPathAndFocusOnTarget(pathNodes, isModelUnitDiving(attacker), targetGridIndex, function()
@@ -445,7 +447,7 @@ local function executeAttack(action, modelWar)
             attackTarget:removeViewFromParent()
         end
 
-        local modelGridEffect = getModelGridEffect(modelWar)
+        local modelGridEffect = getModelGridEffect(modelWarNative)
         if (attackerNewHP == 0) then
             modelGridEffect:showAnimationExplosion(attackerGridIndex)
         elseif ((counterDamage) and (targetNewHP > 0)) then
@@ -464,75 +466,75 @@ local function executeAttack(action, modelWar)
         end
 
         if (targetVision) then
-            getModelFogMap(modelWar):updateMapForUnitsForPlayerIndexOnUnitLeave(targetPlayerIndex, targetGridIndex, targetVision)
+            getModelFogMap(modelWarNative):updateMapForUnitsForPlayerIndexOnUnitLeave(targetPlayerIndex, targetGridIndex, targetVision)
         end
         if (lostPlayerIndex) then
-            Destroyers.destroyPlayerForce(modelWar, lostPlayerIndex)
-            getModelMessageIndicator(modelWar):showMessage(getLocalizedText(74, "Lose", modelPlayerManager:getModelPlayer(lostPlayerIndex):getNickname()))
+            Destroyers.destroyPlayerForce(modelWarNative, lostPlayerIndex)
+            getModelMessageIndicator(modelWarNative):showMessage(getLocalizedText(74, "Lose", modelPlayerManager:getModelPlayer(lostPlayerIndex):getNickname()))
         end
 
-        updateTileAndUnitMapOnVisibilityChanged(modelWar)
+        updateTileAndUnitMapOnVisibilityChanged(modelWarNative)
 
-        if (modelWar:isEnded()) then
+        if (modelWarNative:isEnded()) then
             if (isHumanLost) then
-                modelWar:showEffectLose(callbackOnWarEndedForClient)
+                modelWarNative:showEffectLose(callbackOnWarEndedForClient)
             else
-                if (modelWar:isCampaign()) then
-                    NativeWarManager.updateCampaignHighScore(getModelWarField(modelWar):getWarFieldFileName(), modelWar:getTotalScoreForCampaign())
+                if (modelWarNative:isCampaign()) then
+                    NativeWarManager.updateCampaignHighScore(getModelWarField(modelWarNative):getWarFieldFileName(), modelWarNative:getTotalScoreForCampaign())
                 end
-                modelWar:showEffectWin(callbackOnWarEndedForClient)
+                modelWarNative:showEffectWin(callbackOnWarEndedForClient)
             end
         elseif (lostPlayerIndex == modelTurnManager:getPlayerIndex()) then
             modelTurnManager:endTurnPhaseMain()
         end
 
-        modelWar:setExecutingAction(false)
+        modelWarNative:setExecutingAction(false)
     end)
 end
 
-local function executeBeginTurn(action, modelWar)
-    modelWar:setExecutingAction(true)
+local function executeBeginTurn(action, modelWarNative)
+    modelWarNative:setExecutingAction(true)
 
-    local modelTurnManager   = getModelTurnManager(modelWar)
+    local modelTurnManager   = getModelTurnManager(modelWarNative)
     local lostPlayerIndex    = action.lostPlayerIndex
-    local modelPlayerManager = getModelPlayerManager(modelWar)
+    local modelPlayerManager = getModelPlayerManager(modelWarNative)
     if (not lostPlayerIndex) then
         modelTurnManager:beginTurnPhaseBeginning(action.income, action.repairData, action.supplyData, function()
-            modelWar:setExecutingAction(false)
+            modelWarNative:setExecutingAction(false)
         end)
     else
         local isHumanLost = (lostPlayerIndex == modelPlayerManager:getPlayerIndexForHuman())
-        modelWar:setEnded((isHumanLost) or (modelPlayerManager:getAliveTeamsCount(lostPlayerIndex) <= 1))
+        modelWarNative:setEnded((isHumanLost) or (modelPlayerManager:getAliveTeamsCount(lostPlayerIndex) <= 1))
 
         modelTurnManager:beginTurnPhaseBeginning(action.income, action.repairData, action.supplyData, function()
-            getModelMessageIndicator(modelWar):showMessage(getLocalizedText(74, "Lose", modelPlayerManager:getModelPlayer(lostPlayerIndex):getNickname()))
-            Destroyers.destroyPlayerForce(modelWar, lostPlayerIndex)
+            getModelMessageIndicator(modelWarNative):showMessage(getLocalizedText(74, "Lose", modelPlayerManager:getModelPlayer(lostPlayerIndex):getNickname()))
+            Destroyers.destroyPlayerForce(modelWarNative, lostPlayerIndex)
 
-            if (not modelWar:isEnded()) then
+            if (not modelWarNative:isEnded()) then
                 modelTurnManager:endTurnPhaseMain()
             elseif (lostPlayerIndex == modelPlayerManager:getPlayerIndexForHuman()) then
-                modelWar:showEffectLose(callbackOnWarEndedForClient)
+                modelWarNative:showEffectLose(callbackOnWarEndedForClient)
             else
-                if (modelWar:isCampaign()) then
-                    NativeWarManager.updateCampaignHighScore(getModelWarField(modelWar):getWarFieldFileName(), modelWar:getTotalScoreForCampaign())
+                if (modelWarNative:isCampaign()) then
+                    NativeWarManager.updateCampaignHighScore(getModelWarField(modelWarNative):getWarFieldFileName(), modelWarNative:getTotalScoreForCampaign())
                 end
-                modelWar:showEffectWin(callbackOnWarEndedForClient)
+                modelWarNative:showEffectWin(callbackOnWarEndedForClient)
             end
 
-            modelWar:setExecutingAction(false)
+            modelWarNative:setExecutingAction(false)
         end)
     end
 end
 
-local function executeBuildModelTile(action, modelWar)
-    modelWar:setExecutingAction(true)
+local function executeBuildModelTile(action, modelWarNative)
+    modelWarNative:setExecutingAction(true)
 
     local pathNodes       = action.path.pathNodes
     local endingGridIndex = pathNodes[#pathNodes]
-    local focusModelUnit  = getModelUnitMap(modelWar):getFocusModelUnit(pathNodes[1], action.launchUnitID)
-    local modelTile       = getModelTileMap(modelWar):getModelTile(endingGridIndex)
+    local focusModelUnit  = getModelUnitMap(modelWarNative):getFocusModelUnit(pathNodes[1], action.launchUnitID)
+    local modelTile       = getModelTileMap(modelWarNative):getModelTile(endingGridIndex)
     local buildPoint      = modelTile:getCurrentBuildPoint() - focusModelUnit:getBuildAmount()
-    moveModelUnitWithAction(action, modelWar)
+    moveModelUnitWithAction(action, modelWarNative)
     focusModelUnit:setStateActioned()
 
     if (buildPoint > 0) then
@@ -544,7 +546,7 @@ local function executeBuildModelTile(action, modelWar)
         modelTile:updateWithObjectAndBaseId(focusModelUnit:getBuildTiledIdWithTileType(modelTile:getTileType()))
 
         local playerIndex = focusModelUnit:getPlayerIndex()
-        getModelFogMap(modelWar):updateMapForTilesForPlayerIndexOnGettingOwnership(playerIndex, endingGridIndex, modelTile:getVisionForPlayerIndex(playerIndex))
+        getModelFogMap(modelWarNative):updateMapForTilesForPlayerIndexOnGettingOwnership(playerIndex, endingGridIndex, modelTile:getVisionForPlayerIndex(playerIndex))
     end
 
     focusModelUnit:moveViewAlongPath(pathNodes, isModelUnitDiving(focusModelUnit), function()
@@ -552,23 +554,23 @@ local function executeBuildModelTile(action, modelWar)
             :showNormalAnimation()
         modelTile:updateView()
 
-        updateTileAndUnitMapOnVisibilityChanged(modelWar)
+        updateTileAndUnitMapOnVisibilityChanged(modelWarNative)
 
-        modelWar:setExecutingAction(false)
+        modelWarNative:setExecutingAction(false)
     end)
 end
 
-local function executeCaptureModelTile(action, modelWar)
-    modelWar:setExecutingAction(true)
+local function executeCaptureModelTile(action, modelWarNative)
+    modelWarNative:setExecutingAction(true)
 
     local pathNodes       = action.path.pathNodes
     local endingGridIndex = pathNodes[#pathNodes]
-    local modelTile       = getModelTileMap(modelWar):getModelTile(endingGridIndex)
-    local focusModelUnit  = getModelUnitMap(modelWar):getFocusModelUnit(pathNodes[1], action.launchUnitID)
-    moveModelUnitWithAction(action, modelWar)
+    local modelTile       = getModelTileMap(modelWarNative):getModelTile(endingGridIndex)
+    local focusModelUnit  = getModelUnitMap(modelWarNative):getFocusModelUnit(pathNodes[1], action.launchUnitID)
+    moveModelUnitWithAction(action, modelWarNative)
     focusModelUnit:setStateActioned()
 
-    local modelFogMap  = getModelFogMap(modelWar)
+    local modelFogMap  = getModelFogMap(modelWarNative)
     local capturePoint = modelTile:getCurrentCapturePoint() - focusModelUnit:getCaptureAmount()
     local previousVision, previousPlayerIndex
     if (capturePoint > 0) then
@@ -586,7 +588,7 @@ local function executeCaptureModelTile(action, modelWar)
         modelFogMap:updateMapForTilesForPlayerIndexOnGettingOwnership(playerIndexActing, endingGridIndex, modelTile:getVisionForPlayerIndex(playerIndexActing))
     end
 
-    local modelPlayerManager = getModelPlayerManager(modelWar)
+    local modelPlayerManager = getModelPlayerManager(modelWarNative)
     local lostPlayerIndex    = action.lostPlayerIndex
     if (not lostPlayerIndex) then
         focusModelUnit:moveViewAlongPath(pathNodes, isModelUnitDiving(focusModelUnit), function()
@@ -597,75 +599,61 @@ local function executeCaptureModelTile(action, modelWar)
             if (capturePoint <= 0) then
                 modelFogMap:updateMapForTilesForPlayerIndexOnLosingOwnership(previousPlayerIndex, endingGridIndex, previousVision)
             end
-            updateTileAndUnitMapOnVisibilityChanged(modelWar)
+            updateTileAndUnitMapOnVisibilityChanged(modelWarNative)
 
-            modelWar:setExecutingAction(false)
+            modelWarNative:setExecutingAction(false)
         end)
     else
         local isHumanLost = (lostPlayerIndex == modelPlayerManager:getPlayerIndexForHuman())
-        modelWar:setEnded((isHumanLost) or (modelPlayerManager:getAliveTeamsCount(lostPlayerIndex) <= 1))
+        modelWarNative:setEnded((isHumanLost) or (modelPlayerManager:getAliveTeamsCount(lostPlayerIndex) <= 1))
 
         focusModelUnit:moveViewAlongPath(pathNodes, isModelUnitDiving(focusModelUnit), function()
             focusModelUnit:updateView()
                 :showNormalAnimation()
             modelTile:updateView()
 
-            getModelMessageIndicator(modelWar):showMessage(getLocalizedText(74, "Lose", modelPlayerManager:getModelPlayer(lostPlayerIndex):getNickname()))
-            Destroyers.destroyPlayerForce(modelWar, lostPlayerIndex)
-            updateTileAndUnitMapOnVisibilityChanged(modelWar)
+            getModelMessageIndicator(modelWarNative):showMessage(getLocalizedText(74, "Lose", modelPlayerManager:getModelPlayer(lostPlayerIndex):getNickname()))
+            Destroyers.destroyPlayerForce(modelWarNative, lostPlayerIndex)
+            updateTileAndUnitMapOnVisibilityChanged(modelWarNative)
 
-            if (modelWar:isEnded()) then
+            if (modelWarNative:isEnded()) then
                 if (isHumanLost) then
-                    modelWar:showEffectLose(callbackOnWarEndedForClient)
+                    modelWarNative:showEffectLose(callbackOnWarEndedForClient)
                 else
-                    if (modelWar:isCampaign()) then
-                        NativeWarManager.updateCampaignHighScore(getModelWarField(modelWar):getWarFieldFileName(), modelWar:getTotalScoreForCampaign())
+                    if (modelWarNative:isCampaign()) then
+                        NativeWarManager.updateCampaignHighScore(getModelWarField(modelWarNative):getWarFieldFileName(), modelWarNative:getTotalScoreForCampaign())
                     end
-                    modelWar:showEffectWin(callbackOnWarEndedForClient)
+                    modelWarNative:showEffectWin(callbackOnWarEndedForClient)
                 end
             end
 
-            modelWar:setExecutingAction(false)
+            modelWarNative:setExecutingAction(false)
         end)
     end
 end
 
-local function executeDeclareSkill(action, modelWar)
-    modelWar:setExecutingAction(true)
-
-    local playerIndex = getModelTurnManager(modelWar):getPlayerIndex()
-    local modelPlayer = getModelPlayerManager(modelWar):getModelPlayer(playerIndex)
-    modelPlayer:setEnergy(modelPlayer:getEnergy() - modelWar:getModelSkillDataManager():getSkillDeclarationCost())
-        :setSkillDeclared(true)
-
-    SingletonGetters.getModelMessageIndicator(modelWar):showMessage(string.format("[%s]%s!", modelPlayer:getNickname(), getLocalizedText(22, "HasDeclaredSkill")))
-    dispatchEvtModelPlayerUpdated(modelWar, playerIndex)
-
-    modelWar:setExecutingAction(false)
-end
-
-local function executeDestroyOwnedModelUnit(action, modelWar)
-    modelWar:setExecutingAction(true)
+local function executeDestroyOwnedModelUnit(action, modelWarNative)
+    modelWarNative:setExecutingAction(true)
 
     local gridIndex    = action.gridIndex
-    local modelUnitMap = getModelUnitMap(modelWar)
+    local modelUnitMap = getModelUnitMap(modelWarNative)
     local modelUnit    = modelUnitMap:getModelUnit(gridIndex)
-    getModelFogMap(modelWar):updateMapForPathsWithModelUnitAndPath(modelUnit, {gridIndex})
-    modelWar:setTotalLostUnitValueForPlayer(modelWar:getTotalLostUnitValueForPlayer() + getLostValueWithModelUnitAndDamage(modelUnitMap, modelUnit, 100))
-    Destroyers.destroyActorUnitOnMap(modelWar, gridIndex, true)
+    getModelFogMap(modelWarNative):updateMapForPathsWithModelUnitAndPath(modelUnit, {gridIndex})
+    modelWarNative:setTotalLostUnitValueForPlayer(modelWarNative:getTotalLostUnitValueForPlayer() + getLostValueWithModelUnitAndDamage(modelUnitMap, modelUnit, 100))
+    Destroyers.destroyActorUnitOnMap(modelWarNative, gridIndex, true)
 
-    getModelGridEffect(modelWar):showAnimationExplosion(gridIndex)
+    getModelGridEffect(modelWarNative):showAnimationExplosion(gridIndex)
 
-    modelWar:setExecutingAction(false)
+    modelWarNative:setExecutingAction(false)
 end
 
-local function executeDive(action, modelWar)
-    modelWar:setExecutingAction(true)
+local function executeDive(action, modelWarNative)
+    modelWarNative:setExecutingAction(true)
 
     local launchUnitID     = action.launchUnitID
     local pathNodes        = action.path.pathNodes
-    local focusModelUnit   = getModelUnitMap(modelWar):getFocusModelUnit(pathNodes[1], launchUnitID)
-    moveModelUnitWithAction(action, modelWar)
+    local focusModelUnit   = getModelUnitMap(modelWarNative):getFocusModelUnit(pathNodes[1], launchUnitID)
+    moveModelUnitWithAction(action, modelWarNative)
     focusModelUnit:setStateActioned()
         :setDiving(true)
 
@@ -673,27 +661,27 @@ local function executeDive(action, modelWar)
         focusModelUnit:updateView()
             :showNormalAnimation()
 
-        if (isUnitVisible(modelWar, pathNodes[#pathNodes], focusModelUnit:getUnitType(), false, focusModelUnit:getPlayerIndex(), getModelPlayerManager(modelWar):getPlayerIndexForHuman())) then
-            getModelGridEffect(modelWar):showAnimationDive(pathNodes[#pathNodes])
+        if (isUnitVisible(modelWarNative, pathNodes[#pathNodes], focusModelUnit:getUnitType(), false, focusModelUnit:getPlayerIndex(), getModelPlayerManager(modelWarNative):getPlayerIndexForHuman())) then
+            getModelGridEffect(modelWarNative):showAnimationDive(pathNodes[#pathNodes])
         end
-        updateTileAndUnitMapOnVisibilityChanged(modelWar)
+        updateTileAndUnitMapOnVisibilityChanged(modelWarNative)
 
-        modelWar:setExecutingAction(false)
+        modelWarNative:setExecutingAction(false)
     end)
 end
 
-local function executeDropModelUnit(action, modelWar)
-    modelWar:setExecutingAction(true)
+local function executeDropModelUnit(action, modelWarNative)
+    modelWarNative:setExecutingAction(true)
 
     local pathNodes        = action.path.pathNodes
-    local modelUnitMap     = getModelUnitMap(modelWar)
+    local modelUnitMap     = getModelUnitMap(modelWarNative)
     local endingGridIndex  = pathNodes[#pathNodes]
     local focusModelUnit   = modelUnitMap:getFocusModelUnit(pathNodes[1], action.launchUnitID)
-    moveModelUnitWithAction(action, modelWar)
+    moveModelUnitWithAction(action, modelWarNative)
     focusModelUnit:setStateActioned()
 
     local playerIndex    = focusModelUnit:getPlayerIndex()
-    local modelFogMap    = getModelFogMap(modelWar)
+    local modelFogMap    = getModelFogMap(modelWarNative)
     local dropModelUnits = {}
     for _, dropDestination in ipairs(action.dropDestinations) do
         local gridIndex     = dropDestination.gridIndex
@@ -719,7 +707,7 @@ local function executeDropModelUnit(action, modelWar)
         focusModelUnit:updateView()
             :showNormalAnimation()
         if (action.isDropBlocked) then
-            getModelGridEffect(modelWar):showAnimationBlock(endingGridIndex)
+            getModelGridEffect(modelWarNative):showAnimationBlock(endingGridIndex)
         end
 
         for _, dropModelUnit in ipairs(dropModelUnits) do
@@ -729,30 +717,30 @@ local function executeDropModelUnit(action, modelWar)
             end)
         end
 
-        updateTileAndUnitMapOnVisibilityChanged(modelWar)
+        updateTileAndUnitMapOnVisibilityChanged(modelWarNative)
 
-        modelWar:setExecutingAction(false)
+        modelWarNative:setExecutingAction(false)
     end)
 end
 
-local function executeEndTurn(action, modelWar)
-    modelWar:setExecutingAction(true)
+local function executeEndTurn(action, modelWarNative)
+    modelWarNative:setExecutingAction(true)
 
-    getModelTurnManager(modelWar):endTurnPhaseMain()
-    modelWar:setExecutingAction(false)
+    getModelTurnManager(modelWarNative):endTurnPhaseMain()
+    modelWarNative:setExecutingAction(false)
 end
 
-local function executeJoinModelUnit(action, modelWar)
-    modelWar:setExecutingAction(true)
+local function executeJoinModelUnit(action, modelWarNative)
+    modelWarNative:setExecutingAction(true)
 
     local launchUnitID     = action.launchUnitID
     local pathNodes        = action.path.pathNodes
     local endingGridIndex  = pathNodes[#pathNodes]
-    local modelUnitMap     = getModelUnitMap(modelWar)
+    local modelUnitMap     = getModelUnitMap(modelWarNative)
     local focusModelUnit   = modelUnitMap:getFocusModelUnit(pathNodes[1], launchUnitID)
     local targetModelUnit  = modelUnitMap:getModelUnit(endingGridIndex)
     modelUnitMap:removeActorUnitOnMap(endingGridIndex)
-    moveModelUnitWithAction(action, modelWar)
+    moveModelUnitWithAction(action, modelWarNative)
     focusModelUnit:setStateActioned()
 
     if ((focusModelUnit.hasPrimaryWeapon) and (focusModelUnit:hasPrimaryWeapon())) then
@@ -765,9 +753,9 @@ local function executeJoinModelUnit(action, modelWar)
         local joinIncome = focusModelUnit:getJoinIncome(targetModelUnit)
         if (joinIncome ~= 0) then
             local playerIndex = focusModelUnit:getPlayerIndex()
-            local modelPlayer = getModelPlayerManager(modelWar):getModelPlayer(playerIndex)
+            local modelPlayer = getModelPlayerManager(modelWarNative):getModelPlayer(playerIndex)
             modelPlayer:setFund(modelPlayer:getFund() + joinIncome)
-            dispatchEvtModelPlayerUpdated(modelWar, playerIndex)
+            dispatchEvtModelPlayerUpdated(modelWarNative, playerIndex)
         end
     end
     if (focusModelUnit.setCurrentHP) then
@@ -807,49 +795,49 @@ local function executeJoinModelUnit(action, modelWar)
             :showNormalAnimation()
         targetModelUnit:removeViewFromParent()
 
-        updateTileAndUnitMapOnVisibilityChanged(modelWar)
+        updateTileAndUnitMapOnVisibilityChanged(modelWarNative)
 
-        modelWar:setExecutingAction(false)
+        modelWarNative:setExecutingAction(false)
     end)
 end
 
-local function executeLaunchFlare(action, modelWar)
-    modelWar:setExecutingAction(true)
+local function executeLaunchFlare(action, modelWarNative)
+    modelWarNative:setExecutingAction(true)
 
     local pathNodes         = action.path.pathNodes
     local targetGridIndex   = action.targetGridIndex
-    local modelUnitMap      = getModelUnitMap(modelWar)
+    local modelUnitMap      = getModelUnitMap(modelWarNative)
     local focusModelUnit    = modelUnitMap:getFocusModelUnit(pathNodes[1], action.launchUnitID)
     local playerIndexActing = focusModelUnit:getPlayerIndex()
     local flareAreaRadius   = focusModelUnit:getFlareAreaRadius()
-    moveModelUnitWithAction(action, modelWar)
+    moveModelUnitWithAction(action, modelWarNative)
     focusModelUnit:setStateActioned()
         :setCurrentFlareAmmo(focusModelUnit:getCurrentFlareAmmo() - 1)
-    getModelFogMap(modelWar):updateMapForPathsForPlayerIndexWithFlare(playerIndexActing, targetGridIndex, flareAreaRadius)
+    getModelFogMap(modelWarNative):updateMapForPathsForPlayerIndexWithFlare(playerIndexActing, targetGridIndex, flareAreaRadius)
 
     focusModelUnit:moveViewAlongPath(pathNodes, isModelUnitDiving(focusModelUnit), function()
         focusModelUnit:updateView()
             :showNormalAnimation()
 
-        local modelGridEffect = getModelGridEffect(modelWar)
+        local modelGridEffect = getModelGridEffect(modelWarNative)
         for _, gridIndex in pairs(getGridsWithinDistance(targetGridIndex, 0, flareAreaRadius, modelUnitMap:getMapSize())) do
             modelGridEffect:showAnimationFlare(gridIndex)
         end
 
-        updateTileAndUnitMapOnVisibilityChanged(modelWar)
+        updateTileAndUnitMapOnVisibilityChanged(modelWarNative)
 
-        modelWar:setExecutingAction(false)
+        modelWarNative:setExecutingAction(false)
     end)
 end
 
-local function executeLaunchSilo(action, modelWar)
-    modelWar:setExecutingAction(true)
+local function executeLaunchSilo(action, modelWarNative)
+    modelWarNative:setExecutingAction(true)
 
     local pathNodes      = action.path.pathNodes
-    local modelUnitMap   = getModelUnitMap(modelWar)
+    local modelUnitMap   = getModelUnitMap(modelWarNative)
     local focusModelUnit = modelUnitMap:getFocusModelUnit(pathNodes[1], action.launchUnitID)
-    local modelTile      = getModelTileMap(modelWar):getModelTile(pathNodes[#pathNodes])
-    moveModelUnitWithAction(action, modelWar)
+    local modelTile      = getModelTileMap(modelWarNative):getModelTile(pathNodes[#pathNodes])
+    moveModelUnitWithAction(action, modelWarNative)
     focusModelUnit:setStateActioned()
     modelTile:updateWithObjectAndBaseId(focusModelUnit:getTileObjectIdAfterLaunch())
 
@@ -872,24 +860,24 @@ local function executeLaunchSilo(action, modelWar)
             modelUnit:updateView()
         end
 
-        local modelGridEffect = getModelGridEffect(modelWar)
+        local modelGridEffect = getModelGridEffect(modelWarNative)
         for _, gridIndex in ipairs(targetGridIndexes) do
             modelGridEffect:showAnimationSiloAttack(gridIndex)
         end
 
-        updateTileAndUnitMapOnVisibilityChanged(modelWar)
+        updateTileAndUnitMapOnVisibilityChanged(modelWarNative)
 
-        modelWar:setExecutingAction(false)
+        modelWarNative:setExecutingAction(false)
     end)
 end
 
-local function executeLoadModelUnit(action, modelWar)
-    modelWar:setExecutingAction(true)
+local function executeLoadModelUnit(action, modelWarNative)
+    modelWarNative:setExecutingAction(true)
 
     local pathNodes      = action.path.pathNodes
-    local modelUnitMap   = getModelUnitMap(modelWar)
+    local modelUnitMap   = getModelUnitMap(modelWarNative)
     local focusModelUnit = modelUnitMap:getFocusModelUnit(pathNodes[1], action.launchUnitID)
-    moveModelUnitWithAction(action, modelWar)
+    moveModelUnitWithAction(action, modelWarNative)
     focusModelUnit:setStateActioned()
 
     local loaderModelUnit = modelUnitMap:getModelUnit(pathNodes[#pathNodes])
@@ -901,96 +889,130 @@ local function executeLoadModelUnit(action, modelWar)
             :setViewVisible(false)
         loaderModelUnit:updateView()
 
-        updateTileAndUnitMapOnVisibilityChanged(modelWar)
+        updateTileAndUnitMapOnVisibilityChanged(modelWarNative)
 
-        modelWar:setExecutingAction(false)
+        modelWarNative:setExecutingAction(false)
     end)
 end
 
-local function executeProduceModelUnitOnTile(action, modelWar)
-    modelWar:setExecutingAction(true)
+local function executeProduceModelUnitOnTile(action, modelWarNative)
+    modelWarNative:setExecutingAction(true)
 
-    local modelUnitMap      = getModelUnitMap(modelWar)
+    local modelUnitMap      = getModelUnitMap(modelWarNative)
     local producedUnitID    = modelUnitMap:getAvailableUnitId()
-    local playerIndex       = getModelTurnManager(modelWar):getPlayerIndex()
+    local playerIndex       = getModelTurnManager(modelWarNative):getPlayerIndex()
     local gridIndex         = action.gridIndex
-    local producedActorUnit = produceActorUnit(modelWar, action.tiledID, producedUnitID, gridIndex)
+    local producedActorUnit = produceActorUnit(modelWarNative, action.tiledID, producedUnitID, gridIndex)
     modelUnitMap:addActorUnitOnMap(producedActorUnit)
         :setAvailableUnitId(producedUnitID + 1)
-    getModelFogMap(modelWar):updateMapForUnitsForPlayerIndexOnUnitArrive(playerIndex, gridIndex, producedActorUnit:getModel():getVisionForPlayerIndex(playerIndex))
-    updateFundWithCost(modelWar, playerIndex, action.cost)
+    getModelFogMap(modelWarNative):updateMapForUnitsForPlayerIndexOnUnitArrive(playerIndex, gridIndex, producedActorUnit:getModel():getVisionForPlayerIndex(playerIndex))
+    updateFundWithCost(modelWarNative, playerIndex, action.cost)
 
-    updateTileAndUnitMapOnVisibilityChanged(modelWar)
+    updateTileAndUnitMapOnVisibilityChanged(modelWarNative)
 
-    modelWar:setExecutingAction(false)
+    modelWarNative:setExecutingAction(false)
 end
 
-local function executeProduceModelUnitOnUnit(action, modelWar)
-    modelWar:setExecutingAction(true)
+local function executeProduceModelUnitOnUnit(action, modelWarNative)
+    modelWarNative:setExecutingAction(true)
 
     local pathNodes    = action.path.pathNodes
-    local modelUnitMap = getModelUnitMap(modelWar)
+    local modelUnitMap = getModelUnitMap(modelWarNative)
     local producer     = modelUnitMap:getFocusModelUnit(pathNodes[1], action.launchUnitID)
-    moveModelUnitWithAction(action, modelWar)
+    moveModelUnitWithAction(action, modelWarNative)
     producer:setStateActioned()
 
     local producedUnitID    = modelUnitMap:getAvailableUnitId()
-    local producedActorUnit = produceActorUnit(modelWar, producer:getMovableProductionTiledId(), producedUnitID, pathNodes[#pathNodes])
+    local producedActorUnit = produceActorUnit(modelWarNative, producer:getMovableProductionTiledId(), producedUnitID, pathNodes[#pathNodes])
     modelUnitMap:addActorUnitLoaded(producedActorUnit)
         :setAvailableUnitId(producedUnitID + 1)
     producer:addLoadUnitId(producedUnitID)
     if (producer.setCurrentMaterial) then
         producer:setCurrentMaterial(producer:getCurrentMaterial() - 1)
     end
-    updateFundWithCost(modelWar, producer:getPlayerIndex(), action.cost)
+    updateFundWithCost(modelWarNative, producer:getPlayerIndex(), action.cost)
 
     producer:moveViewAlongPath(pathNodes, isModelUnitDiving(producer), function()
         producer:updateView()
             :showNormalAnimation()
 
-        updateTileAndUnitMapOnVisibilityChanged(modelWar)
+        updateTileAndUnitMapOnVisibilityChanged(modelWarNative)
 
-        modelWar:setExecutingAction(false)
+        modelWarNative:setExecutingAction(false)
     end)
 end
 
-local function executeSupplyModelUnit(action, modelWar)
-    modelWar:setExecutingAction(true)
+local function executeResearchPassiveSkill(action, modelWarNative)
+    modelWarNative:setExecutingAction(true)
+
+    local skillID                 = action.skillID
+    local skillLevel              = action.skillLevel
+    local playerIndexInTurn       = getModelTurnManager(modelWarNative):getPlayerIndex()
+    local modelPlayer             = getModelPlayerManager(modelWarNative):getModelPlayer(playerIndexInTurn)
+    local modelSkillConfiguration = modelPlayer:getModelSkillConfiguration()
+    modelPlayer:setEnergy(modelPlayer:getEnergy() - modelWarNative:getModelSkillDataManager():getSkillPoints(skillID, skillLevel, false))
+    modelSkillConfiguration:getModelSkillGroupResearching():pushBackSkill(skillID, skillLevel)
+
+    local modelGridEffect     = getModelGridEffect(modelWarNative)
+    local playerIndexForHuman = getModelPlayerManager(modelWarNative):getPlayerIndexForHuman(modelWarNative)
+    getModelUnitMap(modelWarNative):forEachModelUnitOnMap(function(modelUnit)
+            local playerIndex = modelUnit:getPlayerIndex()
+            if (playerIndex == playerIndexInTurn) then
+                modelUnit:updateView()
+                local gridIndex = modelUnit:getGridIndex()
+                if (isUnitVisible(modelWarNative, gridIndex, modelUnit:getUnitType(), isModelUnitDiving(modelUnit), playerIndex, playerIndexForHuman)) then
+                    modelGridEffect:showAnimationSkillActivation(gridIndex)
+                end
+            end
+        end)
+        :forEachModelUnitLoaded(function(modelUnit)
+            if (modelUnit:getPlayerIndex() == playerIndexInTurn) then
+                modelUnit:updateView()
+            end
+        end)
+
+    dispatchEvtModelPlayerUpdated(modelWarNative, playerIndexInTurn)
+
+    modelWarNative:setExecutingAction(false)
+end
+
+local function executeSupplyModelUnit(action, modelWarNative)
+    modelWarNative:setExecutingAction(true)
 
     local launchUnitID     = action.launchUnitID
     local pathNodes        = action.path.pathNodes
-    local focusModelUnit   = getModelUnitMap(modelWar):getFocusModelUnit(pathNodes[1], launchUnitID)
-    moveModelUnitWithAction(action, modelWar)
+    local focusModelUnit   = getModelUnitMap(modelWarNative):getFocusModelUnit(pathNodes[1], launchUnitID)
+    moveModelUnitWithAction(action, modelWarNative)
     focusModelUnit:setStateActioned()
 
     focusModelUnit:moveViewAlongPath(pathNodes, isModelUnitDiving(focusModelUnit), function()
         focusModelUnit:updateView()
             :showNormalAnimation()
 
-        local modelGridEffect     = getModelGridEffect(modelWar)
-        local playerIndexForHuman = getModelPlayerManager(modelWar):getPlayerIndexForHuman()
-        for _, targetModelUnit in pairs(getAndSupplyAdjacentModelUnits(modelWar, pathNodes[#pathNodes], focusModelUnit:getPlayerIndex())) do
+        local modelGridEffect     = getModelGridEffect(modelWarNative)
+        local playerIndexForHuman = getModelPlayerManager(modelWarNative):getPlayerIndexForHuman()
+        for _, targetModelUnit in pairs(getAndSupplyAdjacentModelUnits(modelWarNative, pathNodes[#pathNodes], focusModelUnit:getPlayerIndex())) do
             targetModelUnit:updateView()
 
             local gridIndex = targetModelUnit:getGridIndex()
-            if (isUnitVisible(modelWar, gridIndex, targetModelUnit:getUnitType(), isModelUnitDiving(targetModelUnit), targetModelUnit:getPlayerIndex(), playerIndexForHuman)) then
+            if (isUnitVisible(modelWarNative, gridIndex, targetModelUnit:getUnitType(), isModelUnitDiving(targetModelUnit), targetModelUnit:getPlayerIndex(), playerIndexForHuman)) then
                 modelGridEffect:showAnimationSupply(gridIndex)
             end
         end
 
-        updateTileAndUnitMapOnVisibilityChanged(modelWar)
+        updateTileAndUnitMapOnVisibilityChanged(modelWarNative)
 
-        modelWar:setExecutingAction(false)
+        modelWarNative:setExecutingAction(false)
     end)
 end
 
-local function executeSurface(action, modelWar)
-    modelWar:setExecutingAction(true)
+local function executeSurface(action, modelWarNative)
+    modelWarNative:setExecutingAction(true)
 
     local launchUnitID     = action.launchUnitID
     local pathNodes        = action.path.pathNodes
-    local focusModelUnit   = getModelUnitMap(modelWar):getFocusModelUnit(pathNodes[1], launchUnitID)
-    moveModelUnitWithAction(action, modelWar)
+    local focusModelUnit   = getModelUnitMap(modelWarNative):getFocusModelUnit(pathNodes[1], launchUnitID)
+    moveModelUnitWithAction(action, modelWarNative)
     focusModelUnit:setStateActioned()
         :setDiving(false)
 
@@ -999,98 +1021,113 @@ local function executeSurface(action, modelWar)
             :showNormalAnimation()
 
         local gridIndex = pathNodes[#pathNodes]
-        if (isUnitVisible(modelWar, gridIndex, focusModelUnit:getUnitType(), false, focusModelUnit:getPlayerIndex(), getModelPlayerManager(modelWar):getPlayerIndexForHuman())) then
-            getModelGridEffect(modelWar):showAnimationSurface(gridIndex)
+        if (isUnitVisible(modelWarNative, gridIndex, focusModelUnit:getUnitType(), false, focusModelUnit:getPlayerIndex(), getModelPlayerManager(modelWarNative):getPlayerIndexForHuman())) then
+            getModelGridEffect(modelWarNative):showAnimationSurface(gridIndex)
         end
-        updateTileAndUnitMapOnVisibilityChanged(modelWar)
+        updateTileAndUnitMapOnVisibilityChanged(modelWarNative)
 
-        modelWar:setExecutingAction(false)
+        modelWarNative:setExecutingAction(false)
     end)
 end
 
-local function executeSurrender(action, modelWar)
-    modelWar:setExecutingAction(true)
+local function executeSurrender(action, modelWarNative)
+    modelWarNative:setExecutingAction(true)
 
-    local modelPlayerManager = getModelPlayerManager(modelWar)
-    local modelTurnManager   = getModelTurnManager(modelWar)
+    local modelPlayerManager = getModelPlayerManager(modelWarNative)
+    local modelTurnManager   = getModelTurnManager(modelWarNative)
     local playerIndex        = modelTurnManager:getPlayerIndex()
     local modelPlayer        = modelPlayerManager:getModelPlayer(playerIndex)
     local isHumanLost        = (playerIndex == modelPlayerManager:getPlayerIndexForHuman())
-    Destroyers.destroyPlayerForce(modelWar, playerIndex)
-    modelWar:setEnded((isHumanLost) or (modelPlayerManager:getAliveTeamsCount() <= 1))
+    Destroyers.destroyPlayerForce(modelWarNative, playerIndex)
+    modelWarNative:setEnded((isHumanLost) or (modelPlayerManager:getAliveTeamsCount() <= 1))
 
-    updateTileAndUnitMapOnVisibilityChanged(modelWar)
-    getModelMessageIndicator(modelWar):showMessage(getLocalizedText(74, "Surrender", modelPlayer:getNickname()))
+    updateTileAndUnitMapOnVisibilityChanged(modelWarNative)
+    getModelMessageIndicator(modelWarNative):showMessage(getLocalizedText(74, "Surrender", modelPlayer:getNickname()))
 
-    if (not modelWar:isEnded()) then
+    if (not modelWarNative:isEnded()) then
         modelTurnManager:endTurnPhaseMain()
     elseif (isHumanLost) then
-        modelWar:showEffectLose(callbackOnWarEndedForClient)
+        modelWarNative:showEffectLose(callbackOnWarEndedForClient)
     else
-        if (modelWar:isCampaign()) then
-            NativeWarManager.updateCampaignHighScore(getModelWarField(modelWar):getWarFieldFileName(), modelWar:getTotalScoreForCampaign())
+        if (modelWarNative:isCampaign()) then
+            NativeWarManager.updateCampaignHighScore(getModelWarField(modelWarNative):getWarFieldFileName(), modelWarNative:getTotalScoreForCampaign())
         end
-        modelWar:showEffectWin(callbackOnWarEndedForClient)
+        modelWarNative:showEffectWin(callbackOnWarEndedForClient)
     end
 
-    modelWar:setExecutingAction(false)
+    modelWarNative:setExecutingAction(false)
 end
 
-local function executeWait(action, modelWar)
-    modelWar:setExecutingAction(true)
+local function executeUpdateReserveSkills(action, modelWarNative)
+    modelWarNative:setExecutingAction(true)
+    local playerIndex = getModelTurnManager(modelWarNative):getPlayerIndex()
+    local modelPlayer = getModelPlayerManager(modelWarNative):getModelPlayer(playerIndex)
+    modelPlayer:getModelSkillConfiguration():getModelSkillGroupReserve():ctor(action.reserveSkills)
+
+    getModelMessageIndicator(modelWarNative):showMessage(
+        string.format("[%s] %s!", modelPlayer:getNickname(), getLocalizedText(22, "HasUpdatedReserveSkills"))
+    )
+    dispatchEvtModelPlayerUpdated(modelWarNative, playerIndex)
+
+    modelWarNative:setExecutingAction(false)
+end
+
+local function executeWait(action, modelWarNative)
+    modelWarNative:setExecutingAction(true)
 
     local path           = action.path
     local pathNodes      = path.pathNodes
-    local focusModelUnit = getModelUnitMap(modelWar):getFocusModelUnit(pathNodes[1], action.launchUnitID)
-    moveModelUnitWithAction(action, modelWar)
+    local focusModelUnit = getModelUnitMap(modelWarNative):getFocusModelUnit(pathNodes[1], action.launchUnitID)
+    moveModelUnitWithAction(action, modelWarNative)
     focusModelUnit:setStateActioned()
 
     focusModelUnit:moveViewAlongPath(pathNodes, isModelUnitDiving(focusModelUnit), function()
         focusModelUnit:updateView()
             :showNormalAnimation()
 
-        updateTileAndUnitMapOnVisibilityChanged(modelWar)
+        updateTileAndUnitMapOnVisibilityChanged(modelWarNative)
 
         if (path.isBlocked) then
-            getModelGridEffect(modelWar):showAnimationBlock(pathNodes[#pathNodes])
+            getModelGridEffect(modelWarNative):showAnimationBlock(pathNodes[#pathNodes])
         end
 
-        modelWar:setExecutingAction(false)
+        modelWarNative:setExecutingAction(false)
     end)
 end
 
 --------------------------------------------------------------------------------
 -- The public function.
 --------------------------------------------------------------------------------
-function ActionExecutorForWarNative.execute(action, modelWar)
+function ActionExecutorForWarNative.execute(action, modelWarNative)
     local actionCode = action.actionCode
     assert(ActionCodeFunctions.getActionName(actionCode), "ActionExecutorForWarNative.executeReplayAction() invalid actionCode: " .. (actionCode or ""))
 
-    if     (actionCode == ACTION_CODES.ActionChat)                   then executeWebChat(               action, modelWar)
-    elseif (actionCode == ACTION_CODES.ActionLogin)                  then executeWebLogin(              action, modelWar)
-    elseif (actionCode == ACTION_CODES.ActionLogout)                 then executeWebLogout(             action, modelWar)
-    elseif (actionCode == ACTION_CODES.ActionMessage)                then executeWebMessage(            action, modelWar)
-    elseif (actionCode == ACTION_CODES.ActionRegister)               then executeWebRegister(           action, modelWar)
-    elseif (actionCode == ACTION_CODES.ActionActivateSkill)          then executeActivateSkill(         action, modelWar)
-    elseif (actionCode == ACTION_CODES.ActionAttack)                 then executeAttack(                action, modelWar)
-    elseif (actionCode == ACTION_CODES.ActionBeginTurn)              then executeBeginTurn(             action, modelWar)
-    elseif (actionCode == ACTION_CODES.ActionBuildModelTile)         then executeBuildModelTile(        action, modelWar)
-    elseif (actionCode == ACTION_CODES.ActionCaptureModelTile)       then executeCaptureModelTile(      action, modelWar)
-    elseif (actionCode == ACTION_CODES.ActionDeclareSkill)           then executeDeclareSkill(          action, modelWar)
-    elseif (actionCode == ACTION_CODES.ActionDestroyOwnedModelUnit)  then executeDestroyOwnedModelUnit( action, modelWar)
-    elseif (actionCode == ACTION_CODES.ActionDive)                   then executeDive(                  action, modelWar)
-    elseif (actionCode == ACTION_CODES.ActionDropModelUnit)          then executeDropModelUnit(         action, modelWar)
-    elseif (actionCode == ACTION_CODES.ActionEndTurn)                then executeEndTurn(               action, modelWar)
-    elseif (actionCode == ACTION_CODES.ActionJoinModelUnit)          then executeJoinModelUnit(         action, modelWar)
-    elseif (actionCode == ACTION_CODES.ActionLaunchFlare)            then executeLaunchFlare(           action, modelWar)
-    elseif (actionCode == ACTION_CODES.ActionLaunchSilo)             then executeLaunchSilo(            action, modelWar)
-    elseif (actionCode == ACTION_CODES.ActionLoadModelUnit)          then executeLoadModelUnit(         action, modelWar)
-    elseif (actionCode == ACTION_CODES.ActionProduceModelUnitOnTile) then executeProduceModelUnitOnTile(action, modelWar)
-    elseif (actionCode == ACTION_CODES.ActionProduceModelUnitOnUnit) then executeProduceModelUnitOnUnit(action, modelWar)
-    elseif (actionCode == ACTION_CODES.ActionSupplyModelUnit)        then executeSupplyModelUnit(       action, modelWar)
-    elseif (actionCode == ACTION_CODES.ActionSurface)                then executeSurface(               action, modelWar)
-    elseif (actionCode == ACTION_CODES.ActionSurrender)              then executeSurrender(             action, modelWar)
-    elseif (actionCode == ACTION_CODES.ActionWait)                   then executeWait(                  action, modelWar)
+    if     (actionCode == ACTION_CODES.ActionChat)                   then executeWebChat(               action, modelWarNative)
+    elseif (actionCode == ACTION_CODES.ActionLogin)                  then executeWebLogin(              action, modelWarNative)
+    elseif (actionCode == ACTION_CODES.ActionLogout)                 then executeWebLogout(             action, modelWarNative)
+    elseif (actionCode == ACTION_CODES.ActionMessage)                then executeWebMessage(            action, modelWarNative)
+    elseif (actionCode == ACTION_CODES.ActionRegister)               then executeWebRegister(           action, modelWarNative)
+    elseif (actionCode == ACTION_CODES.ActionActivateSkill)          then executeActivateSkill(         action, modelWarNative)
+    elseif (actionCode == ACTION_CODES.ActionAttack)                 then executeAttack(                action, modelWarNative)
+    elseif (actionCode == ACTION_CODES.ActionBeginTurn)              then executeBeginTurn(             action, modelWarNative)
+    elseif (actionCode == ACTION_CODES.ActionBuildModelTile)         then executeBuildModelTile(        action, modelWarNative)
+    elseif (actionCode == ACTION_CODES.ActionCaptureModelTile)       then executeCaptureModelTile(      action, modelWarNative)
+    elseif (actionCode == ACTION_CODES.ActionDestroyOwnedModelUnit)  then executeDestroyOwnedModelUnit( action, modelWarNative)
+    elseif (actionCode == ACTION_CODES.ActionDive)                   then executeDive(                  action, modelWarNative)
+    elseif (actionCode == ACTION_CODES.ActionDropModelUnit)          then executeDropModelUnit(         action, modelWarNative)
+    elseif (actionCode == ACTION_CODES.ActionEndTurn)                then executeEndTurn(               action, modelWarNative)
+    elseif (actionCode == ACTION_CODES.ActionJoinModelUnit)          then executeJoinModelUnit(         action, modelWarNative)
+    elseif (actionCode == ACTION_CODES.ActionLaunchFlare)            then executeLaunchFlare(           action, modelWarNative)
+    elseif (actionCode == ACTION_CODES.ActionLaunchSilo)             then executeLaunchSilo(            action, modelWarNative)
+    elseif (actionCode == ACTION_CODES.ActionLoadModelUnit)          then executeLoadModelUnit(         action, modelWarNative)
+    elseif (actionCode == ACTION_CODES.ActionProduceModelUnitOnTile) then executeProduceModelUnitOnTile(action, modelWarNative)
+    elseif (actionCode == ACTION_CODES.ActionProduceModelUnitOnUnit) then executeProduceModelUnitOnUnit(action, modelWarNative)
+    elseif (actionCode == ACTION_CODES.ActionResearchPassiveSkill)   then executeResearchPassiveSkill(  action, modelWarNative)
+    elseif (actionCode == ACTION_CODES.ActionSupplyModelUnit)        then executeSupplyModelUnit(       action, modelWarNative)
+    elseif (actionCode == ACTION_CODES.ActionSurface)                then executeSurface(               action, modelWarNative)
+    elseif (actionCode == ACTION_CODES.ActionSurrender)              then executeSurrender(             action, modelWarNative)
+    elseif (actionCode == ACTION_CODES.ActionUpdateReserveSkills)    then executeUpdateReserveSkills(   action, modelWarNative)
+    elseif (actionCode == ACTION_CODES.ActionWait)                   then executeWait(                  action, modelWarNative)
     end
 
     return ActionExecutorForWarNative

@@ -417,6 +417,19 @@ local s_LongText24_2 = [[
 Untranslated...
 ]]
 
+local s_LongText25_1 = [[
+关于预备主动技的说明：
+1. 预备主动技用于改变您的主动技的具体效果。
+2. 设置预备主动技后，在您的下个回合初，系统会自动用预备主动技替换掉您的主动技。之后，只要能量足够，您就可以在您的回合中发动主动技。
+3. 您可以任意设置预备主动技，其威力、类别都没有限制。
+4. 预备主动技最多包含四个技能，且不能包含重复的技能。
+5. 设定预备主动技不需要消耗能量。
+]]
+
+local s_LongText25_2 = [[
+Untranslated...
+]]
+
 --------------------------------------------------------------------------------
 -- The private functions.
 --------------------------------------------------------------------------------
@@ -513,68 +526,85 @@ local s_Texts = {
     },
     [3] = {
         [1] = function(textType)
-            if     (textType == "Configuration")          then return "配 置"
-            elseif (textType == "CurrentPosition")        then return "当前位置"
-            elseif (textType == "SetSkillPoint")          then return "设定基准技能点数"
-            elseif (textType == "PassiveSkill")           then return "日 常 技 能"
-            elseif (textType == "ActiveSkill")            then return "主 动 技 能"
-            elseif (textType == "Skill")                  then return "技 能"
-            elseif (textType == "SkillActive")            then return "当前回合已发动的主动技能"
-            elseif (textType == "SkillPassive")           then return "日常技能"
-            elseif (textType == "SkillResearching")       then return "研发中的日常技能"
-            elseif (textType == "MaxPoints")              then return "可用总技能点"
-            elseif (textType == "BasePoints")             then return "基准技能点"
-            elseif (textType == "TotalPoints")            then return "已用技能点"
-            elseif (textType == "SkillPoints")            then return "技能点"
-            elseif (textType == "EnergyRequirement")      then return "能量槽长度"
-            elseif (textType == "MinEnergy")              then return "最小能量槽"
-            elseif (textType == "SetEnergyRequirement")   then return "设定能量槽长度"
-            elseif (textType == "Level")                  then return "等级"
-            elseif (textType == "Modifier")               then return "幅度"
-            elseif (textType == "Default")                then return "默认"
-            elseif (textType == "Clear")                  then return "清 空"
-            elseif (textType == "Enable")                 then return "启 用"
-            elseif (textType == "Disable")                then return "禁 用"
-            elseif (textType == "Disabled")               then return "已 禁 用"
-            elseif (textType == "Selected")               then return "已 选 定"
-            elseif (textType == "None")                   then return "无"
-            elseif (textType == "NoSkills")               then return "没有任何技能"
-            elseif (textType == "ConfirmExitConfiguring") then return "是否确定要停止配置技能，并返回上层菜单？"
-            elseif (textType == "GettingConfiguration")   then return "正在从服务器获取配置数据，请稍候。若长时间没有反应，请返回并重试。"
-            elseif (textType == "SettingConfiguration")   then return "正在传输配置数据到服务器，请稍候。若长时间没有反应，请重试。"
-            else                                               return "未知[3]: " .. (textType or "")
+            if     (textType == "ActiveSkill")             then return "主 动 技 能"
+            elseif (textType == "Clear")                   then return "清 空"
+            elseif (textType == "Configuration")           then return "配 置"
+            elseif (textType == "ConfirmActivateSkill")    then return "是否确定要发动主动技？"
+            elseif (textType == "ConfirmExitConfiguring")  then return "是否确定要停止配置技能，并返回上层菜单？"
+            elseif (textType == "ConfirmGiveUpSettings")   then return "您确定要放弃更改吗？"
+            elseif (textType == "ConfirmReserveSkills")    then return "您确定要设置这些预备技能吗？"
+            elseif (textType == "CurrentEnergy")           then return "当前能量"
+            elseif (textType == "CurrentPosition")         then return "当前位置"
+            elseif (textType == "Default")                 then return "默认"
+            elseif (textType == "Disable")                 then return "禁 用"
+            elseif (textType == "Disabled")                then return "已 禁 用"
+            elseif (textType == "DuplicatedReserveSkills") then return "预备技能中包含重复的技能，请删除后重试。"
+            elseif (textType == "Enable")                  then return "启 用"
+            elseif (textType == "EnergyCost")              then return "消耗能量"
+            elseif (textType == "EnergyRequirement")       then return "能量槽长度"
+            elseif (textType == "GettingConfiguration")    then return "正在从服务器获取配置数据，请稍候。若长时间没有反应，请返回并重试。"
+            elseif (textType == "Level")                   then return "等级"
+            elseif (textType == "MaxPoints")               then return "可用总技能点"
+            elseif (textType == "MinEnergy")               then return "最小能量槽"
+            elseif (textType == "Modifier")                then return "幅度"
+            elseif (textType == "NoActiveSkills")          then return "您目前没有主动技能，无法发动。"
+            elseif (textType == "None")                    then return "无"
+            elseif (textType == "NoReserveSkills")         then return "您尚未设定任何预备技能。"
+            elseif (textType == "NoSkills")                then return "没有任何技能"
+            elseif (textType == "PassiveSkill")            then return "日 常 技 能"
+            elseif (textType == "Selected")                then return "已 选 定"
+            elseif (textType == "SetEnergyRequirement")    then return "设定能量槽长度"
+            elseif (textType == "SetSkillPoint")           then return "设定基准技能点数"
+            elseif (textType == "SettingConfiguration")    then return "正在传输配置数据到服务器，请稍候。若长时间没有反应，请重试。"
+            elseif (textType == "Skill")                   then return "技 能"
+            elseif (textType == "SkillActive")             then return "主动技能"
+            elseif (textType == "SkillPassive")            then return "日常技能"
+            elseif (textType == "SkillPoints")             then return "技能点"
+            elseif (textType == "SkillResearching")        then return "研发中的日常技能"
+            elseif (textType == "SkillReserve")            then return "预备主动技能"
+            elseif (textType == "TotalPoints")             then return "已用技能点"
+            else                                                return "未知[3]: " .. (textType or "")
             end
         end,
         [2] = function(textType)
-            if     (textType == "Configuration")          then return "Configuration"
-            elseif (textType == "CurrentPosition")        then return "Add"
-            elseif (textType == "SetSkillPoint")          then return "SetSkillPoint"
-            elseif (textType == "PassiveSkill")           then return "Passive"
-            elseif (textType == "ActiveSkill")            then return "Active"
-            elseif (textType == "Skill")                  then return "Skill"
-            elseif (textType == "SkillActive")            then return "Active Skills"
-            elseif (textType == "SkillPassive")           then return "Passive Skills"
-            elseif (textType == "SkillResearching")       then return "Researching Skills"
-            elseif (textType == "MaxPoints")              then return "Max Skill Points"
-            elseif (textType == "TotalPoints")            then return "Total Points"
-            elseif (textType == "SkillPoints")            then return "Points"
-            elseif (textType == "EnergyRequirement")      then return "Energy Requirement"
-            elseif (textType == "MinEnergy")              then return "Min Energy"
-            elseif (textType == "SetEnergyRequirement")   then return "Set Energy"
-            elseif (textType == "Level")                  then return "Level"
-            elseif (textType == "Modifier")               then return "Modifier"
-            elseif (textType == "Default")                then return "Default"
-            elseif (textType == "Clear")                  then return "Clear"
-            elseif (textType == "Enable")                 then return "Enable"
-            elseif (textType == "Disable")                then return "Disable"
-            elseif (textType == "Disabled")               then return "Disabled"
-            elseif (textType == "Selected")               then return "Selected"
-            elseif (textType == "None")                   then return "None"
-            elseif (textType == "NoSkills")               then return "No skills"
-            elseif (textType == "ConfirmExitConfiguring") then return "Are you sure to quit the configuration?"
-            elseif (textType == "GettingConfiguration")   then return "Getting data from the server. Please wait."
-            elseif (textType == "SettingConfiguration")   then return "Transfering data to the server. Please wait."
-            else                                               return "Unknown[3]: " .. (textType or "")
+            if     (textType == "ActiveSkill")             then return "Active"
+            elseif (textType == "Clear")                   then return "Clear"
+            elseif (textType == "Configuration")           then return "Configuration"
+            elseif (textType == "ConfirmActivateSkill")    then return "Are you sure to activate the active skills?"
+            elseif (textType == "ConfirmExitConfiguring")  then return "Are you sure to quit the configuration?"
+            elseif (textType == "ConfirmGiveUpSettings")   then return "Are you sure to give up the modified settings?"
+            elseif (textType == "ConfirmReserveSkills")    then return "Are you sure to update the reserve skills?"
+            elseif (textType == "CurrentEnergy")           then return "CurrentEnergy"
+            elseif (textType == "CurrentPosition")         then return "Add"
+            elseif (textType == "Default")                 then return "Default"
+            elseif (textType == "Disable")                 then return "Disable"
+            elseif (textType == "Disabled")                then return "Disabled"
+            elseif (textType == "DuplicatedReserveSkills") then return "Duplicated reserve skills are not allowed."
+            elseif (textType == "Enable")                  then return "Enable"
+            elseif (textType == "EnergyCost")              then return "EnergyCost"
+            elseif (textType == "EnergyRequirement")       then return "Energy Requirement"
+            elseif (textType == "GettingConfiguration")    then return "Getting data from the server. Please wait."
+            elseif (textType == "Level")                   then return "Level"
+            elseif (textType == "MaxPoints")               then return "Max Skill Points"
+            elseif (textType == "MinEnergy")               then return "Min Energy"
+            elseif (textType == "Modifier")                then return "Modifier"
+            elseif (textType == "NoActiveSkills")          then return "You have no active skills."
+            elseif (textType == "None")                    then return "None"
+            elseif (textType == "NoSkills")                then return "No skills"
+            elseif (textType == "NoReserveSkills")         then return "You haven't set any reserve skill yet."
+            elseif (textType == "PassiveSkill")            then return "Passive"
+            elseif (textType == "SetSkillPoint")           then return "SetSkillPoint"
+            elseif (textType == "Selected")                then return "Selected"
+            elseif (textType == "SetEnergyRequirement")    then return "Set Energy"
+            elseif (textType == "SettingConfiguration")    then return "Transfering data to the server. Please wait."
+            elseif (textType == "Skill")                   then return "Skill"
+            elseif (textType == "SkillActive")             then return "Active Skills"
+            elseif (textType == "SkillPassive")            then return "Passive Skills"
+            elseif (textType == "SkillPoints")             then return "Points"
+            elseif (textType == "SkillResearching")        then return "Researching Skills"
+            elseif (textType == "SkillReserve")            then return "Reserve Skills"
+            elseif (textType == "TotalPoints")             then return "Total Points"
+            else                                                return "Unknown[3]: " .. (textType or "")
             end
         end,
     },
@@ -593,6 +623,7 @@ local s_Texts = {
             elseif (skillID == 11) then return "我方建筑及部队的维修量"
             elseif (skillID == 12) then return "我方步兵系的占领速度（四舍五入）"
             elseif (skillID == 13) then return "我方能量值获取速度（四舍五入）"
+            elseif (skillID == 14) then return "我方能量值获取速度（不受战局设定影响）"
             else                        return "未知4:" .. (skillID or "")
             end
         end,
@@ -615,6 +646,7 @@ local s_Texts = {
             elseif (skillID == 11) then return "我军维修量"
             elseif (skillID == 12) then return "占领速度"
             elseif (skillID == 13) then return "能量增速"
+            elseif (skillID == 14) then return "能量增速"
             else                        return "未知5:" .. (skillID or "")
             end
         end,
@@ -817,7 +849,7 @@ local s_Texts = {
     },
     [12] = {
         [1] = function(actionName)
-            if     (actionName == "ActionActivateSkill")          then return "发动/研发技能"
+            if     (actionName == "ActionActivateSkill")          then return "发动主动技"
             elseif (actionName == "ActionAttack")                 then return "攻击"
             elseif (actionName == "ActionBeginTurn")              then return "开始回合"
             elseif (actionName == "ActionBuildModelTile")         then return "建造"
@@ -833,6 +865,7 @@ local s_Texts = {
             elseif (actionName == "ActionLoadModelUnit")          then return "装载"
             elseif (actionName == "ActionProduceModelUnitOnTile") then return "生产部队"
             elseif (actionName == "ActionProduceModelUnitOnUnit") then return "生产舰载机"
+            elseif (actionName == "ActionResearchPassiveSkill")   then return "研发日常技"
             elseif (actionName == "ActionSupplyModelUnit")        then return "补给"
             elseif (actionName == "ActionSurface")                then return "上浮"
             elseif (actionName == "ActionSurrender")              then return "投降"
@@ -843,7 +876,7 @@ local s_Texts = {
             end
         end,
         [2] = function(actionName)
-            if     (actionName == "ActionActivateSkill")          then return "ActivateSkillGroup"
+            if     (actionName == "ActionActivateSkill")          then return "ActivateSkill"
             elseif (actionName == "ActionAttack")                 then return "Attack"
             elseif (actionName == "ActionBeginTurn")              then return "BeginTurn"
             elseif (actionName == "ActionBuildModelTile")         then return "BuildTile"
@@ -859,6 +892,7 @@ local s_Texts = {
             elseif (actionName == "ActionLoadModelUnit")          then return "Load"
             elseif (actionName == "ActionProduceModelUnitOnTile") then return "ProduceUnitOnTile"
             elseif (actionName == "ActionProduceModelUnitOnUnit") then return "ProduceUnitOnUnit"
+            elseif (actionName == "ActionResearchPassiveSkill")   then return "ResearchSkill"
             elseif (actionName == "ActionSupplyModelUnit")        then return "Supply"
             elseif (actionName == "ActionSurface")                then return "Surface"
             elseif (actionName == "ActionSurrender")              then return "Surrender"
@@ -1074,10 +1108,11 @@ local s_Texts = {
             elseif (textType == "ConfirmationResearchSkill") then return "您确定要研发如下日常技吗？"
             elseif (textType == "CurrentEnergy")             then return "当前能量值"
             elseif (textType == "DeclareSkill")              then return "发起特技宣言"
-            elseif (textType == "EffectListActiveSkill")     then return "特技消耗表"
+            elseif (textType == "EffectListActiveSkill")     then return "主动技消耗表"
             elseif (textType == "EffectListPassiveSkill")    then return "日常技消耗表"
             elseif (textType == "EnergyCost")                then return "能量消耗"
             elseif (textType == "HasDeclaredSkill")          then return "已发起了特技宣言"
+            elseif (textType == "HasUpdatedReserveSkills")   then return "已设置了预备主动技"
             elseif (textType == "HelpForActiveSkill")        then return s_LongText6_1
             elseif (textType == "HelpForPassiveSkill")       then return s_LongText7_1
             elseif (textType == "Level")                     then return "等级"
@@ -1087,6 +1122,8 @@ local s_Texts = {
             elseif (textType == "NoAvailableOption")         then return "无可用选项"
             elseif (textType == "ResearchPassiveSkill")      then return "研发日常技"
             elseif (textType == "SkillInfo")                 then return "技 能 信 息"
+            elseif (textType == "UpdateReserveSkill")        then return "设定预备主动技"
+            elseif (textType == "UpdateReserve")             then return "设定预备技"
             elseif (textType == "Yes")                       then return "是"
             else                                                  return "未知22:" .. (textType or "")
             end
@@ -1103,6 +1140,7 @@ local s_Texts = {
             elseif (textType == "EffectListPassiveSkill")    then return "PassiveList"
             elseif (textType == "EnergyCost")                then return "Cost"
             elseif (textType == "HasDeclaredSkill")          then return "has declared skill activation"
+            elseif (textType == "HasUpdatedReserveSkills")   then return "has updated reserve skills"
             elseif (textType == "HelpForActiveSkill")        then return s_LongText6_2
             elseif (textType == "HelpForPassiveSkill")       then return s_LongText7_2
             elseif (textType == "Level")                     then return "Level"
@@ -1112,6 +1150,8 @@ local s_Texts = {
             elseif (textType == "NoAvailableOption")         then return "No Options"
             elseif (textType == "ResearchPassiveSkill")      then return "ResearchSkill"
             elseif (textType == "SkillInfo")                 then return "Skill Info"
+            elseif (textType == "UpdateReserveSkill")        then return "ReserveSkill"
+            elseif (textType == "UpdateReserve")             then return "ReserveSkill"
             elseif (textType == "Yes")                       then return "Yes"
             else                                                  return "Unknown22:" .. (textType or "")
             end
@@ -1132,6 +1172,7 @@ local s_Texts = {
             elseif (skillID == 11) then return "增加我方建筑及部队的维修量。"
             elseif (skillID == 12) then return "增加我方步兵系的占领速度（四舍五入）。"
             elseif (skillID == 13) then return "增加我方的能量获取速度（四舍五入）。"
+            elseif (skillID == 14) then return "增加我方的能量获取速度（不受战局设定影响）。"
             else                        return "未知23:" .. (skillID or "")
             end
         end,
@@ -1269,6 +1310,7 @@ local s_Texts = {
             elseif (textType == "HelpForMoveRangeModifier")      then return s_LongText20_1
             elseif (textType == "HelpForPlayerIndex")            then return s_LongText15_1
             elseif (textType == "HelpForRankMatch")              then return s_LongText16_1
+            elseif (textType == "HelpForReserveSkills")          then return s_LongText25_1
             elseif (textType == "HelpForSaveIndex")              then return s_LongText24_1
             elseif (textType == "HelpForStartingEnergy")         then return s_LongText17_1
             elseif (textType == "HelpForStartingFund")           then return s_LongText18_1
@@ -1290,6 +1332,7 @@ local s_Texts = {
             elseif (textType == "HelpForMoveRangeModifier")      then return s_LongText20_2
             elseif (textType == "HelpForPlayerIndex")            then return s_LongText15_2
             elseif (textType == "HelpForRankMatch")              then return s_LongText16_2
+            elseif (textType == "HelpForReserveSkills")          then return s_LongText25_2
             elseif (textType == "HelpForSaveIndex")              then return s_LongText24_2
             elseif (textType == "HelpForStartingEnergy")         then return s_LongText17_2
             elseif (textType == "HelpForStartingFund")           then return s_LongText18_2
