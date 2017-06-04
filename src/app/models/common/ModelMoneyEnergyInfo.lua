@@ -28,7 +28,7 @@ local function generateInfoText(self)
         (modelPlayerManager:isSameTeamIndex(playerIndex, self.m_PlayerIndexForPlayer))
 
     local modelPlayer = modelPlayerManager:getModelPlayer(playerIndex)
-    return string.format("%s: %s\n%s: %s\n%s: %d",
+    return string.format("%s: %s        %s: %s        %s: %d",
         getLocalizedText(25, "Player"),  modelPlayer:getNickname(),
         getLocalizedText(25, "Fund"),    (shouldShowFund) and (modelPlayer:getFund()) or ("--"),
         getLocalizedText(25, "Energy"),  modelPlayer:getEnergy()

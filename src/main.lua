@@ -44,7 +44,7 @@ require "cocos.init"
 local function main()
     display.loadSpriteFrames("FreeWarsTextureTile.plist",    "FreeWarsTextureTile.pvr.ccz")
     display.loadSpriteFrames("FreeWarsTextureUnit.plist",    "FreeWarsTextureUnit.pvr.ccz")
-    display.loadSpriteFrames("FreeWarsTextureUI.plist",      "FreeWarsTextureUI.pvr.ccz")
+    display.loadSpriteFrames("FreeWarsTextureUI.plist",      "FreeWarsTextureUI.png")
     display.loadSpriteFrames("FreeWarsTextureGallery.plist", "FreeWarsTextureGallery.pvr.ccz")
 
     requireFW("src.app.utilities.AnimationLoader")       .load()
