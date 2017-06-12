@@ -16,7 +16,7 @@ local FONT_NAME  = "res/fonts/msyhbd.ttc"
 local FONT_COLOR = {r = 255, g = 255, b = 255}
 
 local BACKGROUND_WIDTH     = display.width
-local BACKGROUND_HEIGHT    = 21
+local BACKGROUND_HEIGHT    = 20
 local BACKGROUND_CAPINSETS = {x = 9, y = 9, width = 1, height = 1}
 local BACKGROUND_POS_X     = 0
 local BACKGROUND_POS_Y     = display.height - BACKGROUND_HEIGHT

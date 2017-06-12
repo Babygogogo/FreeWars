@@ -9,6 +9,7 @@ local getLocalizedText    = LocalizationFunctions.getLocalizedText
 local BYTE_UPPER_A                              = string.byte("A")
 local BYTE_A, BYTE_Z, BYTE_0                    = string.byte("az0", 1, 3)
 local SECS_FOR_DAY, SECS_FOR_HOUR, SECS_FOR_MIN = 3600 * 24, 3600, 60
+local COLORS_FOR_PLAYERS                        = {"Red", "Blue", "Yellow", "Black"}
 
 function AuxiliaryFunctions.getWarIdWithWarName(warName)
     local bytes      = {string.byte(warName, 1, 6)}
@@ -35,6 +36,10 @@ end
 
 function AuxiliaryFunctions.getTeamNameWithTeamIndex(teamIndex)
     return string.char(teamIndex - 1 + BYTE_UPPER_A)
+end
+
+function AuxiliaryFunctions.getColorNameWithPlayerIndex(playerIndex)
+    return getLocalizedText(34, COLORS_FOR_PLAYERS[playerIndex])
 end
 
 function AuxiliaryFunctions.formatTimeInterval(interval)
