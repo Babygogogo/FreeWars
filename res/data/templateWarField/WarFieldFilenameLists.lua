@@ -93,6 +93,7 @@ return {
         "SiPanDao",
         "SiTongBaDa",
         "TanXinWan",
+        "TianHe",
         "WangPaiKongJun",
         "WuGuangDeWuTai",
         "WuShangZhiAi",

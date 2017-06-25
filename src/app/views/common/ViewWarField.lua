@@ -6,7 +6,7 @@ local TypeChecker = requireFW("src.app.utilities.TypeChecker")
 local GRID_SIZE = requireFW("src.app.utilities.GameConstantFunctions").getGridSize()
 
 local ORIGIN = {x = 0, y = 0}
-local BOUNDARY_RECT  = {upperRightX = display.width - 10, upperRightY = display.height - 10, lowerLeftX = 10, lowerLeftY = 10}
+local BOUNDARY_RECT  = {upperRightX = display.width - 100, upperRightY = display.height - 100, lowerLeftX = 100, lowerLeftY = 100}
       BOUNDARY_RECT.width  = BOUNDARY_RECT.upperRightX - BOUNDARY_RECT.lowerLeftX
       BOUNDARY_RECT.height = BOUNDARY_RECT.upperRightY - BOUNDARY_RECT.lowerLeftY
 
