@@ -2,8 +2,10 @@
 local ViewMoneyEnergyInfo = class("ViewMoneyEnergyInfo", cc.Node)
 
 local LocalizationFunctions = requireFW("src.app.utilities.LocalizationFunctions")
+local ResourceManager       = requireFW("src.app.utilities.ResourceManager")
 local SingletonGetters      = requireFW("src.app.utilities.SingletonGetters")
 
+local getCapInsets           = ResourceManager.getCapInsets
 local getLocalizedText       = LocalizationFunctions.getLocalizedText
 local getModelFogMap         = SingletonGetters.getModelFogMap
 local getPlayerIndexLoggedIn = SingletonGetters.getPlayerIndexLoggedIn
@@ -17,7 +19,7 @@ local FONT_COLOR = {r = 255, g = 255, b = 255}
 
 local BACKGROUND_WIDTH     = display.width
 local BACKGROUND_HEIGHT    = 20
-local BACKGROUND_CAPINSETS = {x = 9, y = 9, width = 1, height = 1}
+local BACKGROUND_NAME      = "c03_t01_s05_f01.png"
 local BACKGROUND_POS_X     = 0
 local BACKGROUND_POS_Y     = display.height - BACKGROUND_HEIGHT
 
@@ -30,22 +32,10 @@ local LABEL_POS_Y      = 2
 -- The composition elements.
 --------------------------------------------------------------------------------
 local function initBackground(self)
-    local background = ccui.Button:create()
-    background:loadTextureNormal("c03_t01_s05_f01.png", ccui.TextureResType.plistType)
-        :ignoreAnchorPointForPosition(true)
-        :setPosition(0, display.height - BACKGROUND_HEIGHT)
-
-        :setScale9Enabled(true)
-        :setCapInsets(BACKGROUND_CAPINSETS)
+    local background = cc.Scale9Sprite:createWithSpriteFrameName(BACKGROUND_NAME, getCapInsets(BACKGROUND_NAME))
+    background:ignoreAnchorPointForPosition(true)
+        :setPosition(BACKGROUND_POS_X, BACKGROUND_POS_Y)
         :setContentSize(BACKGROUND_WIDTH, BACKGROUND_HEIGHT)
-
-        :setZoomScale(0)
-
-        :addTouchEventListener(function(sender, eventType)
-            if ((eventType == ccui.TouchEventType.ended) and (self.m_Model)) then
-                self.m_Model:onPlayerTouch()
-            end
-        end)
 
     self.m_Background = background
     self:addChild(background, BACKGROUND_Z_ORDER)
@@ -63,7 +53,35 @@ local function initLabel(self)
         :setTextColor(FONT_COLOR)
 
     self.m_Label = label
-    self.m_Background:getRendererNormal():addChild(label, LABEL_Z_ORDER)
+    self.m_Background:addChild(label, LABEL_Z_ORDER)
+end
+
+local function initSideBar(self)
+    local width = 70
+    local height = 70
+    local background = ccui.Button:create()
+    background:loadTextureNormal(BACKGROUND_NAME, ccui.TextureResType.plistType)
+        :ignoreAnchorPointForPosition(true)
+        :setPosition(display.width - width, display.height - BACKGROUND_HEIGHT - height)
+
+        :setScale9Enabled(true)
+        :setCapInsets(getCapInsets(BACKGROUND_NAME))
+        :setContentSize(width, height)
+
+        :setZoomScale(-0.05)
+
+        :addTouchEventListener(function(sender, eventType)
+            if ((eventType == ccui.TouchEventType.ended) and (self.m_Model)) then
+                self.m_Model:onPlayerTouch()
+            end
+        end)
+
+    local icon = cc.Sprite:createWithSpriteFrameName("c03_t02_s05_f01.png")
+    icon:setPosition(width / 2, height / 2)
+    background:getRendererNormal():addChild(icon)
+
+    self.m_SideBar = background
+    self:addChild(background)
 end
 
 --------------------------------------------------------------------------------
@@ -72,6 +90,7 @@ end
 function ViewMoneyEnergyInfo:ctor(param)
     initBackground(self)
     initLabel(     self)
+    initSideBar(   self)
 
     self:ignoreAnchorPointForPosition(true)
 
