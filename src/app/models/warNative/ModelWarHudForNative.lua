@@ -6,6 +6,10 @@ local Actor = requireFW("src.global.actors.Actor")
 --------------------------------------------------------------------------------
 -- The composition actors.
 --------------------------------------------------------------------------------
+local function initActorWarCommandBar(self)
+    self.m_ActorWarCommandBar = Actor.createWithModelAndViewName("common.ModelWarCommandBar", nil, "common.ViewWarCommandBar")
+end
+
 local function initActorWarCommandMenu(self)
     self.m_ActorWarCommandMenu = Actor.createWithModelAndViewName("warNative.ModelWarCommandMenuForNative", nil, "common.ViewWarCommandMenu")
 end
@@ -48,6 +52,7 @@ end
 -- The contructor and initializers.
 --------------------------------------------------------------------------------
 function ModelWarHudForNative:ctor()
+    initActorWarCommandBar(  self)
     initActorWarCommandMenu( self)
     initActorMoneyEnergyInfo(self)
     initActorActionMenu(     self)
@@ -72,6 +77,7 @@ function ModelWarHudForNative:initView()
         :setViewUnitDetail(     self.m_ActorUnitDetail:     getView())
         :setViewUnitInfo(       self.m_ActorUnitInfo:       getView())
         :setViewWarCommandMenu( self.m_ActorWarCommandMenu: getView())
+        :setViewWarCommandBar(  self.m_ActorWarCommandBar:  getView())
 
     return self
 end

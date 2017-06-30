@@ -1,9 +1,9 @@
 
-local ViewMoneyEnergyInfo = class("ViewMoneyEnergyInfo", cc.Node)
+local ViewWarCommandBar = class("ViewWarCommandBar", cc.Node)
 
 local LocalizationFunctions = requireFW("src.app.utilities.LocalizationFunctions")
-local SingletonGetters      = requireFW("src.app.utilities.SingletonGetters")
 local ViewUtils             = requireFW("src.app.utilities.ViewUtils")
+local SingletonGetters      = requireFW("src.app.utilities.SingletonGetters")
 
 local getCapInsets           = ViewUtils.getCapInsets
 local getLocalizedText       = LocalizationFunctions.getLocalizedText
@@ -17,7 +17,7 @@ local FONT_SIZE  = 14
 local FONT_NAME  = "res/fonts/msyhbd.ttc"
 local FONT_COLOR = {r = 255, g = 255, b = 255}
 
-local VIEW_STATIC_INFO     = ViewUtils.getViewStaticInfo("ViewMoneyEnergyInfo")
+local VIEW_STATIC_INFO     = ViewUtils.getViewStaticInfo("ViewWarCommandBar")
 local BACKGROUND_WIDTH     = VIEW_STATIC_INFO.width
 local BACKGROUND_HEIGHT    = VIEW_STATIC_INFO.height
 local BACKGROUND_POS_X     = VIEW_STATIC_INFO.x
@@ -42,27 +42,39 @@ local function initBackground(self)
     self:addChild(background, BACKGROUND_Z_ORDER)
 end
 
-local function initLabel(self)
-    local label = cc.Label:createWithTTF("", FONT_NAME, FONT_SIZE)
-    label:setAnchorPoint(0, 0)
+local function initButton(self)
+    local button = ccui.Button:create()
+    button:loadTextureNormal("c03_t02_s05_f01.png", ccui.TextureResType.plistType)
         :ignoreAnchorPointForPosition(true)
-        :setPosition(LABEL_POS_X, LABEL_POS_Y)
+        :setPosition(BACKGROUND_POS_X + 10, BACKGROUND_POS_Y + BACKGROUND_HEIGHT - 60)
 
-        :setHorizontalAlignment(cc.TEXT_ALIGNMENT_LEFT)
-        :setVerticalAlignment(cc.VERTICAL_TEXT_ALIGNMENT_BOTTOM)
+        :setZoomScale(-0.05)
 
-        :setTextColor(FONT_COLOR)
+        :addTouchEventListener(function(sender, eventType)
+            if ((eventType == ccui.TouchEventType.ended) and (self.m_Model)) then
+                self.m_Model:onPlayerTouch()
+            end
+        end)
 
-    self.m_Label = label
-    self.m_Background:addChild(label, LABEL_Z_ORDER)
+    self.m_Button = button
+    self:addChild(button)
+end
+
+local function initCorner(self)
+    local background = cc.Scale9Sprite:createWithSpriteFrameName(BACKGROUND_NAME, getCapInsets(BACKGROUND_NAME))
+    background:ignoreAnchorPointForPosition(true)
+        :setPosition(display.width - 70, 0)
+        :setContentSize(70, 70)
+    self:addChild(background)
 end
 
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
-function ViewMoneyEnergyInfo:ctor(param)
+function ViewWarCommandBar:ctor(param)
     initBackground(self)
-    initLabel(     self)
+    initButton(    self)
+    initCorner(    self)
 
     self:ignoreAnchorPointForPosition(true)
 
@@ -72,20 +84,5 @@ end
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
-function ViewMoneyEnergyInfo:adjustPositionOnTouch(touch)
-    return self
-end
 
-function ViewMoneyEnergyInfo:setInfoText(text)
-    local label = self.m_Label
-    label:setString(text)
-        :setScaleX(math.min(1, LABEL_MAX_WIDTH / label:getContentSize().width))
-
-    return self
-end
-
-function ViewMoneyEnergyInfo:updateWithPlayerIndex(playerIndex)
-    return self
-end
-
-return ViewMoneyEnergyInfo
+return ViewWarCommandBar
