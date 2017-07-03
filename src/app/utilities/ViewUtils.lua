@@ -28,9 +28,9 @@ function ViewUtils.init()
     info.ViewLowerRightButton = {width = width, height = height, x = x, y = y}
 
     width  = info.ViewLowerRightButton.width
-    height = DISPLAY_HEIGHT - info.ViewMoneyEnergyInfo.height - info.ViewLowerRightButton.height
+    height = DISPLAY_HEIGHT - info.ViewMoneyEnergyInfo.height - info.ViewLowerRightButton.height - 10
     x      = DISPLAY_WIDTH - width
-    y      = info.ViewLowerRightButton.y + info.ViewLowerRightButton.height
+    y      = info.ViewLowerRightButton.y + info.ViewLowerRightButton.height + 5
     info.ViewWarCommandBar = {width = width, height = height, x = x, y = y}
 end
 
