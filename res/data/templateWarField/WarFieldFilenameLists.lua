@@ -63,6 +63,7 @@ return {
         "ShiJieDaZhan",
         "XiaoGuoZhengBaSai",
         "XuanZe",
+        "YingXiongLei",
 
         "Random2P",                 -- random maps
         "Random2P_HighQuality",
