@@ -105,17 +105,49 @@ local function initListView(self)
     button:loadTextureNormal("c03_t02_s10_f01.png", ccui.TextureResType.plistType)
         :setZoomScale(-0.05)
     listView:pushBackCustomItem(button)
+
     button = ccui.Button:create()
-    button:loadTextureNormal("c03_t02_s10_f01.png", ccui.TextureResType.plistType)
-        :setZoomScale(-0.05)
-    listView:pushBackCustomItem(button)
-        button = ccui.Button:create()
-    button:loadTextureNormal("c03_t02_s10_f01.png", ccui.TextureResType.plistType)
+    button:loadTextureNormal("c03_t02_s11_f01.png", ccui.TextureResType.plistType)
         :setZoomScale(-0.05)
     listView:pushBackCustomItem(button)
 
     button = ccui.Button:create()
-    button:loadTextureNormal("c03_t02_s11_f01.png", ccui.TextureResType.plistType)
+    button:loadTextureNormal("c03_t02_s12_f01.png", ccui.TextureResType.plistType)
+        :setZoomScale(-0.05)
+    listView:pushBackCustomItem(button)
+
+    button = ccui.Button:create()
+    button:loadTextureNormal("c03_t02_s13_f01.png", ccui.TextureResType.plistType)
+        :setZoomScale(-0.05)
+    listView:pushBackCustomItem(button)
+
+    button = ccui.Button:create()
+    button:loadTextureNormal("c03_t02_s14_f01.png", ccui.TextureResType.plistType)
+        :setZoomScale(-0.05)
+    listView:pushBackCustomItem(button)
+
+    button = ccui.Button:create()
+    button:loadTextureNormal("c03_t02_s15_f01.png", ccui.TextureResType.plistType)
+        :setZoomScale(-0.05)
+    listView:pushBackCustomItem(button)
+
+    button = ccui.Button:create()
+    button:loadTextureNormal("c03_t02_s16_f01.png", ccui.TextureResType.plistType)
+        :setZoomScale(-0.05)
+    listView:pushBackCustomItem(button)
+
+    button = ccui.Button:create()
+    button:loadTextureNormal("c03_t02_s17_f01.png", ccui.TextureResType.plistType)
+        :setZoomScale(-0.05)
+    listView:pushBackCustomItem(button)
+
+    button = ccui.Button:create()
+    button:loadTextureNormal("c03_t02_s18_f01.png", ccui.TextureResType.plistType)
+        :setZoomScale(-0.05)
+    listView:pushBackCustomItem(button)
+
+    button = ccui.Button:create()
+    button:loadTextureNormal("c03_t02_s19_f01.png", ccui.TextureResType.plistType)
         :setZoomScale(-0.05)
     listView:pushBackCustomItem(button)
 end
@@ -149,7 +181,7 @@ end
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
-function ViewWarCommandBar:showItems(itemsInfo)
+function ViewWarCommandBar:setItemsInfo(itemsInfo)
     local listView = self.m_ListView
     listView:removeAllItems()
 
