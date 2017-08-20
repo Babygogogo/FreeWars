@@ -648,6 +648,7 @@ local s_Texts = {
             elseif (skillID == 13) then return "能量增速"
             elseif (skillID == 14) then return "能量增速"
             elseif (skillID == 15) then return "敌军HP"
+            elseif (skillID == 16) then return "敌军能量值"
             else                        return "未知5:" .. (skillID or "")
             end
         end,
@@ -1175,6 +1176,7 @@ local s_Texts = {
             elseif (skillID == 13) then return "增加我方的能量获取速度（四舍五入）。"
             elseif (skillID == 14) then return "增加我方的能量获取速度（不受战局设定影响）。"
             elseif (skillID == 15) then return "减少对方全体部队的当前HP，但最少剩余1。"
+            elseif (skillID == 16) then return "减少所有对手的能量值，但最少剩余0。"
             else                        return "未知23:" .. (skillID or "")
             end
         end,

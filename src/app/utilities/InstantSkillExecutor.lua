@@ -107,6 +107,19 @@ s_Executors.execute15 = function(modelWar, level)
     modelWar:getScriptEventDispatcher():dispatchEvent({name = "EvtModelUnitMapUpdated"})
 end
 
+s_Executors.execute16 = function(modelWar, level)
+    local modelPlayerManager = SingletonGetters.getModelPlayerManager(modelWar)
+    local playerIndex        = modelWar:getModelTurnManager():getPlayerIndex()
+    local teamIndex          = modelPlayerManager:getModelPlayer(playerIndex):getTeamIndex()
+    local modifier           = modelWar:getModelSkillDataManager():getSkillModifier(16, level, true)
+
+    modelPlayerManager:forEachModelPlayer(function(modelPlayer, index)
+        if ((modelPlayer:getTeamIndex() ~= teamIndex) and (modelPlayer:isAlive())) then
+            modelPlayer:setEnergy(math.max(0, modelPlayer:getEnergy() + modifier))
+        end
+    end)
+end
+
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------

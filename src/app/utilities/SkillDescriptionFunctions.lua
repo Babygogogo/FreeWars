@@ -57,6 +57,7 @@ local function getSkillModifierForDisplay(modelSkillDataManager, id, modifier)
     elseif (id == 13) then return transformModifier3(modifier,  modifierUnit)
     elseif (id == 14) then return transformModifier3(modifier,  modifierUnit)
     elseif (id == 15) then return transformModifier3(modifier,  modifierUnit)
+    elseif (id == 16) then return transformModifier3(modifier,  modifierUnit)
     else                   error("SkillDescriptionFunctions-getSkillModifierForDisplay() invalid skill id: " .. (id or ""))
     end
 end

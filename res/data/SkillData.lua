@@ -3,7 +3,7 @@ local SkillData = {}
 
 SkillData.categories = {
     ["SkillsActive"] = {
-        1, 2, 3, 15, 5, 6, 7, 9, 10, 12,
+        1, 2, 3, 15, 5, 6, 7, 9, 16, 12,
     },
 
     ["SkillsPassive"] = {
@@ -152,7 +152,7 @@ SkillData.skills = {
         },
     },
 
-    -- Instant: Modify the energy of the opponent player.
+    -- Instant (deprecated): Modify the energy of the opponents and teammates.
     [10] = {
         minLevelPassive    = nil,
         maxLevelPassive    = nil,
@@ -250,6 +250,22 @@ SkillData.skills = {
             [3] = {modifierPassive = nil, pointsPassive = nil, modifierActive = -3, pointsActive = 37500},
             [4] = {modifierPassive = nil, pointsPassive = nil, modifierActive = -4, pointsActive = 50000},
             [5] = {modifierPassive = nil, pointsPassive = nil, modifierActive = -5, pointsActive = 62500},
+        },
+    },
+
+    -- Instant: Modify the energy of the opponents.
+    [16] = {
+        minLevelPassive    = nil,
+        maxLevelPassive    = nil,
+        minLevelActive     = 1,
+        maxLevelActive     = 5,
+        modifierUnit = "",
+        levels       = {
+            [1] = {modifierPassive = nil, pointsPassive = nil, modifierActive = -5000, pointsActive = 5000},
+            [2] = {modifierPassive = nil, pointsPassive = nil, modifierActive = -10000, pointsActive = 10000},
+            [3] = {modifierPassive = nil, pointsPassive = nil, modifierActive = -15000, pointsActive = 15000},
+            [4] = {modifierPassive = nil, pointsPassive = nil, modifierActive = -20000, pointsActive = 20000},
+            [5] = {modifierPassive = nil, pointsPassive = nil, modifierActive = -25000, pointsActive = 25000},
         },
     },
 }
