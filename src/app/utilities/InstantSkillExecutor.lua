@@ -91,6 +91,35 @@ s_Executors.execute10 = function(modelWar, level)
     end)
 end
 
+s_Executors.execute15 = function(modelWar, level)
+    local modifier     = modelWar:getModelSkillDataManager():getSkillModifier(15, level, true) * 10
+    local playerIndex  = modelWar:getModelTurnManager():getPlayerIndex()
+    local teamIndex    = modelWar:getModelPlayerManager():getModelPlayer(playerIndex):getTeamIndex();
+    local func         = function(modelUnit)
+        if (modelUnit:getTeamIndex() ~= teamIndex) then
+            modifyModelUnitHp(modelUnit, modifier)
+        end
+    end
+
+    modelWar:getModelWarField():getModelUnitMap():forEachModelUnitOnMap(func)
+        :forEachModelUnitLoaded(func)
+
+    modelWar:getScriptEventDispatcher():dispatchEvent({name = "EvtModelUnitMapUpdated"})
+end
+
+s_Executors.execute16 = function(modelWar, level)
+    local modelPlayerManager = SingletonGetters.getModelPlayerManager(modelWar)
+    local playerIndex        = modelWar:getModelTurnManager():getPlayerIndex()
+    local teamIndex          = modelPlayerManager:getModelPlayer(playerIndex):getTeamIndex()
+    local modifier           = modelWar:getModelSkillDataManager():getSkillModifier(16, level, true)
+
+    modelPlayerManager:forEachModelPlayer(function(modelPlayer, index)
+        if ((modelPlayer:getTeamIndex() ~= teamIndex) and (modelPlayer:isAlive())) then
+            modelPlayer:setEnergy(math.max(0, modelPlayer:getEnergy() + modifier))
+        end
+    end)
+end
+
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
