@@ -3,7 +3,7 @@ local SkillData = {}
 
 SkillData.categories = {
     ["SkillsActive"] = {
-        1, 2, 3, 4, 5, 6, 7, 9, 10, 12,
+        1, 2, 3, 15, 5, 6, 7, 9, 10, 12,
     },
 
     ["SkillsPassive"] = {
@@ -60,7 +60,7 @@ SkillData.skills = {
         },
     },
 
-    -- Instant: Modify HPs of all units of the opponents.
+    -- Instant (deprecated): Modify HPs of all units of the opponents and teammates.
     [4] = {
         minLevelPassive     = nil,
         maxLevelPassive     = nil,
@@ -234,6 +234,22 @@ SkillData.skills = {
             [3] = {modifierPassive = 60, pointsPassive = 15000, modifierActive = nil, pointsActive = nil},
             [4] = {modifierPassive = 80, pointsPassive = 20000, modifierActive = nil, pointsActive = nil},
             [5] = {modifierPassive = 100, pointsPassive = 25000, modifierActive = nil, pointsActive = nil},
+        },
+    },
+
+    -- Instant: Modify HPs of all units of the opponents.
+    [15] = {
+        minLevelPassive     = nil,
+        maxLevelPassive     = nil,
+        minLevelActive      = 1,
+        maxLevelActive      = 5,
+        modifierUnit = "",
+        levels = {
+            [1] = {modifierPassive = nil, pointsPassive = nil, modifierActive = -1, pointsActive = 12500},
+            [2] = {modifierPassive = nil, pointsPassive = nil, modifierActive = -2, pointsActive = 25000},
+            [3] = {modifierPassive = nil, pointsPassive = nil, modifierActive = -3, pointsActive = 37500},
+            [4] = {modifierPassive = nil, pointsPassive = nil, modifierActive = -4, pointsActive = 50000},
+            [5] = {modifierPassive = nil, pointsPassive = nil, modifierActive = -5, pointsActive = 62500},
         },
     },
 }
