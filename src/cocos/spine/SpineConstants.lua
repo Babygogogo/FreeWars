@@ -1,11 +1,11 @@
 if nil == sp then
-    return
+	return
 end
 
 sp.EventType =
 {
-    ANIMATION_START = 0, 
-    ANIMATION_END = 1, 
-    ANIMATION_COMPLETE = 2, 
-    ANIMATION_EVENT = 3,
+	ANIMATION_START = 0, 
+	ANIMATION_END = 1, 
+	ANIMATION_COMPLETE = 2, 
+	ANIMATION_EVENT = 3,
 }

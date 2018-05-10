@@ -21,86 +21,89 @@ local GameConstantFunctions = requireFW("src.app.utilities.GameConstantFunctions
 -- The util functions.
 --------------------------------------------------------------------------------
 local function getUnitAnimationName(unitName, playerIndex, state)
-    return unitName .. playerIndex .. state
+	return unitName .. playerIndex .. state
 end
 
 local function getTileAnimationName(tileName, shapeIndex)
-    return tileName .. shapeIndex
+	return tileName .. shapeIndex
 end
 
 local function loadTileAnimations()
-    for tileName, data in pairs(GAME_CONSTANT.tileAnimations) do
-        for shapeIndex = 1, data.shapesCount do
-            local pattern = string.format("c01_t%02d_s%02d_%s.png", data.typeIndex, shapeIndex, "f%02d")
-            local animation = display.newAnimation(display.newFrames(pattern, 1, data.framesCount), data.durationPerFrame)
-            display.setAnimationCache(getTileAnimationName(tileName, shapeIndex), animation)
-        end
-    end
+	print('加载图块动画')
+	for tileName, data in pairs(GAME_CONSTANT.tileAnimations) do
+		for shapeIndex = 1, data.shapesCount do
+			local pattern = string.format("c01_t%02d_s%02d_%s.png", data.typeIndex, shapeIndex, "f%02d")
+			local animation = display.newAnimation(display.newFrames(pattern, 1, data.framesCount), data.durationPerFrame)
+			display.setAnimationCache(getTileAnimationName(tileName, shapeIndex), animation)
+		end
+	end
 end
 
 local function loadUnitAnimations()
-    for unitName, animationsForPlayers in pairs(GAME_CONSTANT.unitAnimations) do
-        for playerIndex, animations in ipairs(animationsForPlayers) do
-            local normal          = animations.normal
-            local normalAnimation = display.newAnimation(display.newFrames(normal.pattern, 1, normal.framesCount), normal.durationPerFrame)
-            display.setAnimationCache(getUnitAnimationName(unitName, playerIndex, "normal"), normalAnimation)
+	print('加载单位动画')
+	for unitName, animationsForPlayers in pairs(GAME_CONSTANT.unitAnimations) do
+		for playerIndex, animations in ipairs(animationsForPlayers) do
+			local normal		  = animations.normal
+			local normalAnimation = display.newAnimation(display.newFrames(normal.pattern, 1, normal.framesCount), normal.durationPerFrame)
+			display.setAnimationCache(getUnitAnimationName(unitName, playerIndex, "normal"), normalAnimation)
 
-            local moving          = animations.moving
-            local movingAnimation = display.newAnimation(display.newFrames(moving.pattern, 1, moving.framesCount), moving.durationPerFrame)
-            display.setAnimationCache(getUnitAnimationName(unitName, playerIndex, "moving"), movingAnimation)
-        end
-    end
+			local moving		  = animations.moving
+			local movingAnimation = display.newAnimation(display.newFrames(moving.pattern, 1, moving.framesCount), moving.durationPerFrame)
+			display.setAnimationCache(getUnitAnimationName(unitName, playerIndex, "moving"), movingAnimation)
+		end
+	end
 end
 
 local function loadGridAnimations()
-    local animationReachableGrid = display.newAnimation(display.newFrames("c01_t99_s05_f%02d.png", 1, 15), 0.07)
-    display.setAnimationCache("ReachableGrid", animationReachableGrid)
+	print('加载网格动画')
+	local animationReachableGrid = display.newAnimation(display.newFrames("c01_t99_s05_f%02d.png", 1, 15), 0.07)
+	display.setAnimationCache("ReachableGrid", animationReachableGrid)
 
-    local animationAttackableGrid = display.newAnimation(display.newFrames("c01_t99_s06_f%02d.png", 1, 15), 0.07)
-    display.setAnimationCache("AttackableGrid", animationAttackableGrid)
+	local animationAttackableGrid = display.newAnimation(display.newFrames("c01_t99_s06_f%02d.png", 1, 15), 0.07)
+	display.setAnimationCache("AttackableGrid", animationAttackableGrid)
 
-    local animationExplosion = display.newAnimation(display.newFrames("c03_t08_s01_f%02d.png", 1, 9), 0.06)
-    display.setAnimationCache("GridExplosion", animationExplosion)
+	local animationExplosion = display.newAnimation(display.newFrames("c03_t08_s01_f%02d.png", 1, 9), 0.06)
+	display.setAnimationCache("GridExplosion", animationExplosion)
 
-    local animationDive = display.newAnimation(display.newFrames("c03_t08_s07_f%02d.png", 1, 7), 0.06)
-    display.setAnimationCache("Dive", animationDive)
+	local animationDive = display.newAnimation(display.newFrames("c03_t08_s07_f%02d.png", 1, 7), 0.06)
+	display.setAnimationCache("Dive", animationDive)
 
-    local animationSurface = display.newAnimation(display.newFrames("c03_t08_s08_f%02d.png", 1, 5), 0.06)
-    display.setAnimationCache("Surface", animationSurface)
+	local animationSurface = display.newAnimation(display.newFrames("c03_t08_s08_f%02d.png", 1, 5), 0.06)
+	display.setAnimationCache("Surface", animationSurface)
 
-    local animationDamage = display.newAnimation(display.newFrames("c03_t08_s02_f%02d.png", 1, 8), 0.04)
-    display.setAnimationCache("GridDamage", animationDamage)
+	local animationDamage = display.newAnimation(display.newFrames("c03_t08_s02_f%02d.png", 1, 8), 0.04)
+	display.setAnimationCache("GridDamage", animationDamage)
 
-    local animationTargetCursor = display.newAnimation(display.newFrames("c03_t07_s08_f%02d.png", 1, 4), 0.08)
-    display.setAnimationCache("TargetCursor", animationTargetCursor)
+	local animationTargetCursor = display.newAnimation(display.newFrames("c03_t07_s08_f%02d.png", 1, 4), 0.08)
+	display.setAnimationCache("TargetCursor", animationTargetCursor)
 
-    local animationSkillActivation = display.newAnimation(display.newFrames("c03_t08_s06_f%02d.png", 1, 34), 0.025)
-    display.setAnimationCache("SkillActivation", animationSkillActivation)
+	local animationSkillActivation = display.newAnimation(display.newFrames("c03_t08_s06_f%02d.png", 1, 34), 0.025)
+	display.setAnimationCache("SkillActivation", animationSkillActivation)
 end
 
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
 function AnimationLoader.load()
-    loadTileAnimations()
-    loadUnitAnimations()
-    loadGridAnimations()
+	loadTileAnimations()
+	loadUnitAnimations()
+	loadGridAnimations()
 end
 
 function AnimationLoader.getUnitAnimation(unitName, playerIndex, animationState)
-    return display.getAnimationCache(getUnitAnimationName(unitName, playerIndex or 1, animationState or "normal"))
+	return display.getAnimationCache(getUnitAnimationName(unitName, playerIndex or 1, animationState or "normal"))
 end
 
 function AnimationLoader.getUnitAnimationWithTiledId(tiledID)
-    return AnimationLoader.getUnitAnimation(GameConstantFunctions.getUnitTypeWithTiledId(tiledID), GameConstantFunctions.getPlayerIndexWithTiledId(tiledID), "normal")
+	return AnimationLoader.getUnitAnimation(GameConstantFunctions.getUnitTypeWithTiledId(tiledID), GameConstantFunctions.getPlayerIndexWithTiledId(tiledID), "normal")
 end
 
 function AnimationLoader.getTileAnimation(tileName, shapeIndex)
-    return display.getAnimationCache(getTileAnimationName(tileName, shapeIndex or 1))
+	return display.getAnimationCache(getTileAnimationName(tileName, shapeIndex or 1))
 end
 
 function AnimationLoader.getTileAnimationWithTiledId(tiledID)
-    return AnimationLoader.getTileAnimation(GameConstantFunctions.getTileTypeWithTiledId(tiledID), GameConstantFunctions.getShapeIndexWithTiledId(tiledID))
+	return AnimationLoader.getTileAnimation(GameConstantFunctions.getTileTypeWithTiledId(tiledID), GameConstantFunctions.getShapeIndexWithTiledId(tiledID))
 end
 
 return AnimationLoader

@@ -12,80 +12,80 @@
 
 local Capturer = requireFW("src.global.functions.class")("Capturer")
 
-local AuxiliaryFunctions     = requireFW("src.app.utilities.AuxiliaryFunctions")
-local SingletonGetters       = requireFW("src.app.utilities.SingletonGetters")
+local AuxiliaryFunctions	 = requireFW("src.app.utilities.AuxiliaryFunctions")
+local SingletonGetters	   = requireFW("src.app.utilities.SingletonGetters")
 local SkillModifierFunctions = requireFW("src.app.utilities.SkillModifierFunctions")
 
 local getCaptureAmountModifierForSkillConfiguration = SkillModifierFunctions.getCaptureAmountModifierForSkillConfiguration
-local getModelPlayerManager                         = SingletonGetters.getModelPlayerManager
-local round                                         = AuxiliaryFunctions.round
+local getModelPlayerManager						 = SingletonGetters.getModelPlayerManager
+local round										 = AuxiliaryFunctions.round
 
 Capturer.EXPORTED_METHODS = {
-    "isCapturingModelTile",
-    "setCapturingModelTile",
-    "canCaptureModelTile",
-    "getCaptureAmount",
+	"isCapturingModelTile",
+	"setCapturingModelTile",
+	"canCaptureModelTile",
+	"getCaptureAmount",
 }
 
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
 function Capturer:ctor(param)
-    self:loadInstantialData(param.instantialData)
+	self:loadInstantialData(param.instantialData)
 
-    return self
+	return self
 end
 
 function Capturer:loadInstantialData(data)
-    self.m_IsCapturing = data.isCapturing
+	self.m_IsCapturing = data.isCapturing
 
-    return self
+	return self
 end
 
 --------------------------------------------------------------------------------
 -- The public callback function on start running.
 --------------------------------------------------------------------------------
 function Capturer:onStartRunning(modelWar)
-    self.m_ModelWar = modelWar
+	self.m_ModelWar = modelWar
 
-    return self
+	return self
 end
 
 --------------------------------------------------------------------------------
 -- The function for serialization.
 --------------------------------------------------------------------------------
 function Capturer:toSerializableTable()
-    if (not self:isCapturingModelTile()) then
-        return nil
-    else
-        return {
-            isCapturing = true,
-        }
-    end
+	if (not self:isCapturingModelTile()) then
+		return nil
+	else
+		return {
+			isCapturing = true,
+		}
+	end
 end
 
 --------------------------------------------------------------------------------
 -- The exported functions.
 --------------------------------------------------------------------------------
 function Capturer:isCapturingModelTile()
-    return self.m_IsCapturing
+	return self.m_IsCapturing
 end
 
 function Capturer:setCapturingModelTile(capturing)
-    self.m_IsCapturing = capturing
+	self.m_IsCapturing = capturing
 
-    return self.m_Owner
+	return self.m_Owner
 end
 
 function Capturer:canCaptureModelTile(modelTile)
-    return (modelTile.getCurrentCapturePoint) and
-        (not getModelPlayerManager(self.m_ModelWar):isSameTeamIndex(self.m_Owner:getPlayerIndex(), modelTile:getPlayerIndex()))
+	return (modelTile.getCurrentCapturePoint) and
+		(not getModelPlayerManager(self.m_ModelWar):isSameTeamIndex(self.m_Owner:getPlayerIndex(), modelTile:getPlayerIndex()))
 end
 
 function Capturer:getCaptureAmount()
-    local modelPlayer = getModelPlayerManager(self.m_ModelWar):getModelPlayer(self.m_Owner:getPlayerIndex())
-    local modifier    = getCaptureAmountModifierForSkillConfiguration(modelPlayer:getModelSkillConfiguration(), modelPlayer:isActivatingSkill())
-    return round(self.m_Owner:getNormalizedCurrentHP() * (100 + modifier) / 100)
+	local modelPlayer = getModelPlayerManager(self.m_ModelWar):getModelPlayer(self.m_Owner:getPlayerIndex())
+	local modifier	= getCaptureAmountModifierForSkillConfiguration(modelPlayer:getModelSkillConfiguration(), modelPlayer:isActivatingSkill())
+	return round(self.m_Owner:getNormalizedCurrentHP() * (100 + modifier) / 100)
 end
 
 return Capturer

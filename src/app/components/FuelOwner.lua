@@ -13,101 +13,101 @@
 local FuelOwner = requireFW("src.global.functions.class")("FuelOwner")
 
 FuelOwner.EXPORTED_METHODS = {
-    "getCurrentFuel",
-    "getMaxFuel",
-    "getFuelConsumptionPerTurn",
-    "getDescriptionOnOutOfFuel",
-    "shouldDestroyOnOutOfFuel",
-    "isFuelInShort",
+	"getCurrentFuel",
+	"getMaxFuel",
+	"getFuelConsumptionPerTurn",
+	"getDescriptionOnOutOfFuel",
+	"shouldDestroyOnOutOfFuel",
+	"isFuelInShort",
 
-    "setCurrentFuel",
+	"setCurrentFuel",
 }
 
 --------------------------------------------------------------------------------
 -- The param validators.
 --------------------------------------------------------------------------------
 local function isFuelAmount(param)
-    return (param >= 0) and (math.ceil(param) == param)
+	return (param >= 0) and (math.ceil(param) == param)
 end
 
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
 function FuelOwner:ctor(param)
-    self:loadTemplate(param.template)
-        :loadInstantialData(param.instantialData)
+	self:loadTemplate(param.template)
+		:loadInstantialData(param.instantialData)
 
-    return self
+	return self
 end
 
 function FuelOwner:loadTemplate(template)
-    assert(isFuelAmount(template.max),     "FuelOwner:loadTemplate() the template.max is expected to be a non-negative integer.")
-    assert(isFuelAmount(template.current), "FuelOwner:loadTemplate() the template.current is expected to be a non-negative integer.")
+	assert(isFuelAmount(template.max),	 "FuelOwner:loadTemplate() the template.max is expected to be a non-negative integer.")
+	assert(isFuelAmount(template.current), "FuelOwner:loadTemplate() the template.current is expected to be a non-negative integer.")
 
-    self.m_Template = template
+	self.m_Template = template
 
-    return self
+	return self
 end
 
 function FuelOwner:loadInstantialData(data)
-    assert(isFuelAmount(data.current), "FuelOwner:loadInstantialData() the data.current is expected to be a non-negative integer.")
+	assert(isFuelAmount(data.current), "FuelOwner:loadInstantialData() the data.current is expected to be a non-negative integer.")
 
-    self.m_CurrentFuel = data.current
+	self.m_CurrentFuel = data.current
 
-    return self
+	return self
 end
 
 --------------------------------------------------------------------------------
 -- The function for serialization.
 --------------------------------------------------------------------------------
 function FuelOwner:toSerializableTable()
-    local currentFuel = self:getCurrentFuel()
-    if (currentFuel == self:getMaxFuel()) then
-        return nil
-    else
-        return {
-            current = currentFuel,
-        }
-    end
+	local currentFuel = self:getCurrentFuel()
+	if (currentFuel == self:getMaxFuel()) then
+		return nil
+	else
+		return {
+			current = currentFuel,
+		}
+	end
 end
 
 --------------------------------------------------------------------------------
 -- The exported functions.
 --------------------------------------------------------------------------------
 function FuelOwner:getCurrentFuel()
-    return self.m_CurrentFuel
+	return self.m_CurrentFuel
 end
 
 function FuelOwner:getMaxFuel()
-    return self.m_Template.max
+	return self.m_Template.max
 end
 
 function FuelOwner:getFuelConsumptionPerTurn()
-    local owner = self.m_Owner
-    if ((owner.isDiving) and (owner:isDiving())) then
-        return self.m_Template.consumptionPerTurn + owner:getAdditionalFuelConsumptionForDive()
-    else
-        return self.m_Template.consumptionPerTurn
-    end
+	local owner = self.m_Owner
+	if ((owner.isDiving) and (owner:isDiving())) then
+		return self.m_Template.consumptionPerTurn + owner:getAdditionalFuelConsumptionForDive()
+	else
+		return self.m_Template.consumptionPerTurn
+	end
 end
 
 function FuelOwner:getDescriptionOnOutOfFuel()
-    return self.m_Template.descriptionOnOutOfFuel
+	return self.m_Template.descriptionOnOutOfFuel
 end
 
 function FuelOwner:shouldDestroyOnOutOfFuel()
-    return self.m_Template.destroyOnOutOfFuel
+	return self.m_Template.destroyOnOutOfFuel
 end
 
 function FuelOwner:isFuelInShort()
-    return (self:getCurrentFuel() / self:getMaxFuel()) <= 0.4
+	return (self:getCurrentFuel() / self:getMaxFuel()) <= 0.4
 end
 
 function FuelOwner:setCurrentFuel(fuelAmount)
-    assert(isFuelAmount(fuelAmount), "FuelOwner:setCurrentFuel() the param fuelAmount is expected to be a non-negative integer.")
-    self.m_CurrentFuel = fuelAmount
+	assert(isFuelAmount(fuelAmount), "FuelOwner:setCurrentFuel() the param fuelAmount is expected to be a non-negative integer.")
+	self.m_CurrentFuel = fuelAmount
 
-    return self.m_Owner
+	return self.m_Owner
 end
 
 return FuelOwner

@@ -20,207 +20,209 @@ local CLIPPING_NODE_POS_Y  = BACKGROUND_POS_Y + 7
 local CLIPPING_NODE_WIDTH  = BACKGROUND_POS_X + BACKGROUND_WIDTH  - 5 - CLIPPING_NODE_POS_X
 local CLIPPING_NODE_HEIGHT = BACKGROUND_POS_Y + BACKGROUND_HEIGHT - 6 - CLIPPING_NODE_POS_Y
 
-local AUTHOR_NAME_LABEL_POS_X         = CLIPPING_NODE_POS_X
-local AUTHOR_NAME_LABEL_POS_Y         = CLIPPING_NODE_POS_Y
-local AUTHOR_NAME_LABEL_WIDTH         = CLIPPING_NODE_WIDTH
-local AUTHOR_NAME_LABEL_HEIGHT        = CLIPPING_NODE_HEIGHT
-local AUTHOR_NAME_LABEL_FONT_NAME     = "res/fonts/msyhbd.ttc"
-local AUTHOR_NAME_LABEL_FONT_SIZE     = 20
-local AUTHOR_NAME_LABEL_FONT_COLOR    = {r = 255, g = 255, b = 255}
+local AUTHOR_NAME_LABEL_POS_X		 = CLIPPING_NODE_POS_X
+local AUTHOR_NAME_LABEL_POS_Y		 = CLIPPING_NODE_POS_Y
+local AUTHOR_NAME_LABEL_WIDTH		 = CLIPPING_NODE_WIDTH
+local AUTHOR_NAME_LABEL_HEIGHT		= CLIPPING_NODE_HEIGHT
+local AUTHOR_NAME_LABEL_FONT_NAME	 = "res/fonts/msyhbd.ttc"
+local AUTHOR_NAME_LABEL_FONT_SIZE	 = 20
+local AUTHOR_NAME_LABEL_FONT_COLOR	= {r = 255, g = 255, b = 255}
 local AUTHOR_NAME_LABEL_OUTLINE_COLOR = {r = 0,   g = 0,   b = 0}
 local AUTHOR_NAME_LABEL_OUTLINE_WIDTH = 2
 
-local LABEL_NICKNAMES_POS_X         = CLIPPING_NODE_POS_X
-local LABEL_NICKNAMES_POS_Y         = CLIPPING_NODE_POS_Y
-local LABEL_NICKNAMES_WIDTH         = CLIPPING_NODE_WIDTH
-local LABEL_NICKNAMES_HEIGHT        = CLIPPING_NODE_HEIGHT
-local LABEL_NICKNAMES_FONT_NAME     = AUTHOR_NAME_LABEL_FONT_NAME
-local LABEL_NICKNAMES_FONT_SIZE     = 18
-local LABEL_NICKNAMES_FONT_COLOR    = AUTHOR_NAME_LABEL_FONT_COLOR
+local LABEL_NICKNAMES_POS_X		 = CLIPPING_NODE_POS_X
+local LABEL_NICKNAMES_POS_Y		 = CLIPPING_NODE_POS_Y
+local LABEL_NICKNAMES_WIDTH		 = CLIPPING_NODE_WIDTH
+local LABEL_NICKNAMES_HEIGHT		= CLIPPING_NODE_HEIGHT
+local LABEL_NICKNAMES_FONT_NAME	 = AUTHOR_NAME_LABEL_FONT_NAME
+local LABEL_NICKNAMES_FONT_SIZE	 = 18
+local LABEL_NICKNAMES_FONT_COLOR	= AUTHOR_NAME_LABEL_FONT_COLOR
 local LABEL_NICKNAMES_OUTLINE_COLOR = AUTHOR_NAME_LABEL_OUTLINE_COLOR
 local LABEL_NICKNAMES_OUTLINE_WIDTH = 2
 
-local LABEL_RANDOM_WIDTH         = CLIPPING_NODE_WIDTH
-local LABEL_RANDOM_HEIGHT        = CLIPPING_NODE_HEIGHT
-local LABEL_RANDOM_FONT_NAME     = AUTHOR_NAME_LABEL_FONT_NAME
-local LABEL_RANDOM_FONT_SIZE     = 60
-local LABEL_RANDOM_FONT_COLOR    = AUTHOR_NAME_LABEL_FONT_COLOR
+local LABEL_RANDOM_WIDTH		 = CLIPPING_NODE_WIDTH
+local LABEL_RANDOM_HEIGHT		= CLIPPING_NODE_HEIGHT
+local LABEL_RANDOM_FONT_NAME	 = AUTHOR_NAME_LABEL_FONT_NAME
+local LABEL_RANDOM_FONT_SIZE	 = 60
+local LABEL_RANDOM_FONT_COLOR	= AUTHOR_NAME_LABEL_FONT_COLOR
 local LABEL_RANDOM_OUTLINE_COLOR = AUTHOR_NAME_LABEL_OUTLINE_COLOR
 local LABEL_RANDOM_OUTLINE_WIDTH = AUTHOR_NAME_LABEL_OUTLINE_WIDTH
 
 local CLIPPING_RECT = {
-    x      = 0,
-    y      = 0,
-    width  = CLIPPING_NODE_WIDTH,
-    height = CLIPPING_NODE_HEIGHT,
+	x	  = 0,
+	y	  = 0,
+	width  = CLIPPING_NODE_WIDTH,
+	height = CLIPPING_NODE_HEIGHT,
 }
 local BOUNDARY_RECT = {
-    lowerLeftX  = CLIPPING_RECT.x,
-    lowerLeftY  = CLIPPING_RECT.y,
-    upperRightX = CLIPPING_RECT.x + CLIPPING_RECT.width,
-    upperRightY = CLIPPING_RECT.y + CLIPPING_RECT.height,
-    width       = CLIPPING_RECT.width,
-    height      = CLIPPING_RECT.height,
+	lowerLeftX  = CLIPPING_RECT.x,
+	lowerLeftY  = CLIPPING_RECT.y,
+	upperRightX = CLIPPING_RECT.x + CLIPPING_RECT.width,
+	upperRightY = CLIPPING_RECT.y + CLIPPING_RECT.height,
+	width	   = CLIPPING_RECT.width,
+	height	  = CLIPPING_RECT.height,
 }
 
 local CLIPPING_NODE_Z_ORDER = 1
-local BACKGROUND_Z_ORDER    = 0
+local BACKGROUND_Z_ORDER	= 0
 
 --------------------------------------------------------------------------------
 -- The composition elements.
 --------------------------------------------------------------------------------
 local function initBackground(self)
-    local background = cc.Scale9Sprite:createWithSpriteFrameName("c03_t01_s02_f01.png", {x = 4, y = 6, width = 1, height = 1})
-    background:ignoreAnchorPointForPosition(true)
-        :setPosition(BACKGROUND_POS_X, BACKGROUND_POS_Y)
-        :setContentSize(BACKGROUND_WIDTH, BACKGROUND_HEIGHT)
-        :setOpacity(180)
+	local background = cc.Scale9Sprite:createWithSpriteFrameName("c03_t01_s02_f01.png", {x = 4, y = 6, width = 1, height = 1})
+	background:ignoreAnchorPointForPosition(true)
+		:setPosition(BACKGROUND_POS_X, BACKGROUND_POS_Y)
+		:setContentSize(BACKGROUND_WIDTH, BACKGROUND_HEIGHT)
+		:setOpacity(180)
 
-    self.m_Background = background
-    self:addChild(background, BACKGROUND_Z_ORDER)
+	self.m_Background = background
+	self:addChild(background, BACKGROUND_Z_ORDER)
 end
 
 local function initClippingNode(self)
-    local clippingNode = cc.ClippingRectangleNode:create(CLIPPING_RECT)
-    clippingNode:setPosition(CLIPPING_NODE_POS_X, CLIPPING_NODE_POS_Y)
-    local zoomableNode = requireFW("src.app.views.common.ViewZoomableNode"):create(BOUNDARY_RECT)
+	local clippingNode = cc.ClippingRectangleNode:create(CLIPPING_RECT)
+	clippingNode:setPosition(CLIPPING_NODE_POS_X, CLIPPING_NODE_POS_Y)
+	local zoomableNode = requireFW("src.app.views.common.ViewZoomableNode"):create(BOUNDARY_RECT)
 
-    self.m_ClippingNode = clippingNode
-    self.m_ZoomableNode = zoomableNode
-    clippingNode:addChild(zoomableNode)
-    self:addChild(clippingNode, CLIPPING_NODE_Z_ORDER)
+	self.m_ClippingNode = clippingNode
+	self.m_ZoomableNode = zoomableNode
+	clippingNode:addChild(zoomableNode)
+	self:addChild(clippingNode, CLIPPING_NODE_Z_ORDER)
 end
 
 local function initRightLabel(self)
-    local label = cc.Label:createWithTTF("", AUTHOR_NAME_LABEL_FONT_NAME, AUTHOR_NAME_LABEL_FONT_SIZE)
-    label:ignoreAnchorPointForPosition(true)
-        :setPosition(AUTHOR_NAME_LABEL_POS_X, AUTHOR_NAME_LABEL_POS_Y)
+	local label = cc.Label:createWithTTF("", AUTHOR_NAME_LABEL_FONT_NAME, AUTHOR_NAME_LABEL_FONT_SIZE)
+	label:ignoreAnchorPointForPosition(true)
+		:setPosition(AUTHOR_NAME_LABEL_POS_X, AUTHOR_NAME_LABEL_POS_Y)
 
-        :enableOutline(AUTHOR_NAME_LABEL_OUTLINE_COLOR, AUTHOR_NAME_LABEL_OUTLINE_WIDTH)
+		:enableOutline(AUTHOR_NAME_LABEL_OUTLINE_COLOR, AUTHOR_NAME_LABEL_OUTLINE_WIDTH)
 
-        :setDimensions(AUTHOR_NAME_LABEL_WIDTH, AUTHOR_NAME_LABEL_HEIGHT)
-        :setHorizontalAlignment(cc.TEXT_ALIGNMENT_RIGHT)
-        :setVerticalAlignment(cc.VERTICAL_TEXT_ALIGNMENT_TOP)
+		:setDimensions(AUTHOR_NAME_LABEL_WIDTH, AUTHOR_NAME_LABEL_HEIGHT)
+		:setHorizontalAlignment(cc.TEXT_ALIGNMENT_RIGHT)
+		:setVerticalAlignment(cc.VERTICAL_TEXT_ALIGNMENT_TOP)
 
-    self.m_RightLabel = label
-    self:addChild(label, AUTHOR_NAME_LABEL_Z_ORDER)
+	self.m_RightLabel = label
+	self:addChild(label, AUTHOR_NAME_LABEL_Z_ORDER)
 end
 
 local function initLeftLabel(self)
-    local label = cc.Label:createWithTTF("", LABEL_NICKNAMES_FONT_NAME, LABEL_NICKNAMES_FONT_SIZE)
-    label:ignoreAnchorPointForPosition(true)
-        :setPosition(LABEL_NICKNAMES_POS_X, LABEL_NICKNAMES_POS_Y)
+	local label = cc.Label:createWithTTF("", LABEL_NICKNAMES_FONT_NAME, LABEL_NICKNAMES_FONT_SIZE)
+	label:ignoreAnchorPointForPosition(true)
+		:setPosition(LABEL_NICKNAMES_POS_X, LABEL_NICKNAMES_POS_Y)
 
-        :enableOutline(LABEL_NICKNAMES_OUTLINE_COLOR, LABEL_NICKNAMES_OUTLINE_WIDTH)
+		:enableOutline(LABEL_NICKNAMES_OUTLINE_COLOR, LABEL_NICKNAMES_OUTLINE_WIDTH)
 
-        :setDimensions(LABEL_NICKNAMES_WIDTH, LABEL_NICKNAMES_HEIGHT)
-        :setHorizontalAlignment(cc.TEXT_ALIGNMENT_LEFT)
-        :setVerticalAlignment(cc.VERTICAL_TEXT_ALIGNMENT_TOP)
+		:setDimensions(LABEL_NICKNAMES_WIDTH, LABEL_NICKNAMES_HEIGHT)
+		:setHorizontalAlignment(cc.TEXT_ALIGNMENT_LEFT)
+		:setVerticalAlignment(cc.VERTICAL_TEXT_ALIGNMENT_TOP)
 
-    self.m_LeftLabel = label
-    self:addChild(label, LABEL_NICKNAMES_Z_ORDER)
+	self.m_LeftLabel = label
+	self:addChild(label, LABEL_NICKNAMES_Z_ORDER)
 end
 
 local function initLabelRandom(self)
-    local label = cc.Label:createWithTTF("", LABEL_RANDOM_FONT_NAME, LABEL_RANDOM_FONT_SIZE)
-    label:ignoreAnchorPointForPosition(true)
+	local label = cc.Label:createWithTTF("", LABEL_RANDOM_FONT_NAME, LABEL_RANDOM_FONT_SIZE)
+	label:ignoreAnchorPointForPosition(true)
 
-        :enableOutline(LABEL_RANDOM_OUTLINE_COLOR, LABEL_RANDOM_OUTLINE_WIDTH)
+		:enableOutline(LABEL_RANDOM_OUTLINE_COLOR, LABEL_RANDOM_OUTLINE_WIDTH)
 
-        :setDimensions(LABEL_RANDOM_WIDTH, LABEL_RANDOM_HEIGHT)
-        :setHorizontalAlignment(cc.TEXT_ALIGNMENT_CENTER)
-        :setVerticalAlignment(cc.VERTICAL_TEXT_ALIGNMENT_CENTER)
+		:setDimensions(LABEL_RANDOM_WIDTH, LABEL_RANDOM_HEIGHT)
+		:setHorizontalAlignment(cc.TEXT_ALIGNMENT_CENTER)
+		:setVerticalAlignment(cc.VERTICAL_TEXT_ALIGNMENT_CENTER)
 
-    self.m_LabelRandom = label
-    self.m_ClippingNode:addChild(label)
+	self.m_LabelRandom = label
+	self.m_ClippingNode:addChild(label)
 end
 
 --------------------------------------------------------------------------------
 -- The constructor.
 --------------------------------------------------------------------------------
 function ViewWarFieldPreviewer:ctor(param)
-    initBackground(     self)
-    initClippingNode(   self)
-    initRightLabel(     self)
-    initLeftLabel(      self)
-    initLabelRandom(    self)
+	initBackground(	 self)
+	initClippingNode(   self)
+	initRightLabel(	 self)
+	initLeftLabel(	  self)
+	initLabelRandom(	self)
 
-    self:ignoreAnchorPointForPosition(true)
-        :setAnchorPoint(0, 0)
+	self:ignoreAnchorPointForPosition(true)
+		:setAnchorPoint(0, 0)
 
-    return self
+	return self
 end
 
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
 function ViewWarFieldPreviewer:setIsRandomWarField(isRandom)
-    self.m_IsRandomWarField = isRandom
-
-    return self
+	self.m_IsRandomWarField = isRandom
+	return self
 end
 
 function ViewWarFieldPreviewer:setViewTilesAndUnits(viewTiles, viewUnits, mapSize)
-    if (self.m_ViewTiles) then
-        self.m_ZoomableNode:removeChild(self.m_ViewTiles)
-        self.m_ViewTiles = nil
-    end
-
-    viewTiles:addChild(viewUnits)
-    self.m_ViewTiles = viewTiles
-    self.m_ZoomableNode:setContentAndSize(viewTiles, {
-        width  = mapSize.width  * GRID_SIZE.width,
-        height = mapSize.height * GRID_SIZE.height,
-    })
-
-    return self
+	if (self.m_ViewTiles) then
+		self.m_ZoomableNode:removeChild(self.m_ViewTiles)
+		self.m_ViewTiles = viewTiles
+	end
+	if viewTiles then
+		if viewUnits then
+			viewTiles:addChild(viewUnits)
+		end
+		if mapSize then
+			self.m_ZoomableNode:setContentAndSize(viewTiles, {
+				width  = mapSize.width  * GRID_SIZE.width,
+				height = mapSize.height * GRID_SIZE.height,
+			})
+		end
+	end
+	return self
 end
 
 function ViewWarFieldPreviewer:setRightLabelText(text)
-    self.m_RightLabel:setString(text)
-        :stopAllActions()
-        :setOpacity(255)
-        :runAction(cc.Sequence:create(
-            cc.DelayTime:create(3),
-            cc.FadeOut:create(1)
-        ))
+	self.m_RightLabel:setString(text)
+		:stopAllActions()
+		:setOpacity(255)
+		:runAction(cc.Sequence:create(
+			cc.DelayTime:create(3),
+			cc.FadeOut:create(1)
+		))
 
-    return self
+	return self
 end
 
 function ViewWarFieldPreviewer:setPlayersCount(playersCount)
-    self.m_PlayersCount = playersCount
+	self.m_PlayersCount = playersCount
 
-    return self
+	return self
 end
 
 function ViewWarFieldPreviewer:setLeftLabelText(text)
-    self.m_LeftLabel:setString(text)
-        :stopAllActions()
-        :setOpacity(255)
-        :runAction(cc.Sequence:create(
-            cc.DelayTime:create(3),
-            cc.FadeOut:create(1)
-        ))
+	self.m_LeftLabel:setString(text)
+		:stopAllActions()
+		:setOpacity(255)
+		:runAction(cc.Sequence:create(
+			cc.DelayTime:create(3),
+			cc.FadeOut:create(1)
+		))
 
-    return self
+	return self
 end
 
 function ViewWarFieldPreviewer:setEnabled(enabled)
-    if (enabled) then
-        if (self.m_IsRandomWarField) then
-            self.m_LabelRandom:setString("??(" .. self.m_PlayersCount .. "P)")
-                :setVisible(true)
-            self.m_ZoomableNode:setEnabled(false)
-        else
-            self.m_LabelRandom:setVisible(false)
-            self.m_ZoomableNode:setEnabled(true)
-        end
-    end
+	if (enabled) then
+		if (self.m_IsRandomWarField) then
+			self.m_LabelRandom:setString("??(" .. self.m_PlayersCount .. "P)")
+				:setVisible(true)
+			self.m_ZoomableNode:setEnabled(false)
+		else
+			self.m_LabelRandom:setVisible(false)
+			self.m_ZoomableNode:setEnabled(true)
+		end
+	end
 
-    self:setVisible(enabled)
+	self:setVisible(enabled)
 
-    return self
+	return self
 end
 
 return ViewWarFieldPreviewer

@@ -1,77 +1,77 @@
 
 local TileBuilder = requireFW("src.global.functions.class")("TileBuilder")
 
-local ComponentManager      = requireFW("src.global.components.ComponentManager")
-local GridIndexFunctions    = requireFW("src.app.utilities.GridIndexFunctions")
+local ComponentManager	  = requireFW("src.global.components.ComponentManager")
+local GridIndexFunctions	= requireFW("src.app.utilities.GridIndexFunctions")
 local GameConstantFunctions = requireFW("src.app.utilities.GameConstantFunctions")
 
 TileBuilder.EXPORTED_METHODS = {
-    "isBuildingModelTile",
-    "setBuildingModelTile",
-    "canBuildOnTileType",
-    "getBuildAmount",
-    "getBuildTiledIdWithTileType",
+	"isBuildingModelTile",
+	"setBuildingModelTile",
+	"canBuildOnTileType",
+	"getBuildAmount",
+	"getBuildTiledIdWithTileType",
 }
 
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
 function TileBuilder:ctor(param)
-    self:loadTemplate(param.template)
-        :loadInstantialData(param.instantialData)
+	self:loadTemplate(param.template)
+		:loadInstantialData(param.instantialData)
 
-    return self
+	return self
 end
 
 function TileBuilder:loadTemplate(template)
-    self.m_Template = template
-    return self
+	self.m_Template = template
+	return self
 end
 
 function TileBuilder:loadInstantialData(data)
-    self.m_IsBuilding = (data.isBuildingModelTile == true) and (true) or (false)
+	self.m_IsBuilding = (data.isBuildingModelTile == true) and (true) or (false)
 
-    return self
+	return self
 end
 
 --------------------------------------------------------------------------------
 -- The function for serialization.
 --------------------------------------------------------------------------------
 function TileBuilder:toSerializableTable()
-    if (not self:isBuildingModelTile()) then
-        return nil
-    else
-        return {
-            isBuildingModelTile = true,
-        }
-    end
+	if (not self:isBuildingModelTile()) then
+		return nil
+	else
+		return {
+			isBuildingModelTile = true,
+		}
+	end
 end
 
 --------------------------------------------------------------------------------
 -- The exported functions.
 --------------------------------------------------------------------------------
 function TileBuilder:isBuildingModelTile()
-    return self.m_IsBuilding
+	return self.m_IsBuilding
 end
 
 function TileBuilder:setBuildingModelTile(isBuilding)
-    self.m_IsBuilding = isBuilding
+	self.m_IsBuilding = isBuilding
 
-    return self.m_Owner
+	return self.m_Owner
 end
 
 function TileBuilder:canBuildOnTileType(tileType)
-    return self.m_Template.buildList[tileType] ~= nil
+	return self.m_Template.buildList[tileType] ~= nil
 end
 
 function TileBuilder:getBuildAmount()
-    -- TODO: take the player skills into account.
-    return self.m_Owner:getNormalizedCurrentHP()
+	-- TODO: take the player skills into account.
+	return self.m_Owner:getNormalizedCurrentHP()
 end
 
 function TileBuilder:getBuildTiledIdWithTileType(tileType)
-    assert(self:canBuildOnTileType(tileType), "TileBuilder:getBuildTiledIdWithTileType() the builder can't build buildings on " .. tileType)
-    return GameConstantFunctions.getTiledIdWithTileOrUnitName(self.m_Template.buildList[tileType], self.m_Owner:getPlayerIndex())
+	assert(self:canBuildOnTileType(tileType), "TileBuilder:getBuildTiledIdWithTileType() the builder can't build buildings on " .. tileType)
+	return GameConstantFunctions.getTiledIdWithTileOrUnitName(self.m_Template.buildList[tileType], self.m_Owner:getPlayerIndex())
 end
 
 return TileBuilder

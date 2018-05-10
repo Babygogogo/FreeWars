@@ -4,29 +4,29 @@ local UnitHider = requireFW("src.global.functions.class")("UnitHider")
 local isTypeInCategory = requireFW("src.app.utilities.GameConstantFunctions").isTypeInCategory
 
 UnitHider.EXPORTED_METHODS = {
-    "canHideUnitType",
+	"canHideUnitType",
 }
 
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
 function UnitHider:ctor(param)
-    self:loadTemplate(param.template)
+	self:loadTemplate(param.template)
 
-    return self
+	return self
 end
 
 function UnitHider:loadTemplate(template)
-    self.m_Template = template
+	self.m_Template = template
 
-    return self
+	return self
 end
 
 --------------------------------------------------------------------------------
 -- The exported functions.
 --------------------------------------------------------------------------------
 function UnitHider:canHideUnitType(unitType)
-    return isTypeInCategory(unitType, self.m_Template.targetCategoryType)
+	return isTypeInCategory(unitType, self.m_Template.targetCategoryType)
 end
 
 return UnitHider

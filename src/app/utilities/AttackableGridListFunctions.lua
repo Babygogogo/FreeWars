@@ -13,119 +13,119 @@
 
 local AttackableGridListFunctions = {}
 
-local DamageCalculator       = requireFW("src.app.utilities.DamageCalculator")
-local GridIndexFunctions     = requireFW("src.app.utilities.GridIndexFunctions")
+local DamageCalculator	   = requireFW("src.app.utilities.DamageCalculator")
+local GridIndexFunctions	 = requireFW("src.app.utilities.GridIndexFunctions")
 local ReachableAreaFunctions = requireFW("src.app.utilities.ReachableAreaFunctions")
 
 local coroutine, math = coroutine, math
-local pairs           = pairs
-local isWithinMap     = GridIndexFunctions.isWithinMap
+local pairs		   = pairs
+local isWithinMap	 = GridIndexFunctions.isWithinMap
 
 --------------------------------------------------------------------------------
 -- The util functions.
 --------------------------------------------------------------------------------
 local function updateAttackableArea(area, mapSize, originX, originY, minRange, maxRange)
-    local width, height = mapSize.width, mapSize.height
-    for rotated = 1, 2 do
-        for sign = -1, 1, 2 do
-            for offset1 = 0, maxRange - 1 do
-                for offset2 = math.max(1, minRange - offset1), maxRange - offset1 do
-                    local x = originX + sign * ((rotated == 1) and (offset1) or (offset2))
-                    local y = originY + sign * ((rotated == 1) and (offset2) or (-offset1))
-                    if ((x >= 1) and (x <= width) and (y >= 1) and (y <= height)) then
-                        area[x] = area[x] or {}
-                        area[x][y] = true
-                    end
-                end
-            end
-        end
-    end
+	local width, height = mapSize.width, mapSize.height
+	for rotated = 1, 2 do
+		for sign = -1, 1, 2 do
+			for offset1 = 0, maxRange - 1 do
+				for offset2 = math.max(1, minRange - offset1), maxRange - offset1 do
+					local x = originX + sign * ((rotated == 1) and (offset1) or (offset2))
+					local y = originY + sign * ((rotated == 1) and (offset2) or (-offset1))
+					if ((x >= 1) and (x <= width) and (y >= 1) and (y <= height)) then
+						area[x] = area[x] or {}
+						area[x][y] = true
+					end
+				end
+			end
+		end
+	end
 end
 
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
 function AttackableGridListFunctions.getListNode(list, gridIndex)
-    for i = 1, #list do
-        if (GridIndexFunctions.isEqual(list[i], gridIndex)) then
-            return list[i]
-        end
-    end
+	for i = 1, #list do
+		if (GridIndexFunctions.isEqual(list[i], gridIndex)) then
+			return list[i]
+		end
+	end
 
-    return nil
+	return nil
 end
 
 function AttackableGridListFunctions.createList(modelWar, pathNodes, launchUnitID)
-    local modelWarField = modelWar:getModelWarField()
-    local modelUnitMap  = modelWarField:getModelUnitMap()
-    local attacker      = modelUnitMap:getFocusModelUnit(pathNodes[1], launchUnitID)
-    if ((not attacker.canAttackAfterMove)                           or
-        ((not attacker:canAttackAfterMove()) and (#pathNodes > 1))) then
-        return {}
-    end
+	local modelWarField = modelWar:getModelWarField()
+	local modelUnitMap  = modelWarField:getModelUnitMap()
+	local attacker	  = modelUnitMap:getFocusModelUnit(pathNodes[1], launchUnitID)
+	if ((not attacker.canAttackAfterMove)						   or
+		((not attacker:canAttackAfterMove()) and (#pathNodes > 1))) then
+		return {}
+	end
 
-    local modelTileMap       = modelWarField:getModelTileMap()
-    local mapSize            = modelTileMap:getMapSize()
-    local minRange, maxRange = attacker:getAttackRangeMinMax()
-    return GridIndexFunctions.getGridsWithinDistance(
-        pathNodes[#pathNodes],
-        minRange,
-        maxRange,
-        mapSize,
-        function(targetGridIndex)
-            targetGridIndex.estimatedAttackDamage, targetGridIndex.estimatedCounterDamage =
-                DamageCalculator.getEstimatedBattleDamage(pathNodes, launchUnitID, targetGridIndex, modelWar)
+	local modelTileMap	   = modelWarField:getModelTileMap()
+	local mapSize			= modelTileMap:getMapSize()
+	local minRange, maxRange = attacker:getAttackRangeMinMax()
+	return GridIndexFunctions.getGridsWithinDistance(
+		pathNodes[#pathNodes],
+		minRange,
+		maxRange,
+		mapSize,
+		function(targetGridIndex)
+			targetGridIndex.estimatedAttackDamage, targetGridIndex.estimatedCounterDamage =
+				DamageCalculator.getEstimatedBattleDamage(pathNodes, launchUnitID, targetGridIndex, modelWar)
 
-            return targetGridIndex.estimatedAttackDamage ~= nil
-        end
-    )
+			return targetGridIndex.estimatedAttackDamage ~= nil
+		end
+	)
 end
 
 function AttackableGridListFunctions.createAttackableArea(attacker, modelTileMap, modelUnitMap, existingArea, passableGridIndex, moveRange, shouldYield)
-    local attackerGridIndex   = attacker:getGridIndex()
-    local attackerTeamIndex   = attacker:getTeamIndex()
-    local mapSize             = modelTileMap:getMapSize()
-    local minRange, maxRange  = attacker:getAttackRangeMinMax()
-    existingArea              = (existingArea) or ({})
+	local attackerGridIndex   = attacker:getGridIndex()
+	local attackerTeamIndex   = attacker:getTeamIndex()
+	local mapSize			 = modelTileMap:getMapSize()
+	local minRange, maxRange  = attacker:getAttackRangeMinMax()
+	existingArea			  = (existingArea) or ({})
 
-    if (not attacker:canAttackAfterMove()) then
-        updateAttackableArea(existingArea, mapSize, attackerGridIndex.x, attackerGridIndex.y, minRange, maxRange)
-        return existingArea
-    else
-        local reachableArea = ReachableAreaFunctions.createArea(
-            attackerGridIndex,
-            (moveRange) or (math.min(attacker:getMoveRange(), attacker:getCurrentFuel())),
-            function(gridIndex)
-                if (not isWithinMap(gridIndex, mapSize)) then
-                    return nil
-                elseif ((passableGridIndex) and (GridIndexFunctions.isEqual(passableGridIndex, gridIndex))) then
-                    return modelTileMap:getModelTile(gridIndex):getMoveCostWithModelUnit(attacker)
-                else
-                    local existingModelUnit = modelUnitMap:getModelUnit(gridIndex)
-                    if ((existingModelUnit) and (existingModelUnit:getTeamIndex() ~= attackerTeamIndex)) then
-                        return nil
-                    else
-                        return modelTileMap:getModelTile(gridIndex):getMoveCostWithModelUnit(attacker)
-                    end
-                end
-            end,
-            shouldYield
-        )
-        local originX, originY = attackerGridIndex.x, attackerGridIndex.y
-        for x, column in pairs(reachableArea) do
-            if (type(column) == "table") then
-                if (shouldYield) then
-                    coroutine.yield()
-                end
+	if (not attacker:canAttackAfterMove()) then
+		updateAttackableArea(existingArea, mapSize, attackerGridIndex.x, attackerGridIndex.y, minRange, maxRange)
+		return existingArea
+	else
+		local reachableArea = ReachableAreaFunctions.createArea(
+			attackerGridIndex,
+			(moveRange) or (math.min(attacker:getMoveRange(), attacker:getCurrentFuel())),
+			function(gridIndex)
+				if (not isWithinMap(gridIndex, mapSize)) then
+					return nil
+				elseif ((passableGridIndex) and (GridIndexFunctions.isEqual(passableGridIndex, gridIndex))) then
+					return modelTileMap:getModelTile(gridIndex):getMoveCostWithModelUnit(attacker)
+				else
+					local existingModelUnit = modelUnitMap:getModelUnit(gridIndex)
+					if ((existingModelUnit) and (existingModelUnit:getTeamIndex() ~= attackerTeamIndex)) then
+						return nil
+					else
+						return modelTileMap:getModelTile(gridIndex):getMoveCostWithModelUnit(attacker)
+					end
+				end
+			end,
+			shouldYield
+		)
+		local originX, originY = attackerGridIndex.x, attackerGridIndex.y
+		for x, column in pairs(reachableArea) do
+			if (type(column) == "table") then
+				if (shouldYield) then
+					coroutine.yield()
+				end
 
-                for y, _ in pairs(column) do
-                    updateAttackableArea(existingArea, mapSize, x, y, minRange, maxRange)
-                end
-            end
-        end
+				for y, _ in pairs(column) do
+					updateAttackableArea(existingArea, mapSize, x, y, minRange, maxRange)
+				end
+			end
+		end
 
-        return existingArea
-    end
+		return existingArea
+	end
 end
 
 return AttackableGridListFunctions

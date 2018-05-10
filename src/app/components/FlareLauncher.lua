@@ -2,75 +2,75 @@
 local FlareLauncher = requireFW("src.global.functions.class")("FlareLauncher")
 
 FlareLauncher.EXPORTED_METHODS = {
-    "getFlareAreaRadius",
-    "getMaxFlareRange",
-    "getMaxFlareAmmo",
-    "getCurrentFlareAmmo",
-    "setCurrentFlareAmmo",
-    "isFlareAmmoInShort"
+	"getFlareAreaRadius",
+	"getMaxFlareRange",
+	"getMaxFlareAmmo",
+	"getCurrentFlareAmmo",
+	"setCurrentFlareAmmo",
+	"isFlareAmmoInShort"
 }
 
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
 function FlareLauncher:ctor(param)
-    self:loadTemplate(param.template)
-        :loadInstantialData(param.instantialData)
+	self:loadTemplate(param.template)
+		:loadInstantialData(param.instantialData)
 
-    return self
+	return self
 end
 
 function FlareLauncher:loadTemplate(template)
-    self.m_Template = template
+	self.m_Template = template
 
-    return self
+	return self
 end
 
 function FlareLauncher:loadInstantialData(data)
-    self.m_CurrentAmmo = data.currentAmmo
+	self.m_CurrentAmmo = data.currentAmmo
 
-    return self
+	return self
 end
 
 --------------------------------------------------------------------------------
 -- The functions for serialization.
 --------------------------------------------------------------------------------
 function FlareLauncher:toSerializableTable()
-    local currentAmmo = self:getCurrentFlareAmmo()
-    if (currentAmmo == self:getMaxFlareAmmo()) then
-        return nil
-    else
-        return {currentAmmo = currentAmmo}
-    end
+	local currentAmmo = self:getCurrentFlareAmmo()
+	if (currentAmmo == self:getMaxFlareAmmo()) then
+		return nil
+	else
+		return {currentAmmo = currentAmmo}
+	end
 end
 
 --------------------------------------------------------------------------------
 -- The exported functions.
 --------------------------------------------------------------------------------
 function FlareLauncher:getFlareAreaRadius()
-    return self.m_Template.areaRadius
+	return self.m_Template.areaRadius
 end
 
 function FlareLauncher:getMaxFlareRange()
-    return self.m_Template.maxRange
+	return self.m_Template.maxRange
 end
 
 function FlareLauncher:getMaxFlareAmmo()
-    return self.m_Template.maxAmmo
+	return self.m_Template.maxAmmo
 end
 
 function FlareLauncher:getCurrentFlareAmmo()
-    return self.m_CurrentAmmo
+	return self.m_CurrentAmmo
 end
 
 function FlareLauncher:setCurrentFlareAmmo(ammo)
-    self.m_CurrentAmmo = ammo
+	self.m_CurrentAmmo = ammo
 
-    return self.m_Owner
+	return self.m_Owner
 end
 
 function FlareLauncher:isFlareAmmoInShort()
-    return self:getCurrentFlareAmmo() <= 1
+	return self:getCurrentFlareAmmo() <= 1
 end
 
 return FlareLauncher

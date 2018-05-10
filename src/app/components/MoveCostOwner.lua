@@ -14,61 +14,61 @@
 local MoveCostOwner = requireFW("src.global.functions.class")("MoveCostOwner")
 
 local GameConstantFunctions  = requireFW("src.app.utilities.GameConstantFunctions")
-local SingletonGetters       = requireFW("src.app.utilities.SingletonGetters")
+local SingletonGetters	   = requireFW("src.app.utilities.SingletonGetters")
 local SkillModifierFunctions = requireFW("src.app.utilities.SkillModifierFunctions")
-local ComponentManager       = requireFW("src.global.components.ComponentManager")
+local ComponentManager	   = requireFW("src.global.components.ComponentManager")
 
 local assert, type = assert, type
 
 MoveCostOwner.EXPORTED_METHODS = {
-    "getMoveCostWithMoveType",
-    "getMoveCostWithModelUnit",
+	"getMoveCostWithMoveType",
+	"getMoveCostWithModelUnit",
 }
 
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
 function MoveCostOwner:ctor(param)
-    self:loadTemplate(param.template)
+	self:loadTemplate(param.template)
 
-    return self
+	return self
 end
 
 function MoveCostOwner:loadTemplate(template)
-    assert(type(template) == "table", "MoveCostOwner:loadTemplate() the param template is invalid.")
-    self.m_Template = template
+	assert(type(template) == "table", "MoveCostOwner:loadTemplate() the param template is invalid.")
+	self.m_Template = template
 
-    return self
+	return self
 end
 
 --------------------------------------------------------------------------------
 -- The public callback function on start running.
 --------------------------------------------------------------------------------
 function MoveCostOwner:onStartRunning(modelSceneWar)
-    self.m_ModelSceneWar = modelSceneWar
+	self.m_ModelSceneWar = modelSceneWar
 
-    return self
+	return self
 end
 
 --------------------------------------------------------------------------------
 -- The exported functions.
 --------------------------------------------------------------------------------
 function MoveCostOwner:getMoveCostWithMoveType(moveType)
-    -- TODO: take the skills of the players into account.
+	-- TODO: take the skills of the players into account.
 
-    return self.m_Template[moveType]
+	return self.m_Template[moveType]
 end
 
 function MoveCostOwner:getMoveCostWithModelUnit(modelUnit)
-    local owner    = self.m_Owner
-    local tileType = owner:getTileType()
-    if (((tileType == "Seaport") or (tileType == "TempSeaport"))                              and
-        (owner:getTeamIndex() ~= modelUnit:getTeamIndex())                                    and
-        (GameConstantFunctions.isTypeInCategory(modelUnit:getUnitType(), "LargeNavalUnits"))) then
-        return nil
-    else
-        return self:getMoveCostWithMoveType(modelUnit:getMoveType())
-    end
+	local owner	= self.m_Owner
+	local tileType = owner:getTileType()
+	if (((tileType == "Seaport") or (tileType == "TempSeaport"))							  and
+		(owner:getTeamIndex() ~= modelUnit:getTeamIndex())									and
+		(GameConstantFunctions.isTypeInCategory(modelUnit:getUnitType(), "LargeNavalUnits"))) then
+		return nil
+	else
+		return self:getMoveCostWithMoveType(modelUnit:getMoveType())
+	end
 end
 
 return MoveCostOwner

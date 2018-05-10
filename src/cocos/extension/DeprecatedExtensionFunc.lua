@@ -1,18 +1,18 @@
 if nil == cc.Control then
-    return
+	return
 end
 
 --tip
 local function deprecatedTip(old_name,new_name)
-    print("\n********** \n"..old_name.." was deprecated please use ".. new_name .. " instead.\n**********")
+	print("\n********** \n"..old_name.." was deprecated please use ".. new_name .. " instead.\n**********")
 end
 
 --functions of CCControl will be deprecated end
 local CCControlDeprecated = { }
 function CCControlDeprecated.addHandleOfControlEvent(self,func,controlEvent)
-    deprecatedTip("addHandleOfControlEvent","registerControlEventHandler")
-    print("come in addHandleOfControlEvent")
-    self:registerControlEventHandler(func,controlEvent)
+	deprecatedTip("addHandleOfControlEvent","registerControlEventHandler")
+	print("come in addHandleOfControlEvent")
+	self:registerControlEventHandler(func,controlEvent)
 end
 CCControl.addHandleOfControlEvent = CCControlDeprecated.addHandleOfControlEvent
 --functions of CCControl will be deprecated end

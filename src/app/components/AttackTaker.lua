@@ -10,126 +10,126 @@
 -- 其他：
 --   - 所有种类的ModelUnit都必须绑定本组件，但ModelUnit里没有写死，而是由GameConstant决定
 --   - 关于防御类型：老三代里pipe与mdtank的防御属性是相同的，所以抽象出防御类型来重用其属性表。
---     但dor里每个单位的防御类型都是独立的，所以防御类型实际上可以取消，直接用宿主的类型名字（如infantry，meteor）代替
+--	 但dor里每个单位的防御类型都是独立的，所以防御类型实际上可以取消，直接用宿主的类型名字（如infantry，meteor）代替
 --   - unit的hp上限实际上为100，但多数情况下（如攻击，占领）按10点来计算（换算关系：实际hp / 10 并向上取整）
 --]]--------------------------------------------------------------------------------
 
 local AttackTaker = requireFW("src.global.functions.class")("AttackTaker")
 
 local GameConstantFunctions  = requireFW("src.app.utilities.GameConstantFunctions")
-local ComponentManager       = requireFW("src.global.components.ComponentManager")
+local ComponentManager	   = requireFW("src.global.components.ComponentManager")
 
 local UNIT_MAX_HP = GameConstantFunctions.getUnitMaxHP()
 local TILE_MAX_HP = GameConstantFunctions.getTileMaxHP()
 
 AttackTaker.EXPORTED_METHODS = {
-    "getCurrentHP",
-    "setCurrentHP",
-    "getNormalizedCurrentHP",
+	"getCurrentHP",
+	"setCurrentHP",
+	"getNormalizedCurrentHP",
 
-    "getDefenseType",
-    "getDefenseFatalList",
-    "getDefenseWeakList",
-    "isAffectedByLuck",
+	"getDefenseType",
+	"getDefenseFatalList",
+	"getDefenseWeakList",
+	"isAffectedByLuck",
 }
 
 --------------------------------------------------------------------------------
 -- The util function.
 --------------------------------------------------------------------------------
 local function getNormalizedHP(hp)
-    return math.ceil(hp / 10)
+	return math.ceil(hp / 10)
 end
 
 local function getDamageCostWithTargetAndDamage(target, damage)
-    if (not target.getProductionCost) then
-        return 0
-    else
-        local remainingHP = math.max(0, target:getCurrentHP() - damage)
-        return math.floor(target:getBaseProductionCost() * (target:getNormalizedCurrentHP() - getNormalizedHP(remainingHP)) / 10)
-    end
+	if (not target.getProductionCost) then
+		return 0
+	else
+		local remainingHP = math.max(0, target:getCurrentHP() - damage)
+		return math.floor(target:getBaseProductionCost() * (target:getNormalizedCurrentHP() - getNormalizedHP(remainingHP)) / 10)
+	end
 end
 
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
 function AttackTaker:ctor(param)
-    self:loadTemplate(param.template)
-        :loadInstantialData(param.instantialData)
+	self:loadTemplate(param.template)
+		:loadInstantialData(param.instantialData)
 
-    return self
+	return self
 end
 
 function AttackTaker:loadTemplate(template)
-    assert(template.maxHP ~= nil,            "AttackTaker:loadTemplate() the param template.maxHP is invalid.")
-    assert(template.defenseType ~= nil,      "AttackTaker:loadTemplate() the param template.defenseType is invalid.")
-    assert(template.isAffectedByLuck ~= nil, "AttackTaker:loadTemplate() the param template.isAffectedByLuck is invalid.")
+	assert(template.maxHP ~= nil,			"AttackTaker:loadTemplate() the param template.maxHP is invalid.")
+	assert(template.defenseType ~= nil,	  "AttackTaker:loadTemplate() the param template.defenseType is invalid.")
+	assert(template.isAffectedByLuck ~= nil, "AttackTaker:loadTemplate() the param template.isAffectedByLuck is invalid.")
 
-    self.m_Template = template
+	self.m_Template = template
 
-    return self
+	return self
 end
 
 function AttackTaker:loadInstantialData(data)
-    assert(data.currentHP <= self:getMaxHP(), "AttackTaker:loadInstantialData() the param data.currentHP is invalid.")
-    self.m_CurrentHP = data.currentHP
+	assert(data.currentHP <= self:getMaxHP(), "AttackTaker:loadInstantialData() the param data.currentHP is invalid.")
+	self.m_CurrentHP = data.currentHP
 
-    return self
+	return self
 end
 
 --------------------------------------------------------------------------------
 -- The function for serialization.
 --------------------------------------------------------------------------------
 function AttackTaker:toSerializableTable()
-    local currentHP = self:getCurrentHP()
-    if (currentHP == self:getMaxHP()) then
-        return nil
-    else
-        return {
-            currentHP = currentHP,
-        }
-    end
+	local currentHP = self:getCurrentHP()
+	if (currentHP == self:getMaxHP()) then
+		return nil
+	else
+		return {
+			currentHP = currentHP,
+		}
+	end
 end
 
 function AttackTaker:toSerializableTableWithFog()
-    return self:toSerializableTable()
+	return self:toSerializableTable()
 end
 
 --------------------------------------------------------------------------------
 -- The exported functions.
 --------------------------------------------------------------------------------
 function AttackTaker:getMaxHP()
-    return self.m_Template.maxHP
+	return self.m_Template.maxHP
 end
 
 function AttackTaker:getCurrentHP()
-    return self.m_CurrentHP
+	return self.m_CurrentHP
 end
 
 function AttackTaker:setCurrentHP(hp)
-    assert((hp >= 0) and (hp <= math.max(UNIT_MAX_HP, TILE_MAX_HP)) and (hp == math.floor(hp)), "AttackTaker:setCurrentHP() the param hp is invalid.")
-    self.m_CurrentHP = hp
+	assert((hp >= 0) and (hp <= math.max(UNIT_MAX_HP, TILE_MAX_HP)) and (hp == math.floor(hp)), "AttackTaker:setCurrentHP() the param hp is invalid.")
+	self.m_CurrentHP = hp
 
-    return self.m_Owner
+	return self.m_Owner
 end
 
 function AttackTaker:getNormalizedCurrentHP()
-    return getNormalizedHP(self.m_CurrentHP)
+	return getNormalizedHP(self.m_CurrentHP)
 end
 
 function AttackTaker:getDefenseType()
-    return self.m_Template.defenseType
+	return self.m_Template.defenseType
 end
 
 function AttackTaker:isAffectedByLuck()
-    return self.m_Template.isAffectedByLuck
+	return self.m_Template.isAffectedByLuck
 end
 
 function AttackTaker:getDefenseFatalList()
-    return self.m_Template.fatal
+	return self.m_Template.fatal
 end
 
 function AttackTaker:getDefenseWeakList()
-    return self.m_Template.weak
+	return self.m_Template.weak
 end
 
 return AttackTaker

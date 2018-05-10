@@ -1,9 +1,9 @@
 
 local ViewUnitInfo = class("ViewUnitInfo", cc.Node)
 
-local AnimationLoader       = requireFW("src.app.utilities.AnimationLoader")
+local AnimationLoader	   = requireFW("src.app.utilities.AnimationLoader")
 local GameConstantFunctions = requireFW("src.app.utilities.GameConstantFunctions")
-local Actor                 = requireFW("src.global.actors.Actor")
+local Actor				 = requireFW("src.global.actors.Actor")
 
 local SUB_VIEW_Z_ORDER = 0
 
@@ -19,124 +19,124 @@ local RIGHT_POS_Y = LEFT_POS_Y
 -- The util functions.
 --------------------------------------------------------------------------------
 local function createLabel(posX, posY)
-    local label = cc.Label:createWithTTF("", "res/fonts/msyhbd.ttc", FONT_SIZE)
-    label:ignoreAnchorPointForPosition(true)
-        :setPosition(posX, posY)
-        :setDimensions(INFO_LABEL_WIDTH, INFO_LABEL_HEIGHT)
+	local label = cc.Label:createWithTTF("", "res/fonts/msyhbd.ttc", FONT_SIZE)
+	label:ignoreAnchorPointForPosition(true)
+		:setPosition(posX, posY)
+		:setDimensions(INFO_LABEL_WIDTH, INFO_LABEL_HEIGHT)
 
-        :setHorizontalAlignment(cc.TEXT_ALIGNMENT_RIGHT)
-        :setVerticalAlignment(cc.VERTICAL_TEXT_ALIGNMENT_BOTTOM)
+		:setHorizontalAlignment(cc.TEXT_ALIGNMENT_RIGHT)
+		:setVerticalAlignment(cc.VERTICAL_TEXT_ALIGNMENT_BOTTOM)
 
-        :setTextColor(FONT_COLOR)
-        :enableOutline(FONT_OUTLINE_COLOR, FONT_OUTLINE_WIDTH)
+		:setTextColor(FONT_COLOR)
+		:enableOutline(FONT_OUTLINE_COLOR, FONT_OUTLINE_WIDTH)
 
-    return label
+	return label
 end
 
 local function initSubView(self, index)
-    local subView = Actor.createView("common.ViewUnitInfoSingle")
-    subView:updateWithPlayerIndex(self.m_PlayerIndex)
-        :setVisible(true)
-        :setCallbackOnTouch(function()
-            if (self.m_Model) then
-                self.m_Model:onPlayerTouch(index)
-            end
-        end)
+	local subView = Actor.createView("common.ViewUnitInfoSingle")
+	subView:updateWithPlayerIndex(self.m_PlayerIndex)
+		:setVisible(true)
+		:setCallbackOnTouch(function()
+			if (self.m_Model) then
+				self.m_Model:onPlayerTouch(index)
+			end
+		end)
 
-    self:addChild(subView, SUB_VIEW_Z_ORDER)
-    self.m_SubViewList[index] = subView
+	self:addChild(subView, SUB_VIEW_Z_ORDER)
+	self.m_SubViewList[index] = subView
 end
 
 --------------------------------------------------------------------------------
 -- The functions that adjust the position of the view.
 --------------------------------------------------------------------------------
 local function moveToLeftSide(self)
-    self.m_IsLeftSide = true
+	self.m_IsLeftSide = true
 
-    self:setPosition(LEFT_POS_X, LEFT_POS_Y)
-    for i, subView in ipairs(self.m_SubViewList) do
-        subView:setPositionX(SUB_VIEW_WIDTH * (i - 1))
-    end
+	self:setPosition(LEFT_POS_X, LEFT_POS_Y)
+	for i, subView in ipairs(self.m_SubViewList) do
+		subView:setPositionX(SUB_VIEW_WIDTH * (i - 1))
+	end
 end
 
 local function moveToRightSide(self)
-    self.m_IsLeftSide = false
+	self.m_IsLeftSide = false
 
-    self:setPosition(RIGHT_POS_X, RIGHT_POS_Y)
-    for i, subView in ipairs(self.m_SubViewList) do
-        subView:setPositionX(-SUB_VIEW_WIDTH * i)
-    end
+	self:setPosition(RIGHT_POS_X, RIGHT_POS_Y)
+	for i, subView in ipairs(self.m_SubViewList) do
+		subView:setPositionX(-SUB_VIEW_WIDTH * i)
+	end
 end
 
 local function adjustPosition(self, toLeftSide)
-    if (toLeftSide) then
-        moveToLeftSide(self)
-    else
-        moveToRightSide(self)
-    end
+	if (toLeftSide) then
+		moveToLeftSide(self)
+	else
+		moveToRightSide(self)
+	end
 end
 
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
 function ViewUnitInfo:ctor(param)
-    self.m_SubViewList = {}
+	self.m_SubViewList = {}
 
-    self:ignoreAnchorPointForPosition(true)
-        :setVisible(false)
+	self:ignoreAnchorPointForPosition(true)
+		:setVisible(false)
 
-    adjustPosition(self, false)
+	adjustPosition(self, false)
 
-    return self
+	return self
 end
 
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
 function ViewUnitInfo:adjustPositionOnTouch(touch)
-    local touchLocation = touch:getLocation()
-    if (touchLocation.y < display.height / 2) then
-        local toLeftSide = touchLocation.x > display.width / 2
-        if (self.m_IsLeftSide ~= toLeftSide) then
-            adjustPosition(self, toLeftSide)
-        end
-    end
+	local touchLocation = touch:getLocation()
+	if (touchLocation.y < display.height / 2) then
+		local toLeftSide = touchLocation.x > display.width / 2
+		if (self.m_IsLeftSide ~= toLeftSide) then
+			adjustPosition(self, toLeftSide)
+		end
+	end
 
-    return self
+	return self
 end
 
 function ViewUnitInfo:updateWithModelUnit(modelUnit, loadedModelUnits)
-    local subViewList = self.m_SubViewList
-    if (not subViewList[1]) then
-        initSubView(self, 1)
-    end
-    subViewList[1]:updateWithModelUnit(modelUnit)
+	local subViewList = self.m_SubViewList
+	if (not subViewList[1]) then
+		initSubView(self, 1)
+	end
+	subViewList[1]:updateWithModelUnit(modelUnit)
 
-    for i = 2, #subViewList do
-        subViewList[i]:setVisible(false)
-    end
+	for i = 2, #subViewList do
+		subViewList[i]:setVisible(false)
+	end
 
-    for i, loadedModelUnit in ipairs(loadedModelUnits or {}) do
-        if (not subViewList[i + 1]) then
-            initSubView(self, i + 1)
-        end
+	for i, loadedModelUnit in ipairs(loadedModelUnits or {}) do
+		if (not subViewList[i + 1]) then
+			initSubView(self, i + 1)
+		end
 
-        subViewList[i + 1]:updateWithModelUnit(loadedModelUnit)
-            :setVisible(true)
-    end
+		subViewList[i + 1]:updateWithModelUnit(loadedModelUnit)
+			:setVisible(true)
+	end
 
-    adjustPosition(self, self.m_IsLeftSide)
+	adjustPosition(self, self.m_IsLeftSide)
 
-    return self
+	return self
 end
 
 function ViewUnitInfo:updateWithPlayerIndex(playerIndex)
-    self.m_PlayerIndex = playerIndex
-    for _, subView in ipairs(self.m_SubViewList) do
-        subView:updateWithPlayerIndex(playerIndex)
-    end
+	self.m_PlayerIndex = playerIndex
+	for _, subView in ipairs(self.m_SubViewList) do
+		subView:updateWithPlayerIndex(playerIndex)
+	end
 
-    return self
+	return self
 end
 
 return ViewUnitInfo

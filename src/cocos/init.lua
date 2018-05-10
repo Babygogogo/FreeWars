@@ -33,12 +33,12 @@ require "cocos.cocos2d.OpenglConstants"
 require "cocos.cocosdenshion.AudioEngine"
 -- cocosstudio
 if nil ~= ccs then
-    require "cocos.cocostudio.CocoStudio"
+	require "cocos.cocostudio.CocoStudio"
 end
 -- ui
 if nil ~= ccui then
-    require "cocos.ui.GuiConstants"
-    require "cocos.ui.experimentalUIConstants"
+	require "cocos.ui.GuiConstants"
+	require "cocos.ui.experimentalUIConstants"
 end
 
 -- extensions
@@ -47,7 +47,7 @@ require "cocos.extension.ExtensionConstants"
 require "cocos.network.NetworkConstants"
 -- Spine
 if nil ~= sp then
-    require "cocos.spine.SpineConstants"
+	require "cocos.spine.SpineConstants"
 end
 
 require "cocos.cocos2d.deprecated"
@@ -64,8 +64,8 @@ require "cocos.cocos2d.DeprecatedOpenglEnum"
 
 -- register_cocostudio_module
 if nil ~= ccs then
-    require "cocos.cocostudio.DeprecatedCocoStudioClass"
-    require "cocos.cocostudio.DeprecatedCocoStudioFunc"
+	require "cocos.cocostudio.DeprecatedCocoStudioClass"
+	require "cocos.cocostudio.DeprecatedCocoStudioFunc"
 end
 
 
@@ -88,8 +88,8 @@ require "cocos.network.DeprecatedNetworkFunc"
 
 -- register_ui_moudle
 if nil ~= ccui then
-    require "cocos.ui.DeprecatedUIEnum"
-    require "cocos.ui.DeprecatedUIFunc"
+	require "cocos.ui.DeprecatedUIEnum"
+	require "cocos.ui.DeprecatedUIFunc"
 end
 
 -- cocosbuilder
@@ -99,5 +99,5 @@ require "cocos.cocosbuilder.CCBReaderLoad"
 require "cocos.physics3d.physics3d-constants"
 
 if CC_USE_FRAMEWORK then
-    require "cocos.framework.init"
+	require "cocos.framework.init"
 end

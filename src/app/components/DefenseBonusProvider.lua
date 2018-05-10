@@ -14,67 +14,67 @@ local DefenseBonusProvider = requireFW("src.global.functions.class")("DefenseBon
 
 local LocalizationFunctions = requireFW("src.app.utilities.LocalizationFunctions")
 local GameConstantFunctions = requireFW("src.app.utilities.GameConstantFunctions")
-local ComponentManager      = requireFW("src.global.components.ComponentManager")
+local ComponentManager	  = requireFW("src.global.components.ComponentManager")
 
 DefenseBonusProvider.EXPORTED_METHODS = {
-    "getDefenseBonusAmount",
-    "getNormalizedDefenseBonusAmount",
-    "getDefenseBonusTargetCategoryFullName",
-    "getDefenseBonusTargetCategory",
+	"getDefenseBonusAmount",
+	"getNormalizedDefenseBonusAmount",
+	"getDefenseBonusTargetCategoryFullName",
+	"getDefenseBonusTargetCategory",
 }
 
 --------------------------------------------------------------------------------
 -- The util functions.
 --------------------------------------------------------------------------------
 local function isDefenseBonusTarget(self, targetName)
-    for _, name in ipairs(self:getDefenseBonusTargetCategory()) do
-        if (targetName == name) then
-            return true
-        end
-    end
+	for _, name in ipairs(self:getDefenseBonusTargetCategory()) do
+		if (targetName == name) then
+			return true
+		end
+	end
 
-    return false
+	return false
 end
 
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
 function DefenseBonusProvider:ctor(param)
-    self:loadTemplate(param.template)
+	self:loadTemplate(param.template)
 
-    return self
+	return self
 end
 
 function DefenseBonusProvider:loadTemplate(template)
-    assert(template.amount,             "DefenseBonusProvider:loadTemplate() the param template.amount is invalid.")
-    assert(template.targetCategoryType, "DefenseBonusProvider:loadTemplate() the param template.targetCategoryType is invalid.")
+	assert(template.amount,			 "DefenseBonusProvider:loadTemplate() the param template.amount is invalid.")
+	assert(template.targetCategoryType, "DefenseBonusProvider:loadTemplate() the param template.targetCategoryType is invalid.")
 
-    self.m_Template = template
+	self.m_Template = template
 
-    return self
+	return self
 end
 
 --------------------------------------------------------------------------------
 -- The exported functions.
 --------------------------------------------------------------------------------
 function DefenseBonusProvider:getDefenseBonusAmount(targetType)
-    if ((not targetType) or (isDefenseBonusTarget(self, targetType))) then
-        return self.m_Template.amount
-    else
-        return 0
-    end
+	if ((not targetType) or (isDefenseBonusTarget(self, targetType))) then
+		return self.m_Template.amount
+	else
+		return 0
+	end
 end
 
 function DefenseBonusProvider:getNormalizedDefenseBonusAmount()
-    return math.floor(self:getDefenseBonusAmount() / 10)
+	return math.floor(self:getDefenseBonusAmount() / 10)
 end
 
 function DefenseBonusProvider:getDefenseBonusTargetCategoryFullName()
-    return LocalizationFunctions.getLocalizedText(118, self.m_Template.targetCategoryType)
+	return LocalizationFunctions.getLocalizedText(118, self.m_Template.targetCategoryType)
 end
 
 function DefenseBonusProvider:getDefenseBonusTargetCategory()
-    return GameConstantFunctions.getCategory(self.m_Template.targetCategoryType)
+	return GameConstantFunctions.getCategory(self.m_Template.targetCategoryType)
 end
 
 return DefenseBonusProvider

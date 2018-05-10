@@ -13,81 +13,81 @@
 
 local MoveDoer = requireFW("src.global.functions.class")("MoveDoer")
 
-local GridIndexFunctions     = requireFW("src.app.utilities.GridIndexFunctions")
+local GridIndexFunctions	 = requireFW("src.app.utilities.GridIndexFunctions")
 local LocalizationFunctions  = requireFW("src.app.utilities.LocalizationFunctions")
-local SingletonGetters       = requireFW("src.app.utilities.SingletonGetters")
+local SingletonGetters	   = requireFW("src.app.utilities.SingletonGetters")
 local SkillModifierFunctions = requireFW("src.app.utilities.SkillModifierFunctions")
-local ComponentManager       = requireFW("src.global.components.ComponentManager")
+local ComponentManager	   = requireFW("src.global.components.ComponentManager")
 
 local MOVE_TYPES = requireFW("res.data.GameConstant").moveTypes
 
-local math           = math
+local math		   = math
 local assert, ipairs = assert, ipairs
 
 MoveDoer.EXPORTED_METHODS = {
-    "getMoveRange",
-    "getMoveType",
-    "getMoveTypeFullName",
+	"getMoveRange",
+	"getMoveType",
+	"getMoveTypeFullName",
 }
 
 --------------------------------------------------------------------------------
 -- The param validators.
 --------------------------------------------------------------------------------
 local function isMoveRange(param)
-    return (param > 0) and (math.ceil(param) == param)
+	return (param > 0) and (math.ceil(param) == param)
 end
 
 local function isMoveType(param)
-    for _, validType in ipairs(MOVE_TYPES) do
-        if (validType == param) then
-            return true
-        end
-    end
+	for _, validType in ipairs(MOVE_TYPES) do
+		if (validType == param) then
+			return true
+		end
+	end
 
-    return false
+	return false
 end
 
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
 function MoveDoer:ctor(param)
-    self:loadTemplate(param.template)
+	self:loadTemplate(param.template)
 
-    return self
+	return self
 end
 
 function MoveDoer:loadTemplate(template)
-    assert(isMoveRange(template.range), "MoveDoer:loadTemplate() the template.range is expected to be an integer.")
-    assert(isMoveType(template.type), "MoveDoer:loadTemplate() the template.type is invalid.")
-    self.m_Template = template
+	assert(isMoveRange(template.range), "MoveDoer:loadTemplate() the template.range is expected to be an integer.")
+	assert(isMoveType(template.type), "MoveDoer:loadTemplate() the template.type is invalid.")
+	self.m_Template = template
 
-    return self
+	return self
 end
 
 --------------------------------------------------------------------------------
 -- The public callback function on start running.
 --------------------------------------------------------------------------------
 function MoveDoer:onStartRunning(modelWar)
-    self.m_ModelWar = modelWar
+	self.m_ModelWar = modelWar
 
-    return self
+	return self
 end
 
 --------------------------------------------------------------------------------
 -- The exported functions.
 --------------------------------------------------------------------------------
 function MoveDoer:getMoveRange()
-    local modelPlayer      = SingletonGetters.getModelPlayerManager(self.m_ModelWar):getModelPlayer(self.m_Owner:getPlayerIndex())
-    local modifierForSkill = SkillModifierFunctions.getMoveRangeModifierForSkillConfiguration(modelPlayer:getModelSkillConfiguration(), modelPlayer:isActivatingSkill())
-    return math.max(1, self.m_Template.range + self.m_ModelWar:getMoveRangeModifier() + modifierForSkill)
+	local modelPlayer	  = SingletonGetters.getModelPlayerManager(self.m_ModelWar):getModelPlayer(self.m_Owner:getPlayerIndex())
+	local modifierForSkill = SkillModifierFunctions.getMoveRangeModifierForSkillConfiguration(modelPlayer:getModelSkillConfiguration(), modelPlayer:isActivatingSkill())
+	return math.max(1, self.m_Template.range + self.m_ModelWar:getMoveRangeModifier() + modifierForSkill)
 end
 
 function MoveDoer:getMoveType()
-    return self.m_Template.type
+	return self.m_Template.type
 end
 
 function MoveDoer:getMoveTypeFullName()
-    return LocalizationFunctions.getLocalizedText(110, self:getMoveType())
+	return LocalizationFunctions.getLocalizedText(110, self:getMoveType())
 end
 
 return MoveDoer

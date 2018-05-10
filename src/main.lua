@@ -19,15 +19,15 @@
 requireFW = require
 
 __G__TRACKBACK__ = function(msg)
-    local msg = debug.traceback(msg, 3)
-    print(msg)
+	local msg = debug.traceback(msg, 3)
+	print(msg)
 
-    local scene = display.getRunningScene()
-    if (scene ~= nil) then
-        scene:addChild(requireFW("app.views.common.ViewErrorIndicator"):create(msg), 999)
-    end
+	local scene = display.getRunningScene()
+	if (scene ~= nil) then
+		scene:addChild(requireFW("app.views.common.ViewErrorIndicator"):create(msg), 999)
+	end
 
-    return msg
+	return msg
 end
 
 --------------------------------------------------------------------------------
@@ -42,28 +42,37 @@ require "config"
 require "cocos.init"
 
 local function main()
-    display.loadSpriteFrames("FreeWarsTextureTile.plist",    "FreeWarsTextureTile.pvr.ccz")
-    display.loadSpriteFrames("FreeWarsTextureUnit.plist",    "FreeWarsTextureUnit.pvr.ccz")
-    display.loadSpriteFrames("FreeWarsTextureUI.plist",      "FreeWarsTextureUI.pvr.ccz")
-    display.loadSpriteFrames("FreeWarsTextureGallery.plist", "FreeWarsTextureGallery.pvr.ccz")
+	print('正在读取plist文件')
+	display.loadSpriteFrames("FreeWarsTextureTile.plist","FreeWarsTextureTile.pvr.ccz")
+	display.loadSpriteFrames("FreeWarsTextureUnit.plist","FreeWarsTextureUnit.pvr.ccz")
+	display.loadSpriteFrames("FreeWarsTextureUI.plist","FreeWarsTextureUI.pvr.ccz")
+	display.loadSpriteFrames("FreeWarsTextureGallery.plist","FreeWarsTextureGallery.pvr.ccz")
+	print('正在启动工具模块')
+	requireFW("src.app.utilities.AnimationLoader").load()
+	requireFW("src.app.utilities.GameConstantFunctions").init()
+	requireFW("src.app.utilities.SerializationFunctions").init()
+	requireFW("src.app.utilities.NativeWarManager").init()
+	math.randomseed(os.time())
 
-    requireFW("src.app.utilities.AnimationLoader")       .load()
-    requireFW("src.app.utilities.GameConstantFunctions") .init()
-    requireFW("src.app.utilities.SerializationFunctions").init()
-    requireFW("src.app.utilities.WarFieldManager")       .init()
-    requireFW("src.app.utilities.NativeWarManager")      .init()
-
-    math.randomseed(os.time())
-
-    --cc.Director:getInstance():setDisplayStats(true)
-
-    local actorSceneMain = requireFW("src.global.actors.Actor").createWithModelAndViewName("sceneMain.ModelSceneMain", nil, "sceneMain.ViewSceneMain")
-    requireFW("src.app.utilities.WebSocketManager").init()
-    requireFW("src.global.actors.ActorManager").setAndRunRootActor(actorSceneMain)
-    actorSceneMain:getModel():getModelMessageIndicator():showMessage(requireFW("src.app.utilities.LocalizationFunctions").getLocalizedText(30, "StartConnecting"))
+	cc.Director:getInstance():setDisplayStats(true)
+	local actor=requireFW("src.global.actors.Actor")
+	--启动主界面
+	local actorSceneMain = actor.createWithModelAndViewName("sceneMain.ModelSceneMain", nil, "sceneMain.ViewSceneMain")
+	requireFW("src.global.actors.ActorManager").setAndRunRootActor(actorSceneMain)
+	--消息指示器
+	local indicator=actorSceneMain:getModel():getModelMessageIndicator()
+	indicator:showMessage(requireFW("src.app.utilities.LocalizationFunctions").getLocalizedText(30, "StartConnecting"))
+	requireFW("src.app.utilities.WebSocketManager").init()--初始化网络
+	--给战场管理器设置指示器
+	local wfManager=requireFW("src.app.utilities.WarFieldManager")
+	wfManager.indicator=indicator
+	--让下载器准备进行热更新
+	local downloader=requireFW("src.global.functions.download")
+	downloader.indicator=indicator
+	downloader.httpDownload('localhost:1024/','./')
 end
 
 local status, msg = xpcall(main, __G__TRACKBACK__)
 if not status then
-    print(msg)
+	print(msg)
 end

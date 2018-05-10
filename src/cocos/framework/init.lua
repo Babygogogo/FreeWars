@@ -26,12 +26,12 @@ if type(DEBUG) ~= "number" then DEBUG = 0 end
 
 -- load framework
 printInfo("")
-printInfo("# DEBUG                        = " .. DEBUG)
+printInfo("# DEBUG						= " .. DEBUG)
 printInfo("#")
 
-device     = require("cocos.framework.device")
-display    = require("cocos.framework.display")
-audio      = require("cocos.framework.audio")
+device	 = require("cocos.framework.device")
+display	= require("cocos.framework.display")
+audio	  = require("cocos.framework.audio")
 transition = require("cocos.framework.transition")
 
 require("cocos.framework.extends.NodeEx")
@@ -59,24 +59,24 @@ cc.register("event", require("cocos.framework.components.event"))
 local __g = _G
 cc.exports = {}
 setmetatable(cc.exports, {
-    __newindex = function(_, name, value)
-        rawset(__g, name, value)
-    end,
+	__newindex = function(_, name, value)
+		rawset(__g, name, value)
+	end,
 
-    __index = function(_, name)
-        return rawget(__g, name)
-    end
+	__index = function(_, name)
+		return rawget(__g, name)
+	end
 })
 
 -- disable create unexpected global variable
 function cc.disable_global()
-    setmetatable(__g, {
-        __newindex = function(_, name, value)
-            error(string.format("USE \" cc.exports.%s = value \" INSTEAD OF SET GLOBAL VARIABLE", name), 0)
-        end
-    })
+	setmetatable(__g, {
+		__newindex = function(_, name, value)
+			error(string.format("USE \" cc.exports.%s = value \" INSTEAD OF SET GLOBAL VARIABLE", name), 0)
+		end
+	})
 end
 
 if CC_DISABLE_GLOBAL then
-    cc.disable_global()
+	cc.disable_global()
 end

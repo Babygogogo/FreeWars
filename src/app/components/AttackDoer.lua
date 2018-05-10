@@ -9,209 +9,209 @@
 --   玩家操作单位时，需要通过本组件获知能否对特定目标进行攻击；选择攻击目标时，需要使用本组件计算预估的伤害值和反击伤害
 --   服务器接收到玩家进攻的操作命令时，用本组件判定进攻是否合法，并计算最终伤害并返回给客户端
 -- 其他：
---    在目前设定中，预估伤害值和最终伤害值的区别仅在于：预估伤害值无视幸运伤害，而最终伤害值计算幸运伤害
---    伤害值受防御类型、hp、地形、等级、co技能、天气等影响
+--	在目前设定中，预估伤害值和最终伤害值的区别仅在于：预估伤害值无视幸运伤害，而最终伤害值计算幸运伤害
+--	伤害值受防御类型、hp、地形、等级、co技能、天气等影响
 --]]--------------------------------------------------------------------------------
 
 local AttackDoer = requireFW("src.global.functions.class")("AttackDoer")
 
 local LocalizationFunctions  = requireFW("src.app.utilities.LocalizationFunctions")
 local SkillModifierFunctions = requireFW("src.app.utilities.SkillModifierFunctions")
-local ComponentManager       = requireFW("src.global.components.ComponentManager")
-local SingletonGetters       = requireFW("src.app.utilities.SingletonGetters")
+local ComponentManager	   = requireFW("src.global.components.ComponentManager")
+local SingletonGetters	   = requireFW("src.app.utilities.SingletonGetters")
 
 AttackDoer.EXPORTED_METHODS = {
-    "hasPrimaryWeapon",
-    "getPrimaryWeaponFullName",
-    "getPrimaryWeaponMaxAmmo",
-    "getPrimaryWeaponCurrentAmmo",
-    "getPrimaryWeaponFatalList",
-    "getPrimaryWeaponStrongList",
+	"hasPrimaryWeapon",
+	"getPrimaryWeaponFullName",
+	"getPrimaryWeaponMaxAmmo",
+	"getPrimaryWeaponCurrentAmmo",
+	"getPrimaryWeaponFatalList",
+	"getPrimaryWeaponStrongList",
 
-    "hasSecondaryWeapon",
-    "getSecondaryWeaponFullName",
-    "getSecondaryWeaponFatalList",
-    "getSecondaryWeaponStrongList",
+	"hasSecondaryWeapon",
+	"getSecondaryWeaponFullName",
+	"getSecondaryWeaponFatalList",
+	"getSecondaryWeaponStrongList",
 
-    "getBaseDamage",
-    "getPrimaryWeaponBaseDamage",
-    "getAttackRangeMinMax",
-    "canAttackAfterMove",
-    "canAttackDivingTarget",
-    "isPrimaryWeaponAmmoInShort",
+	"getBaseDamage",
+	"getPrimaryWeaponBaseDamage",
+	"getAttackRangeMinMax",
+	"canAttackAfterMove",
+	"canAttackDivingTarget",
+	"isPrimaryWeaponAmmoInShort",
 
-    "setPrimaryWeaponCurrentAmmo",
+	"setPrimaryWeaponCurrentAmmo",
 }
 
 --------------------------------------------------------------------------------
 -- The util functions.
 --------------------------------------------------------------------------------
 local function getAttackDoer(owner)
-    return ComponentManager.getComponent(owner, "AttackDoer")
+	return ComponentManager.getComponent(owner, "AttackDoer")
 end
 
 local function getSecondaryWeaponBaseDamage(self, defenseType)
-    if (self:hasSecondaryWeapon()) then
-        return self.m_Template.secondaryWeapon.baseDamage[defenseType]
-    else
-        return nil
-    end
+	if (self:hasSecondaryWeapon()) then
+		return self.m_Template.secondaryWeapon.baseDamage[defenseType]
+	else
+		return nil
+	end
 end
 
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
 function AttackDoer:ctor(param)
-    self:loadTemplate(param.template)
-        :loadInstantialData(param.instantialData)
+	self:loadTemplate(param.template)
+		:loadInstantialData(param.instantialData)
 
-    return self
+	return self
 end
 
 function AttackDoer:loadTemplate(template)
-    assert(type(template.minAttackRange)        == "number",   "AttackDoer:loadTemplate() the param template.minAttackRange is invalid.")
-    assert(type(template.maxAttackRange)        == "number",   "AttackDoer:loadTemplate() the param template.maxAttackRange is invalid.")
-    assert(type(template.canAttackAfterMove)    == "boolean",  "AttackDoer:loadTemplate() the param template.canAttackAfterMove is invalid.")
-    assert(type(template.canAttackDivingTarget) == "boolean",  "AttackDoer:loadTemplate() the param template.canAttackDivingTarget is invalid.")
-    assert(template.primaryWeapon or template.secondaryWeapon, "AttackDoer:loadTemplate() the template has no weapon.")
+	assert(type(template.minAttackRange)		== "number",   "AttackDoer:loadTemplate() the param template.minAttackRange is invalid.")
+	assert(type(template.maxAttackRange)		== "number",   "AttackDoer:loadTemplate() the param template.maxAttackRange is invalid.")
+	assert(type(template.canAttackAfterMove)	== "boolean",  "AttackDoer:loadTemplate() the param template.canAttackAfterMove is invalid.")
+	assert(type(template.canAttackDivingTarget) == "boolean",  "AttackDoer:loadTemplate() the param template.canAttackDivingTarget is invalid.")
+	assert(template.primaryWeapon or template.secondaryWeapon, "AttackDoer:loadTemplate() the template has no weapon.")
 
-    self.m_Template = template
+	self.m_Template = template
 
-    return self
+	return self
 end
 
 function AttackDoer:loadInstantialData(data)
-    if (data.primaryWeapon) then
-        self:setPrimaryWeaponCurrentAmmo(data.primaryWeapon.currentAmmo)
-    end
+	if (data.primaryWeapon) then
+		self:setPrimaryWeaponCurrentAmmo(data.primaryWeapon.currentAmmo)
+	end
 
-    return self
+	return self
 end
 
 --------------------------------------------------------------------------------
 -- The function for serialzation.
 --------------------------------------------------------------------------------
 function AttackDoer:toSerializableTable()
-    if ((not self:hasPrimaryWeapon()) or (self:getPrimaryWeaponCurrentAmmo() == self:getPrimaryWeaponMaxAmmo())) then
-        return nil
-    else
-        return {
-            primaryWeapon = {
-                currentAmmo = self:getPrimaryWeaponCurrentAmmo(),
-            }
-        }
-    end
+	if ((not self:hasPrimaryWeapon()) or (self:getPrimaryWeaponCurrentAmmo() == self:getPrimaryWeaponMaxAmmo())) then
+		return nil
+	else
+		return {
+			primaryWeapon = {
+				currentAmmo = self:getPrimaryWeaponCurrentAmmo(),
+			}
+		}
+	end
 end
 
 --------------------------------------------------------------------------------
 -- The public callback function for start running.
 --------------------------------------------------------------------------------
 function AttackDoer:onStartRunning(modelSceneWar)
-    self.m_ModelWar = modelSceneWar
+	self.m_ModelWar = modelSceneWar
 
-    return self
+	return self
 end
 
 --------------------------------------------------------------------------------
 -- Exported methods.
 --------------------------------------------------------------------------------
 function AttackDoer:hasPrimaryWeapon()
-    return self.m_Template.primaryWeapon ~= nil
+	return self.m_Template.primaryWeapon ~= nil
 end
 
 function AttackDoer:getPrimaryWeaponMaxAmmo()
-    assert(self:hasPrimaryWeapon(), "AttackDoer:getPrimaryWeaponMaxAmmo() the attack doer has no primary weapon.")
-    return self.m_Template.primaryWeapon.maxAmmo
+	assert(self:hasPrimaryWeapon(), "AttackDoer:getPrimaryWeaponMaxAmmo() the attack doer has no primary weapon.")
+	return self.m_Template.primaryWeapon.maxAmmo
 end
 
 function AttackDoer:getPrimaryWeaponCurrentAmmo()
-    assert(self:hasPrimaryWeapon(), "AttackDoer:getPrimaryWeaponCurrentAmmo() the attack doer has no primary weapon.")
-    return self.m_PrimaryWeaponCurrentAmmo
+	assert(self:hasPrimaryWeapon(), "AttackDoer:getPrimaryWeaponCurrentAmmo() the attack doer has no primary weapon.")
+	return self.m_PrimaryWeaponCurrentAmmo
 end
 
 function AttackDoer:getPrimaryWeaponFullName()
-    assert(self:hasPrimaryWeapon(), "AttackDoer:getPrimaryWeaponFullName() the attack doer has no primary weapon.")
-    return LocalizationFunctions.getLocalizedText(115, self.m_Template.primaryWeapon.type)
+	assert(self:hasPrimaryWeapon(), "AttackDoer:getPrimaryWeaponFullName() the attack doer has no primary weapon.")
+	return LocalizationFunctions.getLocalizedText(115, self.m_Template.primaryWeapon.type)
 end
 
 function AttackDoer:getPrimaryWeaponFatalList()
-    assert(self:hasPrimaryWeapon(), "AttackDoer:getPrimaryWeaponFatalList() the attack doer has no primary weapon.")
-    return self.m_Template.primaryWeapon.fatal
+	assert(self:hasPrimaryWeapon(), "AttackDoer:getPrimaryWeaponFatalList() the attack doer has no primary weapon.")
+	return self.m_Template.primaryWeapon.fatal
 end
 
 function AttackDoer:getPrimaryWeaponStrongList()
-    assert(self:hasPrimaryWeapon(), "AttackDoer:getPrimaryWeaponStrongList() the attack doer has no primary weapon.")
-    return self.m_Template.primaryWeapon.strong
+	assert(self:hasPrimaryWeapon(), "AttackDoer:getPrimaryWeaponStrongList() the attack doer has no primary weapon.")
+	return self.m_Template.primaryWeapon.strong
 end
 
 function AttackDoer:hasSecondaryWeapon()
-    return self.m_Template.secondaryWeapon ~= nil
+	return self.m_Template.secondaryWeapon ~= nil
 end
 
 function AttackDoer:getSecondaryWeaponFullName()
-    assert(self:hasSecondaryWeapon(), "AttackDoer:getSecondaryWeaponFullName() the attack doer has no secondary weapon.")
-    return LocalizationFunctions.getLocalizedText(115, self.m_Template.secondaryWeapon.type)
+	assert(self:hasSecondaryWeapon(), "AttackDoer:getSecondaryWeaponFullName() the attack doer has no secondary weapon.")
+	return LocalizationFunctions.getLocalizedText(115, self.m_Template.secondaryWeapon.type)
 end
 
 function AttackDoer:getSecondaryWeaponFatalList()
-    assert(self:hasSecondaryWeapon(), "AttackDoer:getSecondaryWeaponFatalList() the attack doer has no secondary weapon.")
-    return self.m_Template.secondaryWeapon.fatal
+	assert(self:hasSecondaryWeapon(), "AttackDoer:getSecondaryWeaponFatalList() the attack doer has no secondary weapon.")
+	return self.m_Template.secondaryWeapon.fatal
 end
 
 function AttackDoer:getSecondaryWeaponStrongList()
-    assert(self:hasSecondaryWeapon(), "AttackDoer:getSecondaryWeaponStrongList() the attack doer has no secondary weapon.")
-    return self.m_Template.secondaryWeapon.strong
+	assert(self:hasSecondaryWeapon(), "AttackDoer:getSecondaryWeaponStrongList() the attack doer has no secondary weapon.")
+	return self.m_Template.secondaryWeapon.strong
 end
 
 function AttackDoer:getBaseDamage(defenseType, ignoreAmmo)
-    return self:getPrimaryWeaponBaseDamage(defenseType, ignoreAmmo) or getSecondaryWeaponBaseDamage(self, defenseType)
+	return self:getPrimaryWeaponBaseDamage(defenseType, ignoreAmmo) or getSecondaryWeaponBaseDamage(self, defenseType)
 end
 
 function AttackDoer:getPrimaryWeaponBaseDamage(defenseType, ignoreAmmo)
-    if (not self:hasPrimaryWeapon()) then
-        return nil
-    elseif ((ignoreAmmo) or (self:getPrimaryWeaponCurrentAmmo() > 0)) then
-        return self.m_Template.primaryWeapon.baseDamage[defenseType]
-    else
-        return nil
-    end
+	if (not self:hasPrimaryWeapon()) then
+		return nil
+	elseif ((ignoreAmmo) or (self:getPrimaryWeaponCurrentAmmo() > 0)) then
+		return self.m_Template.primaryWeapon.baseDamage[defenseType]
+	else
+		return nil
+	end
 end
 
 function AttackDoer:getAttackRangeMinMax()
-    local minRange = self.m_Template.minAttackRange
-    local maxRange = self.m_Template.maxAttackRange
-    if (maxRange <= 1) then
-        return minRange, maxRange
-    else
-        local modelPlayer = SingletonGetters.getModelPlayerManager(self.m_ModelWar):getModelPlayer(self.m_Owner:getPlayerIndex())
-        return minRange,
-            math.max(minRange, maxRange + SkillModifierFunctions.getAttackRangeModifierForSkillConfiguration(modelPlayer:getModelSkillConfiguration(), modelPlayer:isActivatingSkill()))
-    end
+	local minRange = self.m_Template.minAttackRange
+	local maxRange = self.m_Template.maxAttackRange
+	if (maxRange <= 1) then
+		return minRange, maxRange
+	else
+		local modelPlayer = SingletonGetters.getModelPlayerManager(self.m_ModelWar):getModelPlayer(self.m_Owner:getPlayerIndex())
+		return minRange,
+			math.max(minRange, maxRange + SkillModifierFunctions.getAttackRangeModifierForSkillConfiguration(modelPlayer:getModelSkillConfiguration(), modelPlayer:isActivatingSkill()))
+	end
 end
 
 function AttackDoer:canAttackAfterMove()
-    return self.m_Template.canAttackAfterMove
+	return self.m_Template.canAttackAfterMove
 end
 
 function AttackDoer:canAttackDivingTarget()
-    return self.m_Template.canAttackDivingTarget
+	return self.m_Template.canAttackDivingTarget
 end
 
 function AttackDoer:isPrimaryWeaponAmmoInShort()
-    if (not self:hasPrimaryWeapon()) then
-        return false
-    else
-        return (self:getPrimaryWeaponCurrentAmmo() / self:getPrimaryWeaponMaxAmmo()) <= 0.4
-    end
+	if (not self:hasPrimaryWeapon()) then
+		return false
+	else
+		return (self:getPrimaryWeaponCurrentAmmo() / self:getPrimaryWeaponMaxAmmo()) <= 0.4
+	end
 end
 
 function AttackDoer:setPrimaryWeaponCurrentAmmo(ammo)
-    assert(self:hasPrimaryWeapon(), "AttackDoer:setPrimaryWeaponCurrentAmmo() there's no primary weapon.")
-    assert((ammo >= 0) and (ammo <= self:getPrimaryWeaponMaxAmmo()) and (math.floor(ammo) == ammo), "AttackDoer:setPrimaryWeaponCurrentAmmo() the param ammo is invalid.")
+	assert(self:hasPrimaryWeapon(), "AttackDoer:setPrimaryWeaponCurrentAmmo() there's no primary weapon.")
+	assert((ammo >= 0) and (ammo <= self:getPrimaryWeaponMaxAmmo()) and (math.floor(ammo) == ammo), "AttackDoer:setPrimaryWeaponCurrentAmmo() the param ammo is invalid.")
 
-    self.m_PrimaryWeaponCurrentAmmo = ammo
+	self.m_PrimaryWeaponCurrentAmmo = ammo
 
-    return self
+	return self
 end
 
 return AttackDoer

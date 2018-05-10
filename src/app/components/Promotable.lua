@@ -19,75 +19,75 @@ local MAX_PROMOTION   = GameConstantFunctions.getMaxPromotion()
 local PROMOTION_BONUS = GameConstantFunctions.getPromotionBonus()
 
 Promotable.EXPORTED_METHODS = {
-    "getCurrentPromotion",
-    "getMaxPromotion",
-    "getPromotionAttackBonus",
-    "getPromotionDefenseBonus",
+	"getCurrentPromotion",
+	"getMaxPromotion",
+	"getPromotionAttackBonus",
+	"getPromotionDefenseBonus",
 
-    "setCurrentPromotion",
+	"setCurrentPromotion",
 }
 
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
 function Promotable:ctor(param)
-    self:loadInstantialData(param.instantialData)
+	self:loadInstantialData(param.instantialData)
 
-    return self
+	return self
 end
 
 function Promotable:loadInstantialData(data)
-    self:setCurrentPromotion(data.current)
+	self:setCurrentPromotion(data.current)
 
-    return self
+	return self
 end
 
 --------------------------------------------------------------------------------
 -- The function for serialization.
 --------------------------------------------------------------------------------
 function Promotable:toSerializableTable()
-    local promotion = self:getCurrentPromotion()
-    if (promotion == 0) then
-        return nil
-    else
-        return {
-            current = promotion,
-        }
-    end
+	local promotion = self:getCurrentPromotion()
+	if (promotion == 0) then
+		return nil
+	else
+		return {
+			current = promotion,
+		}
+	end
 end
 
 --------------------------------------------------------------------------------
 -- The exported functions.
 --------------------------------------------------------------------------------
 function Promotable:getCurrentPromotion()
-    return self.m_CurrentPromotion
+	return self.m_CurrentPromotion
 end
 
 function Promotable:getMaxPromotion()
-    return MAX_PROMOTION
+	return MAX_PROMOTION
 end
 
 function Promotable:getPromotionAttackBonus()
-    if (self.m_CurrentPromotion == 0) then
-        return 0
-    else
-        return PROMOTION_BONUS[self.m_CurrentPromotion].attack
-    end
+	if (self.m_CurrentPromotion == 0) then
+		return 0
+	else
+		return PROMOTION_BONUS[self.m_CurrentPromotion].attack
+	end
 end
 
 function Promotable:getPromotionDefenseBonus()
-    if (self.m_CurrentPromotion == 0) then
-        return 0
-    else
-        return PROMOTION_BONUS[self.m_CurrentPromotion].defense
-    end
+	if (self.m_CurrentPromotion == 0) then
+		return 0
+	else
+		return PROMOTION_BONUS[self.m_CurrentPromotion].defense
+	end
 end
 
 function Promotable:setCurrentPromotion(promotion)
-    assert((promotion >= 0) and (promotion <= MAX_PROMOTION), "Promotable:setCurrentPromotion() the param promotion is invalid." )
-    self.m_CurrentPromotion = promotion
+	assert((promotion >= 0) and (promotion <= MAX_PROMOTION), "Promotable:setCurrentPromotion() the param promotion is invalid." )
+	self.m_CurrentPromotion = promotion
 
-    return self.m_Owner
+	return self.m_Owner
 end
 
 return Promotable

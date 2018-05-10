@@ -1,87 +1,87 @@
 
 local Buildable = requireFW("src.global.functions.class")("Buildable")
 
-local ComponentManager      = requireFW("src.global.components.ComponentManager")
-local GridIndexFunctions    = requireFW("src.app.utilities.GridIndexFunctions")
+local ComponentManager	  = requireFW("src.global.components.ComponentManager")
+local GridIndexFunctions	= requireFW("src.app.utilities.GridIndexFunctions")
 
 Buildable.EXPORTED_METHODS = {
-    "getCurrentBuildPoint",
-    "getMaxBuildPoint",
+	"getCurrentBuildPoint",
+	"getMaxBuildPoint",
 
-    "setCurrentBuildPoint",
+	"setCurrentBuildPoint",
 }
 
 --------------------------------------------------------------------------------
 -- The util functions.
 --------------------------------------------------------------------------------
 local function isBuilderDestroyed(selfGridIndex, builder)
-    return ((GridIndexFunctions.isEqual(selfGridIndex, builder:getGridIndex())) and
-        (builder:getCurrentHP() <= 0))
+	return ((GridIndexFunctions.isEqual(selfGridIndex, builder:getGridIndex())) and
+		(builder:getCurrentHP() <= 0))
 end
 
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
 function Buildable:ctor(param)
-    self:loadTemplate(param.template)
-        :loadInstantialData(param.instantialData)
+	self:loadTemplate(param.template)
+		:loadInstantialData(param.instantialData)
 
-    return self
+	return self
 end
 
 function Buildable:loadTemplate(template)
-    assert(template.maxBuildPoint, "Buildable:loadTemplate() the param template.maxBuildPoint is invalid.")
-    self.m_Template = template
+	assert(template.maxBuildPoint, "Buildable:loadTemplate() the param template.maxBuildPoint is invalid.")
+	self.m_Template = template
 
-    return self
+	return self
 end
 
 function Buildable:loadInstantialData(data)
-    assert(data.currentBuildPoint, "Buildable:loadInstantialData() the param data.currentBuildPoint is invalid.")
-    self:setCurrentBuildPoint(data.currentBuildPoint)
+	assert(data.currentBuildPoint, "Buildable:loadInstantialData() the param data.currentBuildPoint is invalid.")
+	self:setCurrentBuildPoint(data.currentBuildPoint)
 
-    return self
+	return self
 end
 
 --------------------------------------------------------------------------------
 -- The function for serialization.
 --------------------------------------------------------------------------------
 function Buildable:toSerializableTable()
-    local currentBuildPoint = self:getCurrentBuildPoint()
-    if (currentBuildPoint == self:getMaxBuildPoint()) then
-        return nil
-    else
-        return {
-            currentBuildPoint = currentBuildPoint,
-        }
-    end
+	local currentBuildPoint = self:getCurrentBuildPoint()
+	if (currentBuildPoint == self:getMaxBuildPoint()) then
+		return nil
+	else
+		return {
+			currentBuildPoint = currentBuildPoint,
+		}
+	end
 end
 
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
 function Buildable:updateAsFogEnabled()
-    self:setCurrentBuildPoint(self:getMaxBuildPoint())
+	self:setCurrentBuildPoint(self:getMaxBuildPoint())
 
-    return self
+	return self
 end
 
 --------------------------------------------------------------------------------
 -- The exported functions.
 --------------------------------------------------------------------------------
 function Buildable:getCurrentBuildPoint()
-    return self.m_CurrentBuildPoint
+	return self.m_CurrentBuildPoint
 end
 
 function Buildable:getMaxBuildPoint()
-    return self.m_Template.maxBuildPoint
+	return self.m_Template.maxBuildPoint
 end
 
 function Buildable:setCurrentBuildPoint(point)
-    assert((point >= 0) and (point <= self:getMaxBuildPoint()) and (math.floor(point) == point))
-    self.m_CurrentBuildPoint = point
+	assert((point >= 0) and (point <= self:getMaxBuildPoint()) and (math.floor(point) == point))
+	self.m_CurrentBuildPoint = point
 
-    return self.m_Owner
+	return self.m_Owner
 end
 
 return Buildable

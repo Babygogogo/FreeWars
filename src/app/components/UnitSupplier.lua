@@ -6,21 +6,21 @@ local SupplyFunctions = requireFW("src.app.utilities.SupplyFunctions")
 local canBeSuppliedWithAmmoOrFuel = SupplyFunctions.canBeSuppliedWithAmmoOrFuel
 
 UnitSupplier.EXPORTED_METHODS = {
-    "canSupplyModelUnit",
+	"canSupplyModelUnit",
 }
 
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
 function UnitSupplier:ctor(param)
-    return self
+	return self
 end
 
 --------------------------------------------------------------------------------
 -- The exported functions.
 --------------------------------------------------------------------------------
 function UnitSupplier:canSupplyModelUnit(modelUnit)
-    return (self.m_Owner:getPlayerIndex() == modelUnit:getPlayerIndex()) and (canBeSuppliedWithAmmoOrFuel(modelUnit))
+	return (self.m_Owner:getPlayerIndex() == modelUnit:getPlayerIndex()) and (canBeSuppliedWithAmmoOrFuel(modelUnit))
 end
 
 return UnitSupplier

@@ -11,7 +11,7 @@
 --   - 对单位的维修是有次序的。在金钱不够的情况下，优先维修最贵的单位，造价相同的情况下，优先维修首先出现的单位（由ModelUnit.m_UnitID记录）
 --   - 维修除了回复hp，也会回复燃料和弹药（不用花钱）
 --   - 如果unit的hp为71（此时游戏里显示的hp为8，原因见AttackTaker），那么维修时会补充到100（此时游戏里显示hp为10)。
---     如果unit的hp为70（此时游戏里显示的hp为7），那么维修时会补充到90（此时游戏里显示为9）
+--	 如果unit的hp为70（此时游戏里显示的hp为7），那么维修时会补充到90（此时游戏里显示为9）
 --   - 维修量受co技能、金钱影响
 --]]--------------------------------------------------------------------------------
 
@@ -19,74 +19,74 @@ local RepairDoer = requireFW("src.global.functions.class")("RepairDoer")
 
 local GameConstantFunctions  = requireFW("src.app.utilities.GameConstantFunctions")
 local LocalizationFunctions  = requireFW("src.app.utilities.LocalizationFunctions")
-local SingletonGetters       = requireFW("src.app.utilities.SingletonGetters")
-local ComponentManager       = requireFW("src.global.components.ComponentManager")
+local SingletonGetters	   = requireFW("src.app.utilities.SingletonGetters")
+local ComponentManager	   = requireFW("src.global.components.ComponentManager")
 
 local ipairs = ipairs
 
 RepairDoer.EXPORTED_METHODS = {
-    "getRepairTargetCategoryFullName",
-    "getRepairTargetCategory",
-    "canRepairTarget",
-    "getNormalizedRepairAmount",
+	"getRepairTargetCategoryFullName",
+	"getRepairTargetCategory",
+	"canRepairTarget",
+	"getNormalizedRepairAmount",
 }
 
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
 function RepairDoer:ctor(param)
-    self:loadTemplate(param.template)
+	self:loadTemplate(param.template)
 
-    return self
+	return self
 end
 
 function RepairDoer:loadTemplate(template)
-    assert(template.amount,             "RepairDoer:loadTemplate() the param template.amount is invalid.")
-    assert(template.targetCategoryType, "RepairDoer:loadTemplate() the param template.targetCategoryType is invalid.")
+	assert(template.amount,			 "RepairDoer:loadTemplate() the param template.amount is invalid.")
+	assert(template.targetCategoryType, "RepairDoer:loadTemplate() the param template.targetCategoryType is invalid.")
 
-    self.m_Template = template
+	self.m_Template = template
 
-    return self
+	return self
 end
 
 --------------------------------------------------------------------------------
 -- The public callback function on start running.
 --------------------------------------------------------------------------------
 function RepairDoer:onStartRunning(modelWar)
-    self.m_ModelWar = modelWar
+	self.m_ModelWar = modelWar
 
-    return self
+	return self
 end
 
 --------------------------------------------------------------------------------
 -- Exported methods.
 --------------------------------------------------------------------------------
 function RepairDoer:getRepairTargetCategoryFullName()
-    return LocalizationFunctions.getLocalizedText(118, self.m_Template.targetCategoryType)
+	return LocalizationFunctions.getLocalizedText(118, self.m_Template.targetCategoryType)
 end
 
 function RepairDoer:getRepairTargetCategory()
-    return GameConstantFunctions.getCategory(self.m_Template.targetCategoryType)
+	return GameConstantFunctions.getCategory(self.m_Template.targetCategoryType)
 end
 
 function RepairDoer:canRepairTarget(target)
-    local targetTiledID = target:getTiledId()
-    if (not SingletonGetters.getModelPlayerManager(self.m_ModelWar):isSameTeamIndex(GameConstantFunctions.getPlayerIndexWithTiledId(targetTiledID), self.m_Owner:getPlayerIndex())) then
-        return false
-    end
+	local targetTiledID = target:getTiledId()
+	if (not SingletonGetters.getModelPlayerManager(self.m_ModelWar):isSameTeamIndex(GameConstantFunctions.getPlayerIndexWithTiledId(targetTiledID), self.m_Owner:getPlayerIndex())) then
+		return false
+	end
 
-    local targetName = GameConstantFunctions.getUnitTypeWithTiledId(targetTiledID)
-    for _, name in ipairs(self:getRepairTargetCategory()) do
-        if (targetName == name) then
-            return true
-        end
-    end
+	local targetName = GameConstantFunctions.getUnitTypeWithTiledId(targetTiledID)
+	for _, name in ipairs(self:getRepairTargetCategory()) do
+		if (targetName == name) then
+			return true
+		end
+	end
 
-    return false
+	return false
 end
 
 function RepairDoer:getNormalizedRepairAmount()
-    return self.m_Template.amount
+	return self.m_Template.amount
 end
 
 return RepairDoer

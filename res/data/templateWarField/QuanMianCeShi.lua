@@ -6,20 +6,20 @@ return {
   width = 20,
   height = 22,
   layers = {
-    {
-      type = "tilelayer",
-      name = "tileBase",
-      x = 0,
-      y = 0,
-      width = 20,
-      height = 22,
-      visible = true,
-      opacity = 1,
-      offsetx = 0,
-      offsety = 0,
-      properties = {},
-      encoding = "lua",
-      data = {
+	{
+	  type = "tilelayer",
+	  name = "tileBase",
+	  x = 0,
+	  y = 0,
+	  width = 20,
+	  height = 22,
+	  visible = true,
+	  opacity = 1,
+	  offsetx = 0,
+	  offsety = 0,
+	  properties = {},
+	  encoding = "lua",
+	  data = {
 1,2,3,4,5,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
 6,7,8,9,10,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
 11,12,13,14,15,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
@@ -42,22 +42,22 @@ return {
 96,97,98,99,100,1,1,1,1,1,38,18,18,18,34,1,1,1,1,1,
 1,1,1,1,1,1,1,1,1,1,38,18,18,18,34,1,1,1,1,1,
 1,1,1,1,1,1,1,1,1,1,49,43,43,43,47,1,1,1,1,1
-      }
-    },
-    {
-      type = "tilelayer",
-      name = "tileObject",
-      x = 0,
-      y = 0,
-      width = 20,
-      height = 22,
-      visible = true,
-      opacity = 1,
-      offsetx = 0,
-      offsety = 0,
-      properties = {},
-      encoding = "lua",
-      data = {
+	  }
+	},
+	{
+	  type = "tilelayer",
+	  name = "tileObject",
+	  x = 0,
+	  y = 0,
+	  width = 20,
+	  height = 22,
+	  visible = true,
+	  opacity = 1,
+	  offsetx = 0,
+	  offsety = 0,
+	  properties = {},
+	  encoding = "lua",
+	  data = {
 0,0,0,0,0,101,102,103,104,105,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,106,107,108,109,110,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,111,112,113,114,115,0,0,0,0,0,0,0,0,0,0,
@@ -80,22 +80,22 @@ return {
 0,0,0,0,0,196,197,198,199,200,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,201,202,203,204,205,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,206,207,208,209,0,0,0,0,0,0,0,0,0,0,0
-      }
-    },
-    {
-      type = "tilelayer",
-      name = "unit",
-      x = 0,
-      y = 0,
-      width = 20,
-      height = 22,
-      visible = true,
-      opacity = 1,
-      offsetx = 0,
-      offsety = 0,
-      properties = {},
-      encoding = "lua",
-      data = {
+	  }
+	},
+	{
+	  type = "tilelayer",
+	  name = "unit",
+	  x = 0,
+	  y = 0,
+	  width = 20,
+	  height = 22,
+	  visible = true,
+	  opacity = 1,
+	  offsetx = 0,
+	  offsety = 0,
+	  properties = {},
+	  encoding = "lua",
+	  data = {
 0,0,0,0,0,0,0,0,0,0,210,211,212,213,214,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,215,216,217,218,219,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,220,221,222,223,224,0,0,0,0,0,
@@ -118,7 +118,7 @@ return {
 0,0,0,0,0,0,0,0,0,0,305,306,307,308,309,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,310,311,312,313,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-      }
-    }
+	  }
+	}
   }
 }

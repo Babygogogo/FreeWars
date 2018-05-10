@@ -10,189 +10,189 @@
 local ModelContinueWarSelector = class("ModelContinueWarSelector")
 
 local ActionCodeFunctions   = requireFW("src.app.utilities.ActionCodeFunctions")
-local AuxiliaryFunctions    = requireFW("src.app.utilities.AuxiliaryFunctions")
-local WebSocketManager      = requireFW("src.app.utilities.WebSocketManager")
+local AuxiliaryFunctions	= requireFW("src.app.utilities.AuxiliaryFunctions")
+local WebSocketManager	  = requireFW("src.app.utilities.WebSocketManager")
 local LocalizationFunctions = requireFW("src.app.utilities.LocalizationFunctions")
-local SingletonGetters      = requireFW("src.app.utilities.SingletonGetters")
-local WarFieldManager       = requireFW("src.app.utilities.WarFieldManager")
-local Actor                 = requireFW("src.global.actors.Actor")
-local ActorManager          = requireFW("src.global.actors.ActorManager")
+local SingletonGetters	  = requireFW("src.app.utilities.SingletonGetters")
+local WarFieldManager	   = requireFW("src.app.utilities.WarFieldManager")
+local Actor				 = requireFW("src.global.actors.Actor")
+local ActorManager		  = requireFW("src.global.actors.ActorManager")
 
-local os, string       = os, string
+local os, string	   = os, string
 local getLocalizedText = LocalizationFunctions.getLocalizedText
 
 local ACTION_CODE_GET_ONGOING_WAR_CONFIGURATIONS = ActionCodeFunctions.getActionCode("ActionGetOngoingWarConfigurations")
-local ACTION_CODE_RUN_SCENE_WAR                  = ActionCodeFunctions.getActionCode("ActionRunSceneWar")
+local ACTION_CODE_RUN_SCENE_WAR				  = ActionCodeFunctions.getActionCode("ActionRunSceneWar")
 
 --------------------------------------------------------------------------------
 -- The util functions.
 --------------------------------------------------------------------------------
 local function generateLeftLabelText(warConfiguration, currentTime)
-    local players  = warConfiguration.players
-    local textList = {getLocalizedText(48, "Players")}
-    for i = 1, WarFieldManager.getPlayersCount(warConfiguration.warFieldFileName) do
-        local text = string.format("%d. %s (%s: %s)", i, players[i].account, getLocalizedText(14, "TeamIndex"), AuxiliaryFunctions.getTeamNameWithTeamIndex(players[i].teamIndex))
-        if (i == warConfiguration.playerIndexInTurn) then
-            text = text .. string.format("(%s: %s)", getLocalizedText(34, "BootCountdown"),
-                AuxiliaryFunctions.formatTimeInterval(warConfiguration.intervalUntilBoot - currentTime + warConfiguration.enterTurnTime))
-        end
-        textList[#textList + 1] = text
-    end
+	local players  = warConfiguration.players
+	local textList = {getLocalizedText(48, "Players")}
+	for i = 1, WarFieldManager.getPlayersCount(warConfiguration.warFieldFileName) do
+		local text = string.format("%d. %s (%s: %s)", i, players[i].account, getLocalizedText(14, "TeamIndex"), AuxiliaryFunctions.getTeamNameWithTeamIndex(players[i].teamIndex))
+		if (i == warConfiguration.playerIndexInTurn) then
+			text = text .. string.format("(%s: %s)", getLocalizedText(34, "BootCountdown"),
+				AuxiliaryFunctions.formatTimeInterval(warConfiguration.intervalUntilBoot - currentTime + warConfiguration.enterTurnTime))
+		end
+		textList[#textList + 1] = text
+	end
 
-    return table.concat(textList, "\n")
+	return table.concat(textList, "\n")
 end
 
 --------------------------------------------------------------------------------
 -- The composition elements.
 --------------------------------------------------------------------------------
 local function getActorWarFieldPreviewer(self)
-    if (not self.m_ActorWarFieldPreviewer) then
-        local actor = Actor.createWithModelAndViewName("sceneMain.ModelWarFieldPreviewer", nil, "sceneMain.ViewWarFieldPreviewer")
+	if (not self.m_ActorWarFieldPreviewer) then
+		local actor = Actor.createWithModelAndViewName("sceneMain.ModelWarFieldPreviewer", nil, "sceneMain.ViewWarFieldPreviewer")
 
-        self.m_ActorWarFieldPreviewer = actor
-        self.m_View:setViewWarFieldPreviewer(actor:getView())
-    end
+		self.m_ActorWarFieldPreviewer = actor
+		self.m_View:setViewWarFieldPreviewer(actor:getView())
+	end
 
-    return self.m_ActorWarFieldPreviewer
+	return self.m_ActorWarFieldPreviewer
 end
 
 local function getActorWarConfigurator(self)
-    if (not self.m_ActorWarConfigurator) then
-        local model = Actor.createModel("sceneMain.ModelWarConfigurator")
-        local view  = Actor.createView( "sceneMain.ViewWarConfigurator")
+	if (not self.m_ActorWarConfigurator) then
+		local model = Actor.createModel("sceneMain.ModelWarConfigurator")
+		local view  = Actor.createView( "sceneMain.ViewWarConfigurator")
 
-        model:setModeContinueWar()
-            :setEnabled(false)
-            :setCallbackOnButtonBackTouched(function()
-                model:setEnabled(false)
-                getActorWarFieldPreviewer(self):getModel():setEnabled(false)
+		model:setModeContinueWar()
+			:setEnabled(false)
+			:setCallbackOnButtonBackTouched(function()
+				model:setEnabled(false)
+				getActorWarFieldPreviewer(self):getModel():setEnabled(false)
 
-                self.m_View:setMenuVisible(true)
-                    :setButtonNextVisible(false)
-            end)
+				self.m_View:setMenuVisible(true)
+					:setButtonNextVisible(false)
+			end)
 
-        self.m_ActorWarConfigurator = Actor.createWithModelAndViewInstance(model, view)
-        self.m_View:setViewWarConfigurator(view)
-    end
+		self.m_ActorWarConfigurator = Actor.createWithModelAndViewInstance(model, view)
+		self.m_View:setViewWarConfigurator(view)
+	end
 
-    return self.m_ActorWarConfigurator
+	return self.m_ActorWarConfigurator
 end
 
 local function createOngoingWarList(self, warConfigurations)
-    local warList               = {}
-    local playerAccountLoggedIn = WebSocketManager.getLoggedInAccountAndPassword()
+	local warList			   = {}
+	local playerAccountLoggedIn = WebSocketManager.getLoggedInAccountAndPassword()
 
-    for warID, warConfiguration in pairs(warConfigurations) do
-        local warFieldFileName  = warConfiguration.warFieldFileName
-        local playerIndexInTurn = warConfiguration.playerIndexInTurn
+	for warID, warConfiguration in pairs(warConfigurations) do
+		local warFieldFileName  = warConfiguration.warFieldFileName
+		local playerIndexInTurn = warConfiguration.playerIndexInTurn
 
-        warList[#warList + 1] = {
-            warID        = warID,
-            warFieldName = WarFieldManager.getWarFieldName(warFieldFileName),
-            isInTurn     = (warConfiguration.players[playerIndexInTurn].account == playerAccountLoggedIn),
-            callback     = function()
-                getActorWarFieldPreviewer(self):getModel():setWarField(warFieldFileName)
-                    :setLeftLabelText(generateLeftLabelText(warConfiguration, os.time()))
-                    :setEnabled(true)
-                self.m_View:setButtonNextVisible(true)
+		warList[#warList + 1] = {
+			warID		= warID,
+			warFieldName = WarFieldManager.getWarFieldName(warFieldFileName),
+			isInTurn	 = (warConfiguration.players[playerIndexInTurn].account == playerAccountLoggedIn),
+			callback	 = function()
+				getActorWarFieldPreviewer(self):getModel():setWarField(warFieldFileName)
+					:setLeftLabelText(generateLeftLabelText(warConfiguration, os.time()))
+					:setEnabled(true)
+				self.m_View:setButtonNextVisible(true)
 
-                self.m_OnButtonNextTouched = function()
-                    getActorWarFieldPreviewer(self):getModel():setEnabled(false)
-                    getActorWarConfigurator(self):getModel():resetWithWarConfiguration(warConfiguration)
-                        :setEnabled(true)
+				self.m_OnButtonNextTouched = function()
+					getActorWarFieldPreviewer(self):getModel():setEnabled(false)
+					getActorWarConfigurator(self):getModel():resetWithWarConfiguration(warConfiguration)
+						:setEnabled(true)
 
-                    self.m_View:setMenuVisible(false)
-                        :setButtonNextVisible(false)
-                end
-            end,
-        }
-    end
+					self.m_View:setMenuVisible(false)
+						:setButtonNextVisible(false)
+				end
+			end,
+		}
+	end
 
-    table.sort(warList, function(item1, item2)
-        return item1.warID < item2.warID
-    end)
+	table.sort(warList, function(item1, item2)
+		return item1.warID < item2.warID
+	end)
 
-    return warList
+	return warList
 end
 
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
 function ModelContinueWarSelector:ctor(param)
-    return self
+	return self
 end
 
 --------------------------------------------------------------------------------
 -- The callback function on start running.
 --------------------------------------------------------------------------------
 function ModelContinueWarSelector:onStartRunning(modelSceneMain)
-    self.m_ModelSceneMain = modelSceneMain
-    getActorWarConfigurator(self):getModel():onStartRunning(modelSceneMain)
+	self.m_ModelSceneMain = modelSceneMain
+	getActorWarConfigurator(self):getModel():onStartRunning(modelSceneMain)
 
-    return self
+	return self
 end
 
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
 function ModelContinueWarSelector:setEnabled(enabled)
-    self.m_IsEnabled = enabled
+	self.m_IsEnabled = enabled
 
-    if (enabled) then
-        SingletonGetters.getModelMessageIndicator(self.m_ModelSceneMain):showMessage(getLocalizedText(8, "TransferingData"))
-        WebSocketManager.sendAction({actionCode = ACTION_CODE_GET_ONGOING_WAR_CONFIGURATIONS})
-    end
+	if (enabled) then
+		SingletonGetters.getModelMessageIndicator(self.m_ModelSceneMain):showMessage(getLocalizedText(8, "TransferingData"))
+		WebSocketManager.sendAction({actionCode = ACTION_CODE_GET_ONGOING_WAR_CONFIGURATIONS})
+	end
 
-    if (self.m_View) then
-        self.m_View:setVisible(enabled)
-            :setMenuVisible(true)
-            :removeAllItems()
-            :setButtonNextVisible(false)
-    end
+	if (self.m_View) then
+		self.m_View:setVisible(enabled)
+			:setMenuVisible(true)
+			:removeAllItems()
+			:setButtonNextVisible(false)
+	end
 
-    getActorWarFieldPreviewer(self):getModel():setEnabled(false)
-    getActorWarConfigurator(self):getModel():setEnabled(false)
+	getActorWarFieldPreviewer(self):getModel():setEnabled(false)
+	getActorWarConfigurator(self):getModel():setEnabled(false)
 
-    return self
+	return self
 end
 
 function ModelContinueWarSelector:isRetrievingOngoingWarConfigurations()
-    return self.m_IsEnabled
+	return self.m_IsEnabled
 end
 
 function ModelContinueWarSelector:updateWithOngoingWarConfigurations(warConfigurations)
-    if (self.m_IsEnabled) then
-        local warList = createOngoingWarList(self, warConfigurations)
-        if (#warList == 0) then
-            SingletonGetters.getModelMessageIndicator(self.m_ModelSceneMain):showMessage(getLocalizedText(8, "NoContinuableWar"))
-        else
-            self.m_View:showWarList(warList)
-        end
-    end
+	if (self.m_IsEnabled) then
+		local warList = createOngoingWarList(self, warConfigurations)
+		if (#warList == 0) then
+			SingletonGetters.getModelMessageIndicator(self.m_ModelSceneMain):showMessage(getLocalizedText(8, "NoContinuableWar"))
+		else
+			self.m_View:showWarList(warList)
+		end
+	end
 
-    return self
+	return self
 end
 
 function ModelContinueWarSelector:isRetrievingOngoingWarData()
-    return self.m_IsEnabled
+	return self.m_IsEnabled
 end
 
 function ModelContinueWarSelector:updateWithOngoingWarData(warData)
-    local actorSceneWar = Actor.createWithModelAndViewName("warOnline.ModelWarOnline", warData, "common.ViewSceneWar")
-    ActorManager.setAndRunRootActor(actorSceneWar, "FADE", 1)
+	local actorSceneWar = Actor.createWithModelAndViewName("warOnline.ModelWarOnline", warData, "common.ViewSceneWar")
+	ActorManager.setAndRunRootActor(actorSceneWar, "FADE", 1)
 end
 
 function ModelContinueWarSelector:onButtonBackTouched()
-    self:setEnabled(false)
-    SingletonGetters.getModelMainMenu(self.m_ModelSceneMain):setMenuEnabled(true)
+	self:setEnabled(false)
+	SingletonGetters.getModelMainMenu(self.m_ModelSceneMain):setMenuEnabled(true)
 
-    return self
+	return self
 end
 
 function ModelContinueWarSelector:onButtonNextTouched()
-    self.m_OnButtonNextTouched()
+	self.m_OnButtonNextTouched()
 
-    return self
+	return self
 end
 
 return ModelContinueWarSelector

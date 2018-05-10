@@ -13,82 +13,82 @@ local Capturable = requireFW("src.global.functions.class")("Capturable")
 local GridIndexFunctions = requireFW("src.app.utilities.GridIndexFunctions")
 
 Capturable.EXPORTED_METHODS = {
-    "getCurrentCapturePoint",
-    "getMaxCapturePoint",
-    "isDefeatOnCapture",
+	"getCurrentCapturePoint",
+	"getMaxCapturePoint",
+	"isDefeatOnCapture",
 
-    "setCurrentCapturePoint",
+	"setCurrentCapturePoint",
 }
 
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
 function Capturable:ctor(param)
-    self:loadTemplate(param.template)
-        :loadInstantialData(param.instantialData)
+	self:loadTemplate(param.template)
+		:loadInstantialData(param.instantialData)
 
-    return self
+	return self
 end
 
 function Capturable:loadTemplate(template)
-    assert(template.maxCapturePoint, "Capturable:loadTemplate() the param template.maxCapturePoint is invalid.")
-    self.m_Template = template
+	assert(template.maxCapturePoint, "Capturable:loadTemplate() the param template.maxCapturePoint is invalid.")
+	self.m_Template = template
 
-    return self
+	return self
 end
 
 function Capturable:loadInstantialData(data)
-    assert(data.currentCapturePoint, "Capturable:loadInstantialData() the param data.currentCapturePoint is invalid.")
-    self:setCurrentCapturePoint(data.currentCapturePoint)
+	assert(data.currentCapturePoint, "Capturable:loadInstantialData() the param data.currentCapturePoint is invalid.")
+	self:setCurrentCapturePoint(data.currentCapturePoint)
 
-    return self
+	return self
 end
 
 --------------------------------------------------------------------------------
 -- The function for serialization.
 --------------------------------------------------------------------------------
 function Capturable:toSerializableTable()
-    local currentCapturePoint = self:getCurrentCapturePoint()
-    if (currentCapturePoint == self:getMaxCapturePoint()) then
-        return nil
-    else
-        return {
-            currentCapturePoint = currentCapturePoint,
-        }
-    end
+	local currentCapturePoint = self:getCurrentCapturePoint()
+	if (currentCapturePoint == self:getMaxCapturePoint()) then
+		return nil
+	else
+		return {
+			currentCapturePoint = currentCapturePoint,
+		}
+	end
 end
 
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
 function Capturable:updateAsFogEnabled()
-    self:setCurrentCapturePoint(self:getMaxCapturePoint())
+	self:setCurrentCapturePoint(self:getMaxCapturePoint())
 
-    return self
+	return self
 end
 
 --------------------------------------------------------------------------------
 -- The exported functions.
 --------------------------------------------------------------------------------
 function Capturable:getCurrentCapturePoint()
-    return self.m_CurrentCapturePoint
+	return self.m_CurrentCapturePoint
 end
 
 function Capturable:getMaxCapturePoint()
-    return self.m_Template.maxCapturePoint
+	return self.m_Template.maxCapturePoint
 end
 
 function Capturable:isDefeatOnCapture()
-    return self.m_Template.defeatOnCapture
+	return self.m_Template.defeatOnCapture
 end
 
 function Capturable:setCurrentCapturePoint(point)
-    assert((point >= 0) and (point <= self:getMaxCapturePoint()) and (point == math.floor(point)),
-        "Capturable:setCurrentCapturePoint() the param point is invalid.")
+	assert((point >= 0) and (point <= self:getMaxCapturePoint()) and (point == math.floor(point)),
+		"Capturable:setCurrentCapturePoint() the param point is invalid.")
 
-    self.m_CurrentCapturePoint = point
+	self.m_CurrentCapturePoint = point
 
-    return self.m_Owner
+	return self.m_Owner
 end
 
 return Capturable

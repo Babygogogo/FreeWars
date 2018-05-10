@@ -15,34 +15,34 @@ local ModelTileDetail = class("ModelTileDetail")
 -- The constructor.
 --------------------------------------------------------------------------------
 function ModelTileDetail:ctor(param)
-    return self
+	return self
 end
 
 function ModelTileDetail:onStartRunning(modelWar)
-    self.m_ModelWar = modelWar
+	self.m_ModelWar = modelWar
 end
 
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
 function ModelTileDetail:getModelWar()
-    return self.m_ModelWar
+	return self.m_ModelWar
 end
 
 function ModelTileDetail:updateWithModelTile(modelTile)
-    if (self.m_View) then
-        self.m_View:updateWithModelTile(modelTile)
-    end
+	if (self.m_View) then
+		self.m_View:updateWithModelTile(modelTile)
+	end
 
-    return self
+	return self
 end
 
 function ModelTileDetail:setEnabled(enabled)
-    if (self.m_View) then
-        self.m_View:setEnabled(enabled)
-    end
+	if (self.m_View) then
+		self.m_View:setEnabled(enabled)
+	end
 
-    return self
+	return self
 end
 
 return ModelTileDetail

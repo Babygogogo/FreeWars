@@ -5,94 +5,94 @@ local SingletonGetters = {}
 -- The public getters.
 --------------------------------------------------------------------------------
 function SingletonGetters.getActionId(modelSceneWar)
-    return modelSceneWar:getActionId()
+	return modelSceneWar:getActionId()
 end
 
 function SingletonGetters.getModelChatManager(modelSceneWar)
-    return modelSceneWar:getModelChatManager()
+	return modelSceneWar:getModelChatManager()
 end
 
 function SingletonGetters.getModelFogMap(modelSceneWar)
-    return SingletonGetters.getModelWarField(modelSceneWar):getModelFogMap()
+	return SingletonGetters.getModelWarField(modelSceneWar):getModelFogMap()
 end
 
 function SingletonGetters.getModelPlayerManager(modelSceneWar)
-    return modelSceneWar:getModelPlayerManager()
+	return modelSceneWar:getModelPlayerManager()
 end
 
 function SingletonGetters.getModelTileMap(modelSceneWar)
-    return SingletonGetters.getModelWarField(modelSceneWar):getModelTileMap()
+	return SingletonGetters.getModelWarField(modelSceneWar):getModelTileMap()
 end
 
 function SingletonGetters.getModelTurnManager(modelSceneWar)
-    return modelSceneWar:getModelTurnManager()
+	return modelSceneWar:getModelTurnManager()
 end
 
 function SingletonGetters.getModelUnitMap(modelSceneWar)
-    return SingletonGetters.getModelWarField(modelSceneWar):getModelUnitMap()
+	return SingletonGetters.getModelWarField(modelSceneWar):getModelUnitMap()
 end
 
 function SingletonGetters.getModelWarField(modelSceneWar)
-    return modelSceneWar:getModelWarField()
+	return modelSceneWar:getModelWarField()
 end
 
 function SingletonGetters.getModelWeatherManager(modelSceneWar)
-    return modelSceneWar:getModelWeatherManager()
+	return modelSceneWar:getModelWeatherManager()
 end
 
 function SingletonGetters.getWarId(modelSceneWar)
-    return modelSceneWar:getWarId()
+	return modelSceneWar:getWarId()
 end
 
 function SingletonGetters.getScriptEventDispatcher(modelSceneWar)
-    return modelSceneWar:getScriptEventDispatcher()
+	return modelSceneWar:getScriptEventDispatcher()
 end
 
 function SingletonGetters.isWarNative(modelWar)
-    return modelWar.isWarNative()
+	return modelWar.isWarNative()
 end
 
 function SingletonGetters.isWarOnline(modelWar)
-    return modelWar.isWarOnline()
+	return modelWar.isWarOnline()
 end
 
 function SingletonGetters.isWarReplay(modelWar)
-    return modelWar.isWarReplay()
+	return modelWar.isWarReplay()
 end
 
 --------------------------------------------------------------------------------
 -- The public getters that can be used only on the client.
 --------------------------------------------------------------------------------
 function SingletonGetters.getModelConfirmBox(modelScene)
-    return modelScene:getModelConfirmBox()
+	return modelScene:getModelConfirmBox()
 end
 
 function SingletonGetters.getModelGridEffect(modelSceneWar)
-    return SingletonGetters.getModelWarField(modelSceneWar):getModelGridEffect()
+	return SingletonGetters.getModelWarField(modelSceneWar):getModelGridEffect()
 end
 
 function SingletonGetters.getModelMapCursor(modelSceneWar)
-    return SingletonGetters.getModelWarField(modelSceneWar):getModelMapCursor()
+	return SingletonGetters.getModelWarField(modelSceneWar):getModelMapCursor()
 end
 
 function SingletonGetters.getModelMessageIndicator(modelScene)
-    return modelScene:getModelMessageIndicator()
+	return modelScene:getModelMessageIndicator()
 end
 
 function SingletonGetters.getModelMainMenu(modelSceneMain)
-    return modelSceneMain:getModelMainMenu()
+	return modelSceneMain:getModelMainMenu()
 end
 
 function SingletonGetters.getModelReplayController(modelSceneWar)
-    return modelSceneWar:getModelWarHud():getModelReplayController()
+	return modelSceneWar:getModelWarHud():getModelReplayController()
 end
 
 function SingletonGetters.getModelWarCommandMenu(modelSceneWar)
-    return modelSceneWar:getModelWarHud():getModelWarCommandMenu()
+	return modelSceneWar:getModelWarHud():getModelWarCommandMenu()
 end
 
 function SingletonGetters.getPlayerIndexLoggedIn(modelSceneWar)
-    return SingletonGetters.getModelPlayerManager(modelSceneWar):getPlayerIndexLoggedIn()
+	return SingletonGetters.getModelPlayerManager(modelSceneWar):getPlayerIndexLoggedIn()
 end
 
 return SingletonGetters

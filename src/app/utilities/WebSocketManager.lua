@@ -1,20 +1,18 @@
 
 local WebSocketManager = {}
 
-local ActionCodeFunctions    = requireFW("src.app.utilities.ActionCodeFunctions")
+local ActionCodeFunctions	= requireFW("src.app.utilities.ActionCodeFunctions")
 local SerializationFunctions = requireFW("src.app.utilities.SerializationFunctions")
-local ActorManager           = requireFW("src.global.actors.ActorManager")
+local ActorManager		   = requireFW("src.global.actors.ActorManager")
 
 local decode = SerializationFunctions.decode
 local encode = SerializationFunctions.encode
 local next   = next
 
---[[
 local SERVER_URL = "localhost:19297/FreeWars"
---]]
-local SERVER_URL = "e1t5268499.imwork.net:10232/FreeWars"
+--local SERVER_URL = "e1t5268499.imwork.net:10232/FreeWars"
 
-local HEARTBEAT_INTERVAL    = 10
+local HEARTBEAT_INTERVAL	= 10
 local ACTION_CODE_HEARTBEAT = ActionCodeFunctions.getActionCode("ActionNetworkHeartbeat")
 
 local s_Socket
@@ -29,111 +27,116 @@ local s_Scheduler = cc.Director:getInstance():getScheduler()
 --------------------------------------------------------------------------------
 -- The util functions.
 --------------------------------------------------------------------------------
+--发送心跳
 local function heartbeat()
-    if (not s_IsHeartbeatAnswered) then
-        WebSocketManager.close()
-    else
-        s_HeartbeatCounter    = s_HeartbeatCounter + 1
-        s_IsHeartbeatAnswered = false
-        WebSocketManager.sendAction({
-                actionCode       = ACTION_CODE_HEARTBEAT,
-                heartbeatCounter = s_HeartbeatCounter,
-                playerAccount    = s_Account,
-                playerPassword   = s_Password,
-            }, true)
-    end
+	if (not s_IsHeartbeatAnswered) then
+		WebSocketManager.close()
+	else
+		s_HeartbeatCounter	= s_HeartbeatCounter + 1
+		s_IsHeartbeatAnswered = false
+		WebSocketManager.sendAction({
+				actionCode	   = ACTION_CODE_HEARTBEAT,
+				heartbeatCounter = s_HeartbeatCounter,
+				playerAccount	= s_Account,
+				playerPassword   = s_Password,
+			}, true)
+	end
 end
-
+--清空socket
 local function cleanup()
-    s_Socket:unregisterScriptHandler(cc.WEBSOCKET_OPEN)
-    s_Socket:unregisterScriptHandler(cc.WEBSOCKET_MESSAGE)
-    s_Socket:unregisterScriptHandler(cc.WEBSOCKET_CLOSE)
-    s_Socket:unregisterScriptHandler(cc.WEBSOCKET_ERROR)
-    s_Socket = nil
+	s_Socket:unregisterScriptHandler(cc.WEBSOCKET_OPEN)
+	s_Socket:unregisterScriptHandler(cc.WEBSOCKET_MESSAGE)
+	s_Socket:unregisterScriptHandler(cc.WEBSOCKET_CLOSE)
+	s_Socket:unregisterScriptHandler(cc.WEBSOCKET_ERROR)
+	s_Socket = nil
 
-    if (s_HeartbeatScheduleID) then
-        s_Scheduler:unscheduleScriptEntry(s_HeartbeatScheduleID)
-        s_HeartbeatScheduleID = nil
-    end
+	if (s_HeartbeatScheduleID) then
+		s_Scheduler:unscheduleScriptEntry(s_HeartbeatScheduleID)
+		s_HeartbeatScheduleID = nil
+	end
 end
 
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
 function WebSocketManager.isInitialized()
-    return s_Socket ~= nil
+	return s_Socket ~= nil
 end
 
 function WebSocketManager.init()
-    assert(not WebSocketManager.isInitialized(), "WebSocketManager.init() the socket has been initialized.")
-    s_Socket = cc.WebSocket:create(SERVER_URL)
+	print('初始化Web套接字管理器')
+	assert(not WebSocketManager.isInitialized(), "WebSocketManager.init() the socket has been initialized.")
+	s_Socket = cc.WebSocket:create(SERVER_URL)--开始链接服务器
+	--设定'连接成功后要执行的函数'
+	s_Socket:registerScriptHandler(function()
+		print('连接成功')
+		ActorManager.getRootActor():getModel():onWebSocketEvent("open")
+		s_HeartbeatCounter	= 0
+		s_IsHeartbeatAnswered = true
+		s_HeartbeatScheduleID = s_Scheduler:scheduleScriptFunc(heartbeat, HEARTBEAT_INTERVAL, false)
+		heartbeat()
+	end, cc.WEBSOCKET_OPEN)
+	--设定'收到消息时要执行的函数'
+	s_Socket:registerScriptHandler(function(msg)
+		print('收到消息')
+		local _, action = next(decode("ActionGeneric", msg), nil)
+		if (action.actionCode == ACTION_CODE_HEARTBEAT) then
+			s_IsHeartbeatAnswered = (action.heartbeatCounter == s_HeartbeatCounter)
+		else
+			ActorManager.getRootActor():getModel():onWebSocketEvent("message", {
+				message = msg,
+				action  = action,
+			})
+		end
+	end, cc.WEBSOCKET_MESSAGE)
+	--设定'连接关闭时要执行的函数'
+	s_Socket:registerScriptHandler(function()
+		print('连接关闭')
+		ActorManager.getRootActor():getModel():onWebSocketEvent("close")
 
-    s_Socket:registerScriptHandler(function()
-        ActorManager.getRootActor():getModel():onWebSocketEvent("open")
+		cleanup()
+		WebSocketManager.init()
+	end, cc.WEBSOCKET_CLOSE)
+	--设定'连接出错时要执行的函数'
+	s_Socket:registerScriptHandler(function(err)
+		print('连接出错')
+		ActorManager.getRootActor():getModel():onWebSocketEvent("error", {error = err})
 
-        s_HeartbeatCounter    = 0
-        s_IsHeartbeatAnswered = true
-        s_HeartbeatScheduleID = s_Scheduler:scheduleScriptFunc(heartbeat, HEARTBEAT_INTERVAL, false)
-        heartbeat()
-    end, cc.WEBSOCKET_OPEN)
+		cleanup()
+		WebSocketManager.init()
+	end, cc.WEBSOCKET_ERROR)
 
-    s_Socket:registerScriptHandler(function(msg)
-        local _, action = next(decode("ActionGeneric", msg), nil)
-        if (action.actionCode == ACTION_CODE_HEARTBEAT) then
-            s_IsHeartbeatAnswered = (action.heartbeatCounter == s_HeartbeatCounter)
-        else
-            ActorManager.getRootActor():getModel():onWebSocketEvent("message", {
-                message = msg,
-                action  = action,
-            })
-        end
-    end, cc.WEBSOCKET_MESSAGE)
-
-    s_Socket:registerScriptHandler(function()
-        ActorManager.getRootActor():getModel():onWebSocketEvent("close")
-
-        cleanup()
-        WebSocketManager.init()
-    end, cc.WEBSOCKET_CLOSE)
-
-    s_Socket:registerScriptHandler(function(err)
-        ActorManager.getRootActor():getModel():onWebSocketEvent("error", {error = err})
-
-        cleanup()
-        WebSocketManager.init()
-    end, cc.WEBSOCKET_ERROR)
-
-    return WebSocketManager
+	return WebSocketManager
 end
 
 function WebSocketManager.setLoggedInAccountAndPassword(account, password)
-    s_Account, s_Password = account, password
+	s_Account, s_Password = account, password
 
-    return WebSocketManager
+	return WebSocketManager
 end
 
 function WebSocketManager.getLoggedInAccountAndPassword()
-    return s_Account, s_Password
+	return s_Account, s_Password
 end
 
 function WebSocketManager.sendAction(action, ignoreAccountAndPassword)
-    assert(WebSocketManager.isInitialized(), "WebSocketManager.sendAction() the socket hasn't been initialized.")
+	assert(WebSocketManager.isInitialized(), "WebSocketManager.sendAction() the socket hasn't been initialized.")
 
-    if (not ignoreAccountAndPassword) then
-        action.playerAccount  = action.playerAccount  or s_Account
-        action.playerPassword = action.playerPassword or s_Password
-    end
+	if (not ignoreAccountAndPassword) then
+		action.playerAccount  = action.playerAccount  or s_Account
+		action.playerPassword = action.playerPassword or s_Password
+	end
 
-    s_Socket:sendString(encode("ActionGeneric", {[ActionCodeFunctions.getActionName(action.actionCode)] = action}))
+	s_Socket:sendString(encode("ActionGeneric", {[ActionCodeFunctions.getActionName(action.actionCode)] = action}))
 
-    return WebSocketManager
+	return WebSocketManager
 end
 
 function WebSocketManager.close()
-    assert(WebSocketManager.isInitialized(), "WebSocketManager.close() the socket hasn't been initialized.")
-    s_Socket:close()
+	assert(WebSocketManager.isInitialized(), "WebSocketManager.close() the socket hasn't been initialized.")
+	s_Socket:close()
 
-    return WebSocketManager
+	return WebSocketManager
 end
 
 return WebSocketManager

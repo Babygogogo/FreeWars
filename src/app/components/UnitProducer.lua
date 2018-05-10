@@ -13,80 +13,80 @@
 local UnitProducer = requireFW("src.global.functions.class")("UnitProducer")
 
 local GameConstantFunctions = requireFW("src.app.utilities.GameConstantFunctions")
-local SingletonGetters      = requireFW("src.app.utilities.SingletonGetters")
-local Actor                 = requireFW("src.global.actors.Actor")
-local ComponentManager      = requireFW("src.global.components.ComponentManager")
+local SingletonGetters	  = requireFW("src.app.utilities.SingletonGetters")
+local Actor				 = requireFW("src.global.actors.Actor")
+local ComponentManager	  = requireFW("src.global.components.ComponentManager")
 
 UnitProducer.EXPORTED_METHODS = {
-    "canProduceUnitWithTiledId",
-    "getProductionList",
+	"canProduceUnitWithTiledId",
+	"getProductionList",
 }
 
 --------------------------------------------------------------------------------
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
 function UnitProducer:ctor(param)
-    self:loadTemplate(param.template)
+	self:loadTemplate(param.template)
 
-    return self
+	return self
 end
 
 function UnitProducer:loadTemplate(template)
-    assert(type(template.productionList) == "table", "UnitProducer:loadTemplate() the param template is invalid.")
-    self.m_Template = template
+	assert(type(template.productionList) == "table", "UnitProducer:loadTemplate() the param template is invalid.")
+	self.m_Template = template
 
-    return self
+	return self
 end
 
 --------------------------------------------------------------------------------
 -- The public callback functions on start running.
 --------------------------------------------------------------------------------
 function UnitProducer:onStartRunning(modelSceneWar)
-    self.m_ModelSceneWar = modelSceneWar
+	self.m_ModelSceneWar = modelSceneWar
 
-    return self
+	return self
 end
 
 --------------------------------------------------------------------------------
 -- The exported functions.
 --------------------------------------------------------------------------------
 function UnitProducer:canProduceUnitWithTiledId(tiledID)
-    if (self.m_Owner:getPlayerIndex() ~= GameConstantFunctions.getPlayerIndexWithTiledId(tiledID)) then
-        return false
-    else
-        local unitType = GameConstantFunctions.getUnitTypeWithTiledId(tiledID)
-        for _, t in pairs(self.m_Template.productionList) do
-            if (unitType == t) then
-                return true
-            end
-        end
+	if (self.m_Owner:getPlayerIndex() ~= GameConstantFunctions.getPlayerIndexWithTiledId(tiledID)) then
+		return false
+	else
+		local unitType = GameConstantFunctions.getUnitTypeWithTiledId(tiledID)
+		for _, t in pairs(self.m_Template.productionList) do
+			if (unitType == t) then
+				return true
+			end
+		end
 
-        return false
-    end
+		return false
+	end
 end
 
 function UnitProducer:getProductionList()
-    local playerIndex      = self.m_Owner:getPlayerIndex()
-    local modelSceneWar    = self.m_ModelSceneWar
-    local fund             = SingletonGetters.getModelPlayerManager(modelSceneWar):getModelPlayer(playerIndex):getFund()
-    local list             = {}
+	local playerIndex	  = self.m_Owner:getPlayerIndex()
+	local modelSceneWar	= self.m_ModelSceneWar
+	local fund			 = SingletonGetters.getModelPlayerManager(modelSceneWar):getModelPlayer(playerIndex):getFund()
+	local list			 = {}
 
-    for i, unitName in ipairs(self.m_Template.productionList) do
-        local tiledID   = GameConstantFunctions.getTiledIdWithTileOrUnitName(unitName, playerIndex)
-        local modelUnit = Actor.createModel("warOnline.ModelUnitForOnline", {tiledID = tiledID})
-        modelUnit:onStartRunning(modelSceneWar)
-        local cost      = modelUnit:getProductionCost()
+	for i, unitName in ipairs(self.m_Template.productionList) do
+		local tiledID   = GameConstantFunctions.getTiledIdWithTileOrUnitName(unitName, playerIndex)
+		local modelUnit = Actor.createModel("warOnline.ModelUnitForOnline", {tiledID = tiledID})
+		modelUnit:onStartRunning(modelSceneWar)
+		local cost	  = modelUnit:getProductionCost()
 
-        list[i] = {
-            modelUnit   = modelUnit,
-            fullName    = modelUnit:getUnitType(),
-            cost        = cost,
-            isAvailable = cost <= fund,
-            tiledID     = tiledID,
-        }
-    end
+		list[i] = {
+			modelUnit   = modelUnit,
+			fullName	= modelUnit:getUnitType(),
+			cost		= cost,
+			isAvailable = cost <= fund,
+			tiledID	 = tiledID,
+		}
+	end
 
-    return list
+	return list
 end
 
 return UnitProducer

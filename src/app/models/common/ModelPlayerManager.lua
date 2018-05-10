@@ -11,12 +11,11 @@
 
 local ModelPlayerManager = requireFW("src.global.functions.class")("ModelPlayerManager")
 
-local ModelPlayer      = requireFW("src.app.models.common.ModelPlayer")
+local ModelPlayer	  = requireFW("src.app.models.common.ModelPlayer")
 local SingletonGetters = requireFW("src.app.utilities.SingletonGetters")
 local TableFunctions   = requireFW("src.app.utilities.TableFunctions")
 
-local IS_SERVER        = requireFW("src.app.utilities.GameConstantFunctions").isServer()
-local WebSocketManager = (not IS_SERVER) and (requireFW("src.app.utilities.WebSocketManager")) or (nil)
+local WebSocketManager = (requireFW("src.app.utilities.WebSocketManager")) or (nil)
 
 local assert, ipairs = assert, ipairs
 
@@ -24,125 +23,121 @@ local assert, ipairs = assert, ipairs
 -- The constructor and initializers.
 --------------------------------------------------------------------------------
 function ModelPlayerManager:ctor(param)
-    self.m_ModelPlayers = {}
-    for i, player in ipairs(param) do
-        self.m_ModelPlayers[i] = ModelPlayer:create(player)
-    end
+	self.m_ModelPlayers = {}
+	for i, player in ipairs(param) do
+		self.m_ModelPlayers[i] = ModelPlayer:create(player)
+	end
 
-    return self
+	return self
 end
 
 --------------------------------------------------------------------------------
 -- The functions for serialization.
 --------------------------------------------------------------------------------
 function ModelPlayerManager:toSerializableTable()
-    local t = {}
-    self:forEachModelPlayer(function(modelPlayer, playerIndex)
-        t[playerIndex] = modelPlayer:toSerializableTable()
-    end)
+	local t = {}
+	self:forEachModelPlayer(function(modelPlayer, playerIndex)
+		t[playerIndex] = modelPlayer:toSerializableTable()
+	end)
 
-    return t
+	return t
 end
 
 function ModelPlayerManager:toSerializableTableForPlayerIndex(playerIndex)
-    return self:toSerializableTable()
+	return self:toSerializableTable()
 end
 
 function ModelPlayerManager:toSerializableReplayData()
-    local t = {}
-    self:forEachModelPlayer(function(modelPlayer, playerIndex)
-        t[playerIndex] = modelPlayer:toSerializableReplayData()
-    end)
+	local t = {}
+	self:forEachModelPlayer(function(modelPlayer, playerIndex)
+		t[playerIndex] = modelPlayer:toSerializableReplayData()
+	end)
 
-    return t
+	return t
 end
 
 --------------------------------------------------------------------------------
 -- The public callback function on start running.
 --------------------------------------------------------------------------------
 function ModelPlayerManager:onStartRunning(modelWar)
-    self:forEachModelPlayer(function(modelPlayer)
-        modelPlayer:onStartRunning(modelWar)
-    end)
+	self:forEachModelPlayer(function(modelPlayer)
+		modelPlayer:onStartRunning(modelWar)
+	end)
 
-    if (not IS_SERVER) then
-        if (SingletonGetters.isWarNative(modelWar)) then
-            self.m_ModelPlayerForHuman, self.m_PlayerIndexForHuman = self:getModelPlayerWithAccount("Player")
-        elseif (SingletonGetters.isWarOnline(modelWar)) then
-            self.m_ModelPlayerLoggedIn, self.m_PlayerIndexLoggedIn = self:getModelPlayerWithAccount(WebSocketManager.getLoggedInAccountAndPassword())
-        end
-    end
-
-    return self
+	if (SingletonGetters.isWarNative(modelWar)) then
+		self.m_ModelPlayerForHuman, self.m_PlayerIndexForHuman = self:getModelPlayerWithAccount("Player")
+	elseif (SingletonGetters.isWarOnline(modelWar)) then
+		self.m_ModelPlayerLoggedIn, self.m_PlayerIndexLoggedIn = self:getModelPlayerWithAccount(WebSocketManager.getLoggedInAccountAndPassword())
+	end
+	return self
 end
 
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
 function ModelPlayerManager:getModelPlayer(playerIndex)
-    return self.m_ModelPlayers[playerIndex]
+	return self.m_ModelPlayers[playerIndex]
 end
 
 function ModelPlayerManager:getPlayersCount()
-    return #self.m_ModelPlayers
+	return #self.m_ModelPlayers
 end
 
 function ModelPlayerManager:getAlivePlayersCount()
-    local count = 0
-    for _, modelPlayer in ipairs(self.m_ModelPlayers) do
-        if (modelPlayer:isAlive()) then
-            count = count + 1
-        end
-    end
+	local count = 0
+	for _, modelPlayer in ipairs(self.m_ModelPlayers) do
+		if (modelPlayer:isAlive()) then
+			count = count + 1
+		end
+	end
 
-    return count
+	return count
 end
 
 function ModelPlayerManager:getAliveTeamsCount(ignoredPlayerIndex)
-    local aliveTeamIndices = {}
-    self:forEachModelPlayer(function(modelPlayer, playerIndex)
-        if ((modelPlayer:isAlive()) and (playerIndex ~= ignoredPlayerIndex)) then
-            aliveTeamIndices[modelPlayer:getTeamIndex()] = true
-        end
-    end)
-
-    return TableFunctions.getPairsCount(aliveTeamIndices)
+	local aliveTeamIndices = {}
+	self:forEachModelPlayer(function(modelPlayer, playerIndex)
+		if ((modelPlayer:isAlive()) and (playerIndex ~= ignoredPlayerIndex)) then
+			aliveTeamIndices[modelPlayer:getTeamIndex()] = true
+		end
+	end)
+	return table.maxn(aliveTeamIndices)
 end
 
 function ModelPlayerManager:getPlayerIndexLoggedIn()
-    assert(self.m_PlayerIndexLoggedIn, "ModelPlayerManager:getPlayerIndexLoggedIn() the index hasn't been initialized yet.")
-    return self.m_PlayerIndexLoggedIn, self.m_ModelPlayerLoggedIn
+	assert(self.m_PlayerIndexLoggedIn, "ModelPlayerManager:getPlayerIndexLoggedIn() the index hasn't been initialized yet.")
+	return self.m_PlayerIndexLoggedIn, self.m_ModelPlayerLoggedIn
 end
 
 function ModelPlayerManager:getPlayerIndexForHuman()
-    assert(self.m_PlayerIndexForHuman, "ModelPlayerManager:getPlayerIndexForHuman() the index has not been initialized yet.")
-    return self.m_PlayerIndexForHuman, self.m_ModelPlayerForHuman
+	assert(self.m_PlayerIndexForHuman, "ModelPlayerManager:getPlayerIndexForHuman() the index has not been initialized yet.")
+	return self.m_PlayerIndexForHuman, self.m_ModelPlayerForHuman
 end
 
 function ModelPlayerManager:getModelPlayerWithAccount(account)
-    for playerIndex, modelPlayer in ipairs(self.m_ModelPlayers) do
-        if (modelPlayer:getAccount() == account) then
-            return modelPlayer, playerIndex
-        end
-    end
+	for playerIndex, modelPlayer in ipairs(self.m_ModelPlayers) do
+		if (modelPlayer:getAccount() == account) then
+			return modelPlayer, playerIndex
+		end
+	end
 
-    return nil, nil
+	return nil, nil
 end
 
 function ModelPlayerManager:forEachModelPlayer(func)
-    for playerIndex, modelPlayer in ipairs(self.m_ModelPlayers) do
-        func(modelPlayer, playerIndex)
-    end
+	for playerIndex, modelPlayer in ipairs(self.m_ModelPlayers) do
+		func(modelPlayer, playerIndex)
+	end
 
-    return self
+	return self
 end
 
 function ModelPlayerManager:isSameTeamIndex(playerIndex1, playerIndex2)
-    if ((playerIndex1 == 0) or (playerIndex2 == 0)) then
-        return false
-    else
-        return self.m_ModelPlayers[playerIndex1]:getTeamIndex() == self.m_ModelPlayers[playerIndex2]:getTeamIndex()
-    end
+	if ((playerIndex1 == 0) or (playerIndex2 == 0)) then
+		return false
+	else
+		return self.m_ModelPlayers[playerIndex1]:getTeamIndex() == self.m_ModelPlayers[playerIndex2]:getTeamIndex()
+	end
 end
 
 return ModelPlayerManager

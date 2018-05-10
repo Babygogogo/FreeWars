@@ -5,49 +5,49 @@ local ModelMessageIndicator = class("ModelMessageIndicator")
 -- The constructor.
 --------------------------------------------------------------------------------
 function ModelMessageIndicator:ctor()
-    self.m_IsEnabled = true
+	self.m_IsEnabled = true
 
-    return self
+	return self
 end
 
 --------------------------------------------------------------------------------
 -- The pulic functions.
 --------------------------------------------------------------------------------
 function ModelMessageIndicator:isEnabled()
-    return self.m_IsEnabled
+	return self.m_IsEnabled
 end
 
 function ModelMessageIndicator:setEnabled(enabled)
-    self.m_IsEnabled = enabled
-    if (self.m_View) then
-        self.m_View:setVisible(enabled)
-    end
+	self.m_IsEnabled = enabled
+	if (self.m_View) then
+		self.m_View:setVisible(enabled)
+	end
 
-    return self
+	return self
 end
 
 function ModelMessageIndicator:showMessage(msg, duration)
-    if ((self:isEnabled()) and (self.m_View)) then
-        self.m_View:showMessage(msg, duration)
-    end
+	if ((self:isEnabled()) and (self.m_View)) then
+		self.m_View:showMessage(msg, duration)
+	end
 
-    return self
+	return self
 end
 
 function ModelMessageIndicator:showPersistentMessage(msg)
-    if ((self:isEnabled()) and (self.m_View)) then
-        self.m_View:showPersistentMessage(msg)
-    end
+	if ((self:isEnabled()) and (self.m_View)) then
+		self.m_View:showPersistentMessage(msg)
+	end
 
-    return self
+	return self
 end
 
 function ModelMessageIndicator:hidePersistentMessage(msg)
-    if (self.m_View) then
-        self.m_View:hidePersistentMessage(msg)
-    end
+	if (self.m_View) then
+		self.m_View:hidePersistentMessage(msg)
+	end
 
-    return self
+	return self
 end
 
 return ModelMessageIndicator

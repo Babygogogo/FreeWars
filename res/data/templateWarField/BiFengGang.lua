@@ -6,20 +6,20 @@ return {
   width = 15,
   height = 15,
   layers = {
-    {
-      type = "tilelayer",
-      name = "TileBase",
-      x = 0,
-      y = 0,
-      width = 15,
-      height = 15,
-      visible = true,
-      opacity = 1,
-      offsetx = 0,
-      offsety = 0,
-      properties = {},
-      encoding = "lua",
-      data = {
+	{
+	  type = "tilelayer",
+	  name = "TileBase",
+	  x = 0,
+	  y = 0,
+	  width = 15,
+	  height = 15,
+	  visible = true,
+	  opacity = 1,
+	  offsetx = 0,
+	  offsety = 0,
+	  properties = {},
+	  encoding = "lua",
+	  data = {
 1,1,1,1,81,65,27,43,66,47,1,1,1,1,1,
 1,1,1,58,26,18,47,1,1,1,1,1,1,1,1,
 1,1,81,26,18,68,1,1,1,1,1,1,1,1,1,
@@ -35,22 +35,22 @@ return {
 1,1,1,1,1,1,1,1,1,67,18,19,83,1,1,
 1,1,1,1,1,1,1,1,58,26,19,47,1,1,1,
 1,1,1,1,1,58,65,52,27,66,83,1,1,1,1
-      }
-    },
-    {
-      type = "tilelayer",
-      name = "TileObject",
-      x = 0,
-      y = 0,
-      width = 15,
-      height = 15,
-      visible = true,
-      opacity = 1,
-      offsetx = 0,
-      offsety = 0,
-      properties = {},
-      encoding = "lua",
-      data = {
+	  }
+	},
+	{
+	  type = "tilelayer",
+	  name = "TileObject",
+	  x = 0,
+	  y = 0,
+	  width = 15,
+	  height = 15,
+	  visible = true,
+	  opacity = 1,
+	  offsetx = 0,
+	  offsety = 0,
+	  properties = {},
+	  encoding = "lua",
+	  data = {
 123,124,0,154,0,0,129,0,0,179,126,0,0,124,0,
 0,103,101,119,112,112,118,101,104,123,0,0,159,0,0,
 103,106,0,0,129,0,154,0,105,101,104,171,102,0,154,
@@ -66,22 +66,22 @@ return {
 154,0,102,170,105,101,104,0,154,0,129,0,0,103,106,
 123,0,159,0,0,123,105,101,119,112,112,118,101,106,0,
 0,124,123,0,126,179,0,0,129,0,0,154,0,124,123
-      }
-    },
-    {
-      type = "tilelayer",
-      name = "Unit",
-      x = 0,
-      y = 0,
-      width = 15,
-      height = 15,
-      visible = true,
-      opacity = 1,
-      offsetx = 0,
-      offsety = 0,
-      properties = {},
-      encoding = "lua",
-      data = {
+	  }
+	},
+	{
+	  type = "tilelayer",
+	  name = "Unit",
+	  x = 0,
+	  y = 0,
+	  width = 15,
+	  height = 15,
+	  visible = true,
+	  opacity = 1,
+	  offsetx = 0,
+	  offsety = 0,
+	  properties = {},
+	  encoding = "lua",
+	  data = {
 0,0,0,0,0,0,0,0,0,307,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,211,0,0,0,
@@ -97,7 +97,7 @@ return {
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,306,0,0,0,0,0,0,0,0,0
-      }
-    }
+	  }
+	}
   }
 }

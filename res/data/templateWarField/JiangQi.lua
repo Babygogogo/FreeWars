@@ -6,20 +6,20 @@ return {
   width = 11,
   height = 11,
   layers = {
-    {
-      type = "tilelayer",
-      name = "TileBase",
-      x = 0,
-      y = 0,
-      width = 11,
-      height = 11,
-      visible = true,
-      opacity = 1,
-      offsetx = 0,
-      offsety = 0,
-      properties = {},
-      encoding = "lua",
-      data = {
+	{
+	  type = "tilelayer",
+	  name = "TileBase",
+	  x = 0,
+	  y = 0,
+	  width = 11,
+	  height = 11,
+	  visible = true,
+	  opacity = 1,
+	  offsetx = 0,
+	  offsety = 0,
+	  properties = {},
+	  encoding = "lua",
+	  data = {
 19,43,23,43,43,43,43,43,23,43,22,
 34,1,51,1,1,1,1,1,51,1,38,
 34,1,1,1,1,1,1,1,1,1,38,
@@ -31,22 +31,22 @@ return {
 34,1,1,1,1,1,1,1,1,1,38,
 34,1,60,1,1,1,1,1,60,1,38,
 20,52,28,52,52,52,52,52,28,52,26
-      }
-    },
-    {
-      type = "tilelayer",
-      name = "TileObject",
-      x = 0,
-      y = 0,
-      width = 11,
-      height = 11,
-      visible = true,
-      opacity = 1,
-      offsetx = 0,
-      offsety = 0,
-      properties = {},
-      encoding = "lua",
-      data = {
+	  }
+	},
+	{
+	  type = "tilelayer",
+	  name = "TileObject",
+	  x = 0,
+	  y = 0,
+	  width = 11,
+	  height = 11,
+	  visible = true,
+	  opacity = 1,
+	  offsetx = 0,
+	  offsety = 0,
+	  properties = {},
+	  encoding = "lua",
+	  data = {
 0,0,0,0,0,0,0,0,0,0,0,
 0,156,181,166,161,151,161,166,181,156,0,
 0,102,176,123,0,123,0,123,171,102,0,
@@ -58,22 +58,22 @@ return {
 0,102,170,123,0,123,0,123,175,102,0,
 0,155,180,165,160,150,160,165,180,155,0,
 0,0,0,0,0,0,0,0,0,0,0
-      }
-    },
-    {
-      type = "tilelayer",
-      name = "Unit",
-      x = 0,
-      y = 0,
-      width = 11,
-      height = 11,
-      visible = true,
-      opacity = 1,
-      offsetx = 0,
-      offsety = 0,
-      properties = {},
-      encoding = "lua",
-      data = {
+	  }
+	},
+	{
+	  type = "tilelayer",
+	  name = "Unit",
+	  x = 0,
+	  y = 0,
+	  width = 11,
+	  height = 11,
+	  visible = true,
+	  opacity = 1,
+	  offsetx = 0,
+	  offsety = 0,
+	  properties = {},
+	  encoding = "lua",
+	  data = {
 0,0,0,0,0,0,0,0,0,0,0,
 0,219,307,0,0,0,0,0,307,219,0,
 0,0,0,0,0,0,0,0,0,0,0,
@@ -85,7 +85,7 @@ return {
 0,0,0,0,0,0,0,0,0,0,0,
 0,218,306,0,0,0,0,0,306,218,0,
 0,0,0,0,0,0,0,0,0,0,0
-      }
-    }
+	  }
+	}
   }
 }

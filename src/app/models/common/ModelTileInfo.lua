@@ -19,113 +19,113 @@ local SingletonGetters   = requireFW("src.app.utilities.SingletonGetters")
 -- The util functions.
 --------------------------------------------------------------------------------
 local function updateWithModelTileMap(self)
-    if ((self.m_ModelWarCommandMenu:isEnabled())                               or
-        (self.m_ModelWarCommandMenu:isHiddenWithHideUI())                      or
-        ((self.m_ModelChatManager) and (self.m_ModelChatManager:isEnabled()))) then
-        self.m_View:setVisible(false)
-    else
-        self.m_View:updateWithModelTile(self.m_ModelTileMap:getModelTile(self.m_CursorGridIndex))
-            :setVisible(true)
-    end
+	if ((self.m_ModelWarCommandMenu:isEnabled())							   or
+		(self.m_ModelWarCommandMenu:isHiddenWithHideUI())					  or
+		((self.m_ModelChatManager) and (self.m_ModelChatManager:isEnabled()))) then
+		self.m_View:setVisible(false)
+	else
+		self.m_View:updateWithModelTile(self.m_ModelTileMap:getModelTile(self.m_CursorGridIndex))
+			:setVisible(true)
+	end
 end
 
 --------------------------------------------------------------------------------
 -- The private callback functions on script events.
 --------------------------------------------------------------------------------
 local function onEvtChatManagerUpdated(self, event)
-    updateWithModelTileMap(self)
+	updateWithModelTileMap(self)
 end
 
 local function onEvtModelTileMapUpdated(self, event)
-    updateWithModelTileMap(self)
+	updateWithModelTileMap(self)
 end
 
 local function onEvtMapCursorMoved(self, event)
-    self.m_CursorGridIndex = GridIndexFunctions.clone(event.gridIndex)
-    updateWithModelTileMap(self)
+	self.m_CursorGridIndex = GridIndexFunctions.clone(event.gridIndex)
+	updateWithModelTileMap(self)
 end
 
 local function onEvtGridSelected(self, event)
-    self.m_CursorGridIndex = GridIndexFunctions.clone(event.gridIndex)
-    updateWithModelTileMap(self)
+	self.m_CursorGridIndex = GridIndexFunctions.clone(event.gridIndex)
+	updateWithModelTileMap(self)
 end
 
 local function onEvtWarCommandMenuUpdated(self, event)
-    updateWithModelTileMap(self)
+	updateWithModelTileMap(self)
 end
 
 local function onEvtPlayerIndexUpdated(self, event)
-    self.m_View:updateWithPlayerIndex(event.playerIndex)
+	self.m_View:updateWithPlayerIndex(event.playerIndex)
 end
 
 --------------------------------------------------------------------------------
 -- The contructor and initializers.
 --------------------------------------------------------------------------------
 function ModelTileInfo:ctor(param)
-    self.m_CursorGridIndex = {x = 1, y = 1}
+	self.m_CursorGridIndex = {x = 1, y = 1}
 
-    return self
+	return self
 end
 
 function ModelTileInfo:setModelTileDetail(model)
-    assert(self.m_ModelTileDetail == nil, "ModelTileInfo:setModelTileDetail() the model has been set.")
-    self.m_ModelTileDetail = model
+	assert(self.m_ModelTileDetail == nil, "ModelTileInfo:setModelTileDetail() the model has been set.")
+	self.m_ModelTileDetail = model
 
-    return self
+	return self
 end
 
 --------------------------------------------------------------------------------
 -- The callback functions on start running/script events.
 --------------------------------------------------------------------------------
 function ModelTileInfo:onStartRunning(modelWar)
-    self.m_ModelWar            = modelWar
-    self.m_ModelTileMap        = SingletonGetters.getModelTileMap(       modelWar)
-    self.m_ModelWarCommandMenu = SingletonGetters.getModelWarCommandMenu(modelWar)
-    if (SingletonGetters.isWarOnline(modelWar)) then
-        self.m_ModelChatManager = SingletonGetters.getModelChatManager(modelWar)
-    end
+	self.m_ModelWar			= modelWar
+	self.m_ModelTileMap		= SingletonGetters.getModelTileMap(	   modelWar)
+	self.m_ModelWarCommandMenu = SingletonGetters.getModelWarCommandMenu(modelWar)
+	if (SingletonGetters.isWarOnline(modelWar)) then
+		self.m_ModelChatManager = SingletonGetters.getModelChatManager(modelWar)
+	end
 
-    SingletonGetters.getScriptEventDispatcher(modelWar)
-        :addEventListener("EvtChatManagerUpdated",    self)
-        :addEventListener("EvtGridSelected",          self)
-        :addEventListener("EvtMapCursorMoved",        self)
-        :addEventListener("EvtModelTileMapUpdated",   self)
-        :addEventListener("EvtPlayerIndexUpdated",    self)
-        :addEventListener("EvtWarCommandMenuUpdated", self)
+	SingletonGetters.getScriptEventDispatcher(modelWar)
+		:addEventListener("EvtChatManagerUpdated",	self)
+		:addEventListener("EvtGridSelected",		  self)
+		:addEventListener("EvtMapCursorMoved",		self)
+		:addEventListener("EvtModelTileMapUpdated",   self)
+		:addEventListener("EvtPlayerIndexUpdated",	self)
+		:addEventListener("EvtWarCommandMenuUpdated", self)
 
-    updateWithModelTileMap(self)
-    self.m_View:updateWithPlayerIndex(SingletonGetters.getModelTurnManager(modelWar):getPlayerIndex())
+	updateWithModelTileMap(self)
+	self.m_View:updateWithPlayerIndex(SingletonGetters.getModelTurnManager(modelWar):getPlayerIndex())
 
-    return self
+	return self
 end
 
 function ModelTileInfo:onEvent(event)
-    local eventName = event.name
-    if     (eventName == "EvtChatManagerUpdated")    then onEvtChatManagerUpdated(   self, event)
-    elseif (eventName == "EvtGridSelected")          then onEvtGridSelected(         self, event)
-    elseif (eventName == "EvtMapCursorMoved")        then onEvtMapCursorMoved(       self, event)
-    elseif (eventName == "EvtModelTileMapUpdated")   then onEvtModelTileMapUpdated(  self, event)
-    elseif (eventName == "EvtPlayerIndexUpdated")    then onEvtPlayerIndexUpdated(   self, event)
-    elseif (eventName == "EvtWarCommandMenuUpdated") then onEvtWarCommandMenuUpdated(self, event)
-    end
+	local eventName = event.name
+	if	 (eventName == "EvtChatManagerUpdated")	then onEvtChatManagerUpdated(   self, event)
+	elseif (eventName == "EvtGridSelected")		  then onEvtGridSelected(		 self, event)
+	elseif (eventName == "EvtMapCursorMoved")		then onEvtMapCursorMoved(	   self, event)
+	elseif (eventName == "EvtModelTileMapUpdated")   then onEvtModelTileMapUpdated(  self, event)
+	elseif (eventName == "EvtPlayerIndexUpdated")	then onEvtPlayerIndexUpdated(   self, event)
+	elseif (eventName == "EvtWarCommandMenuUpdated") then onEvtWarCommandMenuUpdated(self, event)
+	end
 
-    return self
+	return self
 end
 
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
 function ModelTileInfo:onPlayerTouch()
-    if (self.m_ModelTileDetail) then
-        self.m_ModelTileDetail:updateWithModelTile(self.m_ModelTileMap:getModelTile(self.m_CursorGridIndex))
-            :setEnabled(true)
-    end
+	if (self.m_ModelTileDetail) then
+		self.m_ModelTileDetail:updateWithModelTile(self.m_ModelTileMap:getModelTile(self.m_CursorGridIndex))
+			:setEnabled(true)
+	end
 
-    return self
+	return self
 end
 
 function ModelTileInfo:getModelWar()
-    return self.m_ModelWar
+	return self.m_ModelWar
 end
 
 return ModelTileInfo

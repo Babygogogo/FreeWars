@@ -1,91 +1,81 @@
-
+--战场管理器
+local writablePath=cc.FileUtils:getInstance():getWritablePath()
 local WarFieldManager = {}
 
-local WAR_FIELD_PATH           = "res.data.templateWarField."
-local WAR_FIELD_FILENAME_LISTS = requireFW(WAR_FIELD_PATH .. "WarFieldFilenameLists")
-local IS_SERVER                = requireFW("src.app.utilities.GameConstantFunctions").isServer()
+local WAR_FIELD_FILENAME_LISTS = requireFW('res.data.templateWarField.WarFieldFilenameLists')
 
-local string, pairs, ipairs, require, assert = string, pairs, ipairs, require, assert
-local math                                   = math
+--显示消息(消息内容),这个函数需要依赖Babygogogo少年写的东西
+local function showMessage(message)
+	if WarFieldManager.indicator then WarFieldManager.indicator:showMessage(message) end
+end
 
-local s_IsInitialized          = false
-local s_WarFieldList
-local s_WarFieldListDeprecated = {}
-
---------------------------------------------------------------------------------
--- The util functions.
---------------------------------------------------------------------------------
-local function createWarFieldList()
-    local list = {}
-    for categoryName, subList in pairs(WAR_FIELD_FILENAME_LISTS) do
-        if ((not IS_SERVER)                                                          or
-            ((categoryName ~= "Campaign") and (categoryName ~= "SinglePlayerGame"))) then
-            assert(#subList > 0)
-            for _, warFieldFilename in pairs(subList) do
-                list[warFieldFilename] = list[warFieldFilename] or requireFW(WAR_FIELD_PATH .. warFieldFilename)
-            end
-        end
-    end
-
-    return list
+--加载地图的过程
+local function loadMap(name,showIfError)
+	local func,err=loadfile(name)--使用lua的loadfile来加载,返回函数和错误信息
+	if type(func)=='function' then--如果加载成功则执行一遍地图代码(可以在地图代码里下毒)
+		return func()
+	elseif not func then--执行不成功时候,提示错误信息
+		if showIfError then showMessage(err) end
+	end
 end
 
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
-function WarFieldManager.init()
-    if (not s_IsInitialized) then
-        s_IsInitialized = true
-
-        s_WarFieldList = createWarFieldList()
-    end
-
-    return WarFieldManager
-end
-
 function WarFieldManager.isRandomWarField(warFieldFilename)
-    return (string.find(warFieldFilename, "Random", 1, true) == 1)
-end
-
-function WarFieldManager.getRandomWarFieldFilename(warFieldFilename)
-    local list = WAR_FIELD_FILENAME_LISTS[warFieldFilename]
-    return list[math.random(#list)]
+	return (string.find(warFieldFilename, "Random", 1, true) == 1)
 end
 
 function WarFieldManager.getWarFieldData(warFieldFilename)
-    assert(s_IsInitialized, "WarFieldManager.getWarFieldData() the manager has not been initialized yet.")
-    if (s_WarFieldList[warFieldFilename]) then
-        return s_WarFieldList[warFieldFilename]
-    else
-        if (not s_WarFieldListDeprecated[warFieldFilename]) then
-            s_WarFieldListDeprecated[warFieldFilename] = requireFW(WAR_FIELD_PATH .. warFieldFilename)
-        end
-        return s_WarFieldListDeprecated[warFieldFilename]
-    end
+	print(debug.traceback())
+	print('调用WarFieldManager.getWarFieldData('..warFieldFilename..')')
+	--加载DLC地图文件
+	local dlcMapFullName=writablePath.. 'data/downloadMaps/' .. warFieldFilename
+	package.loaded[dlcMapFullName]=nil--这样的话可以让lua强行加载一遍
+	local warField=loadMap(dlcMapFullName)
+	--加载默认地图文件(如果DLC没有的话)
+	if not warField then
+		warField=loadMap('Resources/res/data/templateWarField/'..warFieldFilename..'.lua',true)
+	end
+	return warField
 end
 
 function WarFieldManager.getWarFieldFilenameList(listName)
-    local list = WAR_FIELD_FILENAME_LISTS[listName]
-    assert(list, "WarFieldManager.getWarFieldFilenameList() the list doesn't exist.")
-
-    return list
+	return WAR_FIELD_FILENAME_LISTS[listName]
 end
 
 function WarFieldManager.getWarFieldName(warFieldFilename)
-    return WarFieldManager.getWarFieldData(warFieldFilename).warFieldName
+	local warField=WarFieldManager.getWarFieldData(warFieldFilename)
+	if warField then
+		return warField.warFieldName
+	else
+		return '????'
+	end
 end
 
 function WarFieldManager.getWarFieldAuthorName(warFieldFilename)
-    return WarFieldManager.getWarFieldData(warFieldFilename).authorName
+	local warField=WarFieldManager.getWarFieldData(warFieldFilename)
+	if warField then
+		return warField.authorName
+	else
+		return '????'
+	end
 end
 
 function WarFieldManager.getPlayersCount(warFieldFilename)
-    return WarFieldManager.getWarFieldData(warFieldFilename).playersCount
+	local warField=WarFieldManager.getWarFieldData(warFieldFilename)
+	if warField then
+		return warField.playersCount
+	else
+		return 0
+	end
 end
 
 function WarFieldManager.getMapSize(warFieldFilename)
-    local data = WarFieldManager.getWarFieldData(warFieldFilename)
-    return {width = data.width, height = data.height}
+	local data = WarFieldManager.getWarFieldData(warFieldFilename)
+	if data then
+		return {width = data.width, height = data.height}
+	end
 end
 
 return WarFieldManager
