@@ -632,6 +632,8 @@ local s_Texts = {
             elseif (skillID == 12) then return "我方步兵系的占领速度（四舍五入）"
             elseif (skillID == 13) then return "我方能量值获取速度（四舍五入）"
             elseif (skillID == 14) then return "我方能量值获取速度（不受战局设定影响）"
+            elseif (skillID == 15) then return "对方全体部队的当前HP"
+            elseif (skillID == 16) then return "对方能量值"
             else                        return "未知4:" .. (skillID or "")
             end
         end,
