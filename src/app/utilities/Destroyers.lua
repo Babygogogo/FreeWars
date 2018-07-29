@@ -1,9 +1,7 @@
-
 local Destroyers = {}
 
-local IS_SERVER		   = requireFW("src.app.utilities.GameConstantFunctions").isServer()
 local SingletonGetters	= requireFW("src.app.utilities.SingletonGetters")
-local WebSocketManager	= (not IS_SERVER) and (requireFW("src.app.utilities.WebSocketManager")) or (nil)
+local WebSocketManager	= requireFW("src.app.utilities.WebSocketManager") or nil
 
 local getModelFogMap		   = SingletonGetters.getModelFogMap
 local getModelGridEffect	   = SingletonGetters.getModelGridEffect
@@ -41,7 +39,6 @@ function Destroyers.destroyActorUnitLoaded(modelWar, unitID, shouldRemoveView)
 	local modelUnitMap	= getModelUnitMap(modelWar)
 	local modelUnitLoaded = modelUnitMap:getLoadedModelUnitWithUnitId(unitID)
 	local destroyedUnits  = {}
-	shouldRemoveView	  = (not IS_SERVER) and (shouldRemoveView)
 
 	destroyedUnits[#destroyedUnits + 1] = destroySingleActorUnitLoaded(modelUnitMap, modelUnitLoaded, shouldRemoveView)
 	for _, subModelUnitLoaded in pairs(modelUnitMap:getLoadedModelUnitsWithLoader(modelUnitLoaded, true) or {}) do
@@ -57,7 +54,6 @@ function Destroyers.destroyActorUnitOnMap(modelWar, gridIndex, shouldRemoveView,
 	local modelUnitMap   = getModelUnitMap(modelWar)
 	local modelUnit	  = modelUnitMap:getModelUnit(gridIndex)
 	local destroyedUnits = {modelUnit}
-	shouldRemoveView	 = (not IS_SERVER) and (shouldRemoveView)
 
 	modelUnitMap:removeActorUnitOnMap(gridIndex)
 	if (shouldRemoveView) then
@@ -77,8 +73,7 @@ end
 
 function Destroyers.destroyPlayerForce(modelWar, playerIndex)
 	local modelGridEffect
-	if ((not IS_SERVER)														   and
-		((not isWarReplay(modelWar)) or (not modelWar:isFastExecutingActions()))) then
+	if (not isWarReplay(modelWar)) or (not modelWar:isFastExecutingActions()) then
 		modelGridEffect = SingletonGetters.getModelGridEffect(modelWar)
 	end
 

@@ -178,7 +178,8 @@ local function createItemsForStatePlayerIndex(self)
 	local players			  = warConfiguration.players
 	local items				= {}
 
-	for playerIndex = 1, WarFieldManager.getPlayersCount(warConfiguration.warFieldFileName) do
+	local playerCount=WarFieldManager.getPlayersCount(warConfiguration.warFieldFileName)
+	for playerIndex = 1,playerCount do
 		if ((not players) or (not players[playerIndex])) then
 			items[#items + 1] = {
 				playerIndex = playerIndex,

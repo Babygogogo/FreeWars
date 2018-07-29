@@ -30,7 +30,7 @@ local s_Scheduler = cc.Director:getInstance():getScheduler()
 --发送心跳
 local function heartbeat()
 	if (not s_IsHeartbeatAnswered) then
-		WebSocketManager.close()
+		s_Socket:close()
 	else
 		s_HeartbeatCounter	= s_HeartbeatCounter + 1
 		s_IsHeartbeatAnswered = false
@@ -59,14 +59,10 @@ end
 --------------------------------------------------------------------------------
 -- The public functions.
 --------------------------------------------------------------------------------
-function WebSocketManager.isInitialized()
-	return s_Socket ~= nil
-end
-
 function WebSocketManager.init()
 	print('初始化Web套接字管理器')
-	assert(not WebSocketManager.isInitialized(), "WebSocketManager.init() the socket has been initialized.")
 	s_Socket = cc.WebSocket:create(SERVER_URL)--开始链接服务器
+
 	--设定'连接成功后要执行的函数'
 	s_Socket:registerScriptHandler(function()
 		print('连接成功')
@@ -76,10 +72,11 @@ function WebSocketManager.init()
 		s_HeartbeatScheduleID = s_Scheduler:scheduleScriptFunc(heartbeat, HEARTBEAT_INTERVAL, false)
 		heartbeat()
 	end, cc.WEBSOCKET_OPEN)
+
 	--设定'收到消息时要执行的函数'
 	s_Socket:registerScriptHandler(function(msg)
-		print('收到消息')
 		local _, action = next(decode("ActionGeneric", msg), nil)
+		print('收到消息'..action.actionCode)
 		if (action.actionCode == ACTION_CODE_HEARTBEAT) then
 			s_IsHeartbeatAnswered = (action.heartbeatCounter == s_HeartbeatCounter)
 		else
@@ -89,19 +86,19 @@ function WebSocketManager.init()
 			})
 		end
 	end, cc.WEBSOCKET_MESSAGE)
+
 	--设定'连接关闭时要执行的函数'
 	s_Socket:registerScriptHandler(function()
 		print('连接关闭')
 		ActorManager.getRootActor():getModel():onWebSocketEvent("close")
-
 		cleanup()
 		WebSocketManager.init()
 	end, cc.WEBSOCKET_CLOSE)
+
 	--设定'连接出错时要执行的函数'
 	s_Socket:registerScriptHandler(function(err)
 		print('连接出错')
 		ActorManager.getRootActor():getModel():onWebSocketEvent("error", {error = err})
-
 		cleanup()
 		WebSocketManager.init()
 	end, cc.WEBSOCKET_ERROR)
@@ -111,7 +108,6 @@ end
 
 function WebSocketManager.setLoggedInAccountAndPassword(account, password)
 	s_Account, s_Password = account, password
-
 	return WebSocketManager
 end
 
@@ -120,22 +116,12 @@ function WebSocketManager.getLoggedInAccountAndPassword()
 end
 
 function WebSocketManager.sendAction(action, ignoreAccountAndPassword)
-	assert(WebSocketManager.isInitialized(), "WebSocketManager.sendAction() the socket hasn't been initialized.")
-
 	if (not ignoreAccountAndPassword) then
 		action.playerAccount  = action.playerAccount  or s_Account
 		action.playerPassword = action.playerPassword or s_Password
 	end
 
 	s_Socket:sendString(encode("ActionGeneric", {[ActionCodeFunctions.getActionName(action.actionCode)] = action}))
-
-	return WebSocketManager
-end
-
-function WebSocketManager.close()
-	assert(WebSocketManager.isInitialized(), "WebSocketManager.close() the socket hasn't been initialized.")
-	s_Socket:close()
-
 	return WebSocketManager
 end
 

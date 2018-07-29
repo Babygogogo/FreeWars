@@ -121,6 +121,7 @@ function NativeWarManager.init()
 end
 
 function NativeWarManager.createInitialWarData(warConfiguration)
+	print('创建初始化战场数据')
 	return {
 		actionID				  = 0,
 		attackModifier			= warConfiguration.attackModifier,
@@ -157,7 +158,7 @@ function NativeWarManager.loadWarData(saveIndex)
 end
 
 function NativeWarManager.saveWarData(warData)
-	assert(false,'saveWarData()()()()')
+	--assert(false,'saveWarData()()()()')
 	saveWarConfiguration(generateWarConfiguration(warData))
 	local file = io.open(getDataFilenameWithSaveIndex(warData.saveIndex), "wb")
 	file:write(SerializationFunctions.encode("SceneWar", warData))

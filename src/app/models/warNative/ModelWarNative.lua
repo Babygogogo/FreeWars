@@ -188,11 +188,11 @@ end
 function ModelWarNative:onStartRunning()
 	local modelTurnManager   = self:getModelTurnManager()
 	local modelPlayerManager = self:getModelPlayerManager()
-	modelPlayerManager	 :onStartRunning(self)
-	modelTurnManager	   :onStartRunning(self)
-	self:getModelWarField():onStartRunning(self)
-	self:getModelWarHud()  :onStartRunning(self)
-	self:getModelRobot()   :onStartRunning(self)
+	modelPlayerManager		:onStartRunning(self)
+	modelTurnManager		:onStartRunning(self)
+	self:getModelWarField()	:onStartRunning(self)
+	self:getModelWarHud()	:onStartRunning(self)
+	self:getModelRobot()	:onStartRunning(self)
 
 	self.m_PlayerIndexForHuman = modelPlayerManager:getPlayerIndexForHuman()
 	if ((modelTurnManager:getTurnIndex() == 1) and (modelTurnManager:isTurnPhaseRequestToBegin())) then
@@ -212,6 +212,7 @@ function ModelWarNative:onStartRunning()
 		if ((not self:isExecutingAction()) and (not self:isEnded())) then
 			if (modelTurnManager:getPlayerIndex() == self.m_PlayerIndexForHuman) then
 				if (modelTurnManager:isTurnPhaseRequestToBegin()) then
+					print('人类玩家回合开始')
 					self:translateAndExecuteAction({actionCode = ACTION_CODE_BEGIN_TURN})
 				end
 			else

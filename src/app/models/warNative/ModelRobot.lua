@@ -1,4 +1,3 @@
-
 local ModelRobot = requireFW("src.global.functions.class")("ModelRobot")
 
 local ActionCodeFunctions		 = requireFW("src.app.utilities.ActionCodeFunctions")
@@ -58,6 +57,31 @@ local PRODUCTION_CANDIDATES	   = {																						   -- ADJUSTABLE
 --------------------------------------------------------------------------------
 -- The util functions.
 --------------------------------------------------------------------------------
+--[[local function strTable(tbl)
+	local ret='{'
+	for k,v in ipairs(tbl) do
+		if type(v)=='table' then
+			ret=ret..(strTable(v)..',')
+		else
+			ret=ret..(k..'='..v..',')
+		end
+	end
+	ret=ret..'}'
+	return ret
+end]]
+local function printTable(tbl)
+	print("{")
+	for k,v in pairs(tbl) do
+		if type(v)=='table' then
+			print(k.."(table):")
+			printTable(v)
+		else
+			print(k.."("..type(v).."):"..v)
+		end
+	end
+	print("}")
+end
+--从数组随机抽出元素(不放回)
 local function popRandomElement(array)
 	local length = #array
 	if (length == 0) then
@@ -70,6 +94,7 @@ local function popRandomElement(array)
 	end
 end
 
+--弹出候选单位
 local function popRandomCandidateUnit(modelUnitMap, candidateUnits)
 	local modelUnit = popRandomElement(candidateUnits)
 	if (not modelUnit) then
@@ -77,14 +102,14 @@ local function popRandomCandidateUnit(modelUnitMap, candidateUnits)
 	elseif ((modelUnitMap:getModelUnit(modelUnit:getGridIndex()) == modelUnit) or (modelUnitMap:getLoadedModelUnitWithUnitId(modelUnit:getUnitId()))) then
 		return modelUnit
 	else
-		return popRandomCandidateUnit(modelUnitMap, candidateUnits)
+		return popRandomCandidateUnit(modelUnitMap, candidateUnits)--从剩下的candidateUnits表继续弹出单位
 	end
 end
-
+--单位是否被加载
 local function isModelUnitLoaded(self, modelUnit)
 	return self.m_ModelUnitMap:getLoadedModelUnitWithUnitId(modelUnit:getUnitId()) ~= nil
 end
-
+--计算单位价值率
 local function calculateUnitValueRatio(self)
 	local aiUnitValue, humanUnitValue = 0, 0
 	local func						= function(modelUnit)
@@ -104,7 +129,7 @@ local function calculateUnitValueRatio(self)
 		return 1
 	end
 end
-
+--计算可达范围
 local function getReachableArea(self, modelUnit, passableGridIndex, blockedGridIndex)
 	local modelUnitMap = self.m_ModelUnitMap
 	local modelTileMap = self.m_ModelTileMap
@@ -131,7 +156,7 @@ local function getReachableArea(self, modelUnit, passableGridIndex, blockedGridI
 		true
 	)
 end
-
+--计算玩家回合可能的损伤
 local function getPossibleDamageInPlayerTurn(self, robotUnit, gridIndex, minBaseDamage)
 	minBaseDamage			 = minBaseDamage or 0
 	local modelWar			= self.m_ModelWar
@@ -195,7 +220,7 @@ local function getPossibleDamageInPlayerTurn(self, robotUnit, gridIndex, minBase
 
 	return damage
 end
-
+--获取更好的分数和动作
 local function getBetterScoreAndAction(oldScore, oldAction, newScore, newAction)
 	if (not newScore) then
 		return oldScore, oldAction
@@ -207,7 +232,7 @@ local function getBetterScoreAndAction(oldScore, oldAction, newScore, newAction)
 		return oldScore, oldAction
 	end
 end
-
+--单位能否在某位置待机
 local function canUnitWaitOnGrid(self, modelUnit, gridIndex)
 	if (GridIndexFunctions.isEqual(modelUnit:getGridIndex(), gridIndex)) then
 		return not isModelUnitLoaded(self, modelUnit)
@@ -219,6 +244,7 @@ end
 --------------------------------------------------------------------------------
 -- The damage map generator.
 --------------------------------------------------------------------------------
+--获取玩家据点数
 local function getModelTilesCount(self, tileType, playerIndex)
 	local count = 0
 	self.m_ModelTileMap:forEachModelTile(function(modelTile)
@@ -229,20 +255,20 @@ local function getModelTilesCount(self, tileType, playerIndex)
 
 	return count
 end
-
+--获取玩家的攻击奖励
 local function getAttackBonusForPlayerIndex(self, attackerPlayerIndex)
 	return self.m_ModelWar:getAttackModifier()
 		+ getModelTilesCount(self, "CommandTower", attackerPlayerIndex) * COMMAND_TOWER_ATTACK_BONUS
 		+ SkillModifierFunctions.getAttackModifierForSkillConfiguration(self.m_ModelPlayerManager:getModelPlayer(attackerPlayerIndex):getModelSkillConfiguration())
 end
-
+--获取目标的防御奖励
 local function getDefenseBonusForTarget(self, target)
 	local playerIndex = target:getPlayerIndex()
 	return ((target.getPromotionDefenseBonus) and (target:getPromotionDefenseBonus()) or (0))
 		+ getModelTilesCount(self, "CommandTower", playerIndex) * COMMAND_TOWER_DEFENSE_BONUS
 		+ SkillModifierFunctions.getDefenseModifierForSkillConfiguration(self.m_ModelPlayerManager:getModelPlayer(playerIndex):getModelSkillConfiguration())
 end
-
+--获取防御乘以奖励的值
 local function getDefenseMultiplierWithBonus(bonus)
 	if (bonus >= 0) then
 		return 1 / (1 + bonus / 100)
@@ -250,7 +276,7 @@ local function getDefenseMultiplierWithBonus(bonus)
 		return 1 - bonus / 100
 	end
 end
-
+--获取基础损伤与标准化HP和燃料
 local function getBaseDamageAndNormalizedHpAndFuel(self, attacker, target)
 	if (isModelUnitLoaded(self, attacker)) then
 		local loader = self.m_ModelUnitMap:getModelUnit(attacker:getGridIndex())
@@ -281,7 +307,7 @@ local function getBaseDamageAndNormalizedHpAndFuel(self, attacker, target)
 		end
 	end
 end
-
+--创建损伤图
 local function createDamageMap(self, target, isDiving)
 	local map = {}
 	for x = 1, self.m_MapWidth do
@@ -345,6 +371,7 @@ end
 --------------------------------------------------------------------------------
 -- The generator for score map for distance to the nearest capturable tile.
 --------------------------------------------------------------------------------
+--创建距离积分表
 local function createScoreMapForDistance(self, modelUnit)
 	local modelTileMap		  = self.m_ModelTileMap
 	local nearestCapturableTile = ReachableAreaFunctions.findNearestCapturableTile(modelTileMap, self.m_ModelUnitMap, modelUnit, true)
@@ -366,12 +393,13 @@ end
 --------------------------------------------------------------------------------
 -- The score calculators.
 --------------------------------------------------------------------------------
+--获取威慑分数
 local function getScoreForThreat(self, modelUnit, gridIndex, damageMap)
 	local hp	 = modelUnit:getCurrentHP()
 	local damage = math.min(damageMap[gridIndex.x][gridIndex.y] or 0, hp)
 	return - (damage + ((damage >= hp) and (20) or (0))) * modelUnit:getProductionCost() / 3000 / math.max(1, self.m_UnitValueRatio)
 end
-
+--获取位置分数
 local function getScoreForPosition(self, modelUnit, gridIndex, damageMap, scoreMapForDistance)
 	local score = getScoreForThreat(self, modelUnit, gridIndex, damageMap)
 	if (scoreMapForDistance) then
@@ -413,7 +441,7 @@ local function getScoreForPosition(self, modelUnit, gridIndex, damageMap, scoreM
 
 	return score
 end
-
+--获取攻击动作分数
 local function getScoreForActionAttack(self, modelUnit, gridIndex, targetGridIndex, attackDamage, counterDamage)
 	if (not attackDamage) then
 		return nil
@@ -449,7 +477,7 @@ local function getScoreForActionAttack(self, modelUnit, gridIndex, targetGridInd
 
 	return score
 end
-
+--获取占领地形分数
 local function getScoreForActionCaptureModelTile(self, modelUnit, gridIndex)
 	local modelTile		   = self.m_ModelTileMap:getModelTile(gridIndex)
 	local currentCapturePoint = modelTile:getCurrentCapturePoint()
@@ -478,11 +506,11 @@ local function getScoreForActionCaptureModelTile(self, modelUnit, gridIndex)
 		end
 	end
 end
-
+--获取下潜分数
 local function getScoreForActionDive(self, modelUnit, gridIndex)
 	return (modelUnit:getCurrentFuel() <= 35) and (-10) or (10)
 end
-
+--获取部队结合分数
 local function getScoreForActionJoinModelUnit(self, modelUnit, gridIndex)
 	local targetModelUnit = self.m_ModelUnitMap:getModelUnit(gridIndex)
 	if (targetModelUnit:isStateIdle()) then
@@ -500,7 +528,7 @@ local function getScoreForActionJoinModelUnit(self, modelUnit, gridIndex)
 		return (newHP > 10) and ((newHP - 10) * (-50)) or ((10 - newHP) * 5)													-- ADJUSTABLE
 	end
 end
-
+--获取发射火箭分数
 local function getScoreForActionLaunchSilo(self, unitValueMap, targetGridIndex)
 	local score = 10000																										 -- ADJUSTABLE
 	for _, gridIndex in pairs(GridIndexFunctions.getGridsWithinDistance(targetGridIndex, 0, 2, self.m_MapSize)) do
@@ -509,7 +537,7 @@ local function getScoreForActionLaunchSilo(self, unitValueMap, targetGridIndex)
 
 	return score
 end
-
+--获取加载部队分数
 local function getScoreForActionLoadModelUnit(self, modelUnit, gridIndex)
 	local loader = self.m_ModelUnitMap:getModelUnit(gridIndex)
 	if (not loader:canLaunchModelUnit()) then
@@ -520,7 +548,7 @@ local function getScoreForActionLoadModelUnit(self, modelUnit, gridIndex)
 		return 0
 	end
 end
-
+--获取生产部队分数
 local function getScoreForActionProduceModelUnitOnTile(self, gridIndex, tiledID, idleFactoriesCount)
 	local modelUnit = Actor.createModel("warOnline.ModelUnitForOnline", {
 		tiledID	   = tiledID,
@@ -565,11 +593,11 @@ local function getScoreForActionProduceModelUnitOnTile(self, gridIndex, tiledID,
 
 	return score
 end
-
+--获取上浮分数
 local function getScoreForActionSurface(self, modelUnit, gridIndex)
 	return (modelUnit:getCurrentFuel() <= 35) and (10) or (-10)
 end
-
+--获取待机分数
 local function getScoreForActionWait(self, modelUnit, gridIndex)
 	local modelTile = self.m_ModelTileMap:getModelTile(gridIndex)
 	if ((modelTile.getCurrentCapturePoint)					  and
@@ -821,6 +849,7 @@ local function getActionProduceModelUnitOnTileForMaxScore(self)
 		if ((modelTile:getPlayerIndex() == playerIndexInTurn)		 and
 			(not modelUnitMap:getModelUnit(modelTile:getGridIndex())) and
 			(modelTile.getProductionList))							then
+			--添加可生产的据点
 			idleBuildingsPos[#idleBuildingsPos + 1] = modelTile:getGridIndex()
 			if (modelTile:getTileType() == "Factory") then
 				idleFactoriesCount = idleFactoriesCount + 1
@@ -946,17 +975,16 @@ end
 --------------------------------------------------------------------------------
 -- Phase 0: begin turn.
 local function getActionForPhase0(self)
-	if (not self.m_ModelTurnManager:isTurnPhaseRequestToBegin()) then
-		return nil
-	else
+	if self.m_ModelTurnManager:isTurnPhaseRequestToBegin() then
+		print('回合开始')
 		self.m_PhaseCode = 1
-		return {actionCode = ACTION_CODES.ActionBeginTurn,}
+		return {actionCode = ACTION_CODES.ActionBeginTurn}
 	end
 end
 
 -- Phase 1: make the ranged units to attack enemies.
 local function getActionForPhase1(self)
-	self.m_CandidateUnits = self.m_CandidateUnits or getCandidateUnitsForPhase1(self)
+	self.m_CandidateUnits = self.m_CandidateUnits or getCandidateUnitsForPhase1(self)--获取自己的远程攻击部队列表
 
 	local action
 	while ((not action) or (action.actionCode ~= ACTION_CODES.ActionAttack)) do
@@ -966,10 +994,10 @@ local function getActionForPhase1(self)
 			self.m_PhaseCode	  = 2
 			return nil
 		end
-
 		action = getActionForMaxScoreWithCandicateUnit(self, candidateUnit)
+		print('远程攻击')
+		printTable(action)
 	end
-
 	return action
 end
 
@@ -982,8 +1010,10 @@ local function getActionForPhase2(self)
 		self.m_PhaseCode	  = 3
 		return nil
 	end
-
-	return getActionForMaxScoreWithCandicateUnit(self, candidateUnit)
+	local action=getActionForMaxScoreWithCandicateUnit(self, candidateUnit)
+	print('占领系执行占领')
+	printTable(action)
+	return action
 end
 
 -- Phase 3: move the other infantries, meches and bikes.
@@ -995,8 +1025,10 @@ local function getActionForPhase3(self)
 		self.m_PhaseCode	  = 4
 		return nil
 	end
-
-	return getActionForMaxScoreWithCandicateUnit(self, candidateUnit)
+	local action=getActionForMaxScoreWithCandicateUnit(self, candidateUnit);
+	print('占领系执行非占领命令')
+	printTable(action)
+	return action
 end
 
 -- Phase 4: move the air combat units.
@@ -1008,8 +1040,10 @@ local function getActionForPhase4(self)
 		self.m_PhaseCode	  = 5
 		return nil
 	end
-
-	return getActionForMaxScoreWithCandicateUnit(self, candidateUnit)
+	local action=getActionForMaxScoreWithCandicateUnit(self, candidateUnit)
+	print('空军移动')
+	printTable(action)
+	return action
 end
 
 -- Phase 5: move the remaining direct units.
@@ -1021,8 +1055,10 @@ local function getActionForPhase5(self)
 		self.m_PhaseCode	  = 6
 		return nil
 	end
-
-	return getActionForMaxScoreWithCandicateUnit(self, candidateUnit)
+	local action=getActionForMaxScoreWithCandicateUnit(self, candidateUnit)
+	print('移动剩余的直接攻击部队')
+	printTable(action)
+	return action
 end
 
 -- Phase 6: move the other units except the remaining ranged units.
@@ -1034,8 +1070,10 @@ local function getActionForPhase6(self)
 		self.m_PhaseCode	  = 7
 		return nil
 	end
-
-	return getActionForMaxScoreWithCandicateUnit(self, candidateUnit)
+	local action=getActionForMaxScoreWithCandicateUnit(self, candidateUnit)
+	print('移动其它部队(非范围攻击部队)')
+	printTable(action)
+	return action
 end
 
 -- Phase 7: move the remaining units.
@@ -1047,8 +1085,10 @@ local function getActionForPhase7(self)
 		self.m_PhaseCode	  = 8
 		return nil
 	end
-
-	return getActionForMaxScoreWithCandicateUnit(self, candidateUnit)
+	local action=getActionForMaxScoreWithCandicateUnit(self, candidateUnit)
+	print('移动剩余部队')
+	printTable(action)
+	return action
 end
 
 -- Phase 8: spend energy on passive skills.
@@ -1074,6 +1114,7 @@ local function getActionForPhase8(self)
 		self.m_PhaseCode = 9
 		return nil
 	else
+		print('消耗能量发动技能')
 		return {
 			actionCode	= ACTION_CODES.ActionResearchPassiveSkill,
 			skillID	   = targetSkillID,
@@ -1089,13 +1130,14 @@ local function getActionForPhase9(self)
 		self.m_PhaseCode = 10
 		return nil
 	end
-
+	print('建造单位('..action.gridIndex.x..','..action.gridIndex.y..'):'..action.tiledID)
 	return action
 end
 
 -- Phase 10: end turn.
 local function getActionForPhase10(self)
 	self.m_PhaseCode = nil
+	print('结束回合')
 	return {actionCode = ACTION_CODES.ActionEndTurn}
 end
 
@@ -1124,6 +1166,7 @@ end
 -- The callback functions on start/stop running.
 --------------------------------------------------------------------------------
 function ModelRobot:onStartRunning(modelWar)
+	print("机器人:开始运行")
 	self.m_ModelWar				   = modelWar
 	self.m_ModelPlayerManager		 = SingletonGetters.getModelPlayerManager(modelWar)
 	self.m_ModelTileMap			   = SingletonGetters.getModelTileMap(	  modelWar)
@@ -1150,6 +1193,7 @@ end
 -- The public functions.
 --------------------------------------------------------------------------------
 function ModelRobot:getNextAction()
+	print("机器人:获取下一个动作")
 	local modelTurnManager = self.m_ModelTurnManager
 	assert(modelTurnManager:getPlayerIndex() ~= self.m_PlayerIndexForHuman)
 

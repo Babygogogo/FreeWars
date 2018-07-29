@@ -67,9 +67,16 @@ local function main()
 	local wfManager=requireFW("src.app.utilities.WarFieldManager")
 	wfManager.indicator=indicator
 	--让下载器准备进行热更新
-	local downloader=requireFW("src.global.functions.download")
+	--[[local downloader=requireFW("src.global.functions.download")
 	downloader.indicator=indicator
 	downloader.httpDownload('localhost:1024/','./')
+
+	downloader.setDownloadMode(downloader.downloadAWBWmap)
+	downloader.httpDownload('awbw.amarriner.com/text_map.php?maps_id=1','./1.html')]]
+	local awbw=requireFW("src.global.functions.awbw")
+	local writablePath=cc.FileUtils:getInstance():getWritablePath()
+	local txtFile=io.open(writablePath.."1.html",'r')
+	awbw.analyseMapTxt(txtFile)
 end
 
 local status, msg = xpcall(main, __G__TRACKBACK__)

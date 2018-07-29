@@ -30,9 +30,8 @@ local TableFunctions			 = requireFW("src.app.utilities.TableFunctions")
 local Actor					  = requireFW("src.global.actors.Actor")
 local EventDispatcher			= requireFW("src.global.events.EventDispatcher")
 
-local IS_SERVER		= requireFW("src.app.utilities.GameConstantFunctions").isServer()
-local AudioManager	 = (not IS_SERVER) and (requireFW("src.app.utilities.AudioManager"))	 or (nil)
-local WebSocketManager = (not IS_SERVER) and (requireFW("src.app.utilities.WebSocketManager")) or (nil)
+local AudioManager	 = requireFW("src.app.utilities.AudioManager") or nil
+local WebSocketManager = requireFW("src.app.utilities.WebSocketManager") or nil
 
 local ipairs, next	 = ipairs, next
 local getLocalizedText = LocalizationFunctions.getLocalizedText
@@ -168,11 +167,9 @@ function ModelWarOnline:ctor(sceneData)
 	initActorWarField(		self, sceneData.warField)
 	initActorTurnManager(	 self, sceneData.turn)
 
-	if (not IS_SERVER) then
-		initActorConfirmBox(	  self)
-		initActorMessageIndicator(self)
-		initActorWarHud(		  self)
-	end
+	initActorConfirmBox(	  self)
+	initActorMessageIndicator(self)
+	initActorWarHud(		  self)
 
 	return self
 end
@@ -300,14 +297,12 @@ function ModelWarOnline:onStartRunning(ignoreWarMusic)
 	modelTurnManager			:onStartRunning(self)
 	self:getModelChatManager()  :onStartRunning(self)
 	self:getModelWarField()	 :onStartRunning(self)
-	if (not IS_SERVER) then
-		self:getModelWarHud():onStartRunning(self)
-	end
+	self:getModelWarHud():onStartRunning(self)
 
 	self:getScriptEventDispatcher():dispatchEvent({name = "EvtSceneWarStarted"})
 
 	modelTurnManager:runTurn()
-	if ((not IS_SERVER) and (not ignoreWarMusic)) then
+	if (not ignoreWarMusic) then
 		AudioManager.playRandomWarMusic()
 	end
 
@@ -347,7 +342,7 @@ function ModelWarOnline:setExecutingAction(executing)
 	assert(self.m_IsExecutingAction ~= executing)
 	self.m_IsExecutingAction = executing
 
-	if ((not IS_SERVER) and (not executing) and (not self:isEnded())) then
+	if ((not executing) and (not self:isEnded())) then
 		local actionID = self:getActionId() + 1
 		local action   = self.m_CachedActions[actionID]
 
@@ -380,20 +375,8 @@ end
 
 function ModelWarOnline:cacheAction(action)
 	local actionID = action.actionID
-	assert(not IS_SERVER,				 "ModelWarOnline:cacheAction() this should not happen on the server.")
 	assert(actionID > self:getActionId(), "ModelWarOnline:cacheAction() the action to be cached has been executed already.")
-
 	self.m_CachedActions[actionID] = action
-
-	return self
-end
-
-function ModelWarOnline:pushBackExecutedAction(action)
-	assert(IS_SERVER, "ModelWarOnline:pushBackExecutedAction() should not be invoked on the client.")
-	self.m_ExecutedActions[action.actionID] = {
-		[ActionCodeFunctions.getActionName(action.actionCode)] = TableFunctions.clone(action, IGNORED_KEYS_FOR_EXECUTED_ACTIONS)
-	}
-
 	return self
 end
 
@@ -520,7 +503,6 @@ function ModelWarOnline:getScriptEventDispatcher()
 end
 
 function ModelWarOnline:showEffectEndWithDraw(callback)
-	assert(not IS_SERVER, "ModelWarOnline:showEffectEndWithDraw() should not be invoked on the server.")
 	self.m_View:showEffectEndWithDraw(callback)
 
 	return self

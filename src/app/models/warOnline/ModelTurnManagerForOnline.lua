@@ -19,7 +19,6 @@
 
 local ModelTurnManagerForOnline = requireFW("src.global.functions.class")("ModelTurnManagerForOnline")
 
-local IS_SERVER			 = requireFW("src.app.utilities.GameConstantFunctions").isServer()
 local ActionCodeFunctions   = requireFW("src.app.utilities.ActionCodeFunctions")
 local AuxiliaryFunctions	= requireFW("src.app.utilities.AuxiliaryFunctions")
 local Destroyers			= requireFW("src.app.utilities.Destroyers")
@@ -28,7 +27,7 @@ local LocalizationFunctions = requireFW("src.app.utilities.LocalizationFunctions
 local SingletonGetters	  = requireFW("src.app.utilities.SingletonGetters")
 local SupplyFunctions	   = requireFW("src.app.utilities.SupplyFunctions")
 local VisibilityFunctions   = requireFW("src.app.utilities.VisibilityFunctions")
-local WebSocketManager	  = (not IS_SERVER) and (requireFW("src.app.utilities.WebSocketManager")) or (nil)
+local WebSocketManager	  = requireFW("src.app.utilities.WebSocketManager") or nil
 
 local destroyActorUnitOnMap	= Destroyers.destroyActorUnitOnMap
 local getAdjacentGrids		 = GridIndexFunctions.getAdjacentGrids
@@ -99,20 +98,15 @@ end
 local function repairModelUnit(self, modelUnit, repairAmount)
 	modelUnit:setCurrentHP(modelUnit:getCurrentHP() + repairAmount)
 	local hasSupplied = supplyWithAmmoAndFuel(modelUnit, true)
-
-	if (not IS_SERVER) then
-		modelUnit:updateView()
-
-		if (repairAmount >= 10) then
-			SingletonGetters.getModelGridEffect(self.m_ModelWar):showAnimationRepair(modelUnit:getGridIndex())
-		elseif (hasSupplied) then
-			SingletonGetters.getModelGridEffect(self.m_ModelWar):showAnimationSupply(modelUnit:getGridIndex())
-		end
+	modelUnit:updateView()
+	if (repairAmount >= 10) then
+		SingletonGetters.getModelGridEffect(self.m_ModelWar):showAnimationRepair(modelUnit:getGridIndex())
+	elseif (hasSupplied) then
+		SingletonGetters.getModelGridEffect(self.m_ModelWar):showAnimationSupply(modelUnit:getGridIndex())
 	end
 end
 
 local function resetVisionOnClient(self)
-	assert(not IS_SERVER, "ModelTurnManagerForOnline-resetVisionOnClient() this shouldn't be called on the server.")
 	local modelWar	= self.m_ModelWar
 	local playerIndex = self.m_PlayerIndexLoggedIn
 	getModelUnitMap(modelWar):forEachModelUnitOnMap(function(modelUnit)
@@ -141,8 +135,6 @@ local function createStepForBootReminder(self, delayTime)
 end
 
 local function resetBootReminder(self)
-	assert(not IS_SERVER, "ModelTurnManagerForOnline:resetBootReminder() should not be invoked on the server.")
-
 	if (self.m_BootReminder) then
 		self.m_View:stopAction(self.m_BootReminder)
 	end
@@ -169,11 +161,7 @@ local function runTurnPhaseBeginning(self)
 		self:runTurn()
 	end
 
-	if (not IS_SERVER) then
-		self.m_View:showBeginTurnEffect(self.m_TurnIndex, self.m_ModelPlayerManager:getModelPlayer(self.m_PlayerIndex):getNickname(), callbackOnBeginTurnEffectDisappear)
-	else
-		callbackOnBeginTurnEffectDisappear()
-	end
+	self.m_View:showBeginTurnEffect(self.m_TurnIndex, self.m_ModelPlayerManager:getModelPlayer(self.m_PlayerIndex):getNickname(), callbackOnBeginTurnEffectDisappear)
 end
 
 local function runTurnPhaseGetFund(self)
@@ -196,7 +184,7 @@ local function runTurnPhaseConsumeUnitFuel(self)
 		local mapSize			 = modelTileMap:getMapSize()
 		local dispatcher		  = getScriptEventDispatcher(modelWar)
 		local playerIndexLoggedIn = self.m_PlayerIndexLoggedIn
-		local shouldUpdateFogMap  = (IS_SERVER) or (self.m_ModelPlayerManager:isSameTeamIndex(playerIndexActing, playerIndexLoggedIn))
+		local shouldUpdateFogMap  = self.m_ModelPlayerManager:isSameTeamIndex(playerIndexActing, playerIndexLoggedIn)
 
 		modelUnitMap:forEachModelUnitOnMap(function(modelUnit)
 			if ((modelUnit:getPlayerIndex() == playerIndexActing) and
@@ -267,7 +255,7 @@ local function runTurnPhaseSupplyUnit(self)
 	if (supplyData) then
 		local modelWar		= self.m_ModelWar
 		local modelUnitMap	= getModelUnitMap(modelWar)
-		local modelGridEffect = (not IS_SERVER) and (SingletonGetters.getModelGridEffect(modelWar)) or (nil)
+		local modelGridEffect = SingletonGetters.getModelGridEffect(modelWar) or nil
 
 		if (supplyData.onMapData) then
 			for unitID, data in pairs(supplyData.onMapData) do
@@ -324,9 +312,7 @@ end
 
 local function runTurnPhaseResetVisionForEndingTurnPlayer(self)
 	local playerIndex = self:getPlayerIndex()
-	if (IS_SERVER) then
-		getModelFogMap(self.m_ModelWar):resetMapForPathsForPlayerIndex(playerIndex)
-	elseif (self.m_ModelPlayerManager:isSameTeamIndex(playerIndex, self.m_PlayerIndexLoggedIn)) then
+	if (self.m_ModelPlayerManager:isSameTeamIndex(playerIndex, self.m_PlayerIndexLoggedIn)) then
 		getModelFogMap(self.m_ModelWar):resetMapForPathsForPlayerIndex(playerIndex)
 		resetVisionOnClient(self)
 	end
@@ -337,11 +323,7 @@ end
 local function runTurnPhaseTickTurnAndPlayerIndex(self)
 	local modelPlayerManager = self.m_ModelPlayerManager
 	self.m_TurnIndex, self.m_PlayerIndex = getNextTurnAndPlayerIndex(self, modelPlayerManager)
-	if (IS_SERVER) then
-		self.m_ModelWar:setEnterTurnTime(ngx.time())
-	else
-		self.m_ModelWar:setEnterTurnTime(os.time())
-	end
+	self.m_ModelWar:setEnterTurnTime(os.time())
 
 	getScriptEventDispatcher(self.m_ModelWar):dispatchEvent({
 		name		= "EvtPlayerIndexUpdated",
@@ -361,26 +343,21 @@ local function runTurnPhaseResetSkillState(self)
 			:mergePassiveAndResearchingSkills()
 			:updateActiveAndReserveSkills()
 
-	if (not IS_SERVER) then
-		local func = function(modelUnit)
-			if (modelUnit:getPlayerIndex() == playerIndex) then
-				modelUnit:updateView()
-			end
+	local func = function(modelUnit)
+		if (modelUnit:getPlayerIndex() == playerIndex) then
+			modelUnit:updateView()
 		end
-
-		getModelUnitMap(self.m_ModelWar):forEachModelUnitOnMap(func)
-			:forEachModelUnitLoaded(func)
 	end
+
+	getModelUnitMap(self.m_ModelWar):forEachModelUnitOnMap(func)
+		:forEachModelUnitLoaded(func)
 
 	self.m_TurnPhaseCode = TURN_PHASE_CODES.ResetVisionForBeginningTurnPlayer
 end
 
 local function runTurnPhaseResetVisionForBeginningTurnPlayer(self)
 	local playerIndex = self:getPlayerIndex()
-	if (IS_SERVER) then
-		getModelFogMap(self.m_ModelWar):resetMapForTilesForPlayerIndex(playerIndex)
-			:resetMapForUnitsForPlayerIndex(playerIndex)
-	elseif (self.m_ModelPlayerManager:isSameTeamIndex(playerIndex, self.m_PlayerIndexLoggedIn)) then
+	if (self.m_ModelPlayerManager:isSameTeamIndex(playerIndex, self.m_PlayerIndexLoggedIn)) then
 		getModelFogMap(self.m_ModelWar):resetMapForTilesForPlayerIndex(playerIndex)
 			:resetMapForUnitsForPlayerIndex(playerIndex)
 		resetVisionOnClient(self)
@@ -397,7 +374,7 @@ end
 
 local function runTurnPhaseRequestToBegin(self)
 	local modelWar = self.m_ModelWar
-	if ((not IS_SERVER) and (self.m_PlayerIndex == self.m_PlayerIndexLoggedIn)) then
+	if (self.m_PlayerIndex == self.m_PlayerIndexLoggedIn) then
 		WebSocketManager.sendAction({
 			actionCode = ACTION_CODE_BEGIN_TURN,
 			actionID   = SingletonGetters.getActionId(self.m_ModelWar) + 1,
@@ -443,10 +420,8 @@ function ModelTurnManagerForOnline:onStartRunning(modelWar)
 	self.m_ModelWar		   = modelWar
 	self.m_ModelPlayerManager = SingletonGetters.getModelPlayerManager(modelWar)
 
-	if (not IS_SERVER) then
-		self.m_PlayerIndexLoggedIn  = SingletonGetters.getPlayerIndexLoggedIn(  modelWar)
-		self.m_ModelMessageIndiator = SingletonGetters.getModelMessageIndicator(modelWar)
-	end
+	self.m_PlayerIndexLoggedIn  = SingletonGetters.getPlayerIndexLoggedIn(  modelWar)
+	self.m_ModelMessageIndiator = SingletonGetters.getModelMessageIndicator(modelWar)
 
 	return self
 end
@@ -490,15 +465,12 @@ function ModelTurnManagerForOnline:runTurn()
 		self.m_CallbackOnEnterTurnPhaseMainForNextTurn = nil
 	end
 
-	if (not IS_SERVER) then
-		if (self:getPlayerIndex() == self.m_PlayerIndexLoggedIn) then
-			self.m_ModelMessageIndiator:hidePersistentMessage(getLocalizedText(80, "NotInTurn"))
-		else
-			self.m_ModelMessageIndiator:showPersistentMessage(getLocalizedText(80, "NotInTurn"))
-		end
-
-		resetBootReminder(self)
+	if (self:getPlayerIndex() == self.m_PlayerIndexLoggedIn) then
+		self.m_ModelMessageIndiator:hidePersistentMessage(getLocalizedText(80, "NotInTurn"))
+	else
+		self.m_ModelMessageIndiator:showPersistentMessage(getLocalizedText(80, "NotInTurn"))
 	end
+	resetBootReminder(self)
 
 	return self
 end

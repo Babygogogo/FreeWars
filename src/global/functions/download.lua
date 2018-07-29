@@ -8,8 +8,10 @@
 此项目开源,那么我们可以考虑在游戏启动的时候,检查版本库上的地图文件进行热更新,那么只要版本库有更新,我们就能拿到新地图了
 这样可以减少打包的次数
 ]]
+
 local writablePath=cc.FileUtils:getInstance():getWritablePath()
 local Downloader={}
+
 --显示消息(消息内容),这个函数需要依赖Babygogogo少年写的东西
 local function showMessage(message)
 	if Downloader.indicator then Downloader.indicator:showMessage(message) end
@@ -36,6 +38,7 @@ local function getFilenameFromUrl(url)
 	until not pos
 	return filename,isFile
 end
+
 --写文件(文件名,内容),返回是否成功
 local function writeFile(filename,data)
 	local file=io.open(filename,'wb')
@@ -48,7 +51,10 @@ local function writeFile(filename,data)
 		return false
 	end
 end
-local toDownloadFileList={}--待下载的文件的缓冲列表
+
+--待下载的文件的缓冲列表
+local toDownloadFileList={}
+
 --获取文件名列表(url目录名,本地对应url的目录名,url返回的临时内容文件)
 local function getFilenameList(url,filename,tempFile)
 	tempFile:seek('set')
@@ -71,6 +77,7 @@ local function getFilenameList(url,filename,tempFile)
 	until not line--直到文件结束
 	tempFile:close()
 end
+
 --下载下一个文件,相关信息从toDownloadFileList获取
 local function downloadNext()
 	if table.maxn(toDownloadFileList)>0 then
@@ -79,6 +86,55 @@ local function downloadNext()
 		table.remove(toDownloadFileList,1)--执行下载代码后就可以移除了
 	end
 end
+
+--保存文件或者目录
+local function saveFileOrDirectory(url,filename,data)
+	local filename0,isFile=getFilenameFromUrl(url)
+	if isFile then
+		if writeFile(writablePath..filename,data) then
+			showMessage(filename..'下载完成')
+		else
+			showMessage('写文件'..filename..'失败')
+		end
+	else
+		local file=io.tmpfile()--把目录内容存成临时文件再分析
+		if file then
+			file:write(data)
+			file:flush()
+			--保存完成,开始分析
+			getFilenameList(url,filename,file)
+			os.execute('mkdir '..writablePath..filename)--创建目录
+		else
+			showMessage('临时文件打开失败')
+		end
+	end
+end
+
+--解析AWBW地图
+local function parseAWBWmap(url,filename,data)
+	local tmpFile=io.tmpfile()
+	if tmpFile then
+		tmpFile:write(data)
+		tmpFile:flush()
+	else
+		showMessage('解析awbw地图时,临时文件打开失败')
+	end
+end
+
+--下载类型
+Downloader.downloadDirectoryService = 0--下载目录服务,主要由游戏服务器提供
+Downloader.downloadAWBWmap = 1--下载awbw的地图,下载完成后自动分析并转换
+--设置下载类型
+function Downloader.setDownloadMode(mode)
+	if mode == Downloader.downloadDirectoryService then
+		Downloader.downloadedCallback = saveFileOrDirectory
+	elseif mode == Downloader.downloadAWBWmap then
+		Downloader.downloadedCallback = parseAWBWmap
+	end
+end
+
+Downloader.setDownloadMode(Downloader.downloadDirectoryService)--默认模式
+
 --http下载(网络url,本地文件名),把url上的数据保存到对应本地文件名的文件中
 function Downloader.httpDownload(url,filename)
 	local xhr = cc.XMLHttpRequest:new()--创建请求
@@ -96,24 +152,8 @@ function Downloader.httpDownload(url,filename)
 			print('状态码'..xhr.status)
 			print('状态文本:'..xhr.statusText)
 			if xhr.status == 200 then
-				local filename0,isFile=getFilenameFromUrl(url)
-				if isFile then
-					if writeFile(writablePath..filename,xhr.responseText) then
-						showMessage(filename..'下载完成')
-					else
-						showMessage('写文件'..filename..'失败')
-					end
-				else
-					local file=io.tmpfile()--把目录内容存成临时文件再分析
-					if file then
-						file:write(xhr.responseText)
-						file:flush()
-						--保存完成,开始分析
-						getFilenameList(url,filename,file)
-						os.execute('mkdir '..writablePath..filename)--创建目录
-					else
-						showMessage('临时文件打开失败')
-					end
+				if Downloader.downloadedCallback then
+					Downloader.downloadedCallback(url,filename,xhr.responseText)
 				end
 			else
 				showMessage('访问'..url..'服务器响应'..xhr.status..'文本'..xhr.statusText)

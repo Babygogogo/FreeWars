@@ -19,8 +19,6 @@ local ModelWarFieldForOnline = requireFW("src.global.functions.class")("ModelWar
 local SingletonGetters = requireFW("src.app.utilities.SingletonGetters")
 local Actor			= requireFW("src.global.actors.Actor")
 
-local IS_SERVER = requireFW("src.app.utilities.GameConstantFunctions").isServer()
-
 --------------------------------------------------------------------------------
 -- The private callback functions on script events.
 --------------------------------------------------------------------------------
@@ -52,15 +50,13 @@ end
 
 local function initActorTileMap(self, tileMapData)
 	local modelTileMap  = Actor.createModel("warOnline.ModelTileMapForOnline", tileMapData, self.m_WarFieldFileName)
-	self.m_ActorTileMap = (IS_SERVER)																  and
-		(Actor.createWithModelAndViewInstance(modelTileMap))										   or
+	self.m_ActorTileMap = (Actor.createWithModelAndViewInstance(modelTileMap)) or
 		(Actor.createWithModelAndViewInstance(modelTileMap, Actor.createView("common.ViewTileMap")))
 end
 
 local function initActorUnitMap(self, unitMapData)
 	local modelUnitMap  = Actor.createModel("warOnline.ModelUnitMapForOnline", unitMapData, self.m_WarFieldFileName)
-	self.m_ActorUnitMap = (IS_SERVER)																  and
-		(Actor.createWithModelAndViewInstance(modelUnitMap))										   or
+	self.m_ActorUnitMap = (Actor.createWithModelAndViewInstance(modelUnitMap)) or
 		(Actor.createWithModelAndViewInstance(modelUnitMap, Actor.createView("common.ViewUnitMap")))
 end
 
@@ -85,11 +81,9 @@ function ModelWarFieldForOnline:ctor(warFieldData)
 	initActorTileMap(self, warFieldData.tileMap)
 	initActorUnitMap(self, warFieldData.unitMap)
 
-	if (not IS_SERVER) then
-		initActorActionPlanner(self)
-		initActorMapCursor(	self, {mapSize = self:getModelTileMap():getMapSize()})
-		initActorGridEffect(   self)
-	end
+	initActorActionPlanner(self)
+	initActorMapCursor(	self, {mapSize = self:getModelTileMap():getMapSize()})
+	initActorGridEffect(   self)
 
 	return self
 end

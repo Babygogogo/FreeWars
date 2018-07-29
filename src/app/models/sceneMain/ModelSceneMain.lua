@@ -73,9 +73,7 @@ end
 --------------------------------------------------------------------------------
 function ModelSceneMain:ctor(param)
 	print('ModelSceneMain构造函数')
-	print(debug.traceback())
 	param = param or {}
-	self.m_IsPlayerLoggedIn = (WebSocketManager.getLoggedInAccountAndPassword()~=nil)
 
 	self.m_ScriptEventDispatcher = EventDispatcher:create()
 	initActorConfirmBox(	  self, param.confirmText)

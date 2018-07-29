@@ -14,7 +14,8 @@ local function loadMap(name,showIfError)
 	local func,err=loadfile(name)--使用lua的loadfile来加载,返回函数和错误信息
 	if type(func)=='function' then--如果加载成功则执行一遍地图代码(可以在地图代码里下毒)
 		return func()
-	elseif not func then--执行不成功时候,提示错误信息
+	end
+	if type(err)=='string' then--执行不成功时候,提示错误信息
 		if showIfError then showMessage(err) end
 	end
 end
@@ -27,7 +28,6 @@ function WarFieldManager.isRandomWarField(warFieldFilename)
 end
 
 function WarFieldManager.getWarFieldData(warFieldFilename)
-	print(debug.traceback())
 	print('调用WarFieldManager.getWarFieldData('..warFieldFilename..')')
 	--加载DLC地图文件
 	local dlcMapFullName=writablePath.. 'data/downloadMaps/' .. warFieldFilename
@@ -63,6 +63,7 @@ function WarFieldManager.getWarFieldAuthorName(warFieldFilename)
 end
 
 function WarFieldManager.getPlayersCount(warFieldFilename)
+	debug.traceback()
 	local warField=WarFieldManager.getWarFieldData(warFieldFilename)
 	if warField then
 		return warField.playersCount

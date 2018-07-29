@@ -115,8 +115,6 @@ local function getAndSupplyAdjacentModelUnits(modelWarOnline, supplierGridIndex,
 end
 
 local function addActorUnitsWithUnitsData(modelWarOnline, unitsData, isViewVisible)
-	assert(not IS_SERVER, "ActionExecutorForWarOnline-addActorUnitsWithUnitsData() this should not be called on the server.")
-
 	if (unitsData) then
 		local modelUnitMap = getModelUnitMap(modelWarOnline)
 		for unitID, unitData in pairs(unitsData) do
@@ -135,8 +133,6 @@ local function addActorUnitsWithUnitsData(modelWarOnline, unitsData, isViewVisib
 end
 
 local function updateModelTilesWithTilesData(modelWarOnline, tilesData)
-	assert(not IS_SERVER, "ActionExecutorForWarOnline-updateModelTilesWithTilesData() this shouldn't be called on the server.")
-
 	if (tilesData) then
 		local modelTileMap = getModelTileMap(modelWarOnline)
 		for _, tileData in pairs(tilesData) do
@@ -148,16 +144,13 @@ local function updateModelTilesWithTilesData(modelWarOnline, tilesData)
 end
 
 local function updateTilesAndUnitsBeforeExecutingAction(action, modelWarOnline)
-	if (not IS_SERVER) then
-		addActorUnitsWithUnitsData(   modelWarOnline, action.actingUnitsData, false)
-		addActorUnitsWithUnitsData(   modelWarOnline, action.revealedUnits,   false)
-		updateModelTilesWithTilesData(modelWarOnline, action.actingTilesData)
-		updateModelTilesWithTilesData(modelWarOnline, action.revealedTiles)
-	end
+	addActorUnitsWithUnitsData(   modelWarOnline, action.actingUnitsData, false)
+	addActorUnitsWithUnitsData(   modelWarOnline, action.revealedUnits,   false)
+	updateModelTilesWithTilesData(modelWarOnline, action.actingTilesData)
+	updateModelTilesWithTilesData(modelWarOnline, action.revealedTiles)
 end
 
 local function updateTileAndUnitMapOnVisibilityChanged(modelWarOnline)
-	assert(not IS_SERVER, "ActionExecutorForWarOnline-updateTileAndUnitMapOnVisibilityChanged(modelWarOnline) this shouldn't be called on the server.")
 	local playerIndex	  = getPlayerIndexLoggedIn(modelWarOnline)
 	getModelTileMap(modelWarOnline):forEachModelTile(function(modelTile)
 		if (isTileVisible(modelWarOnline, modelTile:getGridIndex(), playerIndex)) then
@@ -190,7 +183,7 @@ local function moveModelUnitWithAction(action, modelWarOnline)
 	local launchUnitID	   = action.launchUnitID
 	local focusModelUnit	 = modelUnitMap:getFocusModelUnit(beginningGridIndex, launchUnitID)
 	local playerIndex		= focusModelUnit:getPlayerIndex()
-	local shouldUpdateFogMap = (IS_SERVER) or (getModelPlayerManager(modelWarOnline):isSameTeamIndex(playerIndex, getPlayerIndexLoggedIn(modelWarOnline)))
+	local shouldUpdateFogMap = getModelPlayerManager(modelWarOnline):isSameTeamIndex(playerIndex, getPlayerIndexLoggedIn(modelWarOnline))
 	if (shouldUpdateFogMap) then
 		modelFogMap:updateMapForPathsWithModelUnitAndPath(focusModelUnit, pathNodes)
 	end
@@ -230,8 +223,6 @@ local function moveModelUnitWithAction(action, modelWarOnline)
 			loaderModelUnit:removeLoadUnitId(launchUnitID)
 				:updateView()
 				:showNormalAnimation()
-		else
-			assert(not IS_SERVER, "ActionExecutorForWarOnline-moveModelUnitWithAction() failed to get the loader for the launching unit, on the server.")
 		end
 
 		if (actionCode ~= ACTION_CODES.ActionLoadModelUnit) then
@@ -329,8 +320,6 @@ local function callbackOnWarEndedForClient()
 end
 
 local function cleanupOnReceivingResponseFromServer(modelWarOnline)
-	assert(not IS_SERVER, "ActionExecutorForWarOnline-cleanupOnReceivingResponseFromServer() this shouldn't be invoked on the server.")
-
 	getModelMessageIndicator(modelWarOnline):hidePersistentMessage(getLocalizedText(80, "TransferingData"))
 	getScriptEventDispatcher(modelWarOnline):dispatchEvent({
 		name	= "EvtIsWaitingForServerResponse",
@@ -344,21 +333,13 @@ local function prepareForExecutingWarAction(action, modelWarOnline)
 	local warID		   = action.warID
 
 	if ((not warID) or (warID ~= modelWarOnline:getWarId()) or (nextActionID <= currentActionID) or (modelWarOnline:isEnded())) then
-		assert(not IS_SERVER)
 		return false
-
 	elseif ((nextActionID > currentActionID + 1) or (modelWarOnline:isExecutingAction())) then
-		assert(not IS_SERVER)
 		modelWarOnline:cacheAction(action)
 		return false
-
 	else
-		if (IS_SERVER) then
-			modelWarOnline:pushBackExecutedAction(action)
-		end
 		modelWarOnline:setActionId(nextActionID)
 			:setExecutingAction(true)
-
 		return true
 	end
 end
@@ -368,14 +349,9 @@ end
 --------------------------------------------------------------------------------
 local function executeChat(action, modelWarOnline)
 	SingletonGetters.getModelChatManager(modelWarOnline):updateWithChatMessage(action.channelID, action.senderPlayerIndex, action.chatText)
-	if (IS_SERVER) then
-		OnlineWarManager.updateWithModelWarOnline(modelWarOnline)
-	end
 end
 
 local function executeLogin(action, modelWarOnline)
-	assert(not IS_SERVER, "ActionExecutorForWarOnline-executeLogin() should not be invoked on the server.")
-
 	local account, password = action.loginAccount, action.loginPassword
 	if (account ~= getLoggedInAccountAndPassword()) then
 		WebSocketManager.setLoggedInAccountAndPassword(account, password)
@@ -391,21 +367,11 @@ local function executeLogout(action, modelWarOnline)
 end
 
 local function executeMessage(action, modelWarOnline)
-	assert(not IS_SERVER, "ActionExecutorForWarOnline-executeMessage() should not be invoked on the server.")
-
 	local message = getLocalizedText(action.messageCode, unpack(action.messageParams or {}))
 	getModelMessageIndicator(modelWarOnline):showMessage(message)
 end
 
-local function executeNetworkHeartbeat(action, modelWarOnline)
-	assert(IS_SERVER, "ActionExecutorForWarOnline-executeNetworkHeartbeat() should not be invoked on the client.")
-
-	PlayerProfileManager.updateProfileWithNetworkHeartbeat(action.playerAccount)
-end
-
 local function executeRegister(action, modelWarOnline)
-	assert(not IS_SERVER, "ActionExecutorForWarOnline-executeRegister() should not be invoked on the server.")
-
 	local account, password = action.registerAccount, action.registerPassword
 	if (account ~= getLoggedInAccountAndPassword()) then
 		WebSocketManager.setLoggedInAccountAndPassword(account, password)
@@ -417,8 +383,6 @@ local function executeRegister(action, modelWarOnline)
 end
 
 local function executeReloadSceneWar(action, modelWarOnline)
-	assert(not IS_SERVER, "ActionExecutorForWarOnline-executeReloadSceneWar() should not be invoked on the server.")
-
 	local warData = action.warData
 	if ((modelWarOnline:getWarId() == warData.warID) and (modelWarOnline:getActionId() <= warData.actionID)) then
 		if (action.messageCode) then
@@ -454,28 +418,22 @@ local function executeActivateSkill(action, modelWarOnline)
 		InstantSkillExecutor.executeInstantSkill(modelWarOnline, skill.id, skill.level)
 	end
 
-	if (IS_SERVER) then
-		modelWarOnline:setExecutingAction(false)
-		OnlineWarManager.updateWithModelWarOnline(modelWarOnline)
+	cleanupOnReceivingResponseFromServer(modelWarOnline)
 
-	else
-		cleanupOnReceivingResponseFromServer(modelWarOnline)
-
-		local modelGridEffect = getModelGridEffect(modelWarOnline)
-		local func			= function(modelUnit)
-			if (modelUnit:getPlayerIndex() == playerIndex) then
-				modelGridEffect:showAnimationSkillActivation(modelUnit:getGridIndex())
-				modelUnit:updateView()
-			end
+	local modelGridEffect = getModelGridEffect(modelWarOnline)
+	local func			= function(modelUnit)
+		if (modelUnit:getPlayerIndex() == playerIndex) then
+			modelGridEffect:showAnimationSkillActivation(modelUnit:getGridIndex())
+			modelUnit:updateView()
 		end
-		getModelUnitMap(modelWarOnline):forEachModelUnitOnMap(func)
-			:forEachModelUnitLoaded(func)
-
-		updateTileAndUnitMapOnVisibilityChanged(modelWarOnline)
-		dispatchEvtModelPlayerUpdated(modelWarOnline, playerIndex)
-
-		modelWarOnline:setExecutingAction(false)
 	end
+	getModelUnitMap(modelWarOnline):forEachModelUnitOnMap(func)
+		:forEachModelUnitLoaded(func)
+
+	updateTileAndUnitMapOnVisibilityChanged(modelWarOnline)
+	dispatchEvtModelPlayerUpdated(modelWarOnline, playerIndex)
+
+	modelWarOnline:setExecutingAction(false)
 end
 
 local function executeAttack(action, modelWarOnline)
@@ -523,7 +481,7 @@ local function executeAttack(action, modelWarOnline)
 			attacker:setCurrentPromotion(math.min(attacker:getMaxPromotion(), attacker:getCurrentPromotion() + 1))
 			destroyActorUnitOnMap(modelWarOnline, targetGridIndex, false, true)
 		else
-			if ((not IS_SERVER) and (attackTarget:isFogEnabledOnClient())) then
+			if attackTarget:isFogEnabledOnClient() then
 				attackTarget:updateAsFogDisabled()
 			end
 			attackTarget:updateWithObjectAndBaseId(0)
@@ -531,7 +489,7 @@ local function executeAttack(action, modelWarOnline)
 			plasmaGridIndexes = getAdjacentPlasmaGridIndexes(targetGridIndex, modelTileMap)
 			for _, gridIndex in ipairs(plasmaGridIndexes) do
 				local modelTile = modelTileMap:getModelTile(gridIndex)
-				if ((not IS_SERVER) and (modelTile:isFogEnabledOnClient())) then
+				if modelTile:isFogEnabledOnClient() then
 					modelTile:updateAsFogDisabled()
 				end
 				modelTile:updateWithObjectAndBaseId(0)
@@ -547,82 +505,62 @@ local function executeAttack(action, modelWarOnline)
 		modelWarOnline:setRemainingVotesForDraw(nil)
 	end
 
-	if (IS_SERVER) then
-		if (targetVision) then
+	cleanupOnReceivingResponseFromServer(modelWarOnline)
+
+	local playerIndexLoggedIn  = getPlayerIndexLoggedIn(modelWarOnline)
+	local isLoggedInPlayerLost = lostPlayerIndex == playerIndexLoggedIn
+	if ((isLoggedInPlayerLost) or (modelPlayerManager:getAliveTeamsCount(lostPlayerIndex) <= 1)) then
+		modelWarOnline:setEnded(true)
+	end
+
+	attacker:moveViewAlongPathAndFocusOnTarget(pathNodes, isModelUnitDiving(attacker), targetGridIndex, function()
+		attacker:updateView()
+			:showNormalAnimation()
+		attackTarget:updateView()
+		if (attackerNewHP == 0) then
+			attacker:removeViewFromParent()
+		elseif ((targetNewHP == 0) and (attackTarget.getUnitType)) then
+			attackTarget:removeViewFromParent()
+		end
+
+		local modelGridEffect = getModelGridEffect(modelWarOnline)
+		if (attackerNewHP == 0) then
+			modelGridEffect:showAnimationExplosion(attackerGridIndex)
+		elseif ((counterDamage) and (targetNewHP > 0)) then
+			modelGridEffect:showAnimationDamage(attackerGridIndex)
+		end
+
+		if (targetNewHP > 0) then
+			modelGridEffect:showAnimationDamage(targetGridIndex)
+		else
+			modelGridEffect:showAnimationExplosion(targetGridIndex)
+			if (not attackTarget.getUnitType) then
+				for _, gridIndex in ipairs(plasmaGridIndexes) do
+					modelTileMap:getModelTile(gridIndex):updateView()
+				end
+			end
+		end
+
+		if ((targetVision) and (getModelPlayerManager(modelWarOnline):isSameTeamIndex(targetPlayerIndex, playerIndexLoggedIn))) then
 			getModelFogMap(modelWarOnline):updateMapForUnitsForPlayerIndexOnUnitLeave(targetPlayerIndex, targetGridIndex, targetVision)
 		end
 		if (lostPlayerIndex) then
 			Destroyers.destroyPlayerForce(modelWarOnline, lostPlayerIndex)
-			if (modelPlayerManager:getAliveTeamsCount() <= 1) then
-				modelWarOnline:setEnded(true)
-			elseif (isInTurnPlayerLost) then
-				modelTurnManager:endTurnPhaseMain()
-			end
+			getModelMessageIndicator(modelWarOnline):showMessage(getLocalizedText(74, "Lose", modelPlayerManager:getModelPlayer(lostPlayerIndex):getNickname()))
+		end
 
-			PlayerProfileManager.updateProfilesWithModelWarOnline(modelWarOnline)
+		updateTileAndUnitMapOnVisibilityChanged(modelWarOnline)
+
+		if (modelWarOnline:isEnded()) then
+			if (isLoggedInPlayerLost) then modelWarOnline:showEffectLose(	 callbackOnWarEndedForClient)
+			else						   modelWarOnline:showEffectWin(	  callbackOnWarEndedForClient)
+			end
+		elseif (isInTurnPlayerLost) then
+			modelTurnManager:endTurnPhaseMain()
 		end
 
 		modelWarOnline:setExecutingAction(false)
-		OnlineWarManager.updateWithModelWarOnline(modelWarOnline)
-
-	else
-		cleanupOnReceivingResponseFromServer(modelWarOnline)
-
-		local playerIndexLoggedIn  = getPlayerIndexLoggedIn(modelWarOnline)
-		local isLoggedInPlayerLost = lostPlayerIndex == playerIndexLoggedIn
-		if ((isLoggedInPlayerLost) or (modelPlayerManager:getAliveTeamsCount(lostPlayerIndex) <= 1)) then
-			modelWarOnline:setEnded(true)
-		end
-
-		attacker:moveViewAlongPathAndFocusOnTarget(pathNodes, isModelUnitDiving(attacker), targetGridIndex, function()
-			attacker:updateView()
-				:showNormalAnimation()
-			attackTarget:updateView()
-			if (attackerNewHP == 0) then
-				attacker:removeViewFromParent()
-			elseif ((targetNewHP == 0) and (attackTarget.getUnitType)) then
-				attackTarget:removeViewFromParent()
-			end
-
-			local modelGridEffect = getModelGridEffect(modelWarOnline)
-			if (attackerNewHP == 0) then
-				modelGridEffect:showAnimationExplosion(attackerGridIndex)
-			elseif ((counterDamage) and (targetNewHP > 0)) then
-				modelGridEffect:showAnimationDamage(attackerGridIndex)
-			end
-
-			if (targetNewHP > 0) then
-				modelGridEffect:showAnimationDamage(targetGridIndex)
-			else
-				modelGridEffect:showAnimationExplosion(targetGridIndex)
-				if (not attackTarget.getUnitType) then
-					for _, gridIndex in ipairs(plasmaGridIndexes) do
-						modelTileMap:getModelTile(gridIndex):updateView()
-					end
-				end
-			end
-
-			if ((targetVision) and (getModelPlayerManager(modelWarOnline):isSameTeamIndex(targetPlayerIndex, playerIndexLoggedIn))) then
-				getModelFogMap(modelWarOnline):updateMapForUnitsForPlayerIndexOnUnitLeave(targetPlayerIndex, targetGridIndex, targetVision)
-			end
-			if (lostPlayerIndex) then
-				Destroyers.destroyPlayerForce(modelWarOnline, lostPlayerIndex)
-				getModelMessageIndicator(modelWarOnline):showMessage(getLocalizedText(74, "Lose", modelPlayerManager:getModelPlayer(lostPlayerIndex):getNickname()))
-			end
-
-			updateTileAndUnitMapOnVisibilityChanged(modelWarOnline)
-
-			if (modelWarOnline:isEnded()) then
-				if (isLoggedInPlayerLost) then modelWarOnline:showEffectLose(	 callbackOnWarEndedForClient)
-				else						   modelWarOnline:showEffectWin(	  callbackOnWarEndedForClient)
-				end
-			elseif (isInTurnPlayerLost) then
-				modelTurnManager:endTurnPhaseMain()
-			end
-
-			modelWarOnline:setExecutingAction(false)
-		end)
-	end
+	end)
 end
 
 local function executeBeginTurn(action, modelWarOnline)
@@ -637,64 +575,44 @@ local function executeBeginTurn(action, modelWarOnline)
 		modelWarOnline:setRemainingVotesForDraw(nil)
 	end
 
-	if (IS_SERVER) then
-		modelTurnManager:beginTurnPhaseBeginning(action.income, action.repairData, action.supplyData)
+	cleanupOnReceivingResponseFromServer(modelWarOnline)
 
-		if (lostPlayerIndex) then
-			Destroyers.destroyPlayerForce(modelWarOnline, lostPlayerIndex)
-			if (modelPlayerManager:getAliveTeamsCount() <= 1) then
-				modelWarOnline:setEnded(true)
-			else
-				modelTurnManager:endTurnPhaseMain()
+	if (not lostPlayerIndex) then
+		modelTurnManager:beginTurnPhaseBeginning(action.income, action.repairData, action.supplyData, function()
+			local playerIndexInTurn = modelTurnManager:getPlayerIndex()
+			if (playerIndexInTurn == modelPlayerManager:getPlayerIndexLoggedIn()) then
+				local modelMessageIndicator = getModelMessageIndicator(modelWarOnline)
+				modelPlayerManager:forEachModelPlayer(function(modelPlayer, playerIndex)
+					if ((playerIndex ~= playerIndexInTurn)													and
+						(not modelPlayer:getModelSkillConfiguration():getModelSkillGroupReserve():isEmpty())) then
+						modelMessageIndicator:showMessage(string.format("[%s] %s!", modelPlayer:getAccount(), getLocalizedText(22, "HasUpdatedReserveSkills")))
+					end
+				end)
 			end
-
-			PlayerProfileManager.updateProfilesWithModelWarOnline(modelWarOnline)
-		end
-
-		modelWarOnline:setExecutingAction(false)
-		OnlineWarManager.updateWithModelWarOnline(modelWarOnline)
-
+			modelWarOnline:setExecutingAction(false)
+		end)
 	else
-		cleanupOnReceivingResponseFromServer(modelWarOnline)
+		local lostModelPlayer	  = modelPlayerManager:getModelPlayer(lostPlayerIndex)
+		local isLoggedInPlayerLost = lostModelPlayer:getAccount() == getLoggedInAccountAndPassword(modelWarOnline)
+		if ((modelPlayerManager:getAliveTeamsCount(lostPlayerIndex) <= 1) or (isLoggedInPlayerLost)) then
+			modelWarOnline:setEnded(true)
+		end
 
-		if (not lostPlayerIndex) then
-			modelTurnManager:beginTurnPhaseBeginning(action.income, action.repairData, action.supplyData, function()
-				local playerIndexInTurn = modelTurnManager:getPlayerIndex()
-				if (playerIndexInTurn == modelPlayerManager:getPlayerIndexLoggedIn()) then
-					local modelMessageIndicator = getModelMessageIndicator(modelWarOnline)
-					modelPlayerManager:forEachModelPlayer(function(modelPlayer, playerIndex)
-						if ((playerIndex ~= playerIndexInTurn)													and
-							(not modelPlayer:getModelSkillConfiguration():getModelSkillGroupReserve():isEmpty())) then
-							modelMessageIndicator:showMessage(string.format("[%s] %s!", modelPlayer:getAccount(), getLocalizedText(22, "HasUpdatedReserveSkills")))
-						end
-					end)
-				end
+		modelTurnManager:beginTurnPhaseBeginning(action.income, action.repairData, action.supplyData, function()
+			getModelMessageIndicator(modelWarOnline):showMessage(getLocalizedText(74, "Lose", lostModelPlayer:getNickname()))
+			Destroyers.destroyPlayerForce(modelWarOnline, lostPlayerIndex)
+			updateTileAndUnitMapOnVisibilityChanged(modelWarOnline)
 
-				modelWarOnline:setExecutingAction(false)
-			end)
-		else
-			local lostModelPlayer	  = modelPlayerManager:getModelPlayer(lostPlayerIndex)
-			local isLoggedInPlayerLost = lostModelPlayer:getAccount() == getLoggedInAccountAndPassword(modelWarOnline)
-			if ((modelPlayerManager:getAliveTeamsCount(lostPlayerIndex) <= 1) or (isLoggedInPlayerLost)) then
-				modelWarOnline:setEnded(true)
+			if (not modelWarOnline:isEnded()) then
+				modelTurnManager:endTurnPhaseMain()
+			elseif (isLoggedInPlayerLost) then
+				modelWarOnline:showEffectLose(callbackOnWarEndedForClient)
+			else
+				modelWarOnline:showEffectWin(callbackOnWarEndedForClient)
 			end
 
-			modelTurnManager:beginTurnPhaseBeginning(action.income, action.repairData, action.supplyData, function()
-				getModelMessageIndicator(modelWarOnline):showMessage(getLocalizedText(74, "Lose", lostModelPlayer:getNickname()))
-				Destroyers.destroyPlayerForce(modelWarOnline, lostPlayerIndex)
-				updateTileAndUnitMapOnVisibilityChanged(modelWarOnline)
-
-				if (not modelWarOnline:isEnded()) then
-					modelTurnManager:endTurnPhaseMain()
-				elseif (isLoggedInPlayerLost) then
-					modelWarOnline:showEffectLose(callbackOnWarEndedForClient)
-				else
-					modelWarOnline:showEffectWin(callbackOnWarEndedForClient)
-				end
-
-				modelWarOnline:setExecutingAction(false)
-			end)
-		end
+			modelWarOnline:setExecutingAction(false)
+		end)
 	end
 end
 
@@ -709,7 +627,7 @@ local function executeBuildModelTile(action, modelWarOnline)
 	local focusModelUnit  = getModelUnitMap(modelWarOnline):getFocusModelUnit(pathNodes[1], action.launchUnitID)
 	local modelTile	   = getModelTileMap(modelWarOnline):getModelTile(endingGridIndex)
 	local buildPoint	  = modelTile:getCurrentBuildPoint() - focusModelUnit:getBuildAmount()
-	if ((not IS_SERVER) and (modelTile:isFogEnabledOnClient())) then
+	if modelTile:isFogEnabledOnClient() then
 		modelTile:updateAsFogDisabled()
 	end
 	moveModelUnitWithAction(action, modelWarOnline)
@@ -724,28 +642,19 @@ local function executeBuildModelTile(action, modelWarOnline)
 		modelTile:updateWithObjectAndBaseId(focusModelUnit:getBuildTiledIdWithTileType(modelTile:getTileType()))
 
 		local playerIndex = focusModelUnit:getPlayerIndex()
-		if ((IS_SERVER) or (getModelPlayerManager(modelWarOnline):isSameTeamIndex(playerIndex, getPlayerIndexLoggedIn(modelWarOnline)))) then
+		if getModelPlayerManager(modelWarOnline):isSameTeamIndex(playerIndex, getPlayerIndexLoggedIn(modelWarOnline)) then
 			getModelFogMap(modelWarOnline):updateMapForTilesForPlayerIndexOnGettingOwnership(playerIndex, endingGridIndex, modelTile:getVisionForPlayerIndex(playerIndex))
 		end
 	end
 
-	if (IS_SERVER) then
+	cleanupOnReceivingResponseFromServer(modelWarOnline)
+	focusModelUnit:moveViewAlongPath(pathNodes, isModelUnitDiving(focusModelUnit), function()
+		focusModelUnit:updateView()
+			:showNormalAnimation()
+		modelTile:updateView()
+		updateTileAndUnitMapOnVisibilityChanged(modelWarOnline)
 		modelWarOnline:setExecutingAction(false)
-		OnlineWarManager.updateWithModelWarOnline(modelWarOnline)
-
-	else
-		cleanupOnReceivingResponseFromServer(modelWarOnline)
-
-		focusModelUnit:moveViewAlongPath(pathNodes, isModelUnitDiving(focusModelUnit), function()
-			focusModelUnit:updateView()
-				:showNormalAnimation()
-			modelTile:updateView()
-
-			updateTileAndUnitMapOnVisibilityChanged(modelWarOnline)
-
-			modelWarOnline:setExecutingAction(false)
-		end)
-	end
+	end)
 end
 
 local function executeCaptureModelTile(action, modelWarOnline)
@@ -758,14 +667,14 @@ local function executeCaptureModelTile(action, modelWarOnline)
 	local endingGridIndex = pathNodes[#pathNodes]
 	local modelTile	   = getModelTileMap(modelWarOnline):getModelTile(endingGridIndex)
 	local focusModelUnit  = getModelUnitMap(modelWarOnline):getFocusModelUnit(pathNodes[1], action.launchUnitID)
-	if ((not IS_SERVER) and (modelTile:isFogEnabledOnClient())) then
+	if modelTile:isFogEnabledOnClient() then
 		modelTile:updateAsFogDisabled()
 	end
 	moveModelUnitWithAction(action, modelWarOnline)
 	focusModelUnit:setStateActioned()
 
 	local modelFogMap		 = getModelFogMap(modelWarOnline)
-	local playerIndexLoggedIn = (not IS_SERVER) and (getPlayerIndexLoggedIn(modelWarOnline)) or (nil)
+	local playerIndexLoggedIn = getPlayerIndexLoggedIn(modelWarOnline) or nil
 	local capturePoint		= modelTile:getCurrentCapturePoint() - focusModelUnit:getCaptureAmount()
 	local previousVision, previousPlayerIndex
 	if (capturePoint > 0) then
@@ -780,7 +689,7 @@ local function executeCaptureModelTile(action, modelWarOnline)
 		modelTile:setCurrentCapturePoint(modelTile:getMaxCapturePoint())
 			:updateWithPlayerIndex(playerIndexActing)
 
-		if ((IS_SERVER) or (getModelPlayerManager(modelWarOnline):isSameTeamIndex(playerIndexActing, playerIndexLoggedIn))) then
+		if getModelPlayerManager(modelWarOnline):isSameTeamIndex(playerIndexActing, playerIndexLoggedIn) then
 			modelFogMap:updateMapForTilesForPlayerIndexOnGettingOwnership(playerIndexActing, endingGridIndex, modelTile:getVisionForPlayerIndex(playerIndexActing))
 		end
 	end
@@ -791,59 +700,39 @@ local function executeCaptureModelTile(action, modelWarOnline)
 		modelWarOnline:setRemainingVotesForDraw(nil)
 	end
 
-	if (IS_SERVER) then
-		if (capturePoint <= 0) then
-			modelFogMap:updateMapForTilesForPlayerIndexOnLosingOwnership(previousPlayerIndex, endingGridIndex, previousVision)
-		end
-		if (lostPlayerIndex) then
-			Destroyers.destroyPlayerForce(modelWarOnline, lostPlayerIndex)
-			modelWarOnline:setEnded(modelPlayerManager:getAliveTeamsCount() <= 1)
-			PlayerProfileManager.updateProfilesWithModelWarOnline(modelWarOnline)
-		end
+	cleanupOnReceivingResponseFromServer(modelWarOnline)
+	if (not lostPlayerIndex) then
+		focusModelUnit:moveViewAlongPath(pathNodes, isModelUnitDiving(focusModelUnit), function()
+			focusModelUnit:updateView()
+				:showNormalAnimation()
+			modelTile:updateView()
 
-		modelWarOnline:setExecutingAction(false)
-		OnlineWarManager.updateWithModelWarOnline(modelWarOnline)
-
-	else
-		cleanupOnReceivingResponseFromServer(modelWarOnline)
-
-		if (not lostPlayerIndex) then
-			focusModelUnit:moveViewAlongPath(pathNodes, isModelUnitDiving(focusModelUnit), function()
-				focusModelUnit:updateView()
-					:showNormalAnimation()
-				modelTile:updateView()
-
-				if ((capturePoint <= 0) and (getModelPlayerManager(modelWarOnline):isSameTeamIndex(previousPlayerIndex, playerIndexLoggedIn))) then
-					modelFogMap:updateMapForTilesForPlayerIndexOnLosingOwnership(previousPlayerIndex, endingGridIndex, previousVision)
-				end
-				updateTileAndUnitMapOnVisibilityChanged(modelWarOnline)
-
-				modelWarOnline:setExecutingAction(false)
-			end)
-		else
-			local lostModelPlayer	  = modelPlayerManager:getModelPlayer(lostPlayerIndex)
-			local isLoggedInPlayerLost = lostModelPlayer:getAccount() == getLoggedInAccountAndPassword()
-			if ((isLoggedInPlayerLost) or (modelPlayerManager:getAliveTeamsCount(lostPlayerIndex) <= 1)) then
-				modelWarOnline:setEnded(true)
+			if ((capturePoint <= 0) and (getModelPlayerManager(modelWarOnline):isSameTeamIndex(previousPlayerIndex, playerIndexLoggedIn))) then
+				modelFogMap:updateMapForTilesForPlayerIndexOnLosingOwnership(previousPlayerIndex, endingGridIndex, previousVision)
 			end
+			updateTileAndUnitMapOnVisibilityChanged(modelWarOnline)
 
-			focusModelUnit:moveViewAlongPath(pathNodes, isModelUnitDiving(focusModelUnit), function()
-				focusModelUnit:updateView()
-					:showNormalAnimation()
-				modelTile:updateView()
-
-				getModelMessageIndicator(modelWarOnline):showMessage(getLocalizedText(74, "Lose", lostModelPlayer:getNickname()))
-				Destroyers.destroyPlayerForce(modelWarOnline, lostPlayerIndex)
-				updateTileAndUnitMapOnVisibilityChanged(modelWarOnline)
-
-				if	 (not modelWarOnline:isEnded()) then -- do nothing.
-				elseif (isLoggedInPlayerLost)		then modelWarOnline:showEffectLose(	 callbackOnWarEndedForClient)
-				else									  modelWarOnline:showEffectWin(	  callbackOnWarEndedForClient)
-				end
-
-				modelWarOnline:setExecutingAction(false)
-			end)
+			modelWarOnline:setExecutingAction(false)
+		end)
+	else
+		local lostModelPlayer	  = modelPlayerManager:getModelPlayer(lostPlayerIndex)
+		local isLoggedInPlayerLost = lostModelPlayer:getAccount() == getLoggedInAccountAndPassword()
+		if ((isLoggedInPlayerLost) or (modelPlayerManager:getAliveTeamsCount(lostPlayerIndex) <= 1)) then
+			modelWarOnline:setEnded(true)
 		end
+		focusModelUnit:moveViewAlongPath(pathNodes, isModelUnitDiving(focusModelUnit), function()
+			focusModelUnit:updateView()
+				:showNormalAnimation()
+			modelTile:updateView()
+				getModelMessageIndicator(modelWarOnline):showMessage(getLocalizedText(74, "Lose", lostModelPlayer:getNickname()))
+			Destroyers.destroyPlayerForce(modelWarOnline, lostPlayerIndex)
+			updateTileAndUnitMapOnVisibilityChanged(modelWarOnline)
+			if	 (not modelWarOnline:isEnded()) then -- do nothing.
+			elseif (isLoggedInPlayerLost)		then modelWarOnline:showEffectLose(	 callbackOnWarEndedForClient)
+			else									  modelWarOnline:showEffectWin(	  callbackOnWarEndedForClient)
+			end
+			modelWarOnline:setExecutingAction(false)
+		end)
 	end
 end
 
@@ -856,40 +745,31 @@ local function executeDestroyOwnedModelUnit(action, modelWarOnline)
 	local gridIndex		   = action.gridIndex
 	local modelUnitMap		= getModelUnitMap(modelWarOnline)
 	local playerIndexActing   = getModelTurnManager(modelWarOnline):getPlayerIndex()
-	local playerIndexLoggedIn = (not IS_SERVER) and (getPlayerIndexLoggedIn(modelWarOnline)) or (nil)
+	local playerIndexLoggedIn = getPlayerIndexLoggedIn(modelWarOnline) or nil
 
 	if (gridIndex) then
-		if ((IS_SERVER) or (getModelPlayerManager(modelWarOnline):isSameTeamIndex(playerIndexActing, playerIndexLoggedIn))) then
+		if getModelPlayerManager(modelWarOnline):isSameTeamIndex(playerIndexActing, playerIndexLoggedIn) then
 			getModelFogMap(modelWarOnline):updateMapForPathsWithModelUnitAndPath(modelUnitMap:getModelUnit(gridIndex), {gridIndex})
 		end
 		destroyActorUnitOnMap(modelWarOnline, gridIndex, true)
-	else
-		assert(not IS_SERVER, "ActionExecutorForWarOnline-executeDestroyOwnedModelUnit() the gridIndex must exist on server.")
 	end
 
-	if (IS_SERVER) then
-		modelWarOnline:setExecutingAction(false)
-		OnlineWarManager.updateWithModelWarOnline(modelWarOnline)
+	cleanupOnReceivingResponseFromServer(modelWarOnline)
 
-	else
-		cleanupOnReceivingResponseFromServer(modelWarOnline)
-
-		if (gridIndex) then
-			getModelGridEffect(modelWarOnline):showAnimationExplosion(gridIndex)
-
-			if (playerIndexActing == playerIndexLoggedIn) then
-				for _, adjacentGridIndex in pairs(GridIndexFunctions.getAdjacentGrids(gridIndex, modelUnitMap:getMapSize())) do
-					local adjacentModelUnit = modelUnitMap:getModelUnit(adjacentGridIndex)
-					if ((adjacentModelUnit)																																									 and
-						(not isUnitVisible(modelWarOnline, adjacentGridIndex, adjacentModelUnit:getUnitType(), isModelUnitDiving(adjacentModelUnit), adjacentModelUnit:getPlayerIndex(), playerIndexActing))) then
-						destroyActorUnitOnMap(modelWarOnline, adjacentGridIndex, true)
-					end
+	if (gridIndex) then
+		getModelGridEffect(modelWarOnline):showAnimationExplosion(gridIndex)
+		if (playerIndexActing == playerIndexLoggedIn) then
+			for _, adjacentGridIndex in pairs(GridIndexFunctions.getAdjacentGrids(gridIndex, modelUnitMap:getMapSize())) do
+				local adjacentModelUnit = modelUnitMap:getModelUnit(adjacentGridIndex)
+				if ((adjacentModelUnit)																																									 and
+					(not isUnitVisible(modelWarOnline, adjacentGridIndex, adjacentModelUnit:getUnitType(), isModelUnitDiving(adjacentModelUnit), adjacentModelUnit:getPlayerIndex(), playerIndexActing))) then
+					destroyActorUnitOnMap(modelWarOnline, adjacentGridIndex, true)
 				end
 			end
 		end
-
-		modelWarOnline:setExecutingAction(false)
 	end
+
+	modelWarOnline:setExecutingAction(false)
 end
 
 local function executeDive(action, modelWarOnline)
@@ -905,32 +785,26 @@ local function executeDive(action, modelWarOnline)
 	focusModelUnit:setStateActioned()
 		:setDiving(true)
 
-	if (IS_SERVER) then
+	cleanupOnReceivingResponseFromServer(modelWarOnline)
+
+	focusModelUnit:moveViewAlongPath(pathNodes, false, function()
+		focusModelUnit:updateView()
+			:showNormalAnimation()
+
+		local endingGridIndex	 = pathNodes[#pathNodes]
+		local playerIndexLoggedIn = getPlayerIndexLoggedIn(modelWarOnline)
+		local unitType			= focusModelUnit:getUnitType()
+		local playerIndexActing   = focusModelUnit:getPlayerIndex()
+		focusModelUnit:setViewVisible(isUnitVisible(modelWarOnline, endingGridIndex, unitType, true, playerIndexActing, playerIndexLoggedIn))
+
+		if (isUnitVisible(modelWarOnline, endingGridIndex, unitType, false, playerIndexActing, playerIndexLoggedIn)) then
+			getModelGridEffect(modelWarOnline):showAnimationDive(endingGridIndex)
+		end
+
+		updateTileAndUnitMapOnVisibilityChanged(modelWarOnline)
+
 		modelWarOnline:setExecutingAction(false)
-		OnlineWarManager.updateWithModelWarOnline(modelWarOnline)
-
-	else
-		cleanupOnReceivingResponseFromServer(modelWarOnline)
-
-		focusModelUnit:moveViewAlongPath(pathNodes, false, function()
-			focusModelUnit:updateView()
-				:showNormalAnimation()
-
-			local endingGridIndex	 = pathNodes[#pathNodes]
-			local playerIndexLoggedIn = getPlayerIndexLoggedIn(modelWarOnline)
-			local unitType			= focusModelUnit:getUnitType()
-			local playerIndexActing   = focusModelUnit:getPlayerIndex()
-			focusModelUnit:setViewVisible(isUnitVisible(modelWarOnline, endingGridIndex, unitType, true, playerIndexActing, playerIndexLoggedIn))
-
-			if (isUnitVisible(modelWarOnline, endingGridIndex, unitType, false, playerIndexActing, playerIndexLoggedIn)) then
-				getModelGridEffect(modelWarOnline):showAnimationDive(endingGridIndex)
-			end
-
-			updateTileAndUnitMapOnVisibilityChanged(modelWarOnline)
-
-			modelWarOnline:setExecutingAction(false)
-		end)
-	end
+	end)
 end
 
 local function executeDropModelUnit(action, modelWarOnline)
@@ -947,7 +821,7 @@ local function executeDropModelUnit(action, modelWarOnline)
 	focusModelUnit:setStateActioned()
 
 	local playerIndex		= focusModelUnit:getPlayerIndex()
-	local shouldUpdateFogMap = (IS_SERVER) or (getModelPlayerManager(modelWarOnline):isSameTeamIndex(playerIndex, getPlayerIndexLoggedIn(modelWarOnline)))
+	local shouldUpdateFogMap = getModelPlayerManager(modelWarOnline):isSameTeamIndex(playerIndex, getPlayerIndexLoggedIn(modelWarOnline))
 	local modelFogMap		= getModelFogMap(modelWarOnline)
 	local dropModelUnits	 = {}
 	for _, dropDestination in ipairs(action.dropDestinations) do
@@ -972,44 +846,38 @@ local function executeDropModelUnit(action, modelWarOnline)
 		end
 	end
 
-	if (IS_SERVER) then
-		modelWarOnline:setExecutingAction(false)
-		OnlineWarManager.updateWithModelWarOnline(modelWarOnline)
+	cleanupOnReceivingResponseFromServer(modelWarOnline)
 
-	else
-		cleanupOnReceivingResponseFromServer(modelWarOnline)
+	focusModelUnit:moveViewAlongPath(pathNodes, isModelUnitDiving(focusModelUnit), function()
+		focusModelUnit:updateView()
+			:showNormalAnimation()
+		if (action.isDropBlocked) then
+			getModelGridEffect(modelWarOnline):showAnimationBlock(endingGridIndex)
+		end
 
-		focusModelUnit:moveViewAlongPath(pathNodes, isModelUnitDiving(focusModelUnit), function()
-			focusModelUnit:updateView()
-				:showNormalAnimation()
-			if (action.isDropBlocked) then
-				getModelGridEffect(modelWarOnline):showAnimationBlock(endingGridIndex)
+		local playerIndexLoggedIn = getPlayerIndexLoggedIn(modelWarOnline)
+		for _, dropModelUnit in ipairs(dropModelUnits) do
+			local isDiving  = isModelUnitDiving(dropModelUnit)
+			local gridIndex = dropModelUnit:getGridIndex()
+			local isVisible = isUnitVisible(modelWarOnline, gridIndex, dropModelUnit:getUnitType(), isDiving, playerIndex, playerIndexLoggedIn)
+			if (not isVisible) then
+				destroyActorUnitOnMap(modelWarOnline, gridIndex, false)
 			end
 
-			local playerIndexLoggedIn = getPlayerIndexLoggedIn(modelWarOnline)
-			for _, dropModelUnit in ipairs(dropModelUnits) do
-				local isDiving  = isModelUnitDiving(dropModelUnit)
-				local gridIndex = dropModelUnit:getGridIndex()
-				local isVisible = isUnitVisible(modelWarOnline, gridIndex, dropModelUnit:getUnitType(), isDiving, playerIndex, playerIndexLoggedIn)
+			dropModelUnit:moveViewAlongPath({endingGridIndex, gridIndex}, isDiving, function()
+				dropModelUnit:updateView()
+					:showNormalAnimation()
+
 				if (not isVisible) then
-					destroyActorUnitOnMap(modelWarOnline, gridIndex, false)
+					dropModelUnit:removeViewFromParent()
 				end
+			end)
+		end
 
-				dropModelUnit:moveViewAlongPath({endingGridIndex, gridIndex}, isDiving, function()
-					dropModelUnit:updateView()
-						:showNormalAnimation()
+		updateTileAndUnitMapOnVisibilityChanged(modelWarOnline)
 
-					if (not isVisible) then
-						dropModelUnit:removeViewFromParent()
-					end
-				end)
-			end
-
-			updateTileAndUnitMapOnVisibilityChanged(modelWarOnline)
-
-			modelWarOnline:setExecutingAction(false)
-		end)
-	end
+		modelWarOnline:setExecutingAction(false)
+	end)
 end
 
 local function executeEndTurn(action, modelWarOnline)
@@ -1017,16 +885,9 @@ local function executeEndTurn(action, modelWarOnline)
 		return
 	end
 
-	if (IS_SERVER) then
-		getModelTurnManager(modelWarOnline):endTurnPhaseMain()
-		modelWarOnline:setExecutingAction(false)
-		OnlineWarManager.updateWithModelWarOnline(modelWarOnline)
-
-	else
-		cleanupOnReceivingResponseFromServer(modelWarOnline)
-		getModelTurnManager(modelWarOnline):endTurnPhaseMain()
-		modelWarOnline:setExecutingAction(false)
-	end
+	cleanupOnReceivingResponseFromServer(modelWarOnline)
+	getModelTurnManager(modelWarOnline):endTurnPhaseMain()
+	modelWarOnline:setExecutingAction(false)
 end
 
 local function executeJoinModelUnit(action, modelWarOnline)
@@ -1092,23 +953,17 @@ local function executeJoinModelUnit(action, modelWarOnline)
 		focusModelUnit:setCapturingModelTile(targetModelUnit:isCapturingModelTile())
 	end
 
-	if (IS_SERVER) then
+	cleanupOnReceivingResponseFromServer(modelWarOnline)
+
+	focusModelUnit:moveViewAlongPath(pathNodes, isModelUnitDiving(focusModelUnit), function()
+		focusModelUnit:updateView()
+			:showNormalAnimation()
+		targetModelUnit:removeViewFromParent()
+
+		updateTileAndUnitMapOnVisibilityChanged(modelWarOnline)
+
 		modelWarOnline:setExecutingAction(false)
-		OnlineWarManager.updateWithModelWarOnline(modelWarOnline)
-
-	else
-		cleanupOnReceivingResponseFromServer(modelWarOnline)
-
-		focusModelUnit:moveViewAlongPath(pathNodes, isModelUnitDiving(focusModelUnit), function()
-			focusModelUnit:updateView()
-				:showNormalAnimation()
-			targetModelUnit:removeViewFromParent()
-
-			updateTileAndUnitMapOnVisibilityChanged(modelWarOnline)
-
-			modelWarOnline:setExecutingAction(false)
-		end)
-	end
+	end)
 end
 
 local function executeLaunchFlare(action, modelWarOnline)
@@ -1127,34 +982,28 @@ local function executeLaunchFlare(action, modelWarOnline)
 	focusModelUnit:setStateActioned()
 		:setCurrentFlareAmmo(focusModelUnit:getCurrentFlareAmmo() - 1)
 
-	local playerIndexLoggedIn = (not IS_SERVER) and (getPlayerIndexLoggedIn(modelWarOnline)) or (nil)
-	if ((IS_SERVER) or (getModelPlayerManager(modelWarOnline):isSameTeamIndex(playerIndexActing, playerIndexLoggedIn))) then
+	local playerIndexLoggedIn = getPlayerIndexLoggedIn(modelWarOnline) or nil
+	if getModelPlayerManager(modelWarOnline):isSameTeamIndex(playerIndexActing, playerIndexLoggedIn) then
 		getModelFogMap(modelWarOnline):updateMapForPathsForPlayerIndexWithFlare(playerIndexActing, targetGridIndex, flareAreaRadius)
 	end
 
-	if (IS_SERVER) then
-		modelWarOnline:setExecutingAction(false)
-		OnlineWarManager.updateWithModelWarOnline(modelWarOnline)
+	cleanupOnReceivingResponseFromServer(modelWarOnline)
 
-	else
-		cleanupOnReceivingResponseFromServer(modelWarOnline)
+	focusModelUnit:moveViewAlongPath(pathNodes, isModelUnitDiving(focusModelUnit), function()
+		focusModelUnit:updateView()
+			:showNormalAnimation()
 
-		focusModelUnit:moveViewAlongPath(pathNodes, isModelUnitDiving(focusModelUnit), function()
-			focusModelUnit:updateView()
-				:showNormalAnimation()
-
-			if (playerIndexActing == playerIndexLoggedIn) then
-				local modelGridEffect = getModelGridEffect(modelWarOnline)
-				for _, gridIndex in pairs(getGridsWithinDistance(targetGridIndex, 0, flareAreaRadius, modelUnitMap:getMapSize())) do
-					modelGridEffect:showAnimationFlare(gridIndex)
-				end
+		if (playerIndexActing == playerIndexLoggedIn) then
+			local modelGridEffect = getModelGridEffect(modelWarOnline)
+			for _, gridIndex in pairs(getGridsWithinDistance(targetGridIndex, 0, flareAreaRadius, modelUnitMap:getMapSize())) do
+				modelGridEffect:showAnimationFlare(gridIndex)
 			end
+		end
 
-			updateTileAndUnitMapOnVisibilityChanged(modelWarOnline)
+		updateTileAndUnitMapOnVisibilityChanged(modelWarOnline)
 
-			modelWarOnline:setExecutingAction(false)
-		end)
-	end
+		modelWarOnline:setExecutingAction(false)
+	end)
 end
 
 local function executeLaunchSilo(action, modelWarOnline)
@@ -1167,7 +1016,7 @@ local function executeLaunchSilo(action, modelWarOnline)
 	local modelUnitMap   = getModelUnitMap(modelWarOnline)
 	local focusModelUnit = modelUnitMap:getFocusModelUnit(pathNodes[1], action.launchUnitID)
 	local modelTile	  = getModelTileMap(modelWarOnline):getModelTile(pathNodes[#pathNodes])
-	if ((not IS_SERVER) and (modelTile:isFogEnabledOnClient())) then
+	if modelTile:isFogEnabledOnClient() then
 		modelTile:updateAsFogDisabled()
 	end
 	moveModelUnitWithAction(action, modelWarOnline)
@@ -1185,31 +1034,25 @@ local function executeLaunchSilo(action, modelWarOnline)
 		end
 	end
 
-	if (IS_SERVER) then
+	cleanupOnReceivingResponseFromServer(modelWarOnline)
+
+	focusModelUnit:moveViewAlongPath(pathNodes, isModelUnitDiving(focusModelUnit), function()
+		focusModelUnit:updateView()
+			:showNormalAnimation()
+		modelTile:updateView()
+		for _, modelUnit in ipairs(targetModelUnits) do
+			modelUnit:updateView()
+		end
+
+		local modelGridEffect = getModelGridEffect(modelWarOnline)
+		for _, gridIndex in ipairs(targetGridIndexes) do
+			modelGridEffect:showAnimationSiloAttack(gridIndex)
+		end
+
+		updateTileAndUnitMapOnVisibilityChanged(modelWarOnline)
+
 		modelWarOnline:setExecutingAction(false)
-		OnlineWarManager.updateWithModelWarOnline(modelWarOnline)
-
-	else
-		cleanupOnReceivingResponseFromServer(modelWarOnline)
-
-		focusModelUnit:moveViewAlongPath(pathNodes, isModelUnitDiving(focusModelUnit), function()
-			focusModelUnit:updateView()
-				:showNormalAnimation()
-			modelTile:updateView()
-			for _, modelUnit in ipairs(targetModelUnits) do
-				modelUnit:updateView()
-			end
-
-			local modelGridEffect = getModelGridEffect(modelWarOnline)
-			for _, gridIndex in ipairs(targetGridIndexes) do
-				modelGridEffect:showAnimationSiloAttack(gridIndex)
-			end
-
-			updateTileAndUnitMapOnVisibilityChanged(modelWarOnline)
-
-			modelWarOnline:setExecutingAction(false)
-		end)
-	end
+	end)
 end
 
 local function executeLoadModelUnit(action, modelWarOnline)
@@ -1227,30 +1070,22 @@ local function executeLoadModelUnit(action, modelWarOnline)
 	local loaderModelUnit = modelUnitMap:getModelUnit(pathNodes[#pathNodes])
 	if (loaderModelUnit) then
 		loaderModelUnit:addLoadUnitId(focusModelUnit:getUnitId())
-	else
-		assert(not IS_SERVER, "ActionExecutorForWarOnline-executeLoadModelUnit() failed to get the target loader on the server.")
 	end
 
-	if (IS_SERVER) then
+	cleanupOnReceivingResponseFromServer(modelWarOnline)
+
+	focusModelUnit:moveViewAlongPath(pathNodes, isModelUnitDiving(focusModelUnit), function()
+		focusModelUnit:updateView()
+			:showNormalAnimation()
+			:setViewVisible(false)
+		if (loaderModelUnit) then
+			loaderModelUnit:updateView()
+		end
+
+		updateTileAndUnitMapOnVisibilityChanged(modelWarOnline)
+
 		modelWarOnline:setExecutingAction(false)
-		OnlineWarManager.updateWithModelWarOnline(modelWarOnline)
-
-	else
-		cleanupOnReceivingResponseFromServer(modelWarOnline)
-
-		focusModelUnit:moveViewAlongPath(pathNodes, isModelUnitDiving(focusModelUnit), function()
-			focusModelUnit:updateView()
-				:showNormalAnimation()
-				:setViewVisible(false)
-			if (loaderModelUnit) then
-				loaderModelUnit:updateView()
-			end
-
-			updateTileAndUnitMapOnVisibilityChanged(modelWarOnline)
-
-			modelWarOnline:setExecutingAction(false)
-		end)
-	end
+	end)
 end
 
 local function executeProduceModelUnitOnTile(action, modelWarOnline)
@@ -1268,7 +1103,7 @@ local function executeProduceModelUnitOnTile(action, modelWarOnline)
 		local producedActorUnit = produceActorUnit(modelWarOnline, action.tiledID, producedUnitID, gridIndex)
 		modelUnitMap:addActorUnitOnMap(producedActorUnit)
 
-		if ((IS_SERVER) or (getModelPlayerManager(modelWarOnline):isSameTeamIndex(playerIndex, getPlayerIndexLoggedIn(modelWarOnline)))) then
+		if getModelPlayerManager(modelWarOnline):isSameTeamIndex(playerIndex, getPlayerIndexLoggedIn(modelWarOnline)) then
 			getModelFogMap(modelWarOnline):updateMapForUnitsForPlayerIndexOnUnitArrive(playerIndex, gridIndex, producedActorUnit:getModel():getVisionForPlayerIndex(playerIndex))
 		end
 	end
@@ -1276,17 +1111,9 @@ local function executeProduceModelUnitOnTile(action, modelWarOnline)
 	modelUnitMap:setAvailableUnitId(producedUnitID + 1)
 	updateFundWithCost(modelWarOnline, playerIndex, action.cost)
 
-	if (IS_SERVER) then
-		modelWarOnline:setExecutingAction(false)
-		OnlineWarManager.updateWithModelWarOnline(modelWarOnline)
-
-	else
-		cleanupOnReceivingResponseFromServer(modelWarOnline)
-
-		updateTileAndUnitMapOnVisibilityChanged(modelWarOnline)
-
-		modelWarOnline:setExecutingAction(false)
-	end
+	cleanupOnReceivingResponseFromServer(modelWarOnline)
+	updateTileAndUnitMapOnVisibilityChanged(modelWarOnline)
+	modelWarOnline:setExecutingAction(false)
 end
 
 local function executeProduceModelUnitOnUnit(action, modelWarOnline)
@@ -1311,22 +1138,16 @@ local function executeProduceModelUnitOnUnit(action, modelWarOnline)
 	end
 	updateFundWithCost(modelWarOnline, producer:getPlayerIndex(), action.cost)
 
-	if (IS_SERVER) then
+	cleanupOnReceivingResponseFromServer(modelWarOnline)
+
+	producer:moveViewAlongPath(pathNodes, isModelUnitDiving(producer), function()
+		producer:updateView()
+			:showNormalAnimation()
+
+		updateTileAndUnitMapOnVisibilityChanged(modelWarOnline)
+
 		modelWarOnline:setExecutingAction(false)
-		OnlineWarManager.updateWithModelWarOnline(modelWarOnline)
-
-	else
-		cleanupOnReceivingResponseFromServer(modelWarOnline)
-
-		producer:moveViewAlongPath(pathNodes, isModelUnitDiving(producer), function()
-			producer:updateView()
-				:showNormalAnimation()
-
-			updateTileAndUnitMapOnVisibilityChanged(modelWarOnline)
-
-			modelWarOnline:setExecutingAction(false)
-		end)
-	end
+	end)
 end
 
 local function executeResearchPassiveSkill(action, modelWarOnline)
@@ -1343,28 +1164,22 @@ local function executeResearchPassiveSkill(action, modelWarOnline)
 	modelPlayer:setEnergy(modelPlayer:getEnergy() - modelWarOnline:getModelSkillDataManager():getSkillPoints(skillID, skillLevel, false))
 	modelSkillConfiguration:getModelSkillGroupResearching():pushBackSkill(skillID, skillLevel)
 
-	if (IS_SERVER) then
-		modelWarOnline:setExecutingAction(false)
-		OnlineWarManager.updateWithModelWarOnline(modelWarOnline)
+	cleanupOnReceivingResponseFromServer(modelWarOnline)
 
-	else
-		cleanupOnReceivingResponseFromServer(modelWarOnline)
-
-		local modelGridEffect = getModelGridEffect(modelWarOnline)
-		local func			= function(modelUnit)
-			if (modelUnit:getPlayerIndex() == playerIndex) then
-				modelGridEffect:showAnimationSkillActivation(modelUnit:getGridIndex())
-				modelUnit:updateView()
-			end
+	local modelGridEffect = getModelGridEffect(modelWarOnline)
+	local func			= function(modelUnit)
+		if (modelUnit:getPlayerIndex() == playerIndex) then
+			modelGridEffect:showAnimationSkillActivation(modelUnit:getGridIndex())
+			modelUnit:updateView()
 		end
-		getModelUnitMap(modelWarOnline):forEachModelUnitOnMap(func)
-			:forEachModelUnitLoaded(func)
-
-		updateTileAndUnitMapOnVisibilityChanged(modelWarOnline)
-		dispatchEvtModelPlayerUpdated(modelWarOnline, playerIndex)
-
-		modelWarOnline:setExecutingAction(false)
 	end
+	getModelUnitMap(modelWarOnline):forEachModelUnitOnMap(func)
+		:forEachModelUnitLoaded(func)
+
+	updateTileAndUnitMapOnVisibilityChanged(modelWarOnline)
+	dispatchEvtModelPlayerUpdated(modelWarOnline, playerIndex)
+
+	modelWarOnline:setExecutingAction(false)
 end
 
 local function executeSupplyModelUnit(action, modelWarOnline)
@@ -1380,28 +1195,21 @@ local function executeSupplyModelUnit(action, modelWarOnline)
 	focusModelUnit:setStateActioned()
 	local targetModelUnits = getAndSupplyAdjacentModelUnits(modelWarOnline, pathNodes[#pathNodes], focusModelUnit:getPlayerIndex())
 
-	if (IS_SERVER) then
+	cleanupOnReceivingResponseFromServer(modelWarOnline)
+	focusModelUnit:moveViewAlongPath(pathNodes, isModelUnitDiving(focusModelUnit), function()
+		focusModelUnit:updateView()
+			:showNormalAnimation()
+
+		local modelGridEffect = getModelGridEffect(modelWarOnline)
+		for _, targetModelUnit in pairs(targetModelUnits) do
+			targetModelUnit:updateView()
+			modelGridEffect:showAnimationSupply(targetModelUnit:getGridIndex())
+		end
+
+		updateTileAndUnitMapOnVisibilityChanged(modelWarOnline)
+
 		modelWarOnline:setExecutingAction(false)
-		OnlineWarManager.updateWithModelWarOnline(modelWarOnline)
-
-	else
-		cleanupOnReceivingResponseFromServer(modelWarOnline)
-
-		focusModelUnit:moveViewAlongPath(pathNodes, isModelUnitDiving(focusModelUnit), function()
-			focusModelUnit:updateView()
-				:showNormalAnimation()
-
-			local modelGridEffect = getModelGridEffect(modelWarOnline)
-			for _, targetModelUnit in pairs(targetModelUnits) do
-				targetModelUnit:updateView()
-				modelGridEffect:showAnimationSupply(targetModelUnit:getGridIndex())
-			end
-
-			updateTileAndUnitMapOnVisibilityChanged(modelWarOnline)
-
-			modelWarOnline:setExecutingAction(false)
-		end)
-	end
+	end)
 end
 
 local function executeSurface(action, modelWarOnline)
@@ -1417,29 +1225,21 @@ local function executeSurface(action, modelWarOnline)
 	focusModelUnit:setStateActioned()
 		:setDiving(false)
 
-	if (IS_SERVER) then
+	cleanupOnReceivingResponseFromServer(modelWarOnline)
+	focusModelUnit:moveViewAlongPath(pathNodes, true, function()
+		focusModelUnit:updateView()
+			:showNormalAnimation()
+
+		local endingGridIndex = pathNodes[#pathNodes]
+		local isVisible = isUnitVisible(modelWarOnline, endingGridIndex, focusModelUnit:getUnitType(), false, focusModelUnit:getPlayerIndex(), getPlayerIndexLoggedIn(modelWarOnline))
+		focusModelUnit:setViewVisible(isVisible)
+		if (isVisible) then
+			getModelGridEffect(modelWarOnline):showAnimationSurface(endingGridIndex)
+		end
+
+		updateTileAndUnitMapOnVisibilityChanged(modelWarOnline)
 		modelWarOnline:setExecutingAction(false)
-		OnlineWarManager.updateWithModelWarOnline(modelWarOnline)
-
-	else
-		cleanupOnReceivingResponseFromServer(modelWarOnline)
-
-		focusModelUnit:moveViewAlongPath(pathNodes, true, function()
-			focusModelUnit:updateView()
-				:showNormalAnimation()
-
-			local endingGridIndex = pathNodes[#pathNodes]
-			local isVisible = isUnitVisible(modelWarOnline, endingGridIndex, focusModelUnit:getUnitType(), false, focusModelUnit:getPlayerIndex(), getPlayerIndexLoggedIn(modelWarOnline))
-			focusModelUnit:setViewVisible(isVisible)
-			if (isVisible) then
-				getModelGridEffect(modelWarOnline):showAnimationSurface(endingGridIndex)
-			end
-
-			updateTileAndUnitMapOnVisibilityChanged(modelWarOnline)
-
-			modelWarOnline:setExecutingAction(false)
-		end)
-	end
+	end)
 end
 
 local function executeSurrender(action, modelWarOnline)
@@ -1454,38 +1254,24 @@ local function executeSurrender(action, modelWarOnline)
 	modelWarOnline:setRemainingVotesForDraw(nil)
 	Destroyers.destroyPlayerForce(modelWarOnline, playerIndex)
 
-	if (IS_SERVER) then
-		if (modelPlayerManager:getAliveTeamsCount() <= 1) then
-			modelWarOnline:setEnded(true)
-		else
-			modelTurnManager:endTurnPhaseMain()
-		end
-
-		modelWarOnline:setExecutingAction(false)
-		PlayerProfileManager.updateProfilesWithModelWarOnline(modelWarOnline)
-		OnlineWarManager.updateWithModelWarOnline(modelWarOnline)
-
-	else
-		cleanupOnReceivingResponseFromServer(modelWarOnline)
-
-		local isLoggedInPlayerLost = modelPlayer:getAccount() == getLoggedInAccountAndPassword(modelWarOnline)
-		if ((modelPlayerManager:getAliveTeamsCount(playerIndex) <= 1) or (isLoggedInPlayerLost)) then
-			modelWarOnline:setEnded(true)
-		end
-
-		updateTileAndUnitMapOnVisibilityChanged(modelWarOnline)
-		getModelMessageIndicator(modelWarOnline):showMessage(getLocalizedText(74, "Surrender", modelPlayer:getNickname()))
-
-		if (not modelWarOnline:isEnded()) then
-			modelTurnManager:endTurnPhaseMain()
-		elseif (isLoggedInPlayerLost) then
-			modelWarOnline:showEffectSurrender(callbackOnWarEndedForClient)
-		else
-			modelWarOnline:showEffectWin(callbackOnWarEndedForClient)
-		end
-
-		modelWarOnline:setExecutingAction(false)
+	cleanupOnReceivingResponseFromServer(modelWarOnline)
+	local isLoggedInPlayerLost = modelPlayer:getAccount() == getLoggedInAccountAndPassword(modelWarOnline)
+	if ((modelPlayerManager:getAliveTeamsCount(playerIndex) <= 1) or (isLoggedInPlayerLost)) then
+		modelWarOnline:setEnded(true)
 	end
+
+	updateTileAndUnitMapOnVisibilityChanged(modelWarOnline)
+	getModelMessageIndicator(modelWarOnline):showMessage(getLocalizedText(74, "Surrender", modelPlayer:getNickname()))
+
+	if (not modelWarOnline:isEnded()) then
+		modelTurnManager:endTurnPhaseMain()
+	elseif (isLoggedInPlayerLost) then
+		modelWarOnline:showEffectSurrender(callbackOnWarEndedForClient)
+	else
+		modelWarOnline:showEffectWin(callbackOnWarEndedForClient)
+	end
+
+	modelWarOnline:setExecutingAction(false)
 end
 
 local function executeUpdateReserveSkills(action, modelWarOnline)
@@ -1497,20 +1283,13 @@ local function executeUpdateReserveSkills(action, modelWarOnline)
 	local modelPlayer = getModelPlayerManager(modelWarOnline):getModelPlayer(playerIndex)
 	modelPlayer:getModelSkillConfiguration():getModelSkillGroupReserve():ctor(action.reserveSkills)
 
-	if (IS_SERVER) then
-		modelWarOnline:setExecutingAction(false)
-		OnlineWarManager.updateWithModelWarOnline(modelWarOnline)
+	cleanupOnReceivingResponseFromServer(modelWarOnline)
+	getModelMessageIndicator(modelWarOnline):showMessage(
+		string.format("[%s] %s!", modelPlayer:getNickname(), getLocalizedText(22, "HasUpdatedReserveSkills"))
+	)
+	dispatchEvtModelPlayerUpdated(modelWarOnline, playerIndex)
 
-	else
-		cleanupOnReceivingResponseFromServer(modelWarOnline)
-
-		getModelMessageIndicator(modelWarOnline):showMessage(
-			string.format("[%s] %s!", modelPlayer:getNickname(), getLocalizedText(22, "HasUpdatedReserveSkills"))
-		)
-		dispatchEvtModelPlayerUpdated(modelWarOnline, playerIndex)
-
-		modelWarOnline:setExecutingAction(false)
-	end
+	modelWarOnline:setExecutingAction(false)
 end
 
 local function executeVoteForDraw(action, modelWarOnline)
@@ -1532,32 +1311,22 @@ local function executeVoteForDraw(action, modelWarOnline)
 	end
 	modelPlayer:setVotedForDraw(true)
 
-	if (IS_SERVER) then
-		modelWarOnline:setExecutingAction(false)
-		if (modelWarOnline:isEnded()) then
-			PlayerProfileManager.updateProfilesWithModelWarOnline(modelWarOnline)
-		end
-		OnlineWarManager.updateWithModelWarOnline(modelWarOnline)
-
+	cleanupOnReceivingResponseFromServer(modelWarOnline)
+	if (not doesAgree) then
+		getModelMessageIndicator(modelWarOnline):showMessage(getLocalizedText(74, "DisagreeDraw", modelPlayer:getNickname()))
 	else
-		cleanupOnReceivingResponseFromServer(modelWarOnline)
-
-		if (not doesAgree) then
-			getModelMessageIndicator(modelWarOnline):showMessage(getLocalizedText(74, "DisagreeDraw", modelPlayer:getNickname()))
-		else
-			local modelMessageIndicator = getModelMessageIndicator(modelWarOnline)
-			modelMessageIndicator:showMessage(getLocalizedText(74, "AgreeDraw", modelPlayer:getNickname()))
-			if (modelWarOnline:isEnded()) then
-				modelMessageIndicator:showMessage(getLocalizedText(74, "EndWithDraw"))
-			end
-		end
-
+		local modelMessageIndicator = getModelMessageIndicator(modelWarOnline)
+		modelMessageIndicator:showMessage(getLocalizedText(74, "AgreeDraw", modelPlayer:getNickname()))
 		if (modelWarOnline:isEnded()) then
-			modelWarOnline:showEffectEndWithDraw(callbackOnWarEndedForClient)
+			modelMessageIndicator:showMessage(getLocalizedText(74, "EndWithDraw"))
 		end
-
-		modelWarOnline:setExecutingAction(false)
 	end
+
+	if (modelWarOnline:isEnded()) then
+		modelWarOnline:showEffectEndWithDraw(callbackOnWarEndedForClient)
+	end
+
+	modelWarOnline:setExecutingAction(false)
 end
 
 local function executeWait(action, modelWarOnline)
@@ -1572,26 +1341,16 @@ local function executeWait(action, modelWarOnline)
 	moveModelUnitWithAction(action, modelWarOnline)
 	focusModelUnit:setStateActioned()
 
-	if (IS_SERVER) then
+	cleanupOnReceivingResponseFromServer(modelWarOnline)
+	focusModelUnit:moveViewAlongPath(pathNodes, isModelUnitDiving(focusModelUnit), function()
+		focusModelUnit:updateView()
+			:showNormalAnimation()
+		updateTileAndUnitMapOnVisibilityChanged(modelWarOnline)
+		if (path.isBlocked) then
+			getModelGridEffect(modelWarOnline):showAnimationBlock(pathNodes[#pathNodes])
+		end
 		modelWarOnline:setExecutingAction(false)
-		OnlineWarManager.updateWithModelWarOnline(modelWarOnline)
-
-	else
-		cleanupOnReceivingResponseFromServer(modelWarOnline)
-
-		focusModelUnit:moveViewAlongPath(pathNodes, isModelUnitDiving(focusModelUnit), function()
-			focusModelUnit:updateView()
-				:showNormalAnimation()
-
-			updateTileAndUnitMapOnVisibilityChanged(modelWarOnline)
-
-			if (path.isBlocked) then
-				getModelGridEffect(modelWarOnline):showAnimationBlock(pathNodes[#pathNodes])
-			end
-
-			modelWarOnline:setExecutingAction(false)
-		end)
-	end
+	end)
 end
 
 --------------------------------------------------------------------------------
@@ -1605,7 +1364,6 @@ function ActionExecutorForWarOnline.execute(action, modelWarOnline)
 	elseif (actionCode == ACTION_CODES.ActionLogin)				  then executeLogin(				 action, modelWarOnline)
 	elseif (actionCode == ACTION_CODES.ActionLogout)				 then executeLogout(				action, modelWarOnline)
 	elseif (actionCode == ACTION_CODES.ActionMessage)				then executeMessage(			   action, modelWarOnline)
-	elseif (actionCode == ACTION_CODES.ActionNetworkHeartbeat)	   then executeNetworkHeartbeat(	  action, modelWarOnline)
 	elseif (actionCode == ACTION_CODES.ActionRegister)			   then executeRegister(			  action, modelWarOnline)
 	elseif (actionCode == ACTION_CODES.ActionReloadSceneWar)		 then executeReloadSceneWar(		action, modelWarOnline)
 	elseif (actionCode == ACTION_CODES.ActionRunSceneMain)		   then executeRunSceneMain(		  action, modelWarOnline)

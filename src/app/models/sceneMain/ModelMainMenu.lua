@@ -470,7 +470,6 @@ end
 function ModelMainMenu:updateWithIsPlayerLoggedIn(isPlayerLoggedIn)
 	self.m_IsPlayerLoggedIn = isPlayerLoggedIn
 	setStateMain(self)
-
 	return self
 end
 
