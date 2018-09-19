@@ -9,10 +9,11 @@ local decode = SerializationFunctions.decode
 local encode = SerializationFunctions.encode
 local next   = next
 
+local SERVER_URL = "89.208.243.92:19297/FreeWars"
 --[[
+local SERVER_URL = "e1t5268499.imwork.net:10232/FreeWars"
 local SERVER_URL = "localhost:19297/FreeWars"
 --]]
-local SERVER_URL = "e1t5268499.imwork.net:10232/FreeWars"
 
 local HEARTBEAT_INTERVAL    = 10
 local ACTION_CODE_HEARTBEAT = ActionCodeFunctions.getActionCode("ActionNetworkHeartbeat")
